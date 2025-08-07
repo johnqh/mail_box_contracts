@@ -3,7 +3,7 @@
 /* eslint-disable */
 
 import { Contract, Interface, type ContractRunner } from "ethers";
-import type { IERC20, IERC20Interface } from "../../MailBox.sol/IERC20";
+import type { IERC20, IERC20Interface } from "../../PrivilegedMail.sol/IERC20";
 
 const _abi = [
   {

@@ -20,25 +20,23 @@ import type {
   TypedLogDescription,
   TypedListener,
   TypedContractMethod,
-} from "./common";
+} from "../common";
 
-export interface MailBoxInterface extends Interface {
+export interface PrivilegedMailInterface extends Interface {
   getFunction(
-    nameOrSignature: "SEND_FEE" | "getName" | "send" | "usdcToken"
+    nameOrSignature: "SEND_FEE" | "send" | "usdcToken"
   ): FunctionFragment;
 
   getEvent(nameOrSignatureOrTopic: "MailSent"): EventFragment;
 
   encodeFunctionData(functionFragment: "SEND_FEE", values?: undefined): string;
-  encodeFunctionData(functionFragment: "getName", values?: undefined): string;
   encodeFunctionData(
     functionFragment: "send",
-    values: [AddressLike, AddressLike, string, string]
+    values: [AddressLike, string, string]
   ): string;
   encodeFunctionData(functionFragment: "usdcToken", values?: undefined): string;
 
   decodeFunctionResult(functionFragment: "SEND_FEE", data: BytesLike): Result;
-  decodeFunctionResult(functionFragment: "getName", data: BytesLike): Result;
   decodeFunctionResult(functionFragment: "send", data: BytesLike): Result;
   decodeFunctionResult(functionFragment: "usdcToken", data: BytesLike): Result;
 }
@@ -68,11 +66,11 @@ export namespace MailSentEvent {
   export type LogDescription = TypedLogDescription<Event>;
 }
 
-export interface MailBox extends BaseContract {
-  connect(runner?: ContractRunner | null): MailBox;
+export interface PrivilegedMail extends BaseContract {
+  connect(runner?: ContractRunner | null): PrivilegedMail;
   waitForDeployment(): Promise<this>;
 
-  interface: MailBoxInterface;
+  interface: PrivilegedMailInterface;
 
   queryFilter<TCEvent extends TypedContractEvent>(
     event: TCEvent,
@@ -113,10 +111,8 @@ export interface MailBox extends BaseContract {
 
   SEND_FEE: TypedContractMethod<[], [bigint], "view">;
 
-  getName: TypedContractMethod<[], [string], "view">;
-
   send: TypedContractMethod<
-    [from: AddressLike, to: AddressLike, subject: string, body: string],
+    [to: AddressLike, subject: string, body: string],
     [void],
     "nonpayable"
   >;
@@ -131,12 +127,9 @@ export interface MailBox extends BaseContract {
     nameOrSignature: "SEND_FEE"
   ): TypedContractMethod<[], [bigint], "view">;
   getFunction(
-    nameOrSignature: "getName"
-  ): TypedContractMethod<[], [string], "view">;
-  getFunction(
     nameOrSignature: "send"
   ): TypedContractMethod<
-    [from: AddressLike, to: AddressLike, subject: string, body: string],
+    [to: AddressLike, subject: string, body: string],
     [void],
     "nonpayable"
   >;

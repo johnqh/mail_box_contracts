@@ -3,6 +3,8 @@
 /* eslint-disable */
 import type * as mailBoxSol from "./MailBox.sol";
 export type { mailBoxSol };
+import type * as privilegedMailSol from "./PrivilegedMail.sol";
+export type { privilegedMailSol };
 export type { MockUSDC } from "./MockUSDC";
 export * as factories from "./factories";
 export type { IERC20 } from "./MailBox.sol/IERC20";
@@ -10,3 +12,5 @@ export { IERC20__factory } from "./factories/MailBox.sol/IERC20__factory";
 export type { MailBox } from "./MailBox.sol/MailBox";
 export { MailBox__factory } from "./factories/MailBox.sol/MailBox__factory";
 export { MockUSDC__factory } from "./factories/MockUSDC__factory";
+export type { PrivilegedMail } from "./PrivilegedMail.sol/PrivilegedMail";
+export { PrivilegedMail__factory } from "./factories/PrivilegedMail.sol/PrivilegedMail__factory";

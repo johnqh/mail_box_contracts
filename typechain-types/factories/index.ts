@@ -2,4 +2,5 @@
 /* tslint:disable */
 /* eslint-disable */
 export * as mailBoxSol from "./MailBox.sol";
+export * as privilegedMailSol from "./PrivilegedMail.sol";
 export { MockUSDC__factory } from "./MockUSDC__factory";

@@ -1,29 +1,28 @@
 import { ethers } from "ethers";
-import { MailBox, MailBox__factory } from "../typechain-types";
+import { PrivilegedMail, PrivilegedMail__factory } from "../typechain-types";
 
-export class MailBoxClient {
-  private contract: MailBox;
+export class PrivilegedMailClient {
+  private contract: PrivilegedMail;
 
   constructor(contractAddress: string, provider: ethers.Provider) {
-    this.contract = MailBox__factory.connect(contractAddress, provider);
+    this.contract = PrivilegedMail__factory.connect(contractAddress, provider);
   }
 
-  static async deploy(signer: ethers.Signer, usdcTokenAddress: string): Promise<MailBoxClient> {
-    const factory = new MailBox__factory(signer);
+  static async deploy(signer: ethers.Signer, usdcTokenAddress: string): Promise<PrivilegedMailClient> {
+    const factory = new PrivilegedMail__factory(signer);
     const contract = await factory.deploy(usdcTokenAddress);
     await contract.waitForDeployment();
     const address = await contract.getAddress();
-    return new MailBoxClient(address, signer.provider!);
+    return new PrivilegedMailClient(address, signer.provider!);
   }
 
 
   async send(
-    from: string,
     to: string,
     subject: string,
     body: string
   ): Promise<ethers.ContractTransactionResponse> {
-    return await this.contract.send(from, to, subject, body);
+    return await this.contract.send(to, subject, body);
   }
 
   async getSendFee(): Promise<bigint> {
@@ -38,7 +37,7 @@ export class MailBoxClient {
     return this.contract.getAddress();
   }
 
-  getContract(): MailBox {
+  getContract(): PrivilegedMail {
     return this.contract;
   }
 }

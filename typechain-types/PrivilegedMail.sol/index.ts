@@ -2,4 +2,4 @@
 /* tslint:disable */
 /* eslint-disable */
 export type { IERC20 } from "./IERC20";
-export type { MailBox } from "./MailBox";
+export type { PrivilegedMail } from "./PrivilegedMail";

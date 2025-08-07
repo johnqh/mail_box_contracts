@@ -10,14 +10,14 @@ async function main() {
   // In production, use the actual USDC token address
   const mockUsdcAddress = "0x0000000000000000000000000000000000000000";
 
-  const MailBox = await ethers.getContractFactory("MailBox");
-  const mailBox = await MailBox.deploy(mockUsdcAddress);
+  const PrivilegedMail = await ethers.getContractFactory("PrivilegedMail");
+  const privilegedMail = await PrivilegedMail.deploy(mockUsdcAddress);
 
-  await mailBox.waitForDeployment();
+  await privilegedMail.waitForDeployment();
 
-  console.log("MailBox deployed to:", await mailBox.getAddress());
-  console.log("USDC token address:", await mailBox.usdcToken());
-  console.log("Send fee (in USDC):", (await mailBox.SEND_FEE()).toString());
+  console.log("PrivilegedMail deployed to:", await privilegedMail.getAddress());
+  console.log("USDC token address:", await privilegedMail.usdcToken());
+  console.log("Send fee (in USDC):", (await privilegedMail.SEND_FEE()).toString());
 }
 
 main().catch((error) => {

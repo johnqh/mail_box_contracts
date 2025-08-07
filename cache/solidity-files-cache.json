@@ -1,43 +1,6 @@
 {
   "_format": "hh-sol-cache-2",
   "files": {
-    "/Users/qianghuang/mail_box_contracts/contracts/MailBox.sol": {
-      "lastModificationDate": 1754597504472,
-      "contentHash": "a14d8c02e0d7ce0b7efd9458fea6c379",
-      "sourceName": "contracts/MailBox.sol",
-      "solcConfig": {
-        "version": "0.8.24",
-        "settings": {
-          "evmVersion": "paris",
-          "optimizer": {
-            "enabled": false,
-            "runs": 200
-          },
-          "outputSelection": {
-            "*": {
-              "*": [
-                "abi",
-                "evm.bytecode",
-                "evm.deployedBytecode",
-                "evm.methodIdentifiers",
-                "metadata"
-              ],
-              "": [
-                "ast"
-              ]
-            }
-          }
-        }
-      },
-      "imports": [],
-      "versionPragmas": [
-        "^0.8.24"
-      ],
-      "artifacts": [
-        "IERC20",
-        "MailBox"
-      ]
-    },
     "/Users/qianghuang/mail_box_contracts/contracts/MockUSDC.sol": {
       "lastModificationDate": 1754597357381,
       "contentHash": "7d26c269ac15f265e2f5849100ded51a",
@@ -72,6 +35,43 @@
       ],
       "artifacts": [
         "MockUSDC"
+      ]
+    },
+    "/Users/qianghuang/mail_box_contracts/contracts/PrivilegedMail.sol": {
+      "lastModificationDate": 1754610269000,
+      "contentHash": "19c048abaa76b0ceb59e52c922aa9e67",
+      "sourceName": "contracts/PrivilegedMail.sol",
+      "solcConfig": {
+        "version": "0.8.24",
+        "settings": {
+          "evmVersion": "paris",
+          "optimizer": {
+            "enabled": false,
+            "runs": 200
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [],
+      "versionPragmas": [
+        "^0.8.24"
+      ],
+      "artifacts": [
+        "IERC20",
+        "PrivilegedMail"
       ]
     }
   }

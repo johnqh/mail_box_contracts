@@ -2,4 +2,4 @@
 /* tslint:disable */
 /* eslint-disable */
 export { IERC20__factory } from "./IERC20__factory";
-export { MailBox__factory } from "./MailBox__factory";
+export { PrivilegedMail__factory } from "./PrivilegedMail__factory";
