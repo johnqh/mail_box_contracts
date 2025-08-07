@@ -41,7 +41,7 @@ describe("PrivilegedMail", function () {
   describe("send function", function () {
     it("Should emit MailSent event when USDC transfer succeeds", async function () {
       await expect(
-        privilegedMail.send(addr1.address, addr2.address, "Test Subject", "Test Body")
+        privilegedMail.connect(addr1).send(addr2.address, "Test Subject", "Test Body")
       ).to.emit(privilegedMail, "MailSent")
        .withArgs(addr1.address, addr2.address, "Test Subject", "Test Body");
     });
@@ -49,7 +49,7 @@ describe("PrivilegedMail", function () {
     it("Should not emit event when USDC transfer fails (insufficient balance)", async function () {
       // addr2 has no USDC balance
       await expect(
-        privilegedMail.send(addr2.address, addr1.address, "Test Subject", "Test Body")
+        privilegedMail.connect(addr2).send(addr1.address, "Test Subject", "Test Body")
       ).to.not.emit(privilegedMail, "MailSent");
     });
 
@@ -58,17 +58,59 @@ describe("PrivilegedMail", function () {
       await mockUSDC.mint(addr2.address, ethers.parseUnits("1", 6));
       
       await expect(
-        privilegedMail.send(addr2.address, addr1.address, "Test Subject", "Test Body")
+        privilegedMail.connect(addr2).send(addr1.address, "Test Subject", "Test Body")
       ).to.not.emit(privilegedMail, "MailSent");
     });
 
     it("Should transfer correct USDC amount to contract", async function () {
       const initialBalance = await mockUSDC.balanceOf(await privilegedMail.getAddress());
       
-      await privilegedMail.send(addr1.address, addr2.address, "Test Subject", "Test Body");
+      await privilegedMail.connect(addr1).send(addr2.address, "Test Subject", "Test Body");
       
       const finalBalance = await mockUSDC.balanceOf(await privilegedMail.getAddress());
       expect(finalBalance - initialBalance).to.equal(100000); // 0.1 USDC
+    });
+  });
+
+  describe("sendPrepared function", function () {
+    it("Should emit PreparedMailSent event when USDC transfer succeeds", async function () {
+      await expect(
+        privilegedMail.connect(addr1).sendPrepared("mail-123")
+      ).to.emit(privilegedMail, "PreparedMailSent")
+       .withArgs(addr1.address, "mail-123");
+    });
+
+    it("Should not emit event when USDC transfer fails (insufficient balance)", async function () {
+      // addr2 has no USDC balance
+      await expect(
+        privilegedMail.connect(addr2).sendPrepared("mail-456")
+      ).to.not.emit(privilegedMail, "PreparedMailSent");
+    });
+
+    it("Should not emit event when USDC transfer fails (insufficient allowance)", async function () {
+      // Give addr2 USDC but no allowance
+      await mockUSDC.mint(addr2.address, ethers.parseUnits("1", 6));
+      
+      await expect(
+        privilegedMail.connect(addr2).sendPrepared("mail-789")
+      ).to.not.emit(privilegedMail, "PreparedMailSent");
+    });
+
+    it("Should transfer correct USDC amount to contract", async function () {
+      const initialBalance = await mockUSDC.balanceOf(await privilegedMail.getAddress());
+      
+      await privilegedMail.connect(addr1).sendPrepared("mail-999");
+      
+      const finalBalance = await mockUSDC.balanceOf(await privilegedMail.getAddress());
+      expect(finalBalance - initialBalance).to.equal(100000); // 0.1 USDC
+    });
+
+    it("Should handle different mailId strings", async function () {
+      // Test with various mailId formats
+      await expect(
+        privilegedMail.connect(addr1).sendPrepared("abc-123-xyz")
+      ).to.emit(privilegedMail, "PreparedMailSent")
+       .withArgs(addr1.address, "abc-123-xyz");
     });
   });
 });

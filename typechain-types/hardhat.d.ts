@@ -22,6 +22,10 @@ declare module "hardhat/types/runtime" {
       signerOrOptions?: ethers.Signer | FactoryOptions
     ): Promise<Contracts.MailService__factory>;
     getContractFactory(
+      name: "MockSafe",
+      signerOrOptions?: ethers.Signer | FactoryOptions
+    ): Promise<Contracts.MockSafe__factory>;
+    getContractFactory(
       name: "MockUSDC",
       signerOrOptions?: ethers.Signer | FactoryOptions
     ): Promise<Contracts.MockUSDC__factory>;
@@ -33,6 +37,10 @@ declare module "hardhat/types/runtime" {
       name: "PrivilegedMail",
       signerOrOptions?: ethers.Signer | FactoryOptions
     ): Promise<Contracts.PrivilegedMail__factory>;
+    getContractFactory(
+      name: "SafeDelegateHelper",
+      signerOrOptions?: ethers.Signer | FactoryOptions
+    ): Promise<Contracts.SafeDelegateHelper__factory>;
 
     getContractAt(
       name: "ISafe",
@@ -44,6 +52,11 @@ declare module "hardhat/types/runtime" {
       address: string | ethers.Addressable,
       signer?: ethers.Signer
     ): Promise<Contracts.MailService>;
+    getContractAt(
+      name: "MockSafe",
+      address: string | ethers.Addressable,
+      signer?: ethers.Signer
+    ): Promise<Contracts.MockSafe>;
     getContractAt(
       name: "MockUSDC",
       address: string | ethers.Addressable,
@@ -59,6 +72,11 @@ declare module "hardhat/types/runtime" {
       address: string | ethers.Addressable,
       signer?: ethers.Signer
     ): Promise<Contracts.PrivilegedMail>;
+    getContractAt(
+      name: "SafeDelegateHelper",
+      address: string | ethers.Addressable,
+      signer?: ethers.Signer
+    ): Promise<Contracts.SafeDelegateHelper>;
 
     deployContract(
       name: "ISafe",
@@ -68,6 +86,10 @@ declare module "hardhat/types/runtime" {
       name: "MailService",
       signerOrOptions?: ethers.Signer | DeployContractOptions
     ): Promise<Contracts.MailService>;
+    deployContract(
+      name: "MockSafe",
+      signerOrOptions?: ethers.Signer | DeployContractOptions
+    ): Promise<Contracts.MockSafe>;
     deployContract(
       name: "MockUSDC",
       signerOrOptions?: ethers.Signer | DeployContractOptions
@@ -80,6 +102,10 @@ declare module "hardhat/types/runtime" {
       name: "PrivilegedMail",
       signerOrOptions?: ethers.Signer | DeployContractOptions
     ): Promise<Contracts.PrivilegedMail>;
+    deployContract(
+      name: "SafeDelegateHelper",
+      signerOrOptions?: ethers.Signer | DeployContractOptions
+    ): Promise<Contracts.SafeDelegateHelper>;
 
     deployContract(
       name: "ISafe",
@@ -91,6 +117,11 @@ declare module "hardhat/types/runtime" {
       args: any[],
       signerOrOptions?: ethers.Signer | DeployContractOptions
     ): Promise<Contracts.MailService>;
+    deployContract(
+      name: "MockSafe",
+      args: any[],
+      signerOrOptions?: ethers.Signer | DeployContractOptions
+    ): Promise<Contracts.MockSafe>;
     deployContract(
       name: "MockUSDC",
       args: any[],
@@ -106,6 +137,11 @@ declare module "hardhat/types/runtime" {
       args: any[],
       signerOrOptions?: ethers.Signer | DeployContractOptions
     ): Promise<Contracts.PrivilegedMail>;
+    deployContract(
+      name: "SafeDelegateHelper",
+      args: any[],
+      signerOrOptions?: ethers.Signer | DeployContractOptions
+    ): Promise<Contracts.SafeDelegateHelper>;
 
     // default types
     getContractFactory(

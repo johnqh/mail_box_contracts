@@ -110,6 +110,80 @@
         "ISafe",
         "MailService"
       ]
+    },
+    "/Users/qianghuang/mail_box_contracts/contracts/SafeDelegateHelper.sol": {
+      "lastModificationDate": 1754610974977,
+      "contentHash": "43067db7c4b8f2f83fc2b1ab97741bfa",
+      "sourceName": "contracts/SafeDelegateHelper.sol",
+      "solcConfig": {
+        "version": "0.8.24",
+        "settings": {
+          "evmVersion": "paris",
+          "optimizer": {
+            "enabled": false,
+            "runs": 200
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [
+        "./MailService.sol"
+      ],
+      "versionPragmas": [
+        "^0.8.24"
+      ],
+      "artifacts": [
+        "SafeDelegateHelper"
+      ]
+    },
+    "/Users/qianghuang/mail_box_contracts/contracts/MockSafe.sol": {
+      "lastModificationDate": 1754610924308,
+      "contentHash": "df5302edc434a7d26031cfcb052281b6",
+      "sourceName": "contracts/MockSafe.sol",
+      "solcConfig": {
+        "version": "0.8.24",
+        "settings": {
+          "evmVersion": "paris",
+          "optimizer": {
+            "enabled": false,
+            "runs": 200
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [],
+      "versionPragmas": [
+        "^0.8.24"
+      ],
+      "artifacts": [
+        "MockSafe"
+      ]
     }
   }
 }
