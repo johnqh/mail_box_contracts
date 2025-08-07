@@ -14,14 +14,6 @@ import * as Contracts from ".";
 declare module "hardhat/types/runtime" {
   interface HardhatEthersHelpers extends HardhatEthersHelpersBase {
     getContractFactory(
-      name: "IERC20",
-      signerOrOptions?: ethers.Signer | FactoryOptions
-    ): Promise<Contracts.IERC20__factory>;
-    getContractFactory(
-      name: "MailBox",
-      signerOrOptions?: ethers.Signer | FactoryOptions
-    ): Promise<Contracts.MailBox__factory>;
-    getContractFactory(
       name: "MockUSDC",
       signerOrOptions?: ethers.Signer | FactoryOptions
     ): Promise<Contracts.MockUSDC__factory>;
@@ -35,16 +27,6 @@ declare module "hardhat/types/runtime" {
     ): Promise<Contracts.PrivilegedMail__factory>;
 
     getContractAt(
-      name: "IERC20",
-      address: string | ethers.Addressable,
-      signer?: ethers.Signer
-    ): Promise<Contracts.IERC20>;
-    getContractAt(
-      name: "MailBox",
-      address: string | ethers.Addressable,
-      signer?: ethers.Signer
-    ): Promise<Contracts.MailBox>;
-    getContractAt(
       name: "MockUSDC",
       address: string | ethers.Addressable,
       signer?: ethers.Signer
@@ -61,14 +43,6 @@ declare module "hardhat/types/runtime" {
     ): Promise<Contracts.PrivilegedMail>;
 
     deployContract(
-      name: "IERC20",
-      signerOrOptions?: ethers.Signer | DeployContractOptions
-    ): Promise<Contracts.IERC20>;
-    deployContract(
-      name: "MailBox",
-      signerOrOptions?: ethers.Signer | DeployContractOptions
-    ): Promise<Contracts.MailBox>;
-    deployContract(
       name: "MockUSDC",
       signerOrOptions?: ethers.Signer | DeployContractOptions
     ): Promise<Contracts.MockUSDC>;
@@ -81,16 +55,6 @@ declare module "hardhat/types/runtime" {
       signerOrOptions?: ethers.Signer | DeployContractOptions
     ): Promise<Contracts.PrivilegedMail>;
 
-    deployContract(
-      name: "IERC20",
-      args: any[],
-      signerOrOptions?: ethers.Signer | DeployContractOptions
-    ): Promise<Contracts.IERC20>;
-    deployContract(
-      name: "MailBox",
-      args: any[],
-      signerOrOptions?: ethers.Signer | DeployContractOptions
-    ): Promise<Contracts.MailBox>;
     deployContract(
       name: "MockUSDC",
       args: any[],

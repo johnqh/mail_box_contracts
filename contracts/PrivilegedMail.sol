@@ -16,6 +16,11 @@ contract PrivilegedMail {
         string body
     );
     
+    event PreparedMailSent(
+        address indexed from,
+        string indexed mailId
+    );
+    
     constructor(address _usdcToken) {
         usdcToken = IERC20(_usdcToken);
     }
@@ -29,6 +34,13 @@ contract PrivilegedMail {
         bool success = usdcToken.transferFrom(msg.sender, address(this), SEND_FEE);
         if (success) {
             emit MailSent(msg.sender, to, subject, body);
+        }
+    }
+    
+    function sendPrepared(string calldata mailId) external {
+        bool success = usdcToken.transferFrom(msg.sender, address(this), SEND_FEE);
+        if (success) {
+            emit PreparedMailSent(msg.sender, mailId);
         }
     }
 }

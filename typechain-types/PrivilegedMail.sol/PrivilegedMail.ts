@@ -24,20 +24,30 @@ import type {
 
 export interface PrivilegedMailInterface extends Interface {
   getFunction(
-    nameOrSignature: "SEND_FEE" | "send" | "usdcToken"
+    nameOrSignature: "SEND_FEE" | "send" | "sendPrepared" | "usdcToken"
   ): FunctionFragment;
 
-  getEvent(nameOrSignatureOrTopic: "MailSent"): EventFragment;
+  getEvent(
+    nameOrSignatureOrTopic: "MailSent" | "PreparedMailSent"
+  ): EventFragment;
 
   encodeFunctionData(functionFragment: "SEND_FEE", values?: undefined): string;
   encodeFunctionData(
     functionFragment: "send",
     values: [AddressLike, string, string]
   ): string;
+  encodeFunctionData(
+    functionFragment: "sendPrepared",
+    values: [string]
+  ): string;
   encodeFunctionData(functionFragment: "usdcToken", values?: undefined): string;
 
   decodeFunctionResult(functionFragment: "SEND_FEE", data: BytesLike): Result;
   decodeFunctionResult(functionFragment: "send", data: BytesLike): Result;
+  decodeFunctionResult(
+    functionFragment: "sendPrepared",
+    data: BytesLike
+  ): Result;
   decodeFunctionResult(functionFragment: "usdcToken", data: BytesLike): Result;
 }
 
@@ -59,6 +69,19 @@ export namespace MailSentEvent {
     to: string;
     subject: string;
     body: string;
+  }
+  export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
+  export type Filter = TypedDeferredTopicFilter<Event>;
+  export type Log = TypedEventLog<Event>;
+  export type LogDescription = TypedLogDescription<Event>;
+}
+
+export namespace PreparedMailSentEvent {
+  export type InputTuple = [from: AddressLike, mailId: string];
+  export type OutputTuple = [from: string, mailId: string];
+  export interface OutputObject {
+    from: string;
+    mailId: string;
   }
   export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
   export type Filter = TypedDeferredTopicFilter<Event>;
@@ -117,6 +140,8 @@ export interface PrivilegedMail extends BaseContract {
     "nonpayable"
   >;
 
+  sendPrepared: TypedContractMethod<[mailId: string], [void], "nonpayable">;
+
   usdcToken: TypedContractMethod<[], [string], "view">;
 
   getFunction<T extends ContractMethod = ContractMethod>(
@@ -134,6 +159,9 @@ export interface PrivilegedMail extends BaseContract {
     "nonpayable"
   >;
   getFunction(
+    nameOrSignature: "sendPrepared"
+  ): TypedContractMethod<[mailId: string], [void], "nonpayable">;
+  getFunction(
     nameOrSignature: "usdcToken"
   ): TypedContractMethod<[], [string], "view">;
 
@@ -143,6 +171,13 @@ export interface PrivilegedMail extends BaseContract {
     MailSentEvent.InputTuple,
     MailSentEvent.OutputTuple,
     MailSentEvent.OutputObject
+  >;
+  getEvent(
+    key: "PreparedMailSent"
+  ): TypedContractEvent<
+    PreparedMailSentEvent.InputTuple,
+    PreparedMailSentEvent.OutputTuple,
+    PreparedMailSentEvent.OutputObject
   >;
 
   filters: {
@@ -155,6 +190,17 @@ export interface PrivilegedMail extends BaseContract {
       MailSentEvent.InputTuple,
       MailSentEvent.OutputTuple,
       MailSentEvent.OutputObject
+    >;
+
+    "PreparedMailSent(address,string)": TypedContractEvent<
+      PreparedMailSentEvent.InputTuple,
+      PreparedMailSentEvent.OutputTuple,
+      PreparedMailSentEvent.OutputObject
+    >;
+    PreparedMailSent: TypedContractEvent<
+      PreparedMailSentEvent.InputTuple,
+      PreparedMailSentEvent.OutputTuple,
+      PreparedMailSentEvent.OutputObject
     >;
   };
 }

@@ -38,8 +38,8 @@
       ]
     },
     "/Users/qianghuang/mail_box_contracts/contracts/PrivilegedMail.sol": {
-      "lastModificationDate": 1754610269000,
-      "contentHash": "19c048abaa76b0ceb59e52c922aa9e67",
+      "lastModificationDate": 1754610530174,
+      "contentHash": "fcf338667798659baf49000179d13ae2",
       "sourceName": "contracts/PrivilegedMail.sol",
       "solcConfig": {
         "version": "0.8.24",
