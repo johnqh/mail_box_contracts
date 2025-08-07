@@ -73,6 +73,43 @@
         "IERC20",
         "PrivilegedMail"
       ]
+    },
+    "/Users/qianghuang/mail_box_contracts/contracts/MailService.sol": {
+      "lastModificationDate": 1754610774162,
+      "contentHash": "a5c75925e004b72734db4fbcacb0c65c",
+      "sourceName": "contracts/MailService.sol",
+      "solcConfig": {
+        "version": "0.8.24",
+        "settings": {
+          "evmVersion": "paris",
+          "optimizer": {
+            "enabled": false,
+            "runs": 200
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [],
+      "versionPragmas": [
+        "^0.8.24"
+      ],
+      "artifacts": [
+        "ISafe",
+        "MailService"
+      ]
     }
   }
 }
