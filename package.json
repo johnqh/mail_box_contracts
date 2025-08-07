@@ -1,0 +1,24 @@
+{
+  "name": "mail_box_contracts",
+  "version": "1.0.0",
+  "main": "dist/src/index.js",
+  "types": "dist/src/index.d.ts",
+  "scripts": {
+    "build": "tsc",
+    "test": "npx hardhat test",
+    "deploy:local": "npx hardhat run scripts/deploy.ts --network hardhat",
+    "compile": "npx hardhat compile",
+    "clean": "npx hardhat clean"
+  },
+  "keywords": ["solidity", "smart-contract", "ethereum", "mailbox"],
+  "author": "",
+  "license": "MIT",
+  "description": "MailBox smart contract with TypeScript wrapper",
+  "devDependencies": {
+    "@nomicfoundation/hardhat-toolbox": "^6.1.0",
+    "@types/node": "^24.2.0",
+    "hardhat": "^2.26.2",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.9.2"
+  }
+}

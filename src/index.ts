@@ -1,0 +1,1 @@
+export { MailBox__factory, type MailBox } from "../typechain-types";
