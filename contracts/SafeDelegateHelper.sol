@@ -22,4 +22,12 @@ contract SafeDelegateHelper {
     function testDelegation(address delegate) external {
         mailService.delegateTo(delegate);
     }
+    
+    function testDomainRegistration(string calldata domain) external {
+        mailService.registerDomain(domain);
+    }
+    
+    function getMyDomains() external view returns (string[] memory) {
+        return mailService.getDomains();
+    }
 }

@@ -6,12 +6,22 @@ interface ISafe {
 }
 
 contract MailService {
+    address public immutable owner;
     mapping(address => address) private delegations;
+    mapping(string => address) private domainToRegister;
+    mapping(address => string[]) private registerToDomains;
     
     event DelegationSet(address indexed delegator, address indexed delegate);
     event DelegationCleared(address indexed delegator);
+    event DomainRegistered(string indexed domain, address indexed registrar);
     
     error NotASafeWallet();
+    error DomainAlreadyRegistered();
+    error EmptyDomain();
+    
+    constructor() {
+        owner = msg.sender;
+    }
     
     function delegateTo(address delegate) external {
         if (!_isSafe(msg.sender)) {
@@ -29,6 +39,33 @@ contract MailService {
     
     function getDelegatedAddress(address delegator) external view returns (address) {
         return delegations[delegator];
+    }
+    
+    function registerDomain(string calldata domain) external {
+        if (!_isSafe(msg.sender)) {
+            revert NotASafeWallet();
+        }
+        
+        if (bytes(domain).length == 0) {
+            revert EmptyDomain();
+        }
+        
+        if (domainToRegister[domain] != address(0)) {
+            revert DomainAlreadyRegistered();
+        }
+        
+        domainToRegister[domain] = msg.sender;
+        registerToDomains[msg.sender].push(domain);
+        
+        emit DomainRegistered(domain, msg.sender);
+    }
+    
+    function getDomainRegister(string calldata domain) external view returns (address) {
+        return domainToRegister[domain];
+    }
+    
+    function getDomains() external view returns (string[] memory) {
+        return registerToDomains[msg.sender];
     }
     
     function _isSafe(address account) private view returns (bool) {

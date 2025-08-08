@@ -38,8 +38,8 @@
       ]
     },
     "/Users/qianghuang/mail_box_contracts/contracts/PrivilegedMail.sol": {
-      "lastModificationDate": 1754610530174,
-      "contentHash": "fcf338667798659baf49000179d13ae2",
+      "lastModificationDate": 1754612821517,
+      "contentHash": "32e72c6f77ef817f99f4f6c1e7025546",
       "sourceName": "contracts/PrivilegedMail.sol",
       "solcConfig": {
         "version": "0.8.24",
@@ -75,8 +75,8 @@
       ]
     },
     "/Users/qianghuang/mail_box_contracts/contracts/MailService.sol": {
-      "lastModificationDate": 1754610774162,
-      "contentHash": "a5c75925e004b72734db4fbcacb0c65c",
+      "lastModificationDate": 1754612548521,
+      "contentHash": "9d9017c087fde1b68e6f46f14111017d",
       "sourceName": "contracts/MailService.sol",
       "solcConfig": {
         "version": "0.8.24",
@@ -112,8 +112,8 @@
       ]
     },
     "/Users/qianghuang/mail_box_contracts/contracts/SafeDelegateHelper.sol": {
-      "lastModificationDate": 1754610974977,
-      "contentHash": "43067db7c4b8f2f83fc2b1ab97741bfa",
+      "lastModificationDate": 1754612399622,
+      "contentHash": "997352f648beecdf985b07c296c97e0f",
       "sourceName": "contracts/SafeDelegateHelper.sol",
       "solcConfig": {
         "version": "0.8.24",

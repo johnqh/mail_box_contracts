@@ -3,6 +3,7 @@
 /* eslint-disable */
 import type {
   BaseContract,
+  BigNumberish,
   BytesLike,
   FunctionFragment,
   Result,
@@ -24,31 +25,60 @@ import type {
 
 export interface PrivilegedMailInterface extends Interface {
   getFunction(
-    nameOrSignature: "SEND_FEE" | "send" | "sendPrepared" | "usdcToken"
+    nameOrSignature:
+      | "getFee"
+      | "owner"
+      | "send"
+      | "sendFee"
+      | "sendPrepared"
+      | "setFee"
+      | "usdcToken"
   ): FunctionFragment;
 
   getEvent(
-    nameOrSignatureOrTopic: "MailSent" | "PreparedMailSent"
+    nameOrSignatureOrTopic: "FeeUpdated" | "MailSent" | "PreparedMailSent"
   ): EventFragment;
 
-  encodeFunctionData(functionFragment: "SEND_FEE", values?: undefined): string;
+  encodeFunctionData(functionFragment: "getFee", values?: undefined): string;
+  encodeFunctionData(functionFragment: "owner", values?: undefined): string;
   encodeFunctionData(
     functionFragment: "send",
     values: [AddressLike, string, string]
   ): string;
+  encodeFunctionData(functionFragment: "sendFee", values?: undefined): string;
   encodeFunctionData(
     functionFragment: "sendPrepared",
     values: [string]
   ): string;
+  encodeFunctionData(
+    functionFragment: "setFee",
+    values: [BigNumberish]
+  ): string;
   encodeFunctionData(functionFragment: "usdcToken", values?: undefined): string;
 
-  decodeFunctionResult(functionFragment: "SEND_FEE", data: BytesLike): Result;
+  decodeFunctionResult(functionFragment: "getFee", data: BytesLike): Result;
+  decodeFunctionResult(functionFragment: "owner", data: BytesLike): Result;
   decodeFunctionResult(functionFragment: "send", data: BytesLike): Result;
+  decodeFunctionResult(functionFragment: "sendFee", data: BytesLike): Result;
   decodeFunctionResult(
     functionFragment: "sendPrepared",
     data: BytesLike
   ): Result;
+  decodeFunctionResult(functionFragment: "setFee", data: BytesLike): Result;
   decodeFunctionResult(functionFragment: "usdcToken", data: BytesLike): Result;
+}
+
+export namespace FeeUpdatedEvent {
+  export type InputTuple = [oldFee: BigNumberish, newFee: BigNumberish];
+  export type OutputTuple = [oldFee: bigint, newFee: bigint];
+  export interface OutputObject {
+    oldFee: bigint;
+    newFee: bigint;
+  }
+  export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
+  export type Filter = TypedDeferredTopicFilter<Event>;
+  export type Log = TypedEventLog<Event>;
+  export type LogDescription = TypedLogDescription<Event>;
 }
 
 export namespace MailSentEvent {
@@ -132,7 +162,9 @@ export interface PrivilegedMail extends BaseContract {
     event?: TCEvent
   ): Promise<this>;
 
-  SEND_FEE: TypedContractMethod<[], [bigint], "view">;
+  getFee: TypedContractMethod<[], [bigint], "view">;
+
+  owner: TypedContractMethod<[], [string], "view">;
 
   send: TypedContractMethod<
     [to: AddressLike, subject: string, body: string],
@@ -140,7 +172,11 @@ export interface PrivilegedMail extends BaseContract {
     "nonpayable"
   >;
 
+  sendFee: TypedContractMethod<[], [bigint], "view">;
+
   sendPrepared: TypedContractMethod<[mailId: string], [void], "nonpayable">;
+
+  setFee: TypedContractMethod<[usdcAmount: BigNumberish], [void], "nonpayable">;
 
   usdcToken: TypedContractMethod<[], [string], "view">;
 
@@ -149,8 +185,11 @@ export interface PrivilegedMail extends BaseContract {
   ): T;
 
   getFunction(
-    nameOrSignature: "SEND_FEE"
+    nameOrSignature: "getFee"
   ): TypedContractMethod<[], [bigint], "view">;
+  getFunction(
+    nameOrSignature: "owner"
+  ): TypedContractMethod<[], [string], "view">;
   getFunction(
     nameOrSignature: "send"
   ): TypedContractMethod<
@@ -159,12 +198,25 @@ export interface PrivilegedMail extends BaseContract {
     "nonpayable"
   >;
   getFunction(
+    nameOrSignature: "sendFee"
+  ): TypedContractMethod<[], [bigint], "view">;
+  getFunction(
     nameOrSignature: "sendPrepared"
   ): TypedContractMethod<[mailId: string], [void], "nonpayable">;
+  getFunction(
+    nameOrSignature: "setFee"
+  ): TypedContractMethod<[usdcAmount: BigNumberish], [void], "nonpayable">;
   getFunction(
     nameOrSignature: "usdcToken"
   ): TypedContractMethod<[], [string], "view">;
 
+  getEvent(
+    key: "FeeUpdated"
+  ): TypedContractEvent<
+    FeeUpdatedEvent.InputTuple,
+    FeeUpdatedEvent.OutputTuple,
+    FeeUpdatedEvent.OutputObject
+  >;
   getEvent(
     key: "MailSent"
   ): TypedContractEvent<
@@ -181,6 +233,17 @@ export interface PrivilegedMail extends BaseContract {
   >;
 
   filters: {
+    "FeeUpdated(uint256,uint256)": TypedContractEvent<
+      FeeUpdatedEvent.InputTuple,
+      FeeUpdatedEvent.OutputTuple,
+      FeeUpdatedEvent.OutputObject
+    >;
+    FeeUpdated: TypedContractEvent<
+      FeeUpdatedEvent.InputTuple,
+      FeeUpdatedEvent.OutputTuple,
+      FeeUpdatedEvent.OutputObject
+    >;
+
     "MailSent(address,address,string,string)": TypedContractEvent<
       MailSentEvent.InputTuple,
       MailSentEvent.OutputTuple,

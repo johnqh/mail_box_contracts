@@ -24,11 +24,20 @@ import type {
 
 export interface MailServiceInterface extends Interface {
   getFunction(
-    nameOrSignature: "delegateTo" | "getDelegatedAddress"
+    nameOrSignature:
+      | "delegateTo"
+      | "getDelegatedAddress"
+      | "getDomainRegister"
+      | "getDomains"
+      | "owner"
+      | "registerDomain"
   ): FunctionFragment;
 
   getEvent(
-    nameOrSignatureOrTopic: "DelegationCleared" | "DelegationSet"
+    nameOrSignatureOrTopic:
+      | "DelegationCleared"
+      | "DelegationSet"
+      | "DomainRegistered"
   ): EventFragment;
 
   encodeFunctionData(
@@ -39,10 +48,33 @@ export interface MailServiceInterface extends Interface {
     functionFragment: "getDelegatedAddress",
     values: [AddressLike]
   ): string;
+  encodeFunctionData(
+    functionFragment: "getDomainRegister",
+    values: [string]
+  ): string;
+  encodeFunctionData(
+    functionFragment: "getDomains",
+    values?: undefined
+  ): string;
+  encodeFunctionData(functionFragment: "owner", values?: undefined): string;
+  encodeFunctionData(
+    functionFragment: "registerDomain",
+    values: [string]
+  ): string;
 
   decodeFunctionResult(functionFragment: "delegateTo", data: BytesLike): Result;
   decodeFunctionResult(
     functionFragment: "getDelegatedAddress",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(
+    functionFragment: "getDomainRegister",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(functionFragment: "getDomains", data: BytesLike): Result;
+  decodeFunctionResult(functionFragment: "owner", data: BytesLike): Result;
+  decodeFunctionResult(
+    functionFragment: "registerDomain",
     data: BytesLike
   ): Result;
 }
@@ -65,6 +97,19 @@ export namespace DelegationSetEvent {
   export interface OutputObject {
     delegator: string;
     delegate: string;
+  }
+  export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
+  export type Filter = TypedDeferredTopicFilter<Event>;
+  export type Log = TypedEventLog<Event>;
+  export type LogDescription = TypedLogDescription<Event>;
+}
+
+export namespace DomainRegisteredEvent {
+  export type InputTuple = [domain: string, registrar: AddressLike];
+  export type OutputTuple = [domain: string, registrar: string];
+  export interface OutputObject {
+    domain: string;
+    registrar: string;
   }
   export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
   export type Filter = TypedDeferredTopicFilter<Event>;
@@ -127,6 +172,14 @@ export interface MailService extends BaseContract {
     "view"
   >;
 
+  getDomainRegister: TypedContractMethod<[domain: string], [string], "view">;
+
+  getDomains: TypedContractMethod<[], [string[]], "view">;
+
+  owner: TypedContractMethod<[], [string], "view">;
+
+  registerDomain: TypedContractMethod<[domain: string], [void], "nonpayable">;
+
   getFunction<T extends ContractMethod = ContractMethod>(
     key: string | FunctionFragment
   ): T;
@@ -137,6 +190,18 @@ export interface MailService extends BaseContract {
   getFunction(
     nameOrSignature: "getDelegatedAddress"
   ): TypedContractMethod<[delegator: AddressLike], [string], "view">;
+  getFunction(
+    nameOrSignature: "getDomainRegister"
+  ): TypedContractMethod<[domain: string], [string], "view">;
+  getFunction(
+    nameOrSignature: "getDomains"
+  ): TypedContractMethod<[], [string[]], "view">;
+  getFunction(
+    nameOrSignature: "owner"
+  ): TypedContractMethod<[], [string], "view">;
+  getFunction(
+    nameOrSignature: "registerDomain"
+  ): TypedContractMethod<[domain: string], [void], "nonpayable">;
 
   getEvent(
     key: "DelegationCleared"
@@ -151,6 +216,13 @@ export interface MailService extends BaseContract {
     DelegationSetEvent.InputTuple,
     DelegationSetEvent.OutputTuple,
     DelegationSetEvent.OutputObject
+  >;
+  getEvent(
+    key: "DomainRegistered"
+  ): TypedContractEvent<
+    DomainRegisteredEvent.InputTuple,
+    DomainRegisteredEvent.OutputTuple,
+    DomainRegisteredEvent.OutputObject
   >;
 
   filters: {
@@ -174,6 +246,17 @@ export interface MailService extends BaseContract {
       DelegationSetEvent.InputTuple,
       DelegationSetEvent.OutputTuple,
       DelegationSetEvent.OutputObject
+    >;
+
+    "DomainRegistered(string,address)": TypedContractEvent<
+      DomainRegisteredEvent.InputTuple,
+      DomainRegisteredEvent.OutputTuple,
+      DomainRegisteredEvent.OutputObject
+    >;
+    DomainRegistered: TypedContractEvent<
+      DomainRegisteredEvent.InputTuple,
+      DomainRegisteredEvent.OutputTuple,
+      DomainRegisteredEvent.OutputObject
     >;
   };
 }

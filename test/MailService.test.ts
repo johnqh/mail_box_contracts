@@ -24,6 +24,12 @@ describe("MailService", function () {
     await mockSafe.waitForDeployment();
   });
 
+  describe("Contract setup", function () {
+    it("Should set owner as deployer", async function () {
+      expect(await mailService.owner()).to.equal(owner.address);
+    });
+  });
+
   describe("delegateTo function", function () {
     it("Should revert when called from an EOA (not a Safe)", async function () {
       await expect(
@@ -166,6 +172,109 @@ describe("MailService", function () {
       expect(delegation1).to.equal(ethers.ZeroAddress);
       expect(delegation2).to.equal(ethers.ZeroAddress);
       expect(delegation3).to.equal(ethers.ZeroAddress);
+    });
+  });
+
+  describe("Domain registration", function () {
+    beforeEach(async function () {
+      // Deploy a Safe delegate helper contract for testing
+      const SafeDelegateHelper = await ethers.getContractFactory("SafeDelegateHelper");
+      this.helper = await SafeDelegateHelper.deploy(await mailService.getAddress());
+      await this.helper.waitForDeployment();
+    });
+
+    it("Should revert when EOA tries to register a domain", async function () {
+      await expect(
+        mailService.connect(addr1).registerDomain("example.com")
+      ).to.be.revertedWithCustomError(mailService, "NotASafeWallet");
+    });
+
+    it("Should allow Safe wallet to register a domain", async function () {
+      await expect(
+        this.helper.testDomainRegistration("example.com")
+      ).to.emit(mailService, "DomainRegistered")
+       .withArgs("example.com", await this.helper.getAddress());
+      
+      const registrar = await mailService.getDomainRegister("example.com");
+      expect(registrar).to.equal(await this.helper.getAddress());
+    });
+
+    it("Should revert when registering an empty domain", async function () {
+      await expect(
+        this.helper.testDomainRegistration("")
+      ).to.be.revertedWithCustomError(mailService, "EmptyDomain");
+    });
+
+    it("Should revert when domain is already registered", async function () {
+      // First registration should succeed
+      await this.helper.testDomainRegistration("taken.com");
+      
+      // Second registration of same domain should fail
+      await expect(
+        this.helper.testDomainRegistration("taken.com")
+      ).to.be.revertedWithCustomError(mailService, "DomainAlreadyRegistered");
+      
+      // Even from a different Safe
+      const SafeDelegateHelper = await ethers.getContractFactory("SafeDelegateHelper");
+      const helper2 = await SafeDelegateHelper.deploy(await mailService.getAddress());
+      await helper2.waitForDeployment();
+      
+      await expect(
+        helper2.testDomainRegistration("taken.com")
+      ).to.be.revertedWithCustomError(mailService, "DomainAlreadyRegistered");
+    });
+
+    it("Should correctly return domain registrar", async function () {
+      // Register a domain
+      await this.helper.testDomainRegistration("test.com");
+      
+      // Check registrar
+      const registrar = await mailService.getDomainRegister("test.com");
+      expect(registrar).to.equal(await this.helper.getAddress());
+      
+      // Check unregistered domain returns zero address
+      const unregistered = await mailService.getDomainRegister("unregistered.com");
+      expect(unregistered).to.equal(ethers.ZeroAddress);
+    });
+
+    it("Should return all domains registered by a Safe", async function () {
+      // Register multiple domains
+      await this.helper.testDomainRegistration("first.com");
+      await this.helper.testDomainRegistration("second.com");
+      await this.helper.testDomainRegistration("third.com");
+      
+      // Get domains
+      const domains = await this.helper.getMyDomains();
+      expect(domains).to.deep.equal(["first.com", "second.com", "third.com"]);
+    });
+
+    it("Should return empty array for Safe with no domains", async function () {
+      const domains = await this.helper.getMyDomains();
+      expect(domains).to.deep.equal([]);
+    });
+
+    it("Should handle multiple Safes registering different domains", async function () {
+      // Deploy another helper (representing another Safe)
+      const SafeDelegateHelper = await ethers.getContractFactory("SafeDelegateHelper");
+      const helper2 = await SafeDelegateHelper.deploy(await mailService.getAddress());
+      await helper2.waitForDeployment();
+      
+      // Register domains from different Safes
+      await this.helper.testDomainRegistration("safe1-domain1.com");
+      await this.helper.testDomainRegistration("safe1-domain2.com");
+      await helper2.testDomainRegistration("safe2-domain1.com");
+      await helper2.testDomainRegistration("safe2-domain2.com");
+      
+      // Check domains for each Safe
+      const safe1Domains = await this.helper.getMyDomains();
+      const safe2Domains = await helper2.getMyDomains();
+      
+      expect(safe1Domains).to.deep.equal(["safe1-domain1.com", "safe1-domain2.com"]);
+      expect(safe2Domains).to.deep.equal(["safe2-domain1.com", "safe2-domain2.com"]);
+      
+      // Verify registrars
+      expect(await mailService.getDomainRegister("safe1-domain1.com")).to.equal(await this.helper.getAddress());
+      expect(await mailService.getDomainRegister("safe2-domain1.com")).to.equal(await helper2.getAddress());
     });
   });
 

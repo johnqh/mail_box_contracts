@@ -24,12 +24,18 @@ import type {
 export interface SafeDelegateHelperInterface extends Interface {
   getFunction(
     nameOrSignature:
+      | "getMyDomains"
       | "getThreshold"
       | "mailService"
       | "setThreshold"
       | "testDelegation"
+      | "testDomainRegistration"
   ): FunctionFragment;
 
+  encodeFunctionData(
+    functionFragment: "getMyDomains",
+    values?: undefined
+  ): string;
   encodeFunctionData(
     functionFragment: "getThreshold",
     values?: undefined
@@ -46,7 +52,15 @@ export interface SafeDelegateHelperInterface extends Interface {
     functionFragment: "testDelegation",
     values: [AddressLike]
   ): string;
+  encodeFunctionData(
+    functionFragment: "testDomainRegistration",
+    values: [string]
+  ): string;
 
+  decodeFunctionResult(
+    functionFragment: "getMyDomains",
+    data: BytesLike
+  ): Result;
   decodeFunctionResult(
     functionFragment: "getThreshold",
     data: BytesLike
@@ -61,6 +75,10 @@ export interface SafeDelegateHelperInterface extends Interface {
   ): Result;
   decodeFunctionResult(
     functionFragment: "testDelegation",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(
+    functionFragment: "testDomainRegistration",
     data: BytesLike
   ): Result;
 }
@@ -108,6 +126,8 @@ export interface SafeDelegateHelper extends BaseContract {
     event?: TCEvent
   ): Promise<this>;
 
+  getMyDomains: TypedContractMethod<[], [string[]], "view">;
+
   getThreshold: TypedContractMethod<[], [bigint], "view">;
 
   mailService: TypedContractMethod<[], [string], "view">;
@@ -124,10 +144,19 @@ export interface SafeDelegateHelper extends BaseContract {
     "nonpayable"
   >;
 
+  testDomainRegistration: TypedContractMethod<
+    [domain: string],
+    [void],
+    "nonpayable"
+  >;
+
   getFunction<T extends ContractMethod = ContractMethod>(
     key: string | FunctionFragment
   ): T;
 
+  getFunction(
+    nameOrSignature: "getMyDomains"
+  ): TypedContractMethod<[], [string[]], "view">;
   getFunction(
     nameOrSignature: "getThreshold"
   ): TypedContractMethod<[], [bigint], "view">;
@@ -140,6 +169,9 @@ export interface SafeDelegateHelper extends BaseContract {
   getFunction(
     nameOrSignature: "testDelegation"
   ): TypedContractMethod<[delegate: AddressLike], [void], "nonpayable">;
+  getFunction(
+    nameOrSignature: "testDomainRegistration"
+  ): TypedContractMethod<[domain: string], [void], "nonpayable">;
 
   filters: {};
 }

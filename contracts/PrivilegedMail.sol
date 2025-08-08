@@ -7,7 +7,8 @@ interface IERC20 {
 
 contract PrivilegedMail {
     IERC20 public immutable usdcToken;
-    uint256 public constant SEND_FEE = 100000; // 0.1 USDC (6 decimals)
+    uint256 public sendFee = 100000; // 0.1 USDC (6 decimals)
+    address public immutable owner;
     
     event MailSent(
         address indexed from,
@@ -21,8 +22,20 @@ contract PrivilegedMail {
         string indexed mailId
     );
     
+    event FeeUpdated(uint256 oldFee, uint256 newFee);
+    
+    error OnlyOwner();
+    
+    modifier onlyOwner() {
+        if (msg.sender != owner) {
+            revert OnlyOwner();
+        }
+        _;
+    }
+    
     constructor(address _usdcToken) {
         usdcToken = IERC20(_usdcToken);
+        owner = msg.sender;
     }
     
     
@@ -31,16 +44,26 @@ contract PrivilegedMail {
         string calldata subject,
         string calldata body
     ) external {
-        bool success = usdcToken.transferFrom(msg.sender, address(this), SEND_FEE);
+        bool success = usdcToken.transferFrom(msg.sender, address(this), sendFee);
         if (success) {
             emit MailSent(msg.sender, to, subject, body);
         }
     }
     
     function sendPrepared(string calldata mailId) external {
-        bool success = usdcToken.transferFrom(msg.sender, address(this), SEND_FEE);
+        bool success = usdcToken.transferFrom(msg.sender, address(this), sendFee);
         if (success) {
             emit PreparedMailSent(msg.sender, mailId);
         }
+    }
+    
+    function setFee(uint256 usdcAmount) external onlyOwner {
+        uint256 oldFee = sendFee;
+        sendFee = usdcAmount;
+        emit FeeUpdated(oldFee, usdcAmount);
+    }
+    
+    function getFee() external view returns (uint256) {
+        return sendFee;
     }
 }
