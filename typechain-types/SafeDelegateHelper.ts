@@ -24,10 +24,16 @@ import type {
 export interface SafeDelegateHelperInterface extends Interface {
   getFunction(
     nameOrSignature:
+      | "addOwner"
+      | "domainSeparator"
       | "fundAndApprove"
       | "getMyDomains"
+      | "getOwners"
       | "getThreshold"
+      | "isOwner"
       | "mailService"
+      | "nonce"
+      | "removeOwner"
       | "setThreshold"
       | "testDelegation"
       | "testDomainRegistration"
@@ -36,6 +42,14 @@ export interface SafeDelegateHelperInterface extends Interface {
   ): FunctionFragment;
 
   encodeFunctionData(
+    functionFragment: "addOwner",
+    values: [AddressLike]
+  ): string;
+  encodeFunctionData(
+    functionFragment: "domainSeparator",
+    values?: undefined
+  ): string;
+  encodeFunctionData(
     functionFragment: "fundAndApprove",
     values: [BigNumberish]
   ): string;
@@ -43,13 +57,23 @@ export interface SafeDelegateHelperInterface extends Interface {
     functionFragment: "getMyDomains",
     values?: undefined
   ): string;
+  encodeFunctionData(functionFragment: "getOwners", values?: undefined): string;
   encodeFunctionData(
     functionFragment: "getThreshold",
     values?: undefined
   ): string;
   encodeFunctionData(
+    functionFragment: "isOwner",
+    values: [AddressLike]
+  ): string;
+  encodeFunctionData(
     functionFragment: "mailService",
     values?: undefined
+  ): string;
+  encodeFunctionData(functionFragment: "nonce", values?: undefined): string;
+  encodeFunctionData(
+    functionFragment: "removeOwner",
+    values: [AddressLike]
   ): string;
   encodeFunctionData(
     functionFragment: "setThreshold",
@@ -69,6 +93,11 @@ export interface SafeDelegateHelperInterface extends Interface {
   ): string;
   encodeFunctionData(functionFragment: "usdcToken", values?: undefined): string;
 
+  decodeFunctionResult(functionFragment: "addOwner", data: BytesLike): Result;
+  decodeFunctionResult(
+    functionFragment: "domainSeparator",
+    data: BytesLike
+  ): Result;
   decodeFunctionResult(
     functionFragment: "fundAndApprove",
     data: BytesLike
@@ -77,12 +106,19 @@ export interface SafeDelegateHelperInterface extends Interface {
     functionFragment: "getMyDomains",
     data: BytesLike
   ): Result;
+  decodeFunctionResult(functionFragment: "getOwners", data: BytesLike): Result;
   decodeFunctionResult(
     functionFragment: "getThreshold",
     data: BytesLike
   ): Result;
+  decodeFunctionResult(functionFragment: "isOwner", data: BytesLike): Result;
   decodeFunctionResult(
     functionFragment: "mailService",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(functionFragment: "nonce", data: BytesLike): Result;
+  decodeFunctionResult(
+    functionFragment: "removeOwner",
     data: BytesLike
   ): Result;
   decodeFunctionResult(
@@ -147,6 +183,10 @@ export interface SafeDelegateHelper extends BaseContract {
     event?: TCEvent
   ): Promise<this>;
 
+  addOwner: TypedContractMethod<[newOwner: AddressLike], [void], "nonpayable">;
+
+  domainSeparator: TypedContractMethod<[], [string], "view">;
+
   fundAndApprove: TypedContractMethod<
     [amount: BigNumberish],
     [void],
@@ -159,9 +199,21 @@ export interface SafeDelegateHelper extends BaseContract {
     "view"
   >;
 
+  getOwners: TypedContractMethod<[], [string[]], "view">;
+
   getThreshold: TypedContractMethod<[], [bigint], "view">;
 
+  isOwner: TypedContractMethod<[owner: AddressLike], [boolean], "view">;
+
   mailService: TypedContractMethod<[], [string], "view">;
+
+  nonce: TypedContractMethod<[], [bigint], "view">;
+
+  removeOwner: TypedContractMethod<
+    [ownerToRemove: AddressLike],
+    [void],
+    "nonpayable"
+  >;
 
   setThreshold: TypedContractMethod<
     [_threshold: BigNumberish],
@@ -194,6 +246,12 @@ export interface SafeDelegateHelper extends BaseContract {
   ): T;
 
   getFunction(
+    nameOrSignature: "addOwner"
+  ): TypedContractMethod<[newOwner: AddressLike], [void], "nonpayable">;
+  getFunction(
+    nameOrSignature: "domainSeparator"
+  ): TypedContractMethod<[], [string], "view">;
+  getFunction(
     nameOrSignature: "fundAndApprove"
   ): TypedContractMethod<[amount: BigNumberish], [void], "nonpayable">;
   getFunction(
@@ -204,11 +262,23 @@ export interface SafeDelegateHelper extends BaseContract {
     "view"
   >;
   getFunction(
+    nameOrSignature: "getOwners"
+  ): TypedContractMethod<[], [string[]], "view">;
+  getFunction(
     nameOrSignature: "getThreshold"
   ): TypedContractMethod<[], [bigint], "view">;
   getFunction(
+    nameOrSignature: "isOwner"
+  ): TypedContractMethod<[owner: AddressLike], [boolean], "view">;
+  getFunction(
     nameOrSignature: "mailService"
   ): TypedContractMethod<[], [string], "view">;
+  getFunction(
+    nameOrSignature: "nonce"
+  ): TypedContractMethod<[], [bigint], "view">;
+  getFunction(
+    nameOrSignature: "removeOwner"
+  ): TypedContractMethod<[ownerToRemove: AddressLike], [void], "nonpayable">;
   getFunction(
     nameOrSignature: "setThreshold"
   ): TypedContractMethod<[_threshold: BigNumberish], [void], "nonpayable">;

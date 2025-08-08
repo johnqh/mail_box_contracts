@@ -42,6 +42,14 @@ declare module "hardhat/types/runtime" {
       signerOrOptions?: ethers.Signer | FactoryOptions
     ): Promise<Contracts.PrivilegedMail__factory>;
     getContractFactory(
+      name: "IGnosisSafe",
+      signerOrOptions?: ethers.Signer | FactoryOptions
+    ): Promise<Contracts.IGnosisSafe__factory>;
+    getContractFactory(
+      name: "SafeChecker",
+      signerOrOptions?: ethers.Signer | FactoryOptions
+    ): Promise<Contracts.SafeChecker__factory>;
+    getContractFactory(
       name: "SafeDelegateHelper",
       signerOrOptions?: ethers.Signer | FactoryOptions
     ): Promise<Contracts.SafeDelegateHelper__factory>;
@@ -82,6 +90,16 @@ declare module "hardhat/types/runtime" {
       signer?: ethers.Signer
     ): Promise<Contracts.PrivilegedMail>;
     getContractAt(
+      name: "IGnosisSafe",
+      address: string | ethers.Addressable,
+      signer?: ethers.Signer
+    ): Promise<Contracts.IGnosisSafe>;
+    getContractAt(
+      name: "SafeChecker",
+      address: string | ethers.Addressable,
+      signer?: ethers.Signer
+    ): Promise<Contracts.SafeChecker>;
+    getContractAt(
       name: "SafeDelegateHelper",
       address: string | ethers.Addressable,
       signer?: ethers.Signer
@@ -116,6 +134,14 @@ declare module "hardhat/types/runtime" {
       signerOrOptions?: ethers.Signer | DeployContractOptions
     ): Promise<Contracts.PrivilegedMail>;
     deployContract(
+      name: "IGnosisSafe",
+      signerOrOptions?: ethers.Signer | DeployContractOptions
+    ): Promise<Contracts.IGnosisSafe>;
+    deployContract(
+      name: "SafeChecker",
+      signerOrOptions?: ethers.Signer | DeployContractOptions
+    ): Promise<Contracts.SafeChecker>;
+    deployContract(
       name: "SafeDelegateHelper",
       signerOrOptions?: ethers.Signer | DeployContractOptions
     ): Promise<Contracts.SafeDelegateHelper>;
@@ -155,6 +181,16 @@ declare module "hardhat/types/runtime" {
       args: any[],
       signerOrOptions?: ethers.Signer | DeployContractOptions
     ): Promise<Contracts.PrivilegedMail>;
+    deployContract(
+      name: "IGnosisSafe",
+      args: any[],
+      signerOrOptions?: ethers.Signer | DeployContractOptions
+    ): Promise<Contracts.IGnosisSafe>;
+    deployContract(
+      name: "SafeChecker",
+      args: any[],
+      signerOrOptions?: ethers.Signer | DeployContractOptions
+    ): Promise<Contracts.SafeChecker>;
     deployContract(
       name: "SafeDelegateHelper",
       args: any[],

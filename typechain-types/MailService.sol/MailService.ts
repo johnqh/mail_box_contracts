@@ -35,6 +35,7 @@ export interface MailServiceInterface extends Interface {
       | "registerDomain"
       | "registrationFee"
       | "releaseRegistration"
+      | "safeChecker"
       | "setRegistrationFee"
       | "usdcToken"
   ): FunctionFragment;
@@ -83,6 +84,10 @@ export interface MailServiceInterface extends Interface {
     values: [string]
   ): string;
   encodeFunctionData(
+    functionFragment: "safeChecker",
+    values?: undefined
+  ): string;
+  encodeFunctionData(
     functionFragment: "setRegistrationFee",
     values: [BigNumberish]
   ): string;
@@ -113,6 +118,10 @@ export interface MailServiceInterface extends Interface {
   ): Result;
   decodeFunctionResult(
     functionFragment: "releaseRegistration",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(
+    functionFragment: "safeChecker",
     data: BytesLike
   ): Result;
   decodeFunctionResult(
@@ -298,6 +307,8 @@ export interface MailService extends BaseContract {
     "nonpayable"
   >;
 
+  safeChecker: TypedContractMethod<[], [string], "view">;
+
   setRegistrationFee: TypedContractMethod<
     [usdcAmount: BigNumberish],
     [void],
@@ -345,6 +356,9 @@ export interface MailService extends BaseContract {
   getFunction(
     nameOrSignature: "releaseRegistration"
   ): TypedContractMethod<[domain: string], [void], "nonpayable">;
+  getFunction(
+    nameOrSignature: "safeChecker"
+  ): TypedContractMethod<[], [string], "view">;
   getFunction(
     nameOrSignature: "setRegistrationFee"
   ): TypedContractMethod<[usdcAmount: BigNumberish], [void], "nonpayable">;

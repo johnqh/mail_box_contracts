@@ -75,8 +75,8 @@
       ]
     },
     "/Users/qianghuang/mail_box_contracts/contracts/MailService.sol": {
-      "lastModificationDate": 1754613568146,
-      "contentHash": "02c7edfc56b737acd4df8fe624113ab9",
+      "lastModificationDate": 1754675661185,
+      "contentHash": "df4c22a4e904432964102ad60586e387",
       "sourceName": "contracts/MailService.sol",
       "solcConfig": {
         "version": "0.8.24",
@@ -102,19 +102,20 @@
           }
         }
       },
-      "imports": [],
+      "imports": [
+        "./SafeChecker.sol"
+      ],
       "versionPragmas": [
         "^0.8.24"
       ],
       "artifacts": [
         "IERC20",
-        "ISafe",
         "MailService"
       ]
     },
     "/Users/qianghuang/mail_box_contracts/contracts/SafeDelegateHelper.sol": {
-      "lastModificationDate": 1754613581917,
-      "contentHash": "cbe3058f6cb68f8bbcd87fbf88ea875d",
+      "lastModificationDate": 1754675686887,
+      "contentHash": "0a8dc0f30d0c6d50e906aef98e1d962a",
       "sourceName": "contracts/SafeDelegateHelper.sol",
       "solcConfig": {
         "version": "0.8.24",
@@ -141,7 +142,8 @@
         }
       },
       "imports": [
-        "./MailService.sol"
+        "./MailService.sol",
+        "./SafeChecker.sol"
       ],
       "versionPragmas": [
         "^0.8.24"
@@ -184,6 +186,43 @@
       ],
       "artifacts": [
         "MockSafe"
+      ]
+    },
+    "/Users/qianghuang/mail_box_contracts/contracts/SafeChecker.sol": {
+      "lastModificationDate": 1754675643301,
+      "contentHash": "a65c3f6098d5539008c8f43f65b30a58",
+      "sourceName": "contracts/SafeChecker.sol",
+      "solcConfig": {
+        "version": "0.8.24",
+        "settings": {
+          "evmVersion": "paris",
+          "optimizer": {
+            "enabled": false,
+            "runs": 200
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [],
+      "versionPragmas": [
+        "^0.8.24"
+      ],
+      "artifacts": [
+        "IGnosisSafe",
+        "SafeChecker"
       ]
     }
   }

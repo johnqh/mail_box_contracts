@@ -1,9 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.24;
 
-interface ISafe {
-    function getThreshold() external view returns (uint256);
-}
+import "./SafeChecker.sol";
 
 interface IERC20 {
     function transferFrom(address from, address to, uint256 amount) external returns (bool);
@@ -14,6 +12,7 @@ interface IERC20 {
 contract MailService {
     address public immutable owner;
     IERC20 public immutable usdcToken;
+    SafeChecker public immutable safeChecker;
     uint256 public registrationFee = 100000000; // 100 USDC (6 decimals)
     mapping(address => address) private delegations;
     mapping(string => address) private domainToRegister;
@@ -40,13 +39,14 @@ contract MailService {
         _;
     }
     
-    constructor(address _usdcToken) {
+    constructor(address _usdcToken, address _safeChecker) {
         owner = msg.sender;
         usdcToken = IERC20(_usdcToken);
+        safeChecker = SafeChecker(_safeChecker);
     }
     
     function delegateTo(address delegate) external {
-        if (!_isSafe(msg.sender)) {
+        if (!safeChecker.isSafe(msg.sender)) {
             revert NotASafeWallet();
         }
         
@@ -64,7 +64,7 @@ contract MailService {
     }
     
     function registerDomain(string calldata domain) external {
-        if (!_isSafe(msg.sender)) {
+        if (!safeChecker.isSafe(msg.sender)) {
             revert NotASafeWallet();
         }
         
@@ -147,15 +147,4 @@ contract MailService {
         return (userDomains, domainExpirations);
     }
     
-    function _isSafe(address account) private view returns (bool) {
-        if (account.code.length == 0) {
-            return false;
-        }
-        
-        try ISafe(account).getThreshold() returns (uint256 threshold) {
-            return threshold > 0;
-        } catch {
-            return false;
-        }
-    }
 }

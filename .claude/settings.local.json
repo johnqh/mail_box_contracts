@@ -12,7 +12,9 @@
       "Bash(npm install:*)",
       "Bash(cp:*)",
       "Bash(npm test:*)",
-      "Bash(npx hardhat compile:*)"
+      "Bash(npx hardhat compile:*)",
+      "WebFetch(domain:github.com)",
+      "WebFetch(domain:docs.safe.global)"
     ],
     "deny": []
   }

@@ -3,6 +3,7 @@
 /* eslint-disable */
 export * as mailServiceSol from "./MailService.sol";
 export * as privilegedMailSol from "./PrivilegedMail.sol";
+export * as safeCheckerSol from "./SafeChecker.sol";
 export { MockSafe__factory } from "./MockSafe__factory";
 export { MockUSDC__factory } from "./MockUSDC__factory";
 export { SafeDelegateHelper__factory } from "./SafeDelegateHelper__factory";

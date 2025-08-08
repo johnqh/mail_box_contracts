@@ -1,11 +1,12 @@
 import { expect } from "chai";
 import { ethers } from "hardhat";
-import { MailService, MockSafe } from "../typechain-types";
+import { MailService, MockSafe, SafeChecker } from "../typechain-types";
 
 describe("MailService", function () {
   let mailService: MailService;
   let mockSafe: MockSafe;
   let mockUSDC: any;
+  let safeChecker: SafeChecker;
   let owner: any;
   let addr1: any;
   let addr2: any;
@@ -19,9 +20,14 @@ describe("MailService", function () {
     mockUSDC = await MockUSDC.deploy();
     await mockUSDC.waitForDeployment();
     
-    // Deploy MailService with USDC token
+    // Deploy SafeChecker
+    const SafeChecker = await ethers.getContractFactory("SafeChecker");
+    safeChecker = await SafeChecker.deploy();
+    await safeChecker.waitForDeployment();
+    
+    // Deploy MailService with USDC token and SafeChecker
     const MailService = await ethers.getContractFactory("MailService");
-    mailService = await MailService.deploy(await mockUSDC.getAddress());
+    mailService = await MailService.deploy(await mockUSDC.getAddress(), await safeChecker.getAddress());
     await mailService.waitForDeployment();
     
     // Deploy MockSafe with threshold of 2
