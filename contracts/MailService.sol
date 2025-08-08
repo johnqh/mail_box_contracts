@@ -52,10 +52,6 @@ contract MailService {
     }
     
     function delegateTo(address delegate) external {
-        if (!safeChecker.isSafe(msg.sender)) {
-            revert NotASafeWallet();
-        }
-        
         if (delegate == address(0)) {
             delete delegations[msg.sender];
             emit DelegationCleared(msg.sender);

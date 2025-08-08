@@ -51,10 +51,16 @@ describe("MailService", function () {
   });
 
   describe("delegateTo function", function () {
-    it("Should revert when called from an EOA (not a Safe)", async function () {
+    it("Should allow EOA to delegate to another address", async function () {
+      // Now EOAs can delegate
       await expect(
         mailService.connect(addr1).delegateTo(addr2.address)
-      ).to.be.revertedWithCustomError(mailService, "NotASafeWallet");
+      ).to.emit(mailService, "DelegationSet")
+       .withArgs(addr1.address, addr2.address);
+      
+      // Verify delegation was set
+      const delegatedAddress = await mailService.getDelegatedAddress(addr1.address);
+      expect(delegatedAddress).to.equal(addr2.address);
     });
 
     it("Should allow Safe wallet to delegate to another address", async function () {
@@ -99,32 +105,33 @@ describe("MailService", function () {
        .withArgs(await helper.getAddress());
     });
 
-    it("Should revert for contract that doesn't implement getThreshold", async function () {
-      // Deploy a regular contract (not a Safe)
-      const MockUSDC = await ethers.getContractFactory("MockUSDC");
-      const regularContract = await MockUSDC.deploy();
-      await regularContract.waitForDeployment();
-
-      // Try to call delegateTo from this non-Safe contract
-      // This would require a helper, but we can test the validation logic
-      await expect(
-        mailService.connect(addr1).delegateTo(addr2.address)
-      ).to.be.revertedWithCustomError(mailService, "NotASafeWallet");
-    });
-
-    it("Should revert for Safe with threshold of 0", async function () {
-      // Deploy helper with threshold 0
+    it("Should allow any address including EOAs to delegate", async function () {
+      // EOA can delegate
+      await mailService.connect(addr1).delegateTo(addr2.address);
+      expect(await mailService.getDelegatedAddress(addr1.address)).to.equal(addr2.address);
+      
+      // Contract can also delegate (using helper)
       const SafeDelegateHelper = await ethers.getContractFactory("SafeDelegateHelper");
       const helper = await SafeDelegateHelper.deploy(await mailService.getAddress(), await mockUSDC.getAddress());
       await helper.waitForDeployment();
       
-      // Set threshold to 0 (this simulates a Safe with invalid threshold)
-      await helper.setThreshold(0);
+      await helper.testDelegation(addr3.address);
+      expect(await mailService.getDelegatedAddress(await helper.getAddress())).to.equal(addr3.address);
+    });
 
-      // This should revert because threshold is 0
+    it("Should allow clearing delegation from EOA", async function () {
+      // Set delegation from EOA
+      await mailService.connect(addr1).delegateTo(addr2.address);
+      expect(await mailService.getDelegatedAddress(addr1.address)).to.equal(addr2.address);
+      
+      // Clear delegation
       await expect(
-        helper.testDelegation(addr1.address)
-      ).to.be.revertedWithCustomError(mailService, "NotASafeWallet");
+        mailService.connect(addr1).delegateTo(ethers.ZeroAddress)
+      ).to.emit(mailService, "DelegationCleared")
+       .withArgs(addr1.address);
+      
+      // Verify delegation was cleared
+      expect(await mailService.getDelegatedAddress(addr1.address)).to.equal(ethers.ZeroAddress);
     });
   });
 
@@ -714,11 +721,15 @@ describe("MailService", function () {
       expect(await mailService.getDelegatedAddress(await helper.getAddress())).to.equal(addr3.address);
     });
 
-    it("Should not allow delegation from address without code", async function () {
-      // EOA (Externally Owned Account) should not be able to delegate
+    it("Should allow delegation from EOA addresses", async function () {
+      // EOA (Externally Owned Account) can now delegate
       await expect(
         mailService.connect(owner).delegateTo(addr1.address)
-      ).to.be.revertedWithCustomError(mailService, "NotASafeWallet");
+      ).to.emit(mailService, "DelegationSet")
+       .withArgs(owner.address, addr1.address);
+      
+      // Verify delegation was set
+      expect(await mailService.getDelegatedAddress(owner.address)).to.equal(addr1.address);
     });
   });
 });

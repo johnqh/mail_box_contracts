@@ -75,8 +75,8 @@
       ]
     },
     "/Users/qianghuang/mail_box_contracts/contracts/MailService.sol": {
-      "lastModificationDate": 1754676531686,
-      "contentHash": "b94c750ca2a05955193a3141134908ba",
+      "lastModificationDate": 1754677293248,
+      "contentHash": "36e2da495961a4825aa4b72b8ad649cf",
       "sourceName": "contracts/MailService.sol",
       "solcConfig": {
         "version": "0.8.24",
