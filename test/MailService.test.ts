@@ -1,12 +1,10 @@
 import { expect } from "chai";
 import { ethers } from "hardhat";
-import { MailService, MockSafe, SafeChecker } from "../typechain-types";
+import { MailService } from "../typechain-types";
 
 describe("MailService", function () {
   let mailService: MailService;
-  let mockSafe: MockSafe;
   let mockUSDC: any;
-  let safeChecker: SafeChecker;
   let owner: any;
   let addr1: any;
   let addr2: any;
@@ -20,20 +18,11 @@ describe("MailService", function () {
     mockUSDC = await MockUSDC.deploy();
     await mockUSDC.waitForDeployment();
     
-    // Deploy SafeChecker
-    const SafeChecker = await ethers.getContractFactory("SafeChecker");
-    safeChecker = await SafeChecker.deploy();
-    await safeChecker.waitForDeployment();
-    
-    // Deploy MailService with USDC token and SafeChecker
+    // Deploy MailService with USDC token only
     const MailService = await ethers.getContractFactory("MailService");
-    mailService = await MailService.deploy(await mockUSDC.getAddress(), await safeChecker.getAddress());
+    mailService = await MailService.deploy(await mockUSDC.getAddress());
     await mailService.waitForDeployment();
     
-    // Deploy MockSafe with threshold of 2
-    const MockSafe = await ethers.getContractFactory("MockSafe");
-    mockSafe = await MockSafe.deploy(2);
-    await mockSafe.waitForDeployment();
   });
 
   describe("Contract setup", function () {
@@ -48,297 +37,170 @@ describe("MailService", function () {
     it("Should set correct default registration fee", async function () {
       expect(await mailService.registrationFee()).to.equal(100000000); // 100 USDC
     });
+
+    it("Should set correct default delegation fee", async function () {
+      expect(await mailService.delegationFee()).to.equal(10000000); // 10 USDC
+    });
   });
 
   describe("delegateTo function", function () {
-    it("Should allow EOA to delegate to another address", async function () {
-      // Now EOAs can delegate
+    beforeEach(async function () {
+      // Fund addresses with USDC for delegation fees
+      await mockUSDC.mint(addr1.address, ethers.parseUnits("100", 6));
+      await mockUSDC.connect(addr1).approve(await mailService.getAddress(), ethers.parseUnits("100", 6));
+    });
+
+    it("Should allow EOA to delegate and charge fee", async function () {
+      const initialBalance = await mockUSDC.balanceOf(await mailService.getAddress());
+      
       await expect(
         mailService.connect(addr1).delegateTo(addr2.address)
       ).to.emit(mailService, "DelegationSet")
        .withArgs(addr1.address, addr2.address);
       
-      // Verify delegation was set
-      const delegatedAddress = await mailService.getDelegatedAddress(addr1.address);
-      expect(delegatedAddress).to.equal(addr2.address);
+      // Verify fee was charged
+      const finalBalance = await mockUSDC.balanceOf(await mailService.getAddress());
+      expect(finalBalance - initialBalance).to.equal(10000000); // 10 USDC
     });
 
-    it("Should allow Safe wallet to delegate to another address", async function () {
-      // Deploy a Safe delegate helper contract for testing
-      const SafeDelegateHelper = await ethers.getContractFactory("SafeDelegateHelper");
-      const helper = await SafeDelegateHelper.deploy(await mailService.getAddress(), await mockUSDC.getAddress());
-      await helper.waitForDeployment();
+    it("Should allow addr2 to delegate and charge fee", async function () {
+      // Fund addr2 with USDC for delegation fees
+      await mockUSDC.mint(addr2.address, ethers.parseUnits("100", 6));
+      await mockUSDC.connect(addr2).approve(await mailService.getAddress(), ethers.parseUnits("100", 6));
+      
+      const initialBalance = await mockUSDC.balanceOf(await mailService.getAddress());
 
       // Set delegation
-      await helper.testDelegation(addr1.address);
-      
-      // Verify delegation was set
-      const delegatedAddress = await mailService.getDelegatedAddress(await helper.getAddress());
-      expect(delegatedAddress).to.equal(addr1.address);
-    });
-
-    it("Should emit DelegationSet event when delegating", async function () {
-      // Deploy a Safe delegate helper contract for testing
-      const SafeDelegateHelper = await ethers.getContractFactory("SafeDelegateHelper");
-      const helper = await SafeDelegateHelper.deploy(await mailService.getAddress(), await mockUSDC.getAddress());
-      await helper.waitForDeployment();
-
       await expect(
-        helper.testDelegation(addr1.address)
+        mailService.connect(addr2).delegateTo(addr1.address)
       ).to.emit(mailService, "DelegationSet")
-       .withArgs(await helper.getAddress(), addr1.address);
+       .withArgs(addr2.address, addr1.address);
+      
+      // Verify fee was charged
+      const finalBalance = await mockUSDC.balanceOf(await mailService.getAddress());
+      expect(finalBalance - initialBalance).to.equal(10000000); // 10 USDC
     });
 
-    it("Should allow clearing delegation by setting to null address", async function () {
-      // Deploy a Safe delegate helper contract for testing
-      const SafeDelegateHelper = await ethers.getContractFactory("SafeDelegateHelper");
-      const helper = await SafeDelegateHelper.deploy(await mailService.getAddress(), await mockUSDC.getAddress());
-      await helper.waitForDeployment();
-
-      // First set a delegation
-      await helper.testDelegation(addr1.address);
-      
-      // Then clear it
+    it("Should fail delegation when insufficient USDC", async function () {
+      // Don't fund addr2, should fail
       await expect(
-        helper.testDelegation(ethers.ZeroAddress)
-      ).to.emit(mailService, "DelegationCleared")
-       .withArgs(await helper.getAddress());
+        mailService.connect(addr2).delegateTo(addr1.address)
+      ).to.not.emit(mailService, "DelegationSet");
     });
 
-    it("Should allow any address including EOAs to delegate", async function () {
-      // EOA can delegate
-      await mailService.connect(addr1).delegateTo(addr2.address);
-      expect(await mailService.getDelegatedAddress(addr1.address)).to.equal(addr2.address);
+    it("Should allow clearing delegation and charge fee", async function () {
+      const initialBalance = await mockUSDC.balanceOf(await mailService.getAddress());
       
-      // Contract can also delegate (using helper)
-      const SafeDelegateHelper = await ethers.getContractFactory("SafeDelegateHelper");
-      const helper = await SafeDelegateHelper.deploy(await mailService.getAddress(), await mockUSDC.getAddress());
-      await helper.waitForDeployment();
-      
-      await helper.testDelegation(addr3.address);
-      expect(await mailService.getDelegatedAddress(await helper.getAddress())).to.equal(addr3.address);
-    });
-
-    it("Should allow clearing delegation from EOA", async function () {
-      // Set delegation from EOA
-      await mailService.connect(addr1).delegateTo(addr2.address);
-      expect(await mailService.getDelegatedAddress(addr1.address)).to.equal(addr2.address);
-      
-      // Clear delegation
       await expect(
         mailService.connect(addr1).delegateTo(ethers.ZeroAddress)
       ).to.emit(mailService, "DelegationCleared")
        .withArgs(addr1.address);
       
-      // Verify delegation was cleared
-      expect(await mailService.getDelegatedAddress(addr1.address)).to.equal(ethers.ZeroAddress);
+      // Verify fee was charged even for clearing
+      const finalBalance = await mockUSDC.balanceOf(await mailService.getAddress());
+      expect(finalBalance - initialBalance).to.equal(10000000); // 10 USDC
+    });
+
+    it("Should emit correct events for multiple delegations", async function () {
+      // Fund more addresses
+      await mockUSDC.mint(addr2.address, ethers.parseUnits("100", 6));
+      await mockUSDC.connect(addr2).approve(await mailService.getAddress(), ethers.parseUnits("100", 6));
+      
+      // Multiple delegations
+      await expect(
+        mailService.connect(addr1).delegateTo(addr2.address)
+      ).to.emit(mailService, "DelegationSet")
+       .withArgs(addr1.address, addr2.address);
+      
+      await expect(
+        mailService.connect(addr2).delegateTo(addr1.address)
+      ).to.emit(mailService, "DelegationSet")
+       .withArgs(addr2.address, addr1.address);
+    });
+
+    it("Should have delegation fee setter for owner", async function () {
+      await expect(
+        mailService.connect(owner).setDelegationFee(20000000) // 20 USDC
+      ).to.emit(mailService, "DelegationFeeUpdated")
+       .withArgs(10000000, 20000000);
+      
+      expect(await mailService.getDelegationFee()).to.equal(20000000);
     });
   });
 
-  describe("getDelegatedAddress function", function () {
-    beforeEach(async function () {
-      // Deploy a Safe delegate helper contract for testing
-      const SafeDelegateHelper = await ethers.getContractFactory("SafeDelegateHelper");
-      this.helper = await SafeDelegateHelper.deploy(await mailService.getAddress(), await mockUSDC.getAddress());
-      await this.helper.waitForDeployment();
-    });
-
-    it("Should return null address when no delegation exists", async function () {
-      const delegatedAddress = await mailService.getDelegatedAddress(addr1.address);
-      expect(delegatedAddress).to.equal(ethers.ZeroAddress);
-    });
-
-    it("Should return delegated address after delegation is set", async function () {
-      // Set delegation
-      await this.helper.testDelegation(addr2.address);
-      
-      // Check delegation
-      const delegatedAddress = await mailService.getDelegatedAddress(await this.helper.getAddress());
-      expect(delegatedAddress).to.equal(addr2.address);
-    });
-
-    it("Should return null address after delegation is cleared", async function () {
-      // Set delegation
-      await this.helper.testDelegation(addr2.address);
-      
-      // Clear delegation
-      await this.helper.testDelegation(ethers.ZeroAddress);
-      
-      // Check delegation
-      const delegatedAddress = await mailService.getDelegatedAddress(await this.helper.getAddress());
-      expect(delegatedAddress).to.equal(ethers.ZeroAddress);
-    });
-
-    it("Should handle multiple delegations independently", async function () {
-      // Deploy another helper (representing another Safe)
-      const SafeDelegateHelper = await ethers.getContractFactory("SafeDelegateHelper");
-      const helper2 = await SafeDelegateHelper.deploy(await mailService.getAddress(), await mockUSDC.getAddress());
-      await helper2.waitForDeployment();
-
-      // Set different delegations
-      await this.helper.testDelegation(addr1.address);
-      await helper2.testDelegation(addr2.address);
-      
-      // Check delegations are independent
-      const delegation1 = await mailService.getDelegatedAddress(await this.helper.getAddress());
-      const delegation2 = await mailService.getDelegatedAddress(await helper2.getAddress());
-      
-      expect(delegation1).to.equal(addr1.address);
-      expect(delegation2).to.equal(addr2.address);
-    });
-
-    it("Should allow querying delegation for any address", async function () {
-      // Query for addresses that haven't set any delegation
-      const delegation1 = await mailService.getDelegatedAddress(owner.address);
-      const delegation2 = await mailService.getDelegatedAddress(addr3.address);
-      const delegation3 = await mailService.getDelegatedAddress(ethers.ZeroAddress);
-      
-      expect(delegation1).to.equal(ethers.ZeroAddress);
-      expect(delegation2).to.equal(ethers.ZeroAddress);
-      expect(delegation3).to.equal(ethers.ZeroAddress);
-    });
-  });
 
   describe("Domain registration", function () {
-    beforeEach(async function () {
-      // Deploy a Safe delegate helper contract for testing
-      const SafeDelegateHelper = await ethers.getContractFactory("SafeDelegateHelper");
-      this.helper = await SafeDelegateHelper.deploy(await mailService.getAddress(), await mockUSDC.getAddress());
-      await this.helper.waitForDeployment();
+    // No beforeEach needed - tests will fund accounts individually as needed
+
+    it("Should allow EOA to register a domain when funded", async function () {
+      // Fund addr1 with USDC and approve
+      await mockUSDC.mint(addr1.address, ethers.parseUnits("100", 6));
+      await mockUSDC.connect(addr1).approve(await mailService.getAddress(), ethers.parseUnits("100", 6));
       
-      // Fund the helper with USDC and approve spending
-      await mockUSDC.mint(await this.helper.getAddress(), ethers.parseUnits("1000", 6)); // 1000 USDC
-      await this.helper.fundAndApprove(ethers.parseUnits("1000", 6));
+      const tx = mailService.connect(addr1).registerDomain("example.com", false);
+      const block = await ethers.provider.getBlock('latest');
+      const expectedExpiration = BigInt(block!.timestamp + 1) + BigInt(365 * 24 * 60 * 60); // +1 for next block
+      
+      await expect(tx)
+        .to.emit(mailService, "DomainRegistered")
+        .withArgs("example.com", addr1.address, expectedExpiration);
     });
 
-    it("Should revert when EOA tries to register a domain", async function () {
-      await expect(
-        mailService.connect(addr1).registerDomain("example.com")
-      ).to.be.revertedWithCustomError(mailService, "NotASafeWallet");
-    });
-
-    it("Should allow Safe wallet to register a domain", async function () {
-      const tx = this.helper.testDomainRegistration("example.com");
+    it("Should allow addr2 to register a domain", async function () {
+      // Fund addr2 with USDC and approve
+      await mockUSDC.mint(addr2.address, ethers.parseUnits("100", 6));
+      await mockUSDC.connect(addr2).approve(await mailService.getAddress(), ethers.parseUnits("100", 6));
+      
+      const tx = mailService.connect(addr2).registerDomain("example.com", false);
       const block = await ethers.provider.getBlock('latest');
       const expectedExpiration = BigInt(block!.timestamp + 1) + BigInt(365 * 24 * 60 * 60); // +1 for next block
       
       await expect(tx)
       .to.emit(mailService, "DomainRegistered")
-      .withArgs("example.com", await this.helper.getAddress(), expectedExpiration);
+      .withArgs("example.com", addr2.address, expectedExpiration);
       
-      const [registrar, expiration] = await mailService.getUserDomainRegistration("example.com", await this.helper.getAddress());
-      expect(registrar).to.equal(await this.helper.getAddress());
-      expect(expiration).to.be.greaterThan(block!.timestamp);
+      // Note: Storage functions removed in event-only architecture
+      // Domain registration is tracked via events only
     });
 
     it("Should revert when registering an empty domain", async function () {
+      // Fund addr2 with USDC
+      await mockUSDC.mint(addr2.address, ethers.parseUnits("100", 6));
+      await mockUSDC.connect(addr2).approve(await mailService.getAddress(), ethers.parseUnits("100", 6));
+      
       await expect(
-        this.helper.testDomainRegistration("")
+        mailService.connect(addr2).registerDomain("", false)
       ).to.be.revertedWithCustomError(mailService, "EmptyDomain");
     });
 
     it("Should allow same owner to extend registration and allow different owners to also register", async function () {
-      // First registration should succeed
-      await this.helper.testDomainRegistration("taken.com");
-      const [, initialExpiration] = await mailService.getUserDomainRegistration("taken.com", await this.helper.getAddress());
+      // Fund addr2 and addr3 with USDC
+      await mockUSDC.mint(addr2.address, ethers.parseUnits("500", 6));
+      await mockUSDC.connect(addr2).approve(await mailService.getAddress(), ethers.parseUnits("500", 6));
+      await mockUSDC.mint(addr3.address, ethers.parseUnits("500", 6));
+      await mockUSDC.connect(addr3).approve(await mailService.getAddress(), ethers.parseUnits("500", 6));
+      
+      // First registration should succeed  
+      await mailService.connect(addr2).registerDomain("taken.com", false);
       
       // Same owner can re-register (extend) the domain
       await expect(
-        this.helper.testDomainRegistration("taken.com")
+        mailService.connect(addr2).registerDomain("taken.com", true)
       ).to.emit(mailService, "DomainExtended");
       
-      // Verify expiration was extended
-      const [, newExpiration] = await mailService.getUserDomainRegistration("taken.com", await this.helper.getAddress());
-      expect(newExpiration).to.be.greaterThan(initialExpiration);
-      
-      // Different Safe can also register the same domain (multi-registration allowed)
-      const SafeDelegateHelper = await ethers.getContractFactory("SafeDelegateHelper");
-      const helper2 = await SafeDelegateHelper.deploy(await mailService.getAddress(), await mockUSDC.getAddress());
-      await helper2.waitForDeployment();
-      
-      // Fund the second helper
-      await mockUSDC.mint(await helper2.getAddress(), ethers.parseUnits("1000", 6));
-      await helper2.fundAndApprove(ethers.parseUnits("1000", 6));
+      // Note: Storage functions removed - expiration tracking via events only
       
       // Different owner can also register - should succeed now
       await expect(
-        helper2.testDomainRegistration("taken.com")
+        mailService.connect(addr3).registerDomain("taken.com", false)
       ).to.emit(mailService, "DomainRegistered");
       
-      // Verify both registrations exist
-      const registrations = await mailService.getDomainRegistrations("taken.com");
-      expect(registrations).to.have.lengthOf(2);
-      expect(registrations[0].registrar).to.equal(await this.helper.getAddress());
-      expect(registrations[1].registrar).to.equal(await helper2.getAddress());
+      // Note: Storage functions removed - multi-registration tracking via events only
     });
 
-    it("Should correctly return domain registrar", async function () {
-      // Register a domain
-      await this.helper.testDomainRegistration("test.com");
-      
-      // Check registrar and expiration
-      const [registrar, expiration] = await mailService.getUserDomainRegistration("test.com", await this.helper.getAddress());
-      expect(registrar).to.equal(await this.helper.getAddress());
-      expect(expiration).to.be.greaterThan(0);
-      
-      // Check unregistered domain returns zero address and zero expiration
-      const [unregRegistrar, unregExpiration] = await mailService.getUserDomainRegistration("unregistered.com", await this.helper.getAddress());
-      expect(unregRegistrar).to.equal(ethers.ZeroAddress);
-      expect(unregExpiration).to.equal(0);
-    });
 
-    it("Should return all domains registered by a Safe", async function () {
-      // Register multiple domains
-      await this.helper.testDomainRegistration("first.com");
-      await this.helper.testDomainRegistration("second.com");
-      await this.helper.testDomainRegistration("third.com");
-      
-      // Get domains and expirations
-      const [domains, expirations] = await this.helper.getMyDomains();
-      expect(domains).to.deep.equal(["first.com", "second.com", "third.com"]);
-      expect(expirations).to.have.lengthOf(3);
-      expect(expirations[0]).to.be.greaterThan(0);
-      expect(expirations[1]).to.be.greaterThan(0);
-      expect(expirations[2]).to.be.greaterThan(0);
-    });
 
-    it("Should return empty arrays for Safe with no domains", async function () {
-      const [domains, expirations] = await this.helper.getMyDomains();
-      expect(domains).to.deep.equal([]);
-      expect(expirations).to.deep.equal([]);
-    });
 
-    it("Should handle multiple Safes registering different domains", async function () {
-      // Deploy another helper (representing another Safe)
-      const SafeDelegateHelper = await ethers.getContractFactory("SafeDelegateHelper");
-      const helper2 = await SafeDelegateHelper.deploy(await mailService.getAddress(), await mockUSDC.getAddress());
-      await helper2.waitForDeployment();
-      
-      // Fund the second helper
-      await mockUSDC.mint(await helper2.getAddress(), ethers.parseUnits("1000", 6));
-      await helper2.fundAndApprove(ethers.parseUnits("1000", 6));
-      
-      // Register domains from different Safes
-      await this.helper.testDomainRegistration("safe1-domain1.com");
-      await this.helper.testDomainRegistration("safe1-domain2.com");
-      await helper2.testDomainRegistration("safe2-domain1.com");
-      await helper2.testDomainRegistration("safe2-domain2.com");
-      
-      // Check domains for each Safe
-      const [safe1Domains, safe1Expirations] = await this.helper.getMyDomains();
-      const [safe2Domains, safe2Expirations] = await helper2.getMyDomains();
-      
-      expect(safe1Domains).to.deep.equal(["safe1-domain1.com", "safe1-domain2.com"]);
-      expect(safe2Domains).to.deep.equal(["safe2-domain1.com", "safe2-domain2.com"]);
-      expect(safe1Expirations).to.have.lengthOf(2);
-      expect(safe2Expirations).to.have.lengthOf(2);
-      
-      // Verify registrars
-      const [reg1] = await mailService.getUserDomainRegistration("safe1-domain1.com", await this.helper.getAddress());
-      const [reg2] = await mailService.getUserDomainRegistration("safe2-domain1.com", await helper2.getAddress());
-      expect(reg1).to.equal(await this.helper.getAddress());
-      expect(reg2).to.equal(await helper2.getAddress());
-    });
   });
 
   describe("Registration fee management", function () {
@@ -393,21 +255,16 @@ describe("MailService", function () {
     });
 
     describe("Fee integration with domain registration", function () {
-      beforeEach(async function () {
-        // Deploy a Safe delegate helper contract for testing
-        const SafeDelegateHelper = await ethers.getContractFactory("SafeDelegateHelper");
-        this.helper = await SafeDelegateHelper.deploy(await mailService.getAddress(), await mockUSDC.getAddress());
-        await this.helper.waitForDeployment();
-        
-        // Fund the helper with USDC and approve spending
-        await mockUSDC.mint(await this.helper.getAddress(), ethers.parseUnits("1000", 6)); // 1000 USDC
-        await this.helper.fundAndApprove(ethers.parseUnits("1000", 6));
-      });
+      // No beforeEach needed - individual tests will fund accounts as needed
 
       it("Should transfer correct USDC amount on registration", async function () {
+        // Fund addr2 with USDC
+        await mockUSDC.mint(addr2.address, ethers.parseUnits("200", 6));
+        await mockUSDC.connect(addr2).approve(await mailService.getAddress(), ethers.parseUnits("200", 6));
+        
         const initialBalance = await mockUSDC.balanceOf(await mailService.getAddress());
         
-        await this.helper.testDomainRegistration("test.com");
+        await mailService.connect(addr2).registerDomain("test.com", false);
         
         const finalBalance = await mockUSDC.balanceOf(await mailService.getAddress());
         expect(finalBalance - initialBalance).to.equal(100000000); // 100 USDC
@@ -417,319 +274,65 @@ describe("MailService", function () {
         // Set a custom fee
         await mailService.connect(owner).setRegistrationFee(50000000); // 50 USDC
         
+        // Fund addr3 with USDC
+        await mockUSDC.mint(addr3.address, ethers.parseUnits("100", 6));
+        await mockUSDC.connect(addr3).approve(await mailService.getAddress(), ethers.parseUnits("100", 6));
+        
         const initialBalance = await mockUSDC.balanceOf(await mailService.getAddress());
         
-        await this.helper.testDomainRegistration("custom-fee.com");
+        await mailService.connect(addr3).registerDomain("custom-fee.com", false);
         
         const finalBalance = await mockUSDC.balanceOf(await mailService.getAddress());
         expect(finalBalance - initialBalance).to.equal(50000000); // 50 USDC
       });
 
-      it("Should fail when Safe has insufficient USDC balance", async function () {
-        // Deploy helper with no USDC
-        const SafeDelegateHelper = await ethers.getContractFactory("SafeDelegateHelper");
-        const poorHelper = await SafeDelegateHelper.deploy(await mailService.getAddress(), await mockUSDC.getAddress());
-        await poorHelper.waitForDeployment();
+      it("Should fail when account has insufficient USDC balance", async function () {
+        // Don't fund addr1 - it should have 0 USDC balance
         
         // No domain should be registered and no event emitted
         await expect(
-          poorHelper.testDomainRegistration("expensive.com")
+          mailService.connect(addr1).registerDomain("expensive.com", false)
         ).to.not.emit(mailService, "DomainRegistered");
         
-        // Domain should not be registered
-        const [registrar] = await mailService.getUserDomainRegistration("expensive.com", await poorHelper.getAddress());
-        expect(registrar).to.equal(ethers.ZeroAddress);
+        // Note: Storage functions removed - registration tracking via events only
       });
     });
   });
 
-  describe("Multi-registration functionality", function () {
-    beforeEach(async function () {
-      // Deploy Safe delegate helpers for testing
-      const SafeDelegateHelper = await ethers.getContractFactory("SafeDelegateHelper");
-      this.helper1 = await SafeDelegateHelper.deploy(await mailService.getAddress(), await mockUSDC.getAddress());
-      await this.helper1.waitForDeployment();
-      
-      this.helper2 = await SafeDelegateHelper.deploy(await mailService.getAddress(), await mockUSDC.getAddress());
-      await this.helper2.waitForDeployment();
-      
-      // Fund both helpers
-      await mockUSDC.mint(await this.helper1.getAddress(), ethers.parseUnits("1000", 6));
-      await this.helper1.fundAndApprove(ethers.parseUnits("1000", 6));
-      
-      await mockUSDC.mint(await this.helper2.getAddress(), ethers.parseUnits("1000", 6));
-      await this.helper2.fundAndApprove(ethers.parseUnits("1000", 6));
-    });
-
-    it("Should allow multiple addresses to register the same domain", async function () {
-      // First Safe registers domain
-      await expect(
-        this.helper1.testDomainRegistration("shared.com")
-      ).to.emit(mailService, "DomainRegistered");
-      
-      // Second Safe also registers the same domain
-      await expect(
-        this.helper2.testDomainRegistration("shared.com")
-      ).to.emit(mailService, "DomainRegistered");
-      
-      // Check all registrations
-      const registrations = await mailService.getDomainRegistrations("shared.com");
-      expect(registrations).to.have.lengthOf(2);
-      expect(registrations[0].registrar).to.equal(await this.helper1.getAddress());
-      expect(registrations[1].registrar).to.equal(await this.helper2.getAddress());
-    });
-
-    it("Should track registrations independently for each user", async function () {
-      // Both register the same domain
-      await this.helper1.testDomainRegistration("shared.com");
-      await this.helper2.testDomainRegistration("shared.com");
-      
-      // Each should see only their own registration in getDomains
-      const [domains1] = await this.helper1.getMyDomains();
-      const [domains2] = await this.helper2.getMyDomains();
-      
-      expect(domains1).to.deep.equal(["shared.com"]);
-      expect(domains2).to.deep.equal(["shared.com"]);
-      
-      // Release from helper1 should not affect helper2
-      await this.helper1.testDomainRelease("shared.com");
-      
-      const [domainsAfter1] = await this.helper1.getMyDomains();
-      const [domainsAfter2] = await this.helper2.getMyDomains();
-      
-      expect(domainsAfter1).to.have.lengthOf(0);
-      expect(domainsAfter2).to.deep.equal(["shared.com"]);
-      
-      // Check registrations array
-      const registrations = await mailService.getDomainRegistrations("shared.com");
-      expect(registrations).to.have.lengthOf(1);
-      expect(registrations[0].registrar).to.equal(await this.helper2.getAddress());
-    });
-
-    it("Should handle extensions independently for each registrant", async function () {
-      // Both register the same domain
-      await this.helper1.testDomainRegistration("shared.com");
-      await this.helper2.testDomainRegistration("shared.com");
-      
-      const [, exp1Before] = await mailService.getUserDomainRegistration("shared.com", await this.helper1.getAddress());
-      const [, exp2Before] = await mailService.getUserDomainRegistration("shared.com", await this.helper2.getAddress());
-      
-      // Helper1 extends their registration
-      await expect(
-        this.helper1.testDomainRegistration("shared.com")
-      ).to.emit(mailService, "DomainExtended");
-      
-      const [, exp1After] = await mailService.getUserDomainRegistration("shared.com", await this.helper1.getAddress());
-      const [, exp2After] = await mailService.getUserDomainRegistration("shared.com", await this.helper2.getAddress());
-      
-      // Only helper1's expiration should have changed
-      expect(exp1After).to.be.greaterThan(exp1Before);
-      expect(exp2After).to.equal(exp2Before);
-    });
-  });
-
-  describe("Domain expiration functionality", function () {
-    beforeEach(async function () {
-      // Deploy a Safe delegate helper contract for testing
-      const SafeDelegateHelper = await ethers.getContractFactory("SafeDelegateHelper");
-      this.helper = await SafeDelegateHelper.deploy(await mailService.getAddress(), await mockUSDC.getAddress());
-      await this.helper.waitForDeployment();
-      
-      // Fund the helper with USDC and approve spending
-      await mockUSDC.mint(await this.helper.getAddress(), ethers.parseUnits("1000", 6)); // 1000 USDC
-      await this.helper.fundAndApprove(ethers.parseUnits("1000", 6));
-    });
-
-    it("Should set expiration to 365 days from block timestamp for new domain", async function () {
-      const tx = this.helper.testDomainRegistration("expiry-test.com");
-      const block = await ethers.provider.getBlock('latest');
-      const expectedExpiration = BigInt(block!.timestamp + 1) + BigInt(365 * 24 * 60 * 60); // +1 for next block
-      
-      await expect(tx)
-        .to.emit(mailService, "DomainRegistered")
-        .withArgs("expiry-test.com", await this.helper.getAddress(), expectedExpiration);
-      
-      const [, expiration] = await mailService.getUserDomainRegistration("expiry-test.com", await this.helper.getAddress());
-      expect(expiration).to.equal(expectedExpiration);
-    });
-
-    it("Should extend expiration by 365 days when owner re-registers", async function () {
-      // Initial registration
-      await this.helper.testDomainRegistration("extend-test.com");
-      const [, initialExpiration] = await mailService.getUserDomainRegistration("extend-test.com", await this.helper.getAddress());
-      
-      // Re-register (extend) the same domain
-      const tx = this.helper.testDomainRegistration("extend-test.com");
-      const expectedNewExpiration = initialExpiration + BigInt(365 * 24 * 60 * 60);
-      
-      await expect(tx)
-        .to.emit(mailService, "DomainExtended")
-        .withArgs("extend-test.com", await this.helper.getAddress(), expectedNewExpiration);
-      
-      const [, newExpiration] = await mailService.getUserDomainRegistration("extend-test.com", await this.helper.getAddress());
-      expect(newExpiration).to.equal(expectedNewExpiration);
-      expect(newExpiration).to.be.greaterThan(initialExpiration);
-    });
-
-    it("Should return domains with their expiration times", async function () {
-      // Register multiple domains at different times
-      await this.helper.testDomainRegistration("domain1.com");
-      
-      // Mine a new block to get different timestamp
-      await ethers.provider.send("evm_mine", []);
-      await this.helper.testDomainRegistration("domain2.com");
-      
-      const [domains, expirations] = await this.helper.getMyDomains();
-      
-      expect(domains).to.deep.equal(["domain1.com", "domain2.com"]);
-      expect(expirations).to.have.lengthOf(2);
-      expect(expirations[0]).to.be.greaterThan(0);
-      expect(expirations[1]).to.be.greaterThan(0);
-      // Second domain should have later or equal expiration
-      expect(expirations[1]).to.be.greaterThanOrEqual(expirations[0]);
-    });
-
-    it("Should charge fee for domain extension", async function () {
-      // Register initial domain
-      await this.helper.testDomainRegistration("fee-test.com");
-      
-      const initialBalance = await mockUSDC.balanceOf(await mailService.getAddress());
-      
-      // Extend the domain (should charge fee again)
-      await this.helper.testDomainRegistration("fee-test.com");
-      
-      const finalBalance = await mockUSDC.balanceOf(await mailService.getAddress());
-      expect(finalBalance - initialBalance).to.equal(100000000); // 100 USDC fee for extension
-    });
-  });
-
-  describe("Domain release functionality", function () {
-    beforeEach(async function () {
-      // Deploy a Safe delegate helper contract for testing
-      const SafeDelegateHelper = await ethers.getContractFactory("SafeDelegateHelper");
-      this.helper = await SafeDelegateHelper.deploy(await mailService.getAddress(), await mockUSDC.getAddress());
-      await this.helper.waitForDeployment();
-      
-      // Fund the helper with USDC and approve spending
-      await mockUSDC.mint(await this.helper.getAddress(), ethers.parseUnits("1000", 6)); // 1000 USDC
-      await this.helper.fundAndApprove(ethers.parseUnits("1000", 6));
-      
-      // Register some domains for testing
-      await this.helper.testDomainRegistration("release1.com");
-      await this.helper.testDomainRegistration("release2.com");
-      await this.helper.testDomainRegistration("release3.com");
-    });
-
-    it("Should allow owner to release their domain", async function () {
-      await expect(
-        this.helper.testDomainRelease("release2.com")
-      ).to.emit(mailService, "DomainReleased")
-       .withArgs("release2.com", await this.helper.getAddress());
-      
-      // Domain should no longer be registered for this user
-      const [registrar, expiration] = await mailService.getUserDomainRegistration("release2.com", await this.helper.getAddress());
-      expect(registrar).to.equal(ethers.ZeroAddress);
-      expect(expiration).to.equal(0);
-      
-      // Domain should be removed from owner's list
-      const [domains] = await this.helper.getMyDomains();
-      expect(domains).to.deep.equal(["release1.com", "release3.com"]);
-    });
-
-    it("Should revert when trying to release unowned domain", async function () {
-      await expect(
-        this.helper.testDomainRelease("unowned.com")
-      ).to.be.revertedWithCustomError(mailService, "DomainNotRegistered");
-    });
-
-    it("Should revert when trying to release someone else's domain", async function () {
-      // Deploy another helper
-      const SafeDelegateHelper = await ethers.getContractFactory("SafeDelegateHelper");
-      const helper2 = await SafeDelegateHelper.deploy(await mailService.getAddress(), await mockUSDC.getAddress());
-      await helper2.waitForDeployment();
-      
-      await expect(
-        helper2.testDomainRelease("release1.com")
-      ).to.be.revertedWithCustomError(mailService, "DomainNotRegistered");
-    });
-
-    it("Should handle releasing middle domain from array correctly", async function () {
-      // Release the middle domain
-      await this.helper.testDomainRelease("release2.com");
-      
-      // Check that remaining domains are still there
-      const [domains] = await this.helper.getMyDomains();
-      expect(domains).to.have.lengthOf(2);
-      expect(domains).to.include("release1.com");
-      expect(domains).to.include("release3.com");
-    });
-
-    it("Should handle releasing all domains", async function () {
-      // Release all domains
-      await this.helper.testDomainRelease("release1.com");
-      await this.helper.testDomainRelease("release2.com");
-      await this.helper.testDomainRelease("release3.com");
-      
-      // Check that no domains remain
-      const [domains] = await this.helper.getMyDomains();
-      expect(domains).to.have.lengthOf(0);
-      
-      // Check that domains are not registered for this user
-      const [reg1] = await mailService.getUserDomainRegistration("release1.com", await this.helper.getAddress());
-      const [reg2] = await mailService.getUserDomainRegistration("release2.com", await this.helper.getAddress());
-      const [reg3] = await mailService.getUserDomainRegistration("release3.com", await this.helper.getAddress());
-      expect(reg1).to.equal(ethers.ZeroAddress);
-      expect(reg2).to.equal(ethers.ZeroAddress);
-      expect(reg3).to.equal(ethers.ZeroAddress);
-    });
-
-    it("Should allow re-registration after release", async function () {
-      // Release a domain
-      await this.helper.testDomainRelease("release1.com");
-      
-      // Re-register the same domain
-      const tx = this.helper.testDomainRegistration("release1.com");
-      const block = await ethers.provider.getBlock('latest');
-      const expectedExpiration = BigInt(block!.timestamp + 1) + BigInt(365 * 24 * 60 * 60);
-      
-      await expect(tx)
-      .to.emit(mailService, "DomainRegistered")
-      .withArgs("release1.com", await this.helper.getAddress(), expectedExpiration);
-      
-      // Domain should be registered again
-      const [registrar] = await mailService.getUserDomainRegistration("release1.com", await this.helper.getAddress());
-      expect(registrar).to.equal(await this.helper.getAddress());
-    });
-  });
 
   describe("Edge cases and security", function () {
     it("Should handle delegation updates correctly", async function () {
-      const SafeDelegateHelper = await ethers.getContractFactory("SafeDelegateHelper");
-      const helper = await SafeDelegateHelper.deploy(await mailService.getAddress(), await mockUSDC.getAddress());
-      await helper.waitForDeployment();
+      // Fund addr1 for multiple delegation fees
+      await mockUSDC.mint(addr1.address, ethers.parseUnits("100", 6));
+      await mockUSDC.connect(addr1).approve(await mailService.getAddress(), ethers.parseUnits("100", 6));
 
       // Set initial delegation
-      await helper.testDelegation(addr1.address);
-      expect(await mailService.getDelegatedAddress(await helper.getAddress())).to.equal(addr1.address);
-
+      await expect(
+        mailService.connect(addr1).delegateTo(addr2.address)
+      ).to.emit(mailService, "DelegationSet")
+       .withArgs(addr1.address, addr2.address);
+      
       // Update delegation
-      await helper.testDelegation(addr2.address);
-      expect(await mailService.getDelegatedAddress(await helper.getAddress())).to.equal(addr2.address);
-
-      // Update again
-      await helper.testDelegation(addr3.address);
-      expect(await mailService.getDelegatedAddress(await helper.getAddress())).to.equal(addr3.address);
+      await expect(
+        mailService.connect(addr1).delegateTo(addr3.address)
+      ).to.emit(mailService, "DelegationSet")
+       .withArgs(addr1.address, addr3.address);
+      
+      // Note: Storage functions removed - delegation tracking via events only
     });
 
     it("Should allow delegation from EOA addresses", async function () {
+      // Fund owner with USDC for delegation fee
+      await mockUSDC.mint(owner.address, ethers.parseUnits("100", 6));
+      await mockUSDC.connect(owner).approve(await mailService.getAddress(), ethers.parseUnits("100", 6));
+      
       // EOA (Externally Owned Account) can now delegate
       await expect(
         mailService.connect(owner).delegateTo(addr1.address)
       ).to.emit(mailService, "DelegationSet")
        .withArgs(owner.address, addr1.address);
       
-      // Verify delegation was set
-      expect(await mailService.getDelegatedAddress(owner.address)).to.equal(addr1.address);
+      // Note: Storage functions removed - delegation tracking via events only
     });
   });
 });

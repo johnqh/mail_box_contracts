@@ -23,32 +23,18 @@ import type {
   TypedContractMethod,
 } from "../common";
 
-export declare namespace MailService {
-  export type RegistrationStruct = {
-    registrar: AddressLike;
-    expiration: BigNumberish;
-  };
-
-  export type RegistrationStructOutput = [
-    registrar: string,
-    expiration: bigint
-  ] & { registrar: string; expiration: bigint };
-}
-
 export interface MailServiceInterface extends Interface {
   getFunction(
     nameOrSignature:
       | "delegateTo"
-      | "getDelegatedAddress"
-      | "getDomainRegistrations"
-      | "getDomains"
+      | "delegationFee"
+      | "getDelegationFee"
       | "getRegistrationFee"
-      | "getUserDomainRegistration"
       | "owner"
       | "registerDomain"
       | "registrationFee"
       | "releaseRegistration"
-      | "safeChecker"
+      | "setDelegationFee"
       | "setRegistrationFee"
       | "usdcToken"
   ): FunctionFragment;
@@ -56,6 +42,7 @@ export interface MailServiceInterface extends Interface {
   getEvent(
     nameOrSignatureOrTopic:
       | "DelegationCleared"
+      | "DelegationFeeUpdated"
       | "DelegationSet"
       | "DomainExtended"
       | "DomainRegistered"
@@ -68,29 +55,21 @@ export interface MailServiceInterface extends Interface {
     values: [AddressLike]
   ): string;
   encodeFunctionData(
-    functionFragment: "getDelegatedAddress",
-    values: [AddressLike]
+    functionFragment: "delegationFee",
+    values?: undefined
   ): string;
   encodeFunctionData(
-    functionFragment: "getDomainRegistrations",
-    values: [string]
-  ): string;
-  encodeFunctionData(
-    functionFragment: "getDomains",
+    functionFragment: "getDelegationFee",
     values?: undefined
   ): string;
   encodeFunctionData(
     functionFragment: "getRegistrationFee",
     values?: undefined
   ): string;
-  encodeFunctionData(
-    functionFragment: "getUserDomainRegistration",
-    values: [string, AddressLike]
-  ): string;
   encodeFunctionData(functionFragment: "owner", values?: undefined): string;
   encodeFunctionData(
     functionFragment: "registerDomain",
-    values: [string]
+    values: [string, boolean]
   ): string;
   encodeFunctionData(
     functionFragment: "registrationFee",
@@ -101,8 +80,8 @@ export interface MailServiceInterface extends Interface {
     values: [string]
   ): string;
   encodeFunctionData(
-    functionFragment: "safeChecker",
-    values?: undefined
+    functionFragment: "setDelegationFee",
+    values: [BigNumberish]
   ): string;
   encodeFunctionData(
     functionFragment: "setRegistrationFee",
@@ -112,20 +91,15 @@ export interface MailServiceInterface extends Interface {
 
   decodeFunctionResult(functionFragment: "delegateTo", data: BytesLike): Result;
   decodeFunctionResult(
-    functionFragment: "getDelegatedAddress",
+    functionFragment: "delegationFee",
     data: BytesLike
   ): Result;
   decodeFunctionResult(
-    functionFragment: "getDomainRegistrations",
+    functionFragment: "getDelegationFee",
     data: BytesLike
   ): Result;
-  decodeFunctionResult(functionFragment: "getDomains", data: BytesLike): Result;
   decodeFunctionResult(
     functionFragment: "getRegistrationFee",
-    data: BytesLike
-  ): Result;
-  decodeFunctionResult(
-    functionFragment: "getUserDomainRegistration",
     data: BytesLike
   ): Result;
   decodeFunctionResult(functionFragment: "owner", data: BytesLike): Result;
@@ -142,7 +116,7 @@ export interface MailServiceInterface extends Interface {
     data: BytesLike
   ): Result;
   decodeFunctionResult(
-    functionFragment: "safeChecker",
+    functionFragment: "setDelegationFee",
     data: BytesLike
   ): Result;
   decodeFunctionResult(
@@ -157,6 +131,19 @@ export namespace DelegationClearedEvent {
   export type OutputTuple = [delegator: string];
   export interface OutputObject {
     delegator: string;
+  }
+  export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
+  export type Filter = TypedDeferredTopicFilter<Event>;
+  export type Log = TypedEventLog<Event>;
+  export type LogDescription = TypedLogDescription<Event>;
+}
+
+export namespace DelegationFeeUpdatedEvent {
+  export type InputTuple = [oldFee: BigNumberish, newFee: BigNumberish];
+  export type OutputTuple = [oldFee: bigint, newFee: bigint];
+  export interface OutputObject {
+    oldFee: bigint;
+    newFee: bigint;
   }
   export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
   export type Filter = TypedDeferredTopicFilter<Event>;
@@ -296,35 +283,19 @@ export interface MailService extends BaseContract {
     "nonpayable"
   >;
 
-  getDelegatedAddress: TypedContractMethod<
-    [delegator: AddressLike],
-    [string],
-    "view"
-  >;
+  delegationFee: TypedContractMethod<[], [bigint], "view">;
 
-  getDomainRegistrations: TypedContractMethod<
-    [domain: string],
-    [MailService.RegistrationStructOutput[]],
-    "view"
-  >;
-
-  getDomains: TypedContractMethod<
-    [],
-    [[string[], bigint[]] & { domains: string[]; expirations: bigint[] }],
-    "view"
-  >;
+  getDelegationFee: TypedContractMethod<[], [bigint], "view">;
 
   getRegistrationFee: TypedContractMethod<[], [bigint], "view">;
 
-  getUserDomainRegistration: TypedContractMethod<
-    [domain: string, user: AddressLike],
-    [[string, bigint] & { registrar: string; expiration: bigint }],
-    "view"
-  >;
-
   owner: TypedContractMethod<[], [string], "view">;
 
-  registerDomain: TypedContractMethod<[domain: string], [void], "nonpayable">;
+  registerDomain: TypedContractMethod<
+    [domain: string, isExtension: boolean],
+    [void],
+    "nonpayable"
+  >;
 
   registrationFee: TypedContractMethod<[], [bigint], "view">;
 
@@ -334,7 +305,11 @@ export interface MailService extends BaseContract {
     "nonpayable"
   >;
 
-  safeChecker: TypedContractMethod<[], [string], "view">;
+  setDelegationFee: TypedContractMethod<
+    [usdcAmount: BigNumberish],
+    [void],
+    "nonpayable"
+  >;
 
   setRegistrationFee: TypedContractMethod<
     [usdcAmount: BigNumberish],
@@ -352,38 +327,24 @@ export interface MailService extends BaseContract {
     nameOrSignature: "delegateTo"
   ): TypedContractMethod<[delegate: AddressLike], [void], "nonpayable">;
   getFunction(
-    nameOrSignature: "getDelegatedAddress"
-  ): TypedContractMethod<[delegator: AddressLike], [string], "view">;
+    nameOrSignature: "delegationFee"
+  ): TypedContractMethod<[], [bigint], "view">;
   getFunction(
-    nameOrSignature: "getDomainRegistrations"
-  ): TypedContractMethod<
-    [domain: string],
-    [MailService.RegistrationStructOutput[]],
-    "view"
-  >;
-  getFunction(
-    nameOrSignature: "getDomains"
-  ): TypedContractMethod<
-    [],
-    [[string[], bigint[]] & { domains: string[]; expirations: bigint[] }],
-    "view"
-  >;
+    nameOrSignature: "getDelegationFee"
+  ): TypedContractMethod<[], [bigint], "view">;
   getFunction(
     nameOrSignature: "getRegistrationFee"
   ): TypedContractMethod<[], [bigint], "view">;
-  getFunction(
-    nameOrSignature: "getUserDomainRegistration"
-  ): TypedContractMethod<
-    [domain: string, user: AddressLike],
-    [[string, bigint] & { registrar: string; expiration: bigint }],
-    "view"
-  >;
   getFunction(
     nameOrSignature: "owner"
   ): TypedContractMethod<[], [string], "view">;
   getFunction(
     nameOrSignature: "registerDomain"
-  ): TypedContractMethod<[domain: string], [void], "nonpayable">;
+  ): TypedContractMethod<
+    [domain: string, isExtension: boolean],
+    [void],
+    "nonpayable"
+  >;
   getFunction(
     nameOrSignature: "registrationFee"
   ): TypedContractMethod<[], [bigint], "view">;
@@ -391,8 +352,8 @@ export interface MailService extends BaseContract {
     nameOrSignature: "releaseRegistration"
   ): TypedContractMethod<[domain: string], [void], "nonpayable">;
   getFunction(
-    nameOrSignature: "safeChecker"
-  ): TypedContractMethod<[], [string], "view">;
+    nameOrSignature: "setDelegationFee"
+  ): TypedContractMethod<[usdcAmount: BigNumberish], [void], "nonpayable">;
   getFunction(
     nameOrSignature: "setRegistrationFee"
   ): TypedContractMethod<[usdcAmount: BigNumberish], [void], "nonpayable">;
@@ -406,6 +367,13 @@ export interface MailService extends BaseContract {
     DelegationClearedEvent.InputTuple,
     DelegationClearedEvent.OutputTuple,
     DelegationClearedEvent.OutputObject
+  >;
+  getEvent(
+    key: "DelegationFeeUpdated"
+  ): TypedContractEvent<
+    DelegationFeeUpdatedEvent.InputTuple,
+    DelegationFeeUpdatedEvent.OutputTuple,
+    DelegationFeeUpdatedEvent.OutputObject
   >;
   getEvent(
     key: "DelegationSet"
@@ -453,6 +421,17 @@ export interface MailService extends BaseContract {
       DelegationClearedEvent.InputTuple,
       DelegationClearedEvent.OutputTuple,
       DelegationClearedEvent.OutputObject
+    >;
+
+    "DelegationFeeUpdated(uint256,uint256)": TypedContractEvent<
+      DelegationFeeUpdatedEvent.InputTuple,
+      DelegationFeeUpdatedEvent.OutputTuple,
+      DelegationFeeUpdatedEvent.OutputObject
+    >;
+    DelegationFeeUpdated: TypedContractEvent<
+      DelegationFeeUpdatedEvent.InputTuple,
+      DelegationFeeUpdatedEvent.OutputTuple,
+      DelegationFeeUpdatedEvent.OutputObject
     >;
 
     "DelegationSet(address,address)": TypedContractEvent<
