@@ -6,9 +6,93 @@
   "scripts": {
     "build": "tsc",
     "test": "npx hardhat test",
-    "deploy:local": "npx hardhat run scripts/deploy.ts --network hardhat",
     "compile": "npx hardhat compile",
-    "clean": "npx hardhat clean"
+    "clean": "npx hardhat clean",
+    
+    "deploy:local": "npx hardhat run scripts/deploy.ts --network hardhat",
+    "deploy:localhost": "npx hardhat run scripts/deploy.ts --network localhost",
+    
+    "deploy:mainnet": "npx hardhat run scripts/deploy.ts --network mainnet",
+    "deploy:sepolia": "npx hardhat run scripts/deploy.ts --network sepolia",
+    "deploy:goerli": "npx hardhat run scripts/deploy.ts --network goerli",
+    
+    "deploy:polygon": "npx hardhat run scripts/deploy.ts --network polygon",
+    "deploy:mumbai": "npx hardhat run scripts/deploy.ts --network mumbai",
+    
+    "deploy:optimism": "npx hardhat run scripts/deploy.ts --network optimism",
+    "deploy:optimism-goerli": "npx hardhat run scripts/deploy.ts --network optimism-goerli",
+    
+    "deploy:arbitrum": "npx hardhat run scripts/deploy.ts --network arbitrum",
+    "deploy:arbitrum-goerli": "npx hardhat run scripts/deploy.ts --network arbitrum-goerli",
+    "deploy:arbitrum-sepolia": "npx hardhat run scripts/deploy.ts --network arbitrum-sepolia",
+    
+    "deploy:base": "npx hardhat run scripts/deploy.ts --network base",
+    "deploy:base-goerli": "npx hardhat run scripts/deploy.ts --network base-goerli",
+    "deploy:base-sepolia": "npx hardhat run scripts/deploy.ts --network base-sepolia",
+    
+    "deploy:avalanche": "npx hardhat run scripts/deploy.ts --network avalanche",
+    "deploy:fuji": "npx hardhat run scripts/deploy.ts --network fuji",
+    
+    "deploy:bsc": "npx hardhat run scripts/deploy.ts --network bsc",
+    "deploy:bsc-testnet": "npx hardhat run scripts/deploy.ts --network bscTestnet",
+    
+    "deploy:fantom": "npx hardhat run scripts/deploy.ts --network fantom",
+    "deploy:fantom-testnet": "npx hardhat run scripts/deploy.ts --network fantomTestnet",
+    
+    "deploy:zksync": "npx hardhat run scripts/deploy.ts --network zkSync",
+    "deploy:zksync-testnet": "npx hardhat run scripts/deploy.ts --network zkSyncTestnet",
+    
+    "deploy:linea": "npx hardhat run scripts/deploy.ts --network linea",
+    "deploy:linea-goerli": "npx hardhat run scripts/deploy.ts --network linea-goerli",
+    
+    "deploy:scroll": "npx hardhat run scripts/deploy.ts --network scroll",
+    "deploy:scroll-sepolia": "npx hardhat run scripts/deploy.ts --network scroll-sepolia",
+    
+    "deploy:mantle": "npx hardhat run scripts/deploy.ts --network mantle",
+    "deploy:mantle-testnet": "npx hardhat run scripts/deploy.ts --network mantle-testnet",
+    
+    "deploy:gnosis": "npx hardhat run scripts/deploy.ts --network gnosis",
+    "deploy:chiado": "npx hardhat run scripts/deploy.ts --network chiado",
+    
+    "deploy:moonbeam": "npx hardhat run scripts/deploy.ts --network moonbeam",
+    "deploy:moonriver": "npx hardhat run scripts/deploy.ts --network moonriver",
+    "deploy:moonbase-alpha": "npx hardhat run scripts/deploy.ts --network moonbaseAlpha",
+    
+    "deploy:celo": "npx hardhat run scripts/deploy.ts --network celo",
+    "deploy:alfajores": "npx hardhat run scripts/deploy.ts --network alfajores",
+    
+    "verify:mainnet": "npx hardhat run scripts/verify.ts --network mainnet",
+    "verify:sepolia": "npx hardhat run scripts/verify.ts --network sepolia",
+    "verify:goerli": "npx hardhat run scripts/verify.ts --network goerli",
+    "verify:polygon": "npx hardhat run scripts/verify.ts --network polygon",
+    "verify:mumbai": "npx hardhat run scripts/verify.ts --network mumbai",
+    "verify:optimism": "npx hardhat run scripts/verify.ts --network optimism",
+    "verify:optimism-goerli": "npx hardhat run scripts/verify.ts --network optimism-goerli",
+    "verify:arbitrum": "npx hardhat run scripts/verify.ts --network arbitrum",
+    "verify:arbitrum-goerli": "npx hardhat run scripts/verify.ts --network arbitrum-goerli",
+    "verify:arbitrum-sepolia": "npx hardhat run scripts/verify.ts --network arbitrum-sepolia",
+    "verify:base": "npx hardhat run scripts/verify.ts --network base",
+    "verify:base-goerli": "npx hardhat run scripts/verify.ts --network base-goerli",
+    "verify:base-sepolia": "npx hardhat run scripts/verify.ts --network base-sepolia",
+    "verify:avalanche": "npx hardhat run scripts/verify.ts --network avalanche",
+    "verify:fuji": "npx hardhat run scripts/verify.ts --network fuji",
+    "verify:bsc": "npx hardhat run scripts/verify.ts --network bsc",
+    "verify:bsc-testnet": "npx hardhat run scripts/verify.ts --network bscTestnet",
+    "verify:fantom": "npx hardhat run scripts/verify.ts --network fantom",
+    "verify:fantom-testnet": "npx hardhat run scripts/verify.ts --network fantomTestnet",
+    "verify:linea": "npx hardhat run scripts/verify.ts --network linea",
+    "verify:linea-goerli": "npx hardhat run scripts/verify.ts --network linea-goerli",
+    "verify:scroll": "npx hardhat run scripts/verify.ts --network scroll",
+    "verify:scroll-sepolia": "npx hardhat run scripts/verify.ts --network scroll-sepolia",
+    "verify:mantle": "npx hardhat run scripts/verify.ts --network mantle",
+    "verify:mantle-testnet": "npx hardhat run scripts/verify.ts --network mantle-testnet",
+    "verify:gnosis": "npx hardhat run scripts/verify.ts --network gnosis",
+    "verify:chiado": "npx hardhat run scripts/verify.ts --network chiado",
+    "verify:moonbeam": "npx hardhat run scripts/verify.ts --network moonbeam",
+    "verify:moonriver": "npx hardhat run scripts/verify.ts --network moonriver",
+    "verify:moonbase-alpha": "npx hardhat run scripts/verify.ts --network moonbaseAlpha",
+    "verify:celo": "npx hardhat run scripts/verify.ts --network celo",
+    "verify:alfajores": "npx hardhat run scripts/verify.ts --network alfajores"
   },
   "keywords": [
     "solidity",

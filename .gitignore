@@ -10,6 +10,39 @@ states/
 *.dbg.json
 *.tsbuildinfo
 
-# Optional
+# Environment variables (NEVER COMMIT PRIVATE KEYS!)
 .env
 .env.local
+.env.*.local
+
+# Node modules
+node_modules/
+
+# Build outputs
+dist/
+build/
+
+# Hardhat files
+cache/
+typechain-types/
+
+# Deployment records (optional - you may want to commit these)
+# deployments/
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+logs/
+
+# Coverage reports
+coverage/
+.nyc_output/

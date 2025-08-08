@@ -18,7 +18,8 @@
       "Bash(npx hardhat test:*)",
       "Bash(find:*)",
       "Bash(grep:*)",
-      "Bash(sed:*)"
+      "Bash(sed:*)",
+      "Bash(npm run deploy:local:*)"
     ],
     "deny": []
   }
