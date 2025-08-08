@@ -10,7 +10,12 @@
     "compile": "npx hardhat compile",
     "clean": "npx hardhat clean"
   },
-  "keywords": ["solidity", "smart-contract", "ethereum", "mailbox"],
+  "keywords": [
+    "solidity",
+    "smart-contract",
+    "ethereum",
+    "mailbox"
+  ],
   "author": "",
   "license": "MIT",
   "description": "MailBox smart contract with TypeScript wrapper",
@@ -20,5 +25,8 @@
     "hardhat": "^2.26.2",
     "ts-node": "^10.9.2",
     "typescript": "^5.9.2"
+  },
+  "dependencies": {
+    "dotenv": "^17.2.1"
   }
 }
