@@ -18,10 +18,6 @@ declare module "hardhat/types/runtime" {
       signerOrOptions?: ethers.Signer | FactoryOptions
     ): Promise<Contracts.IERC20__factory>;
     getContractFactory(
-      name: "ISafe",
-      signerOrOptions?: ethers.Signer | FactoryOptions
-    ): Promise<Contracts.ISafe__factory>;
-    getContractFactory(
       name: "MailService",
       signerOrOptions?: ethers.Signer | FactoryOptions
     ): Promise<Contracts.MailService__factory>;
@@ -60,11 +56,6 @@ declare module "hardhat/types/runtime" {
       signer?: ethers.Signer
     ): Promise<Contracts.IERC20>;
     getContractAt(
-      name: "ISafe",
-      address: string | ethers.Addressable,
-      signer?: ethers.Signer
-    ): Promise<Contracts.ISafe>;
-    getContractAt(
       name: "MailService",
       address: string | ethers.Addressable,
       signer?: ethers.Signer
@@ -110,10 +101,6 @@ declare module "hardhat/types/runtime" {
       signerOrOptions?: ethers.Signer | DeployContractOptions
     ): Promise<Contracts.IERC20>;
     deployContract(
-      name: "ISafe",
-      signerOrOptions?: ethers.Signer | DeployContractOptions
-    ): Promise<Contracts.ISafe>;
-    deployContract(
       name: "MailService",
       signerOrOptions?: ethers.Signer | DeployContractOptions
     ): Promise<Contracts.MailService>;
@@ -151,11 +138,6 @@ declare module "hardhat/types/runtime" {
       args: any[],
       signerOrOptions?: ethers.Signer | DeployContractOptions
     ): Promise<Contracts.IERC20>;
-    deployContract(
-      name: "ISafe",
-      args: any[],
-      signerOrOptions?: ethers.Signer | DeployContractOptions
-    ): Promise<Contracts.ISafe>;
     deployContract(
       name: "MailService",
       args: any[],

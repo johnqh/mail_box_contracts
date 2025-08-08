@@ -2,5 +2,4 @@
 /* tslint:disable */
 /* eslint-disable */
 export { IERC20__factory } from "./IERC20__factory";
-export { ISafe__factory } from "./ISafe__factory";
 export { MailService__factory } from "./MailService__factory";

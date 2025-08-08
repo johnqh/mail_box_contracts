@@ -13,8 +13,6 @@ export type { SafeDelegateHelper } from "./SafeDelegateHelper";
 export * as factories from "./factories";
 export type { IERC20 } from "./MailService.sol/IERC20";
 export { IERC20__factory } from "./factories/MailService.sol/IERC20__factory";
-export type { ISafe } from "./MailService.sol/ISafe";
-export { ISafe__factory } from "./factories/MailService.sol/ISafe__factory";
 export type { MailService } from "./MailService.sol/MailService";
 export { MailService__factory } from "./factories/MailService.sol/MailService__factory";
 export { MockSafe__factory } from "./factories/MockSafe__factory";

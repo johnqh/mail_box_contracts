@@ -23,14 +23,27 @@ import type {
   TypedContractMethod,
 } from "../common";
 
+export declare namespace MailService {
+  export type RegistrationStruct = {
+    registrar: AddressLike;
+    expiration: BigNumberish;
+  };
+
+  export type RegistrationStructOutput = [
+    registrar: string,
+    expiration: bigint
+  ] & { registrar: string; expiration: bigint };
+}
+
 export interface MailServiceInterface extends Interface {
   getFunction(
     nameOrSignature:
       | "delegateTo"
       | "getDelegatedAddress"
-      | "getDomainRegister"
+      | "getDomainRegistrations"
       | "getDomains"
       | "getRegistrationFee"
+      | "getUserDomainRegistration"
       | "owner"
       | "registerDomain"
       | "registrationFee"
@@ -59,7 +72,7 @@ export interface MailServiceInterface extends Interface {
     values: [AddressLike]
   ): string;
   encodeFunctionData(
-    functionFragment: "getDomainRegister",
+    functionFragment: "getDomainRegistrations",
     values: [string]
   ): string;
   encodeFunctionData(
@@ -69,6 +82,10 @@ export interface MailServiceInterface extends Interface {
   encodeFunctionData(
     functionFragment: "getRegistrationFee",
     values?: undefined
+  ): string;
+  encodeFunctionData(
+    functionFragment: "getUserDomainRegistration",
+    values: [string, AddressLike]
   ): string;
   encodeFunctionData(functionFragment: "owner", values?: undefined): string;
   encodeFunctionData(
@@ -99,12 +116,16 @@ export interface MailServiceInterface extends Interface {
     data: BytesLike
   ): Result;
   decodeFunctionResult(
-    functionFragment: "getDomainRegister",
+    functionFragment: "getDomainRegistrations",
     data: BytesLike
   ): Result;
   decodeFunctionResult(functionFragment: "getDomains", data: BytesLike): Result;
   decodeFunctionResult(
     functionFragment: "getRegistrationFee",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(
+    functionFragment: "getUserDomainRegistration",
     data: BytesLike
   ): Result;
   decodeFunctionResult(functionFragment: "owner", data: BytesLike): Result;
@@ -281,9 +302,9 @@ export interface MailService extends BaseContract {
     "view"
   >;
 
-  getDomainRegister: TypedContractMethod<
+  getDomainRegistrations: TypedContractMethod<
     [domain: string],
-    [[string, bigint] & { registrar: string; expiration: bigint }],
+    [MailService.RegistrationStructOutput[]],
     "view"
   >;
 
@@ -294,6 +315,12 @@ export interface MailService extends BaseContract {
   >;
 
   getRegistrationFee: TypedContractMethod<[], [bigint], "view">;
+
+  getUserDomainRegistration: TypedContractMethod<
+    [domain: string, user: AddressLike],
+    [[string, bigint] & { registrar: string; expiration: bigint }],
+    "view"
+  >;
 
   owner: TypedContractMethod<[], [string], "view">;
 
@@ -328,10 +355,10 @@ export interface MailService extends BaseContract {
     nameOrSignature: "getDelegatedAddress"
   ): TypedContractMethod<[delegator: AddressLike], [string], "view">;
   getFunction(
-    nameOrSignature: "getDomainRegister"
+    nameOrSignature: "getDomainRegistrations"
   ): TypedContractMethod<
     [domain: string],
-    [[string, bigint] & { registrar: string; expiration: bigint }],
+    [MailService.RegistrationStructOutput[]],
     "view"
   >;
   getFunction(
@@ -344,6 +371,13 @@ export interface MailService extends BaseContract {
   getFunction(
     nameOrSignature: "getRegistrationFee"
   ): TypedContractMethod<[], [bigint], "view">;
+  getFunction(
+    nameOrSignature: "getUserDomainRegistration"
+  ): TypedContractMethod<
+    [domain: string, user: AddressLike],
+    [[string, bigint] & { registrar: string; expiration: bigint }],
+    "view"
+  >;
   getFunction(
     nameOrSignature: "owner"
   ): TypedContractMethod<[], [string], "view">;

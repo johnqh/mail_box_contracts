@@ -219,7 +219,7 @@ describe("MailService", function () {
       .to.emit(mailService, "DomainRegistered")
       .withArgs("example.com", await this.helper.getAddress(), expectedExpiration);
       
-      const [registrar, expiration] = await mailService.getDomainRegister("example.com");
+      const [registrar, expiration] = await mailService.getUserDomainRegistration("example.com", await this.helper.getAddress());
       expect(registrar).to.equal(await this.helper.getAddress());
       expect(expiration).to.be.greaterThan(block!.timestamp);
     });
@@ -230,10 +230,10 @@ describe("MailService", function () {
       ).to.be.revertedWithCustomError(mailService, "EmptyDomain");
     });
 
-    it("Should allow same owner to extend registration but prevent different owners", async function () {
+    it("Should allow same owner to extend registration and allow different owners to also register", async function () {
       // First registration should succeed
       await this.helper.testDomainRegistration("taken.com");
-      const [, initialExpiration] = await mailService.getDomainRegister("taken.com");
+      const [, initialExpiration] = await mailService.getUserDomainRegistration("taken.com", await this.helper.getAddress());
       
       // Same owner can re-register (extend) the domain
       await expect(
@@ -241,10 +241,10 @@ describe("MailService", function () {
       ).to.emit(mailService, "DomainExtended");
       
       // Verify expiration was extended
-      const [, newExpiration] = await mailService.getDomainRegister("taken.com");
+      const [, newExpiration] = await mailService.getUserDomainRegistration("taken.com", await this.helper.getAddress());
       expect(newExpiration).to.be.greaterThan(initialExpiration);
       
-      // But different Safe should not be able to register the same domain
+      // Different Safe can also register the same domain (multi-registration allowed)
       const SafeDelegateHelper = await ethers.getContractFactory("SafeDelegateHelper");
       const helper2 = await SafeDelegateHelper.deploy(await mailService.getAddress(), await mockUSDC.getAddress());
       await helper2.waitForDeployment();
@@ -253,9 +253,16 @@ describe("MailService", function () {
       await mockUSDC.mint(await helper2.getAddress(), ethers.parseUnits("1000", 6));
       await helper2.fundAndApprove(ethers.parseUnits("1000", 6));
       
+      // Different owner can also register - should succeed now
       await expect(
         helper2.testDomainRegistration("taken.com")
-      ).to.be.revertedWithCustomError(mailService, "DomainAlreadyRegistered");
+      ).to.emit(mailService, "DomainRegistered");
+      
+      // Verify both registrations exist
+      const registrations = await mailService.getDomainRegistrations("taken.com");
+      expect(registrations).to.have.lengthOf(2);
+      expect(registrations[0].registrar).to.equal(await this.helper.getAddress());
+      expect(registrations[1].registrar).to.equal(await helper2.getAddress());
     });
 
     it("Should correctly return domain registrar", async function () {
@@ -263,12 +270,12 @@ describe("MailService", function () {
       await this.helper.testDomainRegistration("test.com");
       
       // Check registrar and expiration
-      const [registrar, expiration] = await mailService.getDomainRegister("test.com");
+      const [registrar, expiration] = await mailService.getUserDomainRegistration("test.com", await this.helper.getAddress());
       expect(registrar).to.equal(await this.helper.getAddress());
       expect(expiration).to.be.greaterThan(0);
       
       // Check unregistered domain returns zero address and zero expiration
-      const [unregRegistrar, unregExpiration] = await mailService.getDomainRegister("unregistered.com");
+      const [unregRegistrar, unregExpiration] = await mailService.getUserDomainRegistration("unregistered.com", await this.helper.getAddress());
       expect(unregRegistrar).to.equal(ethers.ZeroAddress);
       expect(unregExpiration).to.equal(0);
     });
@@ -320,8 +327,8 @@ describe("MailService", function () {
       expect(safe2Expirations).to.have.lengthOf(2);
       
       // Verify registrars
-      const [reg1] = await mailService.getDomainRegister("safe1-domain1.com");
-      const [reg2] = await mailService.getDomainRegister("safe2-domain1.com");
+      const [reg1] = await mailService.getUserDomainRegistration("safe1-domain1.com", await this.helper.getAddress());
+      const [reg2] = await mailService.getUserDomainRegistration("safe2-domain1.com", await helper2.getAddress());
       expect(reg1).to.equal(await this.helper.getAddress());
       expect(reg2).to.equal(await helper2.getAddress());
     });
@@ -423,9 +430,94 @@ describe("MailService", function () {
         ).to.not.emit(mailService, "DomainRegistered");
         
         // Domain should not be registered
-        const [registrar] = await mailService.getDomainRegister("expensive.com");
+        const [registrar] = await mailService.getUserDomainRegistration("expensive.com", await poorHelper.getAddress());
         expect(registrar).to.equal(ethers.ZeroAddress);
       });
+    });
+  });
+
+  describe("Multi-registration functionality", function () {
+    beforeEach(async function () {
+      // Deploy Safe delegate helpers for testing
+      const SafeDelegateHelper = await ethers.getContractFactory("SafeDelegateHelper");
+      this.helper1 = await SafeDelegateHelper.deploy(await mailService.getAddress(), await mockUSDC.getAddress());
+      await this.helper1.waitForDeployment();
+      
+      this.helper2 = await SafeDelegateHelper.deploy(await mailService.getAddress(), await mockUSDC.getAddress());
+      await this.helper2.waitForDeployment();
+      
+      // Fund both helpers
+      await mockUSDC.mint(await this.helper1.getAddress(), ethers.parseUnits("1000", 6));
+      await this.helper1.fundAndApprove(ethers.parseUnits("1000", 6));
+      
+      await mockUSDC.mint(await this.helper2.getAddress(), ethers.parseUnits("1000", 6));
+      await this.helper2.fundAndApprove(ethers.parseUnits("1000", 6));
+    });
+
+    it("Should allow multiple addresses to register the same domain", async function () {
+      // First Safe registers domain
+      await expect(
+        this.helper1.testDomainRegistration("shared.com")
+      ).to.emit(mailService, "DomainRegistered");
+      
+      // Second Safe also registers the same domain
+      await expect(
+        this.helper2.testDomainRegistration("shared.com")
+      ).to.emit(mailService, "DomainRegistered");
+      
+      // Check all registrations
+      const registrations = await mailService.getDomainRegistrations("shared.com");
+      expect(registrations).to.have.lengthOf(2);
+      expect(registrations[0].registrar).to.equal(await this.helper1.getAddress());
+      expect(registrations[1].registrar).to.equal(await this.helper2.getAddress());
+    });
+
+    it("Should track registrations independently for each user", async function () {
+      // Both register the same domain
+      await this.helper1.testDomainRegistration("shared.com");
+      await this.helper2.testDomainRegistration("shared.com");
+      
+      // Each should see only their own registration in getDomains
+      const [domains1] = await this.helper1.getMyDomains();
+      const [domains2] = await this.helper2.getMyDomains();
+      
+      expect(domains1).to.deep.equal(["shared.com"]);
+      expect(domains2).to.deep.equal(["shared.com"]);
+      
+      // Release from helper1 should not affect helper2
+      await this.helper1.testDomainRelease("shared.com");
+      
+      const [domainsAfter1] = await this.helper1.getMyDomains();
+      const [domainsAfter2] = await this.helper2.getMyDomains();
+      
+      expect(domainsAfter1).to.have.lengthOf(0);
+      expect(domainsAfter2).to.deep.equal(["shared.com"]);
+      
+      // Check registrations array
+      const registrations = await mailService.getDomainRegistrations("shared.com");
+      expect(registrations).to.have.lengthOf(1);
+      expect(registrations[0].registrar).to.equal(await this.helper2.getAddress());
+    });
+
+    it("Should handle extensions independently for each registrant", async function () {
+      // Both register the same domain
+      await this.helper1.testDomainRegistration("shared.com");
+      await this.helper2.testDomainRegistration("shared.com");
+      
+      const [, exp1Before] = await mailService.getUserDomainRegistration("shared.com", await this.helper1.getAddress());
+      const [, exp2Before] = await mailService.getUserDomainRegistration("shared.com", await this.helper2.getAddress());
+      
+      // Helper1 extends their registration
+      await expect(
+        this.helper1.testDomainRegistration("shared.com")
+      ).to.emit(mailService, "DomainExtended");
+      
+      const [, exp1After] = await mailService.getUserDomainRegistration("shared.com", await this.helper1.getAddress());
+      const [, exp2After] = await mailService.getUserDomainRegistration("shared.com", await this.helper2.getAddress());
+      
+      // Only helper1's expiration should have changed
+      expect(exp1After).to.be.greaterThan(exp1Before);
+      expect(exp2After).to.equal(exp2Before);
     });
   });
 
@@ -450,14 +542,14 @@ describe("MailService", function () {
         .to.emit(mailService, "DomainRegistered")
         .withArgs("expiry-test.com", await this.helper.getAddress(), expectedExpiration);
       
-      const [, expiration] = await mailService.getDomainRegister("expiry-test.com");
+      const [, expiration] = await mailService.getUserDomainRegistration("expiry-test.com", await this.helper.getAddress());
       expect(expiration).to.equal(expectedExpiration);
     });
 
     it("Should extend expiration by 365 days when owner re-registers", async function () {
       // Initial registration
       await this.helper.testDomainRegistration("extend-test.com");
-      const [, initialExpiration] = await mailService.getDomainRegister("extend-test.com");
+      const [, initialExpiration] = await mailService.getUserDomainRegistration("extend-test.com", await this.helper.getAddress());
       
       // Re-register (extend) the same domain
       const tx = this.helper.testDomainRegistration("extend-test.com");
@@ -467,7 +559,7 @@ describe("MailService", function () {
         .to.emit(mailService, "DomainExtended")
         .withArgs("extend-test.com", await this.helper.getAddress(), expectedNewExpiration);
       
-      const [, newExpiration] = await mailService.getDomainRegister("extend-test.com");
+      const [, newExpiration] = await mailService.getUserDomainRegistration("extend-test.com", await this.helper.getAddress());
       expect(newExpiration).to.equal(expectedNewExpiration);
       expect(newExpiration).to.be.greaterThan(initialExpiration);
     });
@@ -527,8 +619,8 @@ describe("MailService", function () {
       ).to.emit(mailService, "DomainReleased")
        .withArgs("release2.com", await this.helper.getAddress());
       
-      // Domain should no longer be registered
-      const [registrar, expiration] = await mailService.getDomainRegister("release2.com");
+      // Domain should no longer be registered for this user
+      const [registrar, expiration] = await mailService.getUserDomainRegistration("release2.com", await this.helper.getAddress());
       expect(registrar).to.equal(ethers.ZeroAddress);
       expect(expiration).to.equal(0);
       
@@ -575,10 +667,10 @@ describe("MailService", function () {
       const [domains] = await this.helper.getMyDomains();
       expect(domains).to.have.lengthOf(0);
       
-      // Check that domains are not registered
-      const [reg1] = await mailService.getDomainRegister("release1.com");
-      const [reg2] = await mailService.getDomainRegister("release2.com");
-      const [reg3] = await mailService.getDomainRegister("release3.com");
+      // Check that domains are not registered for this user
+      const [reg1] = await mailService.getUserDomainRegistration("release1.com", await this.helper.getAddress());
+      const [reg2] = await mailService.getUserDomainRegistration("release2.com", await this.helper.getAddress());
+      const [reg3] = await mailService.getUserDomainRegistration("release3.com", await this.helper.getAddress());
       expect(reg1).to.equal(ethers.ZeroAddress);
       expect(reg2).to.equal(ethers.ZeroAddress);
       expect(reg3).to.equal(ethers.ZeroAddress);
@@ -598,7 +690,7 @@ describe("MailService", function () {
       .withArgs("release1.com", await this.helper.getAddress(), expectedExpiration);
       
       // Domain should be registered again
-      const [registrar] = await mailService.getDomainRegister("release1.com");
+      const [registrar] = await mailService.getUserDomainRegistration("release1.com", await this.helper.getAddress());
       expect(registrar).to.equal(await this.helper.getAddress());
     });
   });

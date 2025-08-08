@@ -2,5 +2,4 @@
 /* tslint:disable */
 /* eslint-disable */
 export type { IERC20 } from "./IERC20";
-export type { ISafe } from "./ISafe";
 export type { MailService } from "./MailService";
