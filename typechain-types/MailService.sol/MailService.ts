@@ -3,6 +3,7 @@
 /* eslint-disable */
 import type {
   BaseContract,
+  BigNumberish,
   BytesLike,
   FunctionFragment,
   Result,
@@ -29,15 +30,23 @@ export interface MailServiceInterface extends Interface {
       | "getDelegatedAddress"
       | "getDomainRegister"
       | "getDomains"
+      | "getRegistrationFee"
       | "owner"
       | "registerDomain"
+      | "registrationFee"
+      | "releaseRegistration"
+      | "setRegistrationFee"
+      | "usdcToken"
   ): FunctionFragment;
 
   getEvent(
     nameOrSignatureOrTopic:
       | "DelegationCleared"
       | "DelegationSet"
+      | "DomainExtended"
       | "DomainRegistered"
+      | "DomainReleased"
+      | "RegistrationFeeUpdated"
   ): EventFragment;
 
   encodeFunctionData(
@@ -56,11 +65,28 @@ export interface MailServiceInterface extends Interface {
     functionFragment: "getDomains",
     values?: undefined
   ): string;
+  encodeFunctionData(
+    functionFragment: "getRegistrationFee",
+    values?: undefined
+  ): string;
   encodeFunctionData(functionFragment: "owner", values?: undefined): string;
   encodeFunctionData(
     functionFragment: "registerDomain",
     values: [string]
   ): string;
+  encodeFunctionData(
+    functionFragment: "registrationFee",
+    values?: undefined
+  ): string;
+  encodeFunctionData(
+    functionFragment: "releaseRegistration",
+    values: [string]
+  ): string;
+  encodeFunctionData(
+    functionFragment: "setRegistrationFee",
+    values: [BigNumberish]
+  ): string;
+  encodeFunctionData(functionFragment: "usdcToken", values?: undefined): string;
 
   decodeFunctionResult(functionFragment: "delegateTo", data: BytesLike): Result;
   decodeFunctionResult(
@@ -72,11 +98,28 @@ export interface MailServiceInterface extends Interface {
     data: BytesLike
   ): Result;
   decodeFunctionResult(functionFragment: "getDomains", data: BytesLike): Result;
+  decodeFunctionResult(
+    functionFragment: "getRegistrationFee",
+    data: BytesLike
+  ): Result;
   decodeFunctionResult(functionFragment: "owner", data: BytesLike): Result;
   decodeFunctionResult(
     functionFragment: "registerDomain",
     data: BytesLike
   ): Result;
+  decodeFunctionResult(
+    functionFragment: "registrationFee",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(
+    functionFragment: "releaseRegistration",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(
+    functionFragment: "setRegistrationFee",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(functionFragment: "usdcToken", data: BytesLike): Result;
 }
 
 export namespace DelegationClearedEvent {
@@ -104,12 +147,69 @@ export namespace DelegationSetEvent {
   export type LogDescription = TypedLogDescription<Event>;
 }
 
+export namespace DomainExtendedEvent {
+  export type InputTuple = [
+    domain: string,
+    registrar: AddressLike,
+    newExpiration: BigNumberish
+  ];
+  export type OutputTuple = [
+    domain: string,
+    registrar: string,
+    newExpiration: bigint
+  ];
+  export interface OutputObject {
+    domain: string;
+    registrar: string;
+    newExpiration: bigint;
+  }
+  export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
+  export type Filter = TypedDeferredTopicFilter<Event>;
+  export type Log = TypedEventLog<Event>;
+  export type LogDescription = TypedLogDescription<Event>;
+}
+
 export namespace DomainRegisteredEvent {
+  export type InputTuple = [
+    domain: string,
+    registrar: AddressLike,
+    expiration: BigNumberish
+  ];
+  export type OutputTuple = [
+    domain: string,
+    registrar: string,
+    expiration: bigint
+  ];
+  export interface OutputObject {
+    domain: string;
+    registrar: string;
+    expiration: bigint;
+  }
+  export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
+  export type Filter = TypedDeferredTopicFilter<Event>;
+  export type Log = TypedEventLog<Event>;
+  export type LogDescription = TypedLogDescription<Event>;
+}
+
+export namespace DomainReleasedEvent {
   export type InputTuple = [domain: string, registrar: AddressLike];
   export type OutputTuple = [domain: string, registrar: string];
   export interface OutputObject {
     domain: string;
     registrar: string;
+  }
+  export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
+  export type Filter = TypedDeferredTopicFilter<Event>;
+  export type Log = TypedEventLog<Event>;
+  export type LogDescription = TypedLogDescription<Event>;
+}
+
+export namespace RegistrationFeeUpdatedEvent {
+  export type InputTuple = [oldFee: BigNumberish, newFee: BigNumberish];
+  export type OutputTuple = [oldFee: bigint, newFee: bigint];
+  export interface OutputObject {
+    oldFee: bigint;
+    newFee: bigint;
   }
   export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
   export type Filter = TypedDeferredTopicFilter<Event>;
@@ -172,13 +272,39 @@ export interface MailService extends BaseContract {
     "view"
   >;
 
-  getDomainRegister: TypedContractMethod<[domain: string], [string], "view">;
+  getDomainRegister: TypedContractMethod<
+    [domain: string],
+    [[string, bigint] & { registrar: string; expiration: bigint }],
+    "view"
+  >;
 
-  getDomains: TypedContractMethod<[], [string[]], "view">;
+  getDomains: TypedContractMethod<
+    [],
+    [[string[], bigint[]] & { domains: string[]; expirations: bigint[] }],
+    "view"
+  >;
+
+  getRegistrationFee: TypedContractMethod<[], [bigint], "view">;
 
   owner: TypedContractMethod<[], [string], "view">;
 
   registerDomain: TypedContractMethod<[domain: string], [void], "nonpayable">;
+
+  registrationFee: TypedContractMethod<[], [bigint], "view">;
+
+  releaseRegistration: TypedContractMethod<
+    [domain: string],
+    [void],
+    "nonpayable"
+  >;
+
+  setRegistrationFee: TypedContractMethod<
+    [usdcAmount: BigNumberish],
+    [void],
+    "nonpayable"
+  >;
+
+  usdcToken: TypedContractMethod<[], [string], "view">;
 
   getFunction<T extends ContractMethod = ContractMethod>(
     key: string | FunctionFragment
@@ -192,16 +318,39 @@ export interface MailService extends BaseContract {
   ): TypedContractMethod<[delegator: AddressLike], [string], "view">;
   getFunction(
     nameOrSignature: "getDomainRegister"
-  ): TypedContractMethod<[domain: string], [string], "view">;
+  ): TypedContractMethod<
+    [domain: string],
+    [[string, bigint] & { registrar: string; expiration: bigint }],
+    "view"
+  >;
   getFunction(
     nameOrSignature: "getDomains"
-  ): TypedContractMethod<[], [string[]], "view">;
+  ): TypedContractMethod<
+    [],
+    [[string[], bigint[]] & { domains: string[]; expirations: bigint[] }],
+    "view"
+  >;
+  getFunction(
+    nameOrSignature: "getRegistrationFee"
+  ): TypedContractMethod<[], [bigint], "view">;
   getFunction(
     nameOrSignature: "owner"
   ): TypedContractMethod<[], [string], "view">;
   getFunction(
     nameOrSignature: "registerDomain"
   ): TypedContractMethod<[domain: string], [void], "nonpayable">;
+  getFunction(
+    nameOrSignature: "registrationFee"
+  ): TypedContractMethod<[], [bigint], "view">;
+  getFunction(
+    nameOrSignature: "releaseRegistration"
+  ): TypedContractMethod<[domain: string], [void], "nonpayable">;
+  getFunction(
+    nameOrSignature: "setRegistrationFee"
+  ): TypedContractMethod<[usdcAmount: BigNumberish], [void], "nonpayable">;
+  getFunction(
+    nameOrSignature: "usdcToken"
+  ): TypedContractMethod<[], [string], "view">;
 
   getEvent(
     key: "DelegationCleared"
@@ -218,11 +367,32 @@ export interface MailService extends BaseContract {
     DelegationSetEvent.OutputObject
   >;
   getEvent(
+    key: "DomainExtended"
+  ): TypedContractEvent<
+    DomainExtendedEvent.InputTuple,
+    DomainExtendedEvent.OutputTuple,
+    DomainExtendedEvent.OutputObject
+  >;
+  getEvent(
     key: "DomainRegistered"
   ): TypedContractEvent<
     DomainRegisteredEvent.InputTuple,
     DomainRegisteredEvent.OutputTuple,
     DomainRegisteredEvent.OutputObject
+  >;
+  getEvent(
+    key: "DomainReleased"
+  ): TypedContractEvent<
+    DomainReleasedEvent.InputTuple,
+    DomainReleasedEvent.OutputTuple,
+    DomainReleasedEvent.OutputObject
+  >;
+  getEvent(
+    key: "RegistrationFeeUpdated"
+  ): TypedContractEvent<
+    RegistrationFeeUpdatedEvent.InputTuple,
+    RegistrationFeeUpdatedEvent.OutputTuple,
+    RegistrationFeeUpdatedEvent.OutputObject
   >;
 
   filters: {
@@ -248,7 +418,18 @@ export interface MailService extends BaseContract {
       DelegationSetEvent.OutputObject
     >;
 
-    "DomainRegistered(string,address)": TypedContractEvent<
+    "DomainExtended(string,address,uint256)": TypedContractEvent<
+      DomainExtendedEvent.InputTuple,
+      DomainExtendedEvent.OutputTuple,
+      DomainExtendedEvent.OutputObject
+    >;
+    DomainExtended: TypedContractEvent<
+      DomainExtendedEvent.InputTuple,
+      DomainExtendedEvent.OutputTuple,
+      DomainExtendedEvent.OutputObject
+    >;
+
+    "DomainRegistered(string,address,uint256)": TypedContractEvent<
       DomainRegisteredEvent.InputTuple,
       DomainRegisteredEvent.OutputTuple,
       DomainRegisteredEvent.OutputObject
@@ -257,6 +438,28 @@ export interface MailService extends BaseContract {
       DomainRegisteredEvent.InputTuple,
       DomainRegisteredEvent.OutputTuple,
       DomainRegisteredEvent.OutputObject
+    >;
+
+    "DomainReleased(string,address)": TypedContractEvent<
+      DomainReleasedEvent.InputTuple,
+      DomainReleasedEvent.OutputTuple,
+      DomainReleasedEvent.OutputObject
+    >;
+    DomainReleased: TypedContractEvent<
+      DomainReleasedEvent.InputTuple,
+      DomainReleasedEvent.OutputTuple,
+      DomainReleasedEvent.OutputObject
+    >;
+
+    "RegistrationFeeUpdated(uint256,uint256)": TypedContractEvent<
+      RegistrationFeeUpdatedEvent.InputTuple,
+      RegistrationFeeUpdatedEvent.OutputTuple,
+      RegistrationFeeUpdatedEvent.OutputObject
+    >;
+    RegistrationFeeUpdated: TypedContractEvent<
+      RegistrationFeeUpdatedEvent.InputTuple,
+      RegistrationFeeUpdatedEvent.OutputTuple,
+      RegistrationFeeUpdatedEvent.OutputObject
     >;
   };
 }

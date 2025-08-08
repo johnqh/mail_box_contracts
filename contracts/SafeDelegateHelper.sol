@@ -5,10 +5,12 @@ import "./MailService.sol";
 
 contract SafeDelegateHelper {
     MailService public mailService;
+    IERC20 public usdcToken;
     uint256 private threshold = 2;
     
-    constructor(address _mailService) {
+    constructor(address _mailService, address _usdcToken) {
         mailService = MailService(_mailService);
+        usdcToken = IERC20(_usdcToken);
     }
     
     function getThreshold() external view returns (uint256) {
@@ -27,7 +29,16 @@ contract SafeDelegateHelper {
         mailService.registerDomain(domain);
     }
     
-    function getMyDomains() external view returns (string[] memory) {
+    function testDomainRelease(string calldata domain) external {
+        mailService.releaseRegistration(domain);
+    }
+    
+    function getMyDomains() external view returns (string[] memory domains, uint256[] memory expirations) {
         return mailService.getDomains();
+    }
+    
+    function fundAndApprove(uint256 amount) external {
+        // This would normally be called by an external account to fund the Safe
+        usdcToken.approve(address(mailService), amount);
     }
 }

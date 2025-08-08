@@ -2,7 +2,7 @@
   "_format": "hh-sol-cache-2",
   "files": {
     "/Users/qianghuang/mail_box_contracts/contracts/MockUSDC.sol": {
-      "lastModificationDate": 1754597357381,
+      "lastModificationDate": 1754597694731,
       "contentHash": "7d26c269ac15f265e2f5849100ded51a",
       "sourceName": "contracts/MockUSDC.sol",
       "solcConfig": {
@@ -75,8 +75,8 @@
       ]
     },
     "/Users/qianghuang/mail_box_contracts/contracts/MailService.sol": {
-      "lastModificationDate": 1754612548521,
-      "contentHash": "9d9017c087fde1b68e6f46f14111017d",
+      "lastModificationDate": 1754613568146,
+      "contentHash": "02c7edfc56b737acd4df8fe624113ab9",
       "sourceName": "contracts/MailService.sol",
       "solcConfig": {
         "version": "0.8.24",
@@ -107,13 +107,14 @@
         "^0.8.24"
       ],
       "artifacts": [
+        "IERC20",
         "ISafe",
         "MailService"
       ]
     },
     "/Users/qianghuang/mail_box_contracts/contracts/SafeDelegateHelper.sol": {
-      "lastModificationDate": 1754612399622,
-      "contentHash": "997352f648beecdf985b07c296c97e0f",
+      "lastModificationDate": 1754613581917,
+      "contentHash": "cbe3058f6cb68f8bbcd87fbf88ea875d",
       "sourceName": "contracts/SafeDelegateHelper.sol",
       "solcConfig": {
         "version": "0.8.24",

@@ -14,6 +14,10 @@ import * as Contracts from ".";
 declare module "hardhat/types/runtime" {
   interface HardhatEthersHelpers extends HardhatEthersHelpersBase {
     getContractFactory(
+      name: "IERC20",
+      signerOrOptions?: ethers.Signer | FactoryOptions
+    ): Promise<Contracts.IERC20__factory>;
+    getContractFactory(
       name: "ISafe",
       signerOrOptions?: ethers.Signer | FactoryOptions
     ): Promise<Contracts.ISafe__factory>;
@@ -43,6 +47,11 @@ declare module "hardhat/types/runtime" {
     ): Promise<Contracts.SafeDelegateHelper__factory>;
 
     getContractAt(
+      name: "IERC20",
+      address: string | ethers.Addressable,
+      signer?: ethers.Signer
+    ): Promise<Contracts.IERC20>;
+    getContractAt(
       name: "ISafe",
       address: string | ethers.Addressable,
       signer?: ethers.Signer
@@ -79,6 +88,10 @@ declare module "hardhat/types/runtime" {
     ): Promise<Contracts.SafeDelegateHelper>;
 
     deployContract(
+      name: "IERC20",
+      signerOrOptions?: ethers.Signer | DeployContractOptions
+    ): Promise<Contracts.IERC20>;
+    deployContract(
       name: "ISafe",
       signerOrOptions?: ethers.Signer | DeployContractOptions
     ): Promise<Contracts.ISafe>;
@@ -107,6 +120,11 @@ declare module "hardhat/types/runtime" {
       signerOrOptions?: ethers.Signer | DeployContractOptions
     ): Promise<Contracts.SafeDelegateHelper>;
 
+    deployContract(
+      name: "IERC20",
+      args: any[],
+      signerOrOptions?: ethers.Signer | DeployContractOptions
+    ): Promise<Contracts.IERC20>;
     deployContract(
       name: "ISafe",
       args: any[],

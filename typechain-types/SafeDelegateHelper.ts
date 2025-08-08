@@ -24,14 +24,21 @@ import type {
 export interface SafeDelegateHelperInterface extends Interface {
   getFunction(
     nameOrSignature:
+      | "fundAndApprove"
       | "getMyDomains"
       | "getThreshold"
       | "mailService"
       | "setThreshold"
       | "testDelegation"
       | "testDomainRegistration"
+      | "testDomainRelease"
+      | "usdcToken"
   ): FunctionFragment;
 
+  encodeFunctionData(
+    functionFragment: "fundAndApprove",
+    values: [BigNumberish]
+  ): string;
   encodeFunctionData(
     functionFragment: "getMyDomains",
     values?: undefined
@@ -56,7 +63,16 @@ export interface SafeDelegateHelperInterface extends Interface {
     functionFragment: "testDomainRegistration",
     values: [string]
   ): string;
+  encodeFunctionData(
+    functionFragment: "testDomainRelease",
+    values: [string]
+  ): string;
+  encodeFunctionData(functionFragment: "usdcToken", values?: undefined): string;
 
+  decodeFunctionResult(
+    functionFragment: "fundAndApprove",
+    data: BytesLike
+  ): Result;
   decodeFunctionResult(
     functionFragment: "getMyDomains",
     data: BytesLike
@@ -81,6 +97,11 @@ export interface SafeDelegateHelperInterface extends Interface {
     functionFragment: "testDomainRegistration",
     data: BytesLike
   ): Result;
+  decodeFunctionResult(
+    functionFragment: "testDomainRelease",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(functionFragment: "usdcToken", data: BytesLike): Result;
 }
 
 export interface SafeDelegateHelper extends BaseContract {
@@ -126,7 +147,17 @@ export interface SafeDelegateHelper extends BaseContract {
     event?: TCEvent
   ): Promise<this>;
 
-  getMyDomains: TypedContractMethod<[], [string[]], "view">;
+  fundAndApprove: TypedContractMethod<
+    [amount: BigNumberish],
+    [void],
+    "nonpayable"
+  >;
+
+  getMyDomains: TypedContractMethod<
+    [],
+    [[string[], bigint[]] & { domains: string[]; expirations: bigint[] }],
+    "view"
+  >;
 
   getThreshold: TypedContractMethod<[], [bigint], "view">;
 
@@ -150,13 +181,28 @@ export interface SafeDelegateHelper extends BaseContract {
     "nonpayable"
   >;
 
+  testDomainRelease: TypedContractMethod<
+    [domain: string],
+    [void],
+    "nonpayable"
+  >;
+
+  usdcToken: TypedContractMethod<[], [string], "view">;
+
   getFunction<T extends ContractMethod = ContractMethod>(
     key: string | FunctionFragment
   ): T;
 
   getFunction(
+    nameOrSignature: "fundAndApprove"
+  ): TypedContractMethod<[amount: BigNumberish], [void], "nonpayable">;
+  getFunction(
     nameOrSignature: "getMyDomains"
-  ): TypedContractMethod<[], [string[]], "view">;
+  ): TypedContractMethod<
+    [],
+    [[string[], bigint[]] & { domains: string[]; expirations: bigint[] }],
+    "view"
+  >;
   getFunction(
     nameOrSignature: "getThreshold"
   ): TypedContractMethod<[], [bigint], "view">;
@@ -172,6 +218,12 @@ export interface SafeDelegateHelper extends BaseContract {
   getFunction(
     nameOrSignature: "testDomainRegistration"
   ): TypedContractMethod<[domain: string], [void], "nonpayable">;
+  getFunction(
+    nameOrSignature: "testDomainRelease"
+  ): TypedContractMethod<[domain: string], [void], "nonpayable">;
+  getFunction(
+    nameOrSignature: "usdcToken"
+  ): TypedContractMethod<[], [string], "view">;
 
   filters: {};
 }

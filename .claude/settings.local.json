@@ -10,7 +10,9 @@
       "Bash(npm create:*)",
       "Bash(npx create-ponder:*)",
       "Bash(npm install:*)",
-      "Bash(cp:*)"
+      "Bash(cp:*)",
+      "Bash(npm test:*)",
+      "Bash(npx hardhat compile:*)"
     ],
     "deny": []
   }
