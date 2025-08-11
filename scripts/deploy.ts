@@ -52,6 +52,10 @@ async function main() {
   const [deployer] = await ethers.getSigners();
   const networkName = network.name;
 
+  // Get owner address from environment variable, fallback to deployer
+  const ownerAddress = process.env.OWNER_ADDRESS || deployer.address;
+  console.log("Contract owner will be:", ownerAddress);
+
   console.log("=".repeat(50));
   console.log("MULTI-CHAIN DEPLOYMENT SCRIPT");
   console.log("=".repeat(50));
@@ -97,7 +101,7 @@ async function main() {
     // Deploy PrivilegedMail
     console.log("📧 Deploying PrivilegedMail...");
     const PrivilegedMail = await ethers.getContractFactory("PrivilegedMail");
-    const privilegedMail = await PrivilegedMail.deploy(usdcAddress);
+    const privilegedMail = await PrivilegedMail.deploy(usdcAddress, ownerAddress);
     await privilegedMail.waitForDeployment();
     
     const privilegedMailAddress = await privilegedMail.getAddress();
@@ -109,7 +113,7 @@ async function main() {
     // Deploy MailService
     console.log("📬 Deploying MailService...");
     const MailService = await ethers.getContractFactory("MailService");
-    const mailService = await MailService.deploy(usdcAddress);
+    const mailService = await MailService.deploy(usdcAddress, ownerAddress);
     await mailService.waitForDeployment();
     
     const mailServiceAddress = await mailService.getAddress();
@@ -136,6 +140,7 @@ async function main() {
       chainId: network.config.chainId,
       timestamp: new Date().toISOString(),
       deployer: deployer.address,
+      owner: ownerAddress,
       contracts: {
         usdc: usdcAddress,
         privilegedMail: privilegedMailAddress,

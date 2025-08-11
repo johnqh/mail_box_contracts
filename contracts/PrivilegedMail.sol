@@ -33,9 +33,9 @@ contract PrivilegedMail {
         _;
     }
     
-    constructor(address _usdcToken) {
+    constructor(address _usdcToken, address _owner) {
         usdcToken = IERC20(_usdcToken);
-        owner = msg.sender;
+        owner = _owner;
     }
     
     

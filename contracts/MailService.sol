@@ -31,8 +31,8 @@ contract MailService {
         _;
     }
     
-    constructor(address _usdcToken) {
-        owner = msg.sender;
+    constructor(address _usdcToken, address _owner) {
+        owner = _owner;
         usdcToken = IERC20(_usdcToken);
     }
     
