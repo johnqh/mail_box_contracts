@@ -19,7 +19,8 @@
       "Bash(find:*)",
       "Bash(grep:*)",
       "Bash(sed:*)",
-      "Bash(npm run deploy:local:*)"
+      "Bash(npm run deploy:local:*)",
+      "WebFetch(domain:help.safe.global)"
     ],
     "deny": []
   }

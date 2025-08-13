@@ -10,29 +10,13 @@ const USDC_ADDRESSES: Record<string, string> = {
   base: "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913", // USDC on Base
   avalanche: "0xB97EF9Ef8734C71904D8002F8b6Bc66Dd9c48a6E", // USDC on Avalanche
   bsc: "0x8AC76a51cc950d9822D68b83fE1Ad97B32Cd580d", // USDC on BSC
-  fantom: "0x04068DA6C83AFCFA0e13ba15A6696662335D5B75", // USDC on Fantom
   gnosis: "0xDDAfbb505ad214D7b80b1f830fcCc89B60fb7A83", // USDC on Gnosis
   celo: "0xcebA9300f2b948710d2653dD7B07f33A8B32118C", // USDC on Celo
   
   // Testnets - using zero address as placeholder (deploy mock USDC for testing)
   sepolia: "0x0000000000000000000000000000000000000000",
-  goerli: "0x0000000000000000000000000000000000000000",
-  mumbai: "0x0000000000000000000000000000000000000000",
-  "optimism-goerli": "0x0000000000000000000000000000000000000000",
-  "arbitrum-goerli": "0x0000000000000000000000000000000000000000",
-  "arbitrum-sepolia": "0x0000000000000000000000000000000000000000",
-  "base-goerli": "0x0000000000000000000000000000000000000000",
   "base-sepolia": "0x0000000000000000000000000000000000000000",
-  fuji: "0x0000000000000000000000000000000000000000",
-  bscTestnet: "0x0000000000000000000000000000000000000000",
-  fantomTestnet: "0x0000000000000000000000000000000000000000",
-  zkSyncTestnet: "0x0000000000000000000000000000000000000000",
-  "linea-goerli": "0x0000000000000000000000000000000000000000",
   "scroll-sepolia": "0x0000000000000000000000000000000000000000",
-  "mantle-testnet": "0x0000000000000000000000000000000000000000",
-  chiado: "0x0000000000000000000000000000000000000000",
-  moonbaseAlpha: "0x0000000000000000000000000000000000000000",
-  alfajores: "0x0000000000000000000000000000000000000000",
   
   // Local development
   hardhat: "0x0000000000000000000000000000000000000000",
@@ -75,10 +59,7 @@ async function main() {
   let usdcAddress = USDC_ADDRESSES[networkName];
   
   // For testnets and local networks, deploy mock USDC
-  const testNetworks = ["sepolia", "goerli", "mumbai", "optimism-goerli", "arbitrum-goerli", 
-                       "arbitrum-sepolia", "base-goerli", "base-sepolia", "fuji", "bscTestnet", 
-                       "fantomTestnet", "zkSyncTestnet", "linea-goerli", "scroll-sepolia", 
-                       "mantle-testnet", "chiado", "moonbaseAlpha", "alfajores", "hardhat", "localhost"];
+  const testNetworks = ["sepolia", "base-sepolia", "scroll-sepolia", "hardhat", "localhost"];
   
   if (testNetworks.includes(networkName)) {
     if (process.env.USDC_ADDRESS) {
