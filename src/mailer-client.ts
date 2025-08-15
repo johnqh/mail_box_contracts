@@ -26,23 +26,25 @@ export class MailerClient {
   }
 
   async sendPriorityPrepared(
+    to: string,
     mailId: string
   ): Promise<ethers.ContractTransactionResponse> {
-    return await this.contract.sendPriorityPrepared(mailId);
+    return await this.contract.sendPriorityPrepared(to, mailId);
   }
 
-  async sendFree(
+  async send(
     to: string,
     subject: string,
     body: string
   ): Promise<ethers.ContractTransactionResponse> {
-    return await this.contract.sendFree(to, subject, body);
+    return await this.contract.send(to, subject, body);
   }
 
-  async sendFreePrepared(
+  async sendPrepared(
+    to: string,
     mailId: string
   ): Promise<ethers.ContractTransactionResponse> {
-    return await this.contract.sendFreePrepared(mailId);
+    return await this.contract.sendPrepared(to, mailId);
   }
 
   async getSendFee(): Promise<bigint> {
@@ -55,6 +57,31 @@ export class MailerClient {
 
   getAddress(): Promise<string> {
     return this.contract.getAddress();
+  }
+
+  async claimRecipientShare(): Promise<ethers.ContractTransactionResponse> {
+    return await this.contract.claimRecipientShare();
+  }
+
+  async claimOwnerShare(): Promise<ethers.ContractTransactionResponse> {
+    return await this.contract.claimOwnerShare();
+  }
+
+  async claimExpiredShares(recipient: string): Promise<ethers.ContractTransactionResponse> {
+    return await this.contract.claimExpiredShares(recipient);
+  }
+
+  async getRecipientClaimable(recipient: string): Promise<{amount: bigint, expiresAt: bigint, isExpired: boolean}> {
+    const result = await this.contract.getRecipientClaimable(recipient);
+    return {
+      amount: result[0],
+      expiresAt: result[1], 
+      isExpired: result[2]
+    };
+  }
+
+  async getOwnerClaimable(): Promise<bigint> {
+    return await this.contract.getOwnerClaimable();
   }
 
   getContract(): Mailer {
