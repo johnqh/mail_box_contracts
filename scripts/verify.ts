@@ -7,9 +7,10 @@ interface DeploymentInfo {
   chainId: number;
   timestamp: string;
   deployer: string;
+  owner: string;
   contracts: {
     usdc: string;
-    privilegedMail: string;
+    mailer: string;
     mailService: string;
   };
   fees: {
@@ -75,19 +76,19 @@ async function main() {
       await verifyContract(deploymentInfo.contracts.usdc, [], "contracts/MockUSDC.sol:MockUSDC");
     }
 
-    // Verify PrivilegedMail
-    console.log("📧 Verifying PrivilegedMail...");
+    // Verify Mailer
+    console.log("📧 Verifying Mailer...");
     await verifyContract(
-      deploymentInfo.contracts.privilegedMail, 
-      [deploymentInfo.contracts.usdc],
-      "contracts/PrivilegedMail.sol:PrivilegedMail"
+      deploymentInfo.contracts.mailer, 
+      [deploymentInfo.contracts.usdc, deploymentInfo.owner],
+      "contracts/Mailer.sol:Mailer"
     );
 
     // Verify MailService
     console.log("📬 Verifying MailService...");
     await verifyContract(
       deploymentInfo.contracts.mailService, 
-      [deploymentInfo.contracts.usdc],
+      [deploymentInfo.contracts.usdc, deploymentInfo.owner],
       "contracts/MailService.sol:MailService"
     );
 
@@ -95,7 +96,7 @@ async function main() {
     console.log("🎉 ALL CONTRACTS VERIFIED SUCCESSFULLY!");
     console.log("=".repeat(50));
     console.log("Network:", networkName);
-    console.log("PrivilegedMail:", deploymentInfo.contracts.privilegedMail);
+    console.log("Mailer:", deploymentInfo.contracts.mailer);
     console.log("MailService:", deploymentInfo.contracts.mailService);
     if (testNetworks.includes(networkName)) {
       console.log("MockUSDC:", deploymentInfo.contracts.usdc);

@@ -79,16 +79,16 @@ async function main() {
   console.log("-".repeat(50));
 
   try {
-    // Deploy PrivilegedMail
-    console.log("📧 Deploying PrivilegedMail...");
-    const PrivilegedMail = await ethers.getContractFactory("PrivilegedMail");
-    const privilegedMail = await PrivilegedMail.deploy(usdcAddress, ownerAddress);
-    await privilegedMail.waitForDeployment();
+    // Deploy Mailer
+    console.log("📧 Deploying Mailer...");
+    const Mailer = await ethers.getContractFactory("Mailer");
+    const mailer = await Mailer.deploy(usdcAddress, ownerAddress);
+    await mailer.waitForDeployment();
     
-    const privilegedMailAddress = await privilegedMail.getAddress();
-    console.log("✅ PrivilegedMail deployed to:", privilegedMailAddress);
+    const mailerAddress = await mailer.getAddress();
+    console.log("✅ Mailer deployed to:", mailerAddress);
     
-    const sendFee = await privilegedMail.sendFee();
+    const sendFee = await mailer.sendFee();
     console.log("   - Send fee:", ethers.formatUnits(sendFee, 6), "USDC");
 
     // Deploy MailService
@@ -111,7 +111,7 @@ async function main() {
     console.log("Network:", networkName);
     console.log("Chain ID:", network.config.chainId);
     console.log("USDC Token:", usdcAddress);
-    console.log("PrivilegedMail:", privilegedMailAddress);
+    console.log("Mailer:", mailerAddress);
     console.log("MailService:", mailServiceAddress);
     console.log("=".repeat(50));
 
@@ -124,7 +124,7 @@ async function main() {
       owner: ownerAddress,
       contracts: {
         usdc: usdcAddress,
-        privilegedMail: privilegedMailAddress,
+        mailer: mailerAddress,
         mailService: mailServiceAddress
       },
       fees: {

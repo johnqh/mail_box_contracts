@@ -20,8 +20,10 @@
       "Bash(grep:*)",
       "Bash(sed:*)",
       "Bash(npm run deploy:local:*)",
-      "WebFetch(domain:help.safe.global)"
+      "WebFetch(domain:help.safe.global)",
+      "Bash(npm run clean:*)"
     ],
-    "deny": []
+    "deny": [],
+    "defaultMode": "acceptEdits"
   }
 }

@@ -18,9 +18,9 @@ describe("MailService", function () {
     mockUSDC = await MockUSDC.deploy();
     await mockUSDC.waitForDeployment();
     
-    // Deploy MailService with USDC token only
+    // Deploy MailService with USDC token and owner
     const MailService = await ethers.getContractFactory("MailService");
-    mailService = await MailService.deploy(await mockUSDC.getAddress());
+    mailService = await MailService.deploy(await mockUSDC.getAddress(), owner.address);
     await mailService.waitForDeployment();
     
   });

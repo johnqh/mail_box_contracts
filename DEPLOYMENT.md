@@ -118,7 +118,7 @@ The deployment script automatically uses the correct USDC token address for each
 ### What Gets Deployed
 
 1. **MockUSDC** (testnets only) - Test USDC token
-2. **PrivilegedMail** - Mail sending contract
+2. **Mailer** - Mail sending contract
 3. **MailService** - Domain registration and delegation
 
 ### Deployment Outputs
@@ -130,7 +130,7 @@ After deployment, you'll see:
 Network: polygon
 Chain ID: 137
 USDC Token: 0x2791Bca1f2de4661ED88A30C99A7a9449Aa84174
-PrivilegedMail: 0x1234...abcd
+Mailer: 0x1234...abcd
 MailService: 0x5678...efgh
 ==================================================
 ```
@@ -146,7 +146,7 @@ Deployment info is automatically saved to `deployments/<network>.json`:
   "deployer": "0x...",
   "contracts": {
     "usdc": "0x2791Bca1f2de4661ED88A30C99A7a9449Aa84174",
-    "privilegedMail": "0x1234...abcd",
+    "mailer": "0x1234...abcd",
     "mailService": "0x5678...efgh"
   },
   "fees": {
@@ -183,7 +183,7 @@ npm run verify:base
 
 If automated verification fails:
 ```bash
-npx hardhat verify --network polygon 0x1234...abcd "0x2791Bca1f2de4661ED88A30C99A7a9449Aa84174"
+npx hardhat verify --network polygon 0x1234...abcd "0x2791Bca1f2de4661ED88A30C99A7a9449Aa84174" "0xOwnerAddress"
 ```
 
 ## 🛠️ Advanced Usage

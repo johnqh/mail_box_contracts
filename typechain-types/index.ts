@@ -3,14 +3,14 @@
 /* eslint-disable */
 import type * as mailServiceSol from "./MailService.sol";
 export type { mailServiceSol };
-import type * as privilegedMailSol from "./PrivilegedMail.sol";
-export type { privilegedMailSol };
+import type * as mailerSol from "./Mailer.sol";
+export type { mailerSol };
 export type { MockUSDC } from "./MockUSDC";
 export * as factories from "./factories";
-export type { IERC20 } from "./MailService.sol/IERC20";
-export { IERC20__factory } from "./factories/MailService.sol/IERC20__factory";
+export type { IERC20 } from "./Mailer.sol/IERC20";
+export { IERC20__factory } from "./factories/Mailer.sol/IERC20__factory";
+export type { Mailer } from "./Mailer.sol/Mailer";
+export { Mailer__factory } from "./factories/Mailer.sol/Mailer__factory";
 export type { MailService } from "./MailService.sol/MailService";
 export { MailService__factory } from "./factories/MailService.sol/MailService__factory";
 export { MockUSDC__factory } from "./factories/MockUSDC__factory";
-export type { PrivilegedMail } from "./PrivilegedMail.sol/PrivilegedMail";
-export { PrivilegedMail__factory } from "./factories/PrivilegedMail.sol/PrivilegedMail__factory";
