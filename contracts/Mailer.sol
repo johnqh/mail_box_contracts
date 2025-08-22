@@ -1,26 +1,49 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.24;
 
+/**
+ * @title Mailer
+ * @notice Decentralized messaging system with USDC fees and revenue sharing
+ * @dev Two-tier fee system: Priority (full fee + 90% share) and Standard (10% fee only)
+ * @author MailBox Team
+ */
+
 interface IERC20 {
     function transferFrom(address from, address to, uint256 amount) external returns (bool);
     function transfer(address to, uint256 amount) external returns (bool);
 }
 
 contract Mailer {
+    /// @notice USDC token contract for fee payments
     IERC20 public immutable usdcToken;
-    uint256 public sendFee = 100000; // 0.1 USDC (6 decimals)
+    
+    /// @notice Base sending fee (0.1 USDC with 6 decimals)
+    uint256 public sendFee = 100000;
+    
+    /// @notice Contract owner with administrative privileges
     address public immutable owner;
     
+    /// @notice Time limit for recipients to claim their revenue share (60 days)
     uint256 public constant CLAIM_PERIOD = 60 days;
+    
+    /// @notice Percentage of fee that goes to message sender as revenue share
     uint256 public constant RECIPIENT_SHARE = 90; // 90%
+    
+    /// @notice Percentage of fee that goes to contract owner
     uint256 public constant OWNER_SHARE = 10; // 10%
     
+    /// @notice Structure for tracking claimable amounts with timestamp
+    /// @param amount USDC amount claimable by recipient
+    /// @param timestamp When the claimable amount was last updated
     struct ClaimableAmount {
         uint256 amount;
         uint256 timestamp;
     }
     
+    /// @notice Mapping of recipient addresses to their claimable revenue shares
     mapping(address => ClaimableAmount) public recipientClaims;
+    
+    /// @notice Total USDC amount claimable by contract owner
     uint256 public ownerClaimable;
     
     event MailSent(

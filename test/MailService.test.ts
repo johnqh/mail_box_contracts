@@ -93,8 +93,8 @@ describe("MailService", function () {
       
       await expect(
         mailService.connect(addr1).delegateTo(ethers.ZeroAddress)
-      ).to.emit(mailService, "DelegationCleared")
-       .withArgs(addr1.address);
+      ).to.emit(mailService, "DelegationSet")
+       .withArgs(addr1.address, ethers.ZeroAddress);
       
       // Verify fee was charged even for clearing
       const finalBalance = await mockUSDC.balanceOf(await mailService.getAddress());
@@ -128,6 +128,81 @@ describe("MailService", function () {
     });
   });
 
+  describe("rejectDelegation function", function () {
+    beforeEach(async function () {
+      // Fund addresses with USDC for delegation fees
+      await mockUSDC.mint(addr1.address, ethers.parseUnits("100", 6));
+      await mockUSDC.connect(addr1).approve(await mailService.getAddress(), ethers.parseUnits("100", 6));
+      await mockUSDC.mint(addr2.address, ethers.parseUnits("100", 6));
+      await mockUSDC.connect(addr2).approve(await mailService.getAddress(), ethers.parseUnits("100", 6));
+    });
+
+    it("Should allow delegate to reject delegation", async function () {
+      // First, addr1 delegates to addr2
+      await mailService.connect(addr1).delegateTo(addr2.address);
+      
+      // Verify delegation is set
+      expect(await mailService.delegations(addr1.address)).to.equal(addr2.address);
+      
+      // Now addr2 rejects the delegation
+      await expect(
+        mailService.connect(addr2).rejectDelegation(addr1.address)
+      ).to.emit(mailService, "DelegationSet")
+       .withArgs(addr1.address, ethers.ZeroAddress);
+      
+      // Verify delegation is cleared
+      expect(await mailService.delegations(addr1.address)).to.equal(ethers.ZeroAddress);
+    });
+
+    it("Should revert when trying to reject non-existent delegation", async function () {
+      // addr2 tries to reject delegation from addr1, but addr1 never delegated to addr2
+      await expect(
+        mailService.connect(addr2).rejectDelegation(addr1.address)
+      ).to.be.revertedWithCustomError(mailService, "NoDelegationToReject");
+    });
+
+    it("Should revert when trying to reject delegation not made to caller", async function () {
+      // addr1 delegates to addr2
+      await mailService.connect(addr1).delegateTo(addr2.address);
+      
+      // addr3 tries to reject the delegation (but delegation is to addr2, not addr3)
+      await expect(
+        mailService.connect(addr3).rejectDelegation(addr1.address)
+      ).to.be.revertedWithCustomError(mailService, "NoDelegationToReject");
+    });
+
+    it("Should revert when delegation was already cleared", async function () {
+      // addr1 delegates to addr2
+      await mailService.connect(addr1).delegateTo(addr2.address);
+      
+      // addr1 clears their own delegation
+      await mailService.connect(addr1).delegateTo(ethers.ZeroAddress);
+      
+      // addr2 tries to reject the already cleared delegation
+      await expect(
+        mailService.connect(addr2).rejectDelegation(addr1.address)
+      ).to.be.revertedWithCustomError(mailService, "NoDelegationToReject");
+    });
+
+    it("Should handle multiple delegations and rejections", async function () {
+      // addr1 delegates to addr2
+      await mailService.connect(addr1).delegateTo(addr2.address);
+      // addr2 delegates to addr3
+      await mailService.connect(addr2).delegateTo(addr3.address);
+      
+      // Verify both delegations
+      expect(await mailService.delegations(addr1.address)).to.equal(addr2.address);
+      expect(await mailService.delegations(addr2.address)).to.equal(addr3.address);
+      
+      // addr2 rejects delegation from addr1
+      await mailService.connect(addr2).rejectDelegation(addr1.address);
+      expect(await mailService.delegations(addr1.address)).to.equal(ethers.ZeroAddress);
+      
+      // addr3 rejects delegation from addr2
+      await mailService.connect(addr3).rejectDelegation(addr2.address);
+      expect(await mailService.delegations(addr2.address)).to.equal(ethers.ZeroAddress);
+    });
+  });
 
   describe("Domain registration", function () {
     // No beforeEach needed - tests will fund accounts individually as needed
