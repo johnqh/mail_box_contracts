@@ -33,6 +33,30 @@ This will automatically trigger the release workflow.
 3. Enter the version tag (e.g., `v1.2.0`)
 4. Click **Run workflow**
 
+## 🔄 Workflow Overview
+
+### Build Workflow (Every Commit)
+**Triggers**: Every push to `main`, `master`, `develop`, or feature branches
+- ✅ Quick validation and security checks
+- ✅ Contract compilation and TypeScript builds  
+- ✅ Full test suite across Node.js versions
+- ✅ Package validation and export testing
+- ❌ **NO publishing** - just validates code quality
+
+### CI Workflow (Comprehensive Testing)
+**Triggers**: Push/PR to `main`/`master`/`develop` + Daily schedule
+- ✅ Multi-platform testing (Ubuntu, Windows, macOS)
+- ✅ Extended security audits and dependency checks
+- ✅ Code quality and formatting validation
+- ✅ PR validation for conventional commits
+
+### Release Workflow (Publishing)
+**Triggers**: Git tags (`v*.*.*`) or manual dispatch
+- ✅ Full quality gates (tests + security)
+- ✅ NPM package publishing
+- ✅ Docker image builds and deployment
+- ✅ GitHub release creation with changelog
+
 ## 📋 Release Workflow Steps
 
 The automated release process includes:

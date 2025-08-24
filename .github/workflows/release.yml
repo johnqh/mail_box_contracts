@@ -3,13 +3,24 @@ name: Release TypeScript Client Library
 on:
   push:
     tags:
-      - 'v*.*.*'  # Triggers on version tags like v1.0.0, v1.1.0, etc.
-  workflow_dispatch:  # Allow manual triggering
+      - 'v*.*.*'        # Triggers on version tags like v1.0.0, v1.1.0, etc.
+      - 'v*.*.*-*'      # Triggers on pre-release tags like v1.0.0-beta.1
+    branches:
+      - main
+      - master
+    paths:
+      - 'package.json'  # Trigger when version in package.json changes
+  workflow_dispatch:    # Allow manual triggering
     inputs:
       version_tag:
         description: 'Version tag to release (e.g., v1.1.0)'
         required: true
         type: string
+      dry_run:
+        description: 'Perform a dry run without publishing'
+        required: false
+        default: false
+        type: boolean
 
 jobs:
   test:
@@ -66,6 +77,8 @@ jobs:
     name: Publish to NPM
     runs-on: ubuntu-latest
     needs: [test, security-audit]
+    # Only run if this is a tag push or manual dispatch
+    if: startsWith(github.ref, 'refs/tags/') || github.event_name == 'workflow_dispatch'
     
     steps:
       - name: Checkout code
@@ -122,7 +135,14 @@ jobs:
           NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
       
       - name: Publish to NPM
-        run: npm publish --access public
+        run: |
+          if [ "${{ github.event.inputs.dry_run }}" = "true" ]; then
+            echo "🧪 DRY RUN: Would publish to NPM"
+            npm publish --dry-run --access public
+          else
+            echo "📦 Publishing to NPM"
+            npm publish --access public
+          fi
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
       
@@ -138,6 +158,8 @@ jobs:
     name: Create GitHub Release
     runs-on: ubuntu-latest
     needs: [test, security-audit]
+    # Only run if this is a tag push or manual dispatch
+    if: startsWith(github.ref, 'refs/tags/') || github.event_name == 'workflow_dispatch'
     
     steps:
       - name: Checkout code
@@ -200,6 +222,8 @@ jobs:
     name: Build and Push Docker Image
     runs-on: ubuntu-latest
     needs: [test, security-audit]
+    # Only run if this is a tag push or manual dispatch
+    if: startsWith(github.ref, 'refs/tags/') || github.event_name == 'workflow_dispatch'
     
     steps:
       - name: Checkout code
@@ -293,6 +317,8 @@ jobs:
     name: Post-Release Tasks
     runs-on: ubuntu-latest
     needs: [publish-npm, create-github-release, build-docker]
+    # Only run if this is a tag push or manual dispatch
+    if: startsWith(github.ref, 'refs/tags/') || github.event_name == 'workflow_dispatch'
     
     steps:
       - name: Checkout code

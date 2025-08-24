@@ -2,9 +2,14 @@ name: Continuous Integration
 
 on:
   push:
-    branches: [ main, develop ]
+    branches: [ main, master, develop ]
   pull_request:
-    branches: [ main, develop ]
+    branches: [ main, master, develop ]
+  schedule:
+    # Run daily at 2 AM UTC to catch dependency issues
+    - cron: '0 2 * * *'
+  workflow_dispatch:
+    # Allow manual triggering
 
 jobs:
   test:
