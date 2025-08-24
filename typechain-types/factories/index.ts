@@ -3,4 +3,5 @@
 /* eslint-disable */
 export * as mailServiceSol from "./MailService.sol";
 export * as mailerSol from "./Mailer.sol";
+export { MailBoxFactory__factory } from "./MailBoxFactory__factory";
 export { MockUSDC__factory } from "./MockUSDC__factory";

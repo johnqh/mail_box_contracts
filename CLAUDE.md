@@ -10,7 +10,8 @@ This file provides comprehensive guidance for AI assistants working with this de
 
 1. **MailService.sol** - Domain registration and delegation management
 2. **Mailer.sol** - Message sending with revenue sharing
-3. **MockUSDC.sol** - Test token for development
+3. **MailBoxFactory.sol** - CREATE2 factory for deterministic cross-chain deployment
+4. **MockUSDC.sol** - Test token for development
 
 ## Common Development Commands
 
@@ -21,8 +22,10 @@ npm test          # Run all tests (81 tests total)
 npm run build     # Build TypeScript files
 
 # Deployment Commands
-npm run deploy:local    # Deploy to local Hardhat network
-npx hardhat node      # Start local blockchain
+npm run deploy:local           # Deploy to local Hardhat network (standard)
+npx hardhat run scripts/deploy-create2.ts --network <network>  # Deterministic deployment
+npx hardhat run scripts/predict-addresses.ts                   # Predict cross-chain addresses
+npx hardhat node              # Start local blockchain
 
 # Utility Commands
 npm run clean          # Clean compiled artifacts
@@ -85,8 +88,8 @@ npm run lint          # Linting (if available)
 
 ## Testing Architecture
 
-**Test Files**: `test/MailService.test.ts`, `test/Mailer.test.ts`
-**Total Tests**: 81 passing tests
+**Test Files**: `test/MailService.test.ts`, `test/Mailer.test.ts`, `test/MailBoxFactory.test.ts`
+**Total Tests**: 100+ passing tests (including factory tests)
 **Test Categories**:
 
 ### MailService Tests (27 tests)
@@ -174,6 +177,75 @@ expect(finalBalance - initialBalance).to.equal(expectedFee);
 - **Test Environment**: Built-in Hardhat test network
 - **Deployment**: Uses standard Hardhat deployment patterns
 
+## Cross-Chain Deployment with CREATE2
+
+### MailBoxFactory Contract (`contracts/MailBoxFactory.sol`)
+
+**Purpose**: Deterministic deployment of contracts across multiple EVM chains
+**Key Features**:
+- Uses CREATE2 for identical contract addresses across networks
+- Generates deterministic salts based on project/version/contract type
+- Provides address prediction before deployment
+- Batch deployment support
+
+**Core Functions**:
+- `deployMailer(address usdcToken, address owner, bytes32 salt)` - Deploy Mailer with CREATE2
+- `deployMailService(address usdcToken, address owner, bytes32 salt)` - Deploy MailService with CREATE2
+- `deployBoth(...)` - Deploy both contracts in single transaction
+- `predictMailerAddress(...)` / `predictMailServiceAddress(...)` - Predict addresses before deployment
+- `generateSalt(string projectName, string version, string contractType)` - Generate deterministic salt
+- `isContractDeployed(address)` - Check if contract exists at address
+
+**Cross-Chain Deployment Process**:
+1. **Predict Addresses**: `npx hardhat run scripts/predict-addresses.ts`
+2. **Deploy Factory**: Same factory address on all chains with same deployer
+3. **Deploy Contracts**: `OWNER_ADDRESS=<addr> npx hardhat run scripts/deploy-create2.ts --network <network>`
+4. **Verify Consistency**: All networks will have identical contract addresses
+
+**Benefits**:
+- **Identical Addresses**: Same contract addresses across all EVM chains
+- **Predictable**: Know addresses before deployment
+- **Batch Deployment**: Deploy multiple contracts efficiently
+- **Version Control**: Salt includes version for upgrades
+
+### Deployment Scripts
+
+**Standard Deployment** (`scripts/deploy.ts`):
+- Uses regular contract deployment
+- Different addresses per chain
+- Suitable for single-chain applications
+
+**CREATE2 Deployment** (`scripts/deploy-create2.ts`):
+- Uses MailBoxFactory for deterministic addresses
+- Same addresses across all chains
+- Includes comprehensive address verification
+- Automatically handles USDC token detection per network
+
+**Address Prediction** (`scripts/predict-addresses.ts`):
+- Predicts contract addresses without deployment
+- Shows addresses for all supported networks
+- Generates deployment commands
+- Verifies address consistency
+
+### Supported Networks
+
+**Mainnets**: Ethereum, Polygon, Optimism, Arbitrum, Base, Avalanche, BSC, Gnosis, Celo
+**Testnets**: Sepolia, Base Sepolia, Scroll Sepolia
+**Local**: Hardhat, Localhost
+
+### Example Usage
+
+```bash
+# 1. Predict addresses across all networks
+npx hardhat run scripts/predict-addresses.ts
+
+# 2. Deploy to Polygon with specific owner
+OWNER_ADDRESS=0x123... npx hardhat run scripts/deploy-create2.ts --network polygon
+
+# 3. Deploy to Arbitrum (same addresses as Polygon)
+OWNER_ADDRESS=0x123... npx hardhat run scripts/deploy-create2.ts --network arbitrum
+```
+
 ## AI Assistant Instructions
 
 When working with this project:
@@ -185,5 +257,7 @@ When working with this project:
 6. **Verify event emissions match expected parameters**
 7. **Consider fee calculations and revenue sharing implications**
 8. **Test edge cases like insufficient balances and permissions**
+9. **For cross-chain deployments, use CREATE2 factory pattern**
+10. **Always predict addresses before deployment to verify consistency**
 
-This project emphasizes security, comprehensive testing, and clear separation of concerns between domain management and messaging functionality.
+This project emphasizes security, comprehensive testing, cross-chain consistency, and clear separation of concerns between domain management and messaging functionality.
