@@ -17,8 +17,8 @@ const USDC_ADDRESSES: Record<string, string> = {
 // Configuration for deterministic deployment
 const DEPLOYMENT_CONFIG = {
   projectName: "MailBox",
-  version: "v1.1.0",
-  factorySalt: "MailBoxFactory_v1.1.0",
+  version: "v1.2.0",
+  factorySalt: "MailBoxFactory_v1.2.0",
 };
 
 interface NetworkDeployment {

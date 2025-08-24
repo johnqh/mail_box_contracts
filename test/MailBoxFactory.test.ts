@@ -11,7 +11,7 @@ describe("MailBoxFactory", function () {
   let addr2: SignerWithAddress;
 
   const PROJECT_NAME = "MailBox";
-  const VERSION = "v1.1.0";
+  const VERSION = "v1.2.0";
 
   function getBytecodeWithConstructor(contractFactory: any, ...constructorArgs: any[]) {
     // Combine bytecode with encoded constructor args
