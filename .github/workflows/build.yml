@@ -2,14 +2,14 @@ name: Build and Test
 
 on:
   push:
-    branches: [ main, master, develop, 'feature/*', 'hotfix/*', 'release/*' ]
+    branches: [ main, develop, 'feature/*', 'hotfix/*', 'release/*' ]
     paths-ignore:
       - '**.md'
       - '.gitignore'
       - 'LICENSE'
       - 'docs/**'
   pull_request:
-    branches: [ main, master, develop ]
+    branches: [ main, develop ]
     paths-ignore:
       - '**.md'
       - '.gitignore'
@@ -52,7 +52,7 @@ jobs:
           fi
           
           IS_MAIN_BRANCH="false"
-          if [ "$BRANCH_NAME" = "main" ] || [ "$BRANCH_NAME" = "master" ]; then
+          if [ "$BRANCH_NAME" = "main" ]; then
             IS_MAIN_BRANCH="true"
           fi
           

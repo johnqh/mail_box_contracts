@@ -36,7 +36,7 @@ This will automatically trigger the release workflow.
 ## 🔄 Workflow Overview
 
 ### Build Workflow (Every Commit)
-**Triggers**: Every push to `main`, `master`, `develop`, or feature branches
+**Triggers**: Every push to `main`, `develop`, or feature branches
 - ✅ Quick validation and security checks
 - ✅ Contract compilation and TypeScript builds  
 - ✅ Full test suite across Node.js versions
@@ -44,7 +44,7 @@ This will automatically trigger the release workflow.
 - ❌ **NO publishing** - just validates code quality
 
 ### CI Workflow (Comprehensive Testing)
-**Triggers**: Push/PR to `main`/`master`/`develop` + Daily schedule
+**Triggers**: Push/PR to `main`/`develop` + Daily schedule
 - ✅ Multi-platform testing (Ubuntu, Windows, macOS)
 - ✅ Extended security audits and dependency checks
 - ✅ Code quality and formatting validation
