@@ -46,6 +46,9 @@ contract Mailer {
     /// @notice Total USDC amount claimable by contract owner
     uint256 public ownerClaimable;
     
+    /// @notice Reentrancy guard status
+    uint256 private _status;
+    
     event MailSent(
         address indexed from,
         address indexed to,
@@ -68,6 +71,11 @@ contract Mailer {
     error OnlyOwner();
     error NoClaimableAmount();
     error ClaimPeriodNotExpired();
+    error FeePaymentRequired();
+    error TransferFailed();
+    error ReentrancyGuard();
+    error InvalidAddress();
+    error MathOverflow();
     
     modifier onlyOwner() {
         if (msg.sender != owner) {
@@ -76,7 +84,19 @@ contract Mailer {
         _;
     }
     
+    modifier nonReentrant() {
+        if (_status == 1) {
+            revert ReentrancyGuard();
+        }
+        _status = 1;
+        _;
+        _status = 0;
+    }
+    
     constructor(address _usdcToken, address _owner) {
+        if (_usdcToken == address(0) || _owner == address(0)) {
+            revert InvalidAddress();
+        }
         usdcToken = IERC20(_usdcToken);
         owner = _owner;
     }
@@ -85,45 +105,45 @@ contract Mailer {
     function sendPriority(
         string calldata subject,
         string calldata body
-    ) external {
-        bool success = usdcToken.transferFrom(msg.sender, address(this), sendFee);
-        if (success) {
-            _recordShares(msg.sender, sendFee);
-            emit MailSent(msg.sender, msg.sender, subject, body);
+    ) external nonReentrant {
+        if (!usdcToken.transferFrom(msg.sender, address(this), sendFee)) {
+            revert FeePaymentRequired();
         }
+        _recordShares(msg.sender, sendFee);
+        emit MailSent(msg.sender, msg.sender, subject, body);
     }
     
     function sendPriorityPrepared(
         string calldata mailId
-    ) external {
-        bool success = usdcToken.transferFrom(msg.sender, address(this), sendFee);
-        if (success) {
-            _recordShares(msg.sender, sendFee);
-            emit PreparedMailSent(msg.sender, msg.sender, mailId);
+    ) external nonReentrant {
+        if (!usdcToken.transferFrom(msg.sender, address(this), sendFee)) {
+            revert FeePaymentRequired();
         }
+        _recordShares(msg.sender, sendFee);
+        emit PreparedMailSent(msg.sender, msg.sender, mailId);
     }
     
     function send(
         string calldata subject,
         string calldata body
-    ) external {
+    ) external nonReentrant {
         uint256 ownerFee = (sendFee * OWNER_SHARE) / 100;
-        bool success = usdcToken.transferFrom(msg.sender, address(this), ownerFee);
-        if (success) {
-            ownerClaimable += ownerFee;
-            emit MailSent(msg.sender, msg.sender, subject, body);
+        if (!usdcToken.transferFrom(msg.sender, address(this), ownerFee)) {
+            revert FeePaymentRequired();
         }
+        ownerClaimable += ownerFee;
+        emit MailSent(msg.sender, msg.sender, subject, body);
     }
     
     function sendPrepared(
         string calldata mailId
-    ) external {
+    ) external nonReentrant {
         uint256 ownerFee = (sendFee * OWNER_SHARE) / 100;
-        bool success = usdcToken.transferFrom(msg.sender, address(this), ownerFee);
-        if (success) {
-            ownerClaimable += ownerFee;
-            emit PreparedMailSent(msg.sender, msg.sender, mailId);
+        if (!usdcToken.transferFrom(msg.sender, address(this), ownerFee)) {
+            revert FeePaymentRequired();
         }
+        ownerClaimable += ownerFee;
+        emit PreparedMailSent(msg.sender, msg.sender, mailId);
     }
     
     function setFee(uint256 usdcAmount) external onlyOwner {
@@ -137,12 +157,20 @@ contract Mailer {
     }
     
     function _recordShares(address recipient, uint256 totalAmount) internal {
-        uint256 recipientAmount = (totalAmount * RECIPIENT_SHARE) / 100;
-        uint256 ownerAmount = totalAmount - recipientAmount;
+        // Ensure safe math operations
+        if (totalAmount > type(uint256).max / RECIPIENT_SHARE) {
+            revert MathOverflow();
+        }
         
-        // Update recipient's claimable amount and reset timestamp
+        // Calculate owner amount first to ensure precision
+        uint256 ownerAmount = (totalAmount * OWNER_SHARE) / 100;
+        uint256 recipientAmount = totalAmount - ownerAmount;
+        
+        // Update recipient's claimable amount and set timestamp only if not already set
         recipientClaims[recipient].amount += recipientAmount;
-        recipientClaims[recipient].timestamp = block.timestamp;
+        if (recipientClaims[recipient].timestamp == 0) {
+            recipientClaims[recipient].timestamp = block.timestamp;
+        }
         
         // Update owner's claimable amount
         ownerClaimable += ownerAmount;
@@ -150,7 +178,7 @@ contract Mailer {
         emit SharesRecorded(recipient, recipientAmount, ownerAmount);
     }
     
-    function claimRecipientShare() external {
+    function claimRecipientShare() external nonReentrant {
         ClaimableAmount storage claim = recipientClaims[msg.sender];
         if (claim.amount == 0) {
             revert NoClaimableAmount();
@@ -166,12 +194,14 @@ contract Mailer {
         claim.timestamp = 0;
         
         bool success = usdcToken.transfer(msg.sender, amount);
-        require(success, "Transfer failed");
+        if (!success) {
+            revert TransferFailed();
+        }
         
         emit RecipientClaimed(msg.sender, amount);
     }
     
-    function claimOwnerShare() external onlyOwner {
+    function claimOwnerShare() external onlyOwner nonReentrant {
         if (ownerClaimable == 0) {
             revert NoClaimableAmount();
         }
@@ -180,12 +210,14 @@ contract Mailer {
         ownerClaimable = 0;
         
         bool success = usdcToken.transfer(owner, amount);
-        require(success, "Transfer failed");
+        if (!success) {
+            revert TransferFailed();
+        }
         
         emit OwnerClaimed(amount);
     }
     
-    function claimExpiredShares(address recipient) external onlyOwner {
+    function claimExpiredShares(address recipient) external onlyOwner nonReentrant {
         ClaimableAmount storage claim = recipientClaims[recipient];
         if (claim.amount == 0) {
             revert NoClaimableAmount();

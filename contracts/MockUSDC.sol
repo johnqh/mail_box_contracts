@@ -10,20 +10,39 @@ contract MockUSDC {
     uint8 public decimals = 6;
     uint256 public totalSupply = 1000000 * 10**6; // 1M USDC
     
+    address public immutable owner;
+    
+    error OnlyOwner();
+    error InsufficientBalance();
+    error InsufficientAllowance();
+    
+    modifier onlyOwner() {
+        if (msg.sender != owner) {
+            revert OnlyOwner();
+        }
+        _;
+    }
+    
     constructor() {
+        owner = msg.sender;
         balanceOf[msg.sender] = totalSupply;
     }
     
     function transfer(address to, uint256 amount) external returns (bool) {
-        require(balanceOf[msg.sender] >= amount, "Insufficient balance");
+        if (balanceOf[msg.sender] < amount) {
+            revert InsufficientBalance();
+        }
         balanceOf[msg.sender] -= amount;
         balanceOf[to] += amount;
         return true;
     }
     
     function transferFrom(address from, address to, uint256 amount) external returns (bool) {
-        if (balanceOf[from] < amount || allowance[from][msg.sender] < amount) {
-            return false;
+        if (balanceOf[from] < amount) {
+            revert InsufficientBalance();
+        }
+        if (allowance[from][msg.sender] < amount) {
+            revert InsufficientAllowance();
         }
         
         balanceOf[from] -= amount;
@@ -38,7 +57,7 @@ contract MockUSDC {
         return true;
     }
     
-    function mint(address to, uint256 amount) external {
+    function mint(address to, uint256 amount) external onlyOwner {
         balanceOf[to] += amount;
         totalSupply += amount;
     }

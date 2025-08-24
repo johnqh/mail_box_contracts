@@ -21,6 +21,9 @@ contract MailService {
     /// @notice USDC token contract for fee payments
     IERC20 public immutable usdcToken;
     
+    /// @notice Reentrancy guard status
+    uint256 private _status;
+    
     /// @notice Fee required for domain registration (100 USDC with 6 decimals)
     uint256 public registrationFee = 100000000;
     
@@ -72,6 +75,21 @@ contract MailService {
     /// @notice Thrown when attempting to reject a non-existent delegation
     error NoDelegationToReject();
     
+    /// @notice Thrown when attempting to use disabled function
+    error FunctionDisabled();
+    
+    /// @notice Thrown when fee payment fails
+    error FeePaymentRequired();
+    
+    /// @notice Thrown when registration fee payment fails
+    error RegistrationFeeRequired();
+    
+    /// @notice Thrown when reentrancy is detected
+    error ReentrancyGuard();
+    
+    /// @notice Thrown when zero address is provided where not allowed
+    error InvalidAddress();
+    
     /// @notice Restricts function access to contract owner only
     modifier onlyOwner() {
         if (msg.sender != owner) {
@@ -80,10 +98,22 @@ contract MailService {
         _;
     }
     
+    modifier nonReentrant() {
+        if (_status == 1) {
+            revert ReentrancyGuard();
+        }
+        _status = 1;
+        _;
+        _status = 0;
+    }
+    
     /// @notice Initializes the contract with USDC token and owner
     /// @param _usdcToken Address of the USDC token contract
     /// @param _owner Address that will have administrative privileges
     constructor(address _usdcToken, address _owner) {
+        if (_usdcToken == address(0) || _owner == address(0)) {
+            revert InvalidAddress();
+        }
         owner = _owner;
         usdcToken = IERC20(_usdcToken);
     }
@@ -91,18 +121,21 @@ contract MailService {
     /// @notice Delegate mail handling to another address
     /// @dev Charges delegation fee in USDC. Use address(0) to clear delegation
     /// @param delegate Address to delegate to, or address(0) to clear
-    function delegateTo(address delegate) external {
-        bool success = usdcToken.transferFrom(msg.sender, address(this), delegationFee);
-        if (success) {
-            delegations[msg.sender] = delegate;
-            emit DelegationSet(msg.sender, delegate);
+    function delegateTo(address delegate) external nonReentrant {
+        // If clearing delegation (setting to address(0)), no fee required
+        if (delegate != address(0)) {
+            if (!usdcToken.transferFrom(msg.sender, address(this), delegationFee)) {
+                revert FeePaymentRequired();
+            }
         }
+        delegations[msg.sender] = delegate;
+        emit DelegationSet(msg.sender, delegate);
     }
     
     /// @notice Reject a delegation made to you by another address
     /// @dev Only the delegate can reject a delegation made to them
     /// @param delegatingAddress Address that delegated to msg.sender
-    function rejectDelegation(address delegatingAddress) external {
+    function rejectDelegation(address delegatingAddress) external nonReentrant {
         if (delegations[delegatingAddress] != msg.sender) {
             revert NoDelegationToReject();
         }
@@ -115,28 +148,29 @@ contract MailService {
     /// @dev Charges registration fee in USDC. Emits different events for new vs extension
     /// @param domain The domain name to register (must not be empty)
     /// @param isExtension True if extending existing registration, false for new
-    function registerDomain(string calldata domain, bool isExtension) external {
+    function registerDomain(string calldata domain, bool isExtension) external nonReentrant {
         if (bytes(domain).length == 0) {
             revert EmptyDomain();
         }
         
-        bool success = usdcToken.transferFrom(msg.sender, address(this), registrationFee);
-        if (success) {
-            uint256 expiration = block.timestamp + 365 days;
-            
-            if (isExtension) {
-                emit DomainExtended(domain, msg.sender, expiration);
-            } else {
-                emit DomainRegistered(domain, msg.sender, expiration);
-            }
+        if (!usdcToken.transferFrom(msg.sender, address(this), registrationFee)) {
+            revert RegistrationFeeRequired();
+        }
+        
+        uint256 expiration = block.timestamp + 365 days;
+        
+        if (isExtension) {
+            emit DomainExtended(domain, msg.sender, expiration);
+        } else {
+            emit DomainRegistered(domain, msg.sender, expiration);
         }
     }
     
     /// @notice Release a domain registration
-    /// @dev Only emits event - ownership validation handled by indexer
-    /// @param domain The domain name to release
-    function releaseRegistration(string calldata domain) external {
-        emit DomainReleased(domain, msg.sender);
+    /// @dev Disabled for security - domain releases should be handled by indexer logic
+    function releaseRegistration(string calldata /* domain */) external pure {
+        // Security Fix: Prevent arbitrary domain release events
+        revert FunctionDisabled();
     }
     
     /// @notice Update the domain registration fee (owner only)

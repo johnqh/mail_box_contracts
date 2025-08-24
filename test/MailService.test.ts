@@ -85,10 +85,10 @@ describe("MailService", function () {
       // Don't fund addr2, should fail
       await expect(
         mailService.connect(addr2).delegateTo(addr1.address)
-      ).to.not.emit(mailService, "DelegationSet");
+      ).to.be.revertedWithCustomError(mockUSDC, "InsufficientBalance");
     });
 
-    it("Should allow clearing delegation and charge fee", async function () {
+    it("Should allow clearing delegation without fee", async function () {
       const initialBalance = await mockUSDC.balanceOf(await mailService.getAddress());
       
       await expect(
@@ -96,9 +96,9 @@ describe("MailService", function () {
       ).to.emit(mailService, "DelegationSet")
        .withArgs(addr1.address, ethers.ZeroAddress);
       
-      // Verify fee was charged even for clearing
+      // Verify no fee was charged for clearing (security fix)
       const finalBalance = await mockUSDC.balanceOf(await mailService.getAddress());
-      expect(finalBalance - initialBalance).to.equal(10000000); // 10 USDC
+      expect(finalBalance - initialBalance).to.equal(0); // No fee for clearing
     });
 
     it("Should emit correct events for multiple delegations", async function () {
@@ -364,12 +364,10 @@ describe("MailService", function () {
       it("Should fail when account has insufficient USDC balance", async function () {
         // Don't fund addr1 - it should have 0 USDC balance
         
-        // No domain should be registered and no event emitted
+        // Should revert with InsufficientBalance error from MockUSDC
         await expect(
           mailService.connect(addr1).registerDomain("expensive.com", false)
-        ).to.not.emit(mailService, "DomainRegistered");
-        
-        // Note: Storage functions removed - registration tracking via events only
+        ).to.be.revertedWithCustomError(mockUSDC, "InsufficientBalance");
       });
     });
   });

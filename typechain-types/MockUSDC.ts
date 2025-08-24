@@ -30,6 +30,7 @@ export interface MockUSDCInterface extends Interface {
       | "decimals"
       | "mint"
       | "name"
+      | "owner"
       | "symbol"
       | "totalSupply"
       | "transfer"
@@ -54,6 +55,7 @@ export interface MockUSDCInterface extends Interface {
     values: [AddressLike, BigNumberish]
   ): string;
   encodeFunctionData(functionFragment: "name", values?: undefined): string;
+  encodeFunctionData(functionFragment: "owner", values?: undefined): string;
   encodeFunctionData(functionFragment: "symbol", values?: undefined): string;
   encodeFunctionData(
     functionFragment: "totalSupply",
@@ -74,6 +76,7 @@ export interface MockUSDCInterface extends Interface {
   decodeFunctionResult(functionFragment: "decimals", data: BytesLike): Result;
   decodeFunctionResult(functionFragment: "mint", data: BytesLike): Result;
   decodeFunctionResult(functionFragment: "name", data: BytesLike): Result;
+  decodeFunctionResult(functionFragment: "owner", data: BytesLike): Result;
   decodeFunctionResult(functionFragment: "symbol", data: BytesLike): Result;
   decodeFunctionResult(
     functionFragment: "totalSupply",
@@ -153,6 +156,8 @@ export interface MockUSDC extends BaseContract {
 
   name: TypedContractMethod<[], [string], "view">;
 
+  owner: TypedContractMethod<[], [string], "view">;
+
   symbol: TypedContractMethod<[], [string], "view">;
 
   totalSupply: TypedContractMethod<[], [bigint], "view">;
@@ -202,6 +207,9 @@ export interface MockUSDC extends BaseContract {
   >;
   getFunction(
     nameOrSignature: "name"
+  ): TypedContractMethod<[], [string], "view">;
+  getFunction(
+    nameOrSignature: "owner"
   ): TypedContractMethod<[], [string], "view">;
   getFunction(
     nameOrSignature: "symbol"

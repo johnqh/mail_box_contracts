@@ -54,7 +54,7 @@ describe("Mailer", function () {
       // addr2 has no USDC balance
       await expect(
         mailer.connect(addr2).sendPriority("Test Subject", "Test Body")
-      ).to.not.emit(mailer, "MailSent");
+      ).to.be.revertedWithCustomError(mockUSDC, "InsufficientBalance");
     });
 
     it("Should not emit event when USDC transfer fails (insufficient allowance)", async function () {
@@ -63,7 +63,7 @@ describe("Mailer", function () {
       
       await expect(
         mailer.connect(addr2).sendPriority("Test Subject", "Test Body")
-      ).to.not.emit(mailer, "MailSent");
+      ).to.be.revertedWithCustomError(mockUSDC, "InsufficientAllowance");
     });
 
     it("Should transfer correct USDC amount to contract", async function () {
@@ -88,7 +88,7 @@ describe("Mailer", function () {
       // addr2 has no USDC balance
       await expect(
         mailer.connect(addr2).sendPriorityPrepared("mail-456")
-      ).to.not.emit(mailer, "PreparedMailSent");
+      ).to.be.revertedWithCustomError(mockUSDC, "InsufficientBalance");
     });
 
     it("Should not emit event when USDC transfer fails (insufficient allowance)", async function () {
@@ -97,7 +97,7 @@ describe("Mailer", function () {
       
       await expect(
         mailer.connect(addr2).sendPriorityPrepared("mail-789")
-      ).to.not.emit(mailer, "PreparedMailSent");
+      ).to.be.revertedWithCustomError(mockUSDC, "InsufficientAllowance");
     });
 
     it("Should transfer correct USDC amount to contract", async function () {
@@ -211,7 +211,7 @@ describe("Mailer", function () {
         // addr1 only has 10 USDC, should fail
         await expect(
           mailer.connect(addr1).sendPriority("Test", "Body")
-        ).to.not.emit(mailer, "MailSent");
+        ).to.be.revertedWithCustomError(mockUSDC, "InsufficientBalance");
       });
 
       it("Should work with zero fee", async function () {
@@ -260,10 +260,10 @@ describe("Mailer", function () {
     });
 
     it("Should not emit event when sender has no USDC balance", async function () {
-      // addr3 has no USDC balance by default
+      // owner has USDC but no allowance, so it fails on allowance check
       await expect(
         mailer.connect(owner).send("No Balance", "Should Fail")
-      ).to.not.emit(mailer, "MailSent");
+      ).to.be.revertedWithCustomError(mockUSDC, "InsufficientAllowance");
     });
 
     it("Should not emit event when sender has no USDC allowance", async function () {
@@ -272,7 +272,7 @@ describe("Mailer", function () {
       
       await expect(
         mailer.connect(owner).send("No Allowance", "Should Fail")
-      ).to.not.emit(mailer, "MailSent");
+      ).to.be.revertedWithCustomError(mockUSDC, "InsufficientAllowance");
     });
 
     it("Should transfer 10% of sendFee to contract for owner", async function () {
@@ -324,10 +324,10 @@ describe("Mailer", function () {
     });
 
     it("Should not emit event when sender has no USDC balance", async function () {
-      // addr3 has no USDC balance by default
+      // owner has USDC but no allowance, so it fails on allowance check
       await expect(
         mailer.connect(owner).sendPrepared("no-balance-mail")
-      ).to.not.emit(mailer, "PreparedMailSent");
+      ).to.be.revertedWithCustomError(mockUSDC, "InsufficientAllowance");
     });
 
     it("Should not emit event when sender has no USDC allowance", async function () {
@@ -336,7 +336,7 @@ describe("Mailer", function () {
       
       await expect(
         mailer.connect(owner).sendPrepared("no-allowance-mail")
-      ).to.not.emit(mailer, "PreparedMailSent");
+      ).to.be.revertedWithCustomError(mockUSDC, "InsufficientAllowance");
     });
 
     it("Should transfer 10% of sendFee to contract for owner", async function () {

@@ -312,11 +312,7 @@ export interface MailService extends BaseContract {
     "nonpayable"
   >;
 
-  releaseRegistration: TypedContractMethod<
-    [domain: string],
-    [void],
-    "nonpayable"
-  >;
+  releaseRegistration: TypedContractMethod<[arg0: string], [void], "view">;
 
   setDelegationFee: TypedContractMethod<
     [usdcAmount: BigNumberish],
@@ -373,7 +369,7 @@ export interface MailService extends BaseContract {
   >;
   getFunction(
     nameOrSignature: "releaseRegistration"
-  ): TypedContractMethod<[domain: string], [void], "nonpayable">;
+  ): TypedContractMethod<[arg0: string], [void], "view">;
   getFunction(
     nameOrSignature: "setDelegationFee"
   ): TypedContractMethod<[usdcAmount: BigNumberish], [void], "nonpayable">;
