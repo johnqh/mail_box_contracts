@@ -1,0 +1,304 @@
+name: Continuous Integration
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+
+jobs:
+  test:
+    name: Test Suite
+    runs-on: ubuntu-latest
+    
+    strategy:
+      matrix:
+        node-version: [16, 18, 20]
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Setup Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: 'npm'
+      
+      - name: Install dependencies
+        run: npm ci
+      
+      - name: Compile contracts
+        run: npm run compile
+      
+      - name: Run tests
+        run: npm test
+      
+      - name: Build TypeScript
+        run: npm run build
+      
+      - name: Check TypeScript types
+        run: npx tsc --noEmit
+
+  security-audit:
+    name: Security Audit
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+      
+      - name: Install dependencies
+        run: npm ci
+      
+      - name: Run npm audit
+        run: npm audit --audit-level moderate
+        continue-on-error: true
+      
+      - name: Check for high/critical vulnerabilities
+        run: npm audit --audit-level high
+
+  lint:
+    name: Code Quality
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+      
+      - name: Install dependencies
+        run: npm ci
+      
+      - name: Check code formatting (if prettier is configured)
+        run: |
+          if [ -f .prettierrc ] || [ -f .prettierrc.json ] || [ -f .prettierrc.js ]; then
+            npx prettier --check "**/*.{ts,js,json,md}"
+          else
+            echo "No Prettier configuration found, skipping formatting check"
+          fi
+        continue-on-error: true
+      
+      - name: Run ESLint (if configured)
+        run: |
+          if [ -f .eslintrc.js ] || [ -f .eslintrc.json ] || [ -f eslint.config.js ]; then
+            npx eslint "**/*.{ts,js}"
+          else
+            echo "No ESLint configuration found, skipping linting"
+          fi
+        continue-on-error: true
+
+  contract-verification:
+    name: Contract Verification
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+      
+      - name: Install dependencies
+        run: npm ci
+      
+      - name: Compile contracts
+        run: npm run compile
+      
+      - name: Check contract compilation
+        run: |
+          echo "✅ Checking compiled contracts..."
+          ls -la artifacts/contracts/
+          
+          echo "✅ Checking TypeChain types..."
+          ls -la typechain-types/
+          
+          echo "✅ Verifying contract ABIs..."
+          for contract in artifacts/contracts/*/*.json; do
+            if [ -f "$contract" ] && [[ "$contract" != *.dbg.json ]]; then
+              echo "Contract: $(basename "$contract")"
+              node -e "
+                const fs = require('fs');
+                const artifact = JSON.parse(fs.readFileSync('$contract', 'utf8'));
+                console.log('  - ABI entries:', artifact.abi.length);
+                console.log('  - Bytecode length:', artifact.bytecode.length);
+                console.log('  - Contract name:', artifact.contractName);
+              "
+            fi
+          done
+      
+      - name: Verify TypeScript builds
+        run: |
+          echo "✅ Checking TypeScript build..."
+          npm run build
+          ls -la dist/
+          
+          echo "✅ Verifying exports..."
+          node -e "
+            try {
+              const exports = require('./dist/src/index.js');
+              console.log('✅ Package exports successfully:', Object.keys(exports));
+            } catch (e) {
+              console.error('❌ Package export failed:', e.message);
+              process.exit(1);
+            }
+          "
+
+  coverage:
+    name: Test Coverage
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+      
+      - name: Install dependencies
+        run: npm ci
+      
+      - name: Run coverage
+        run: |
+          if grep -q "coverage" package.json; then
+            npm run coverage || npx hardhat coverage || echo "No coverage script found"
+          else
+            echo "No coverage configuration found"
+          fi
+        continue-on-error: true
+      
+      - name: Upload coverage reports
+        uses: codecov/codecov-action@v3
+        if: always()
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          files: ./coverage/lcov.info
+          flags: contracts
+          name: contract-coverage
+        continue-on-error: true
+
+  build-matrix:
+    name: Build Matrix Test
+    runs-on: ${{ matrix.os }}
+    
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+        node-version: [18]
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: 'npm'
+      
+      - name: Install dependencies
+        run: npm ci
+      
+      - name: Compile contracts
+        run: npm run compile
+      
+      - name: Build TypeScript
+        run: npm run build
+      
+      - name: Quick test
+        run: npm test
+
+  dependency-check:
+    name: Dependency Security Check
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+      
+      - name: Install dependencies
+        run: npm ci
+      
+      - name: Check for outdated dependencies
+        run: npm outdated || true
+      
+      - name: Run npm audit
+        run: npm audit --audit-level moderate
+        continue-on-error: true
+      
+      - name: Check licenses
+        run: |
+          npx license-checker --summary || echo "No license-checker available"
+        continue-on-error: true
+
+  pr-validation:
+    name: PR Validation
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
+    needs: [test, security-audit, contract-verification]
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      
+      - name: Check PR title format
+        run: |
+          PR_TITLE="${{ github.event.pull_request.title }}"
+          echo "PR Title: $PR_TITLE"
+          
+          # Check if PR title follows conventional commit format
+          if [[ ! "$PR_TITLE" =~ ^(feat|fix|docs|style|refactor|perf|test|build|ci|chore)(\(.+\))?: .+ ]]; then
+            echo "❌ PR title should follow conventional commit format: type(scope): description"
+            echo "Examples: feat: add new feature, fix(security): resolve vulnerability"
+            exit 1
+          else
+            echo "✅ PR title follows conventional commit format"
+          fi
+      
+      - name: Check for breaking changes
+        run: |
+          echo "🔍 Checking for potential breaking changes..."
+          
+          # Check if package.json version changed
+          if git diff origin/main HEAD -- package.json | grep -q '"version"'; then
+            echo "⚠️  Package version changed in PR - ensure this is intentional"
+          fi
+          
+          # Check for contract interface changes
+          if git diff origin/main HEAD --name-only | grep -q "contracts/.*\.sol$"; then
+            echo "⚠️  Contract files modified - review for breaking changes"
+            git diff origin/main HEAD -- contracts/ --stat
+          fi
+      
+      - name: PR validation summary
+        run: |
+          echo "## 🎯 PR Validation Summary" >> $GITHUB_STEP_SUMMARY
+          echo "- ✅ Tests passed" >> $GITHUB_STEP_SUMMARY
+          echo "- ✅ Security audit completed" >> $GITHUB_STEP_SUMMARY
+          echo "- ✅ Contract verification successful" >> $GITHUB_STEP_SUMMARY
+          echo "- ✅ PR title format valid" >> $GITHUB_STEP_SUMMARY

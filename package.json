@@ -8,6 +8,9 @@
     "test": "npx hardhat test",
     "compile": "npx hardhat compile",
     "clean": "npx hardhat clean",
+    "prepublishOnly": "npm run clean && npm run compile && npm run build",
+    "prepack": "npm run build",
+    "postinstall": "echo 'MailBox Contracts installed successfully!'",
     
     "deploy:local": "npx hardhat run scripts/deploy.ts --network hardhat",
     "deploy:localhost": "npx hardhat run scripts/deploy.ts --network localhost",
@@ -98,11 +101,42 @@
     "solidity",
     "smart-contract",
     "ethereum",
-    "mailbox"
+    "mailbox",
+    "web3",
+    "defi",
+    "messaging",
+    "usdc",
+    "revenue-sharing",
+    "hardhat",
+    "typechain",
+    "typescript"
   ],
-  "author": "",
+  "author": "MailBox Team",
   "license": "MIT",
-  "description": "MailBox smart contract with TypeScript wrapper",
+  "description": "MailBox decentralized messaging system with USDC fees and revenue sharing - TypeScript client library with full contract bindings",
+  "homepage": "https://github.com/johnqh/mail_box_contracts#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/johnqh/mail_box_contracts.git"
+  },
+  "bugs": {
+    "url": "https://github.com/johnqh/mail_box_contracts/issues"
+  },
+  "engines": {
+    "node": ">=16.0.0",
+    "npm": ">=7.0.0"
+  },
+  "files": [
+    "dist/",
+    "typechain-types/",
+    "artifacts/contracts/",
+    "README.md",
+    "LICENSE"
+  ],
+  "publishConfig": {
+    "access": "public",
+    "registry": "https://registry.npmjs.org"
+  },
   "devDependencies": {
     "@nomicfoundation/hardhat-toolbox": "^6.1.0",
     "@types/node": "^24.2.0",

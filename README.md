@@ -14,6 +14,56 @@ A comprehensive Solidity-based decentralized email/messaging system with USDC fe
 - **Revenue Sharing**: 90% back to senders, 10% to platform
 - **Time-based Claims**: 60-day claim period for revenue shares
 
+## 📦 NPM Package Installation
+
+```bash
+# Install the TypeScript client library
+npm install mail_box_contracts
+
+# Or with yarn
+yarn add mail_box_contracts
+```
+
+### Quick Start
+
+```typescript
+import { MailBox__factory, MailService__factory } from 'mail_box_contracts';
+import { ethers } from 'ethers';
+
+// Connect to contracts
+const provider = new ethers.JsonRpcProvider('YOUR_RPC_URL');
+const signer = new ethers.Wallet('YOUR_PRIVATE_KEY', provider);
+
+// Initialize contracts
+const mailer = MailBox__factory.connect('CONTRACT_ADDRESS', signer);
+const mailService = MailService__factory.connect('CONTRACT_ADDRESS', signer);
+
+// Send a priority message with revenue sharing
+await mailer.sendPriority("Hello Web3!", "This is a decentralized message");
+
+// Register a domain
+await mailService.registerDomain("example.mailbox", false);
+
+// Claim revenue share
+await mailer.claimRecipientShare();
+```
+
+### TypeScript Support
+
+Full TypeScript support with auto-generated contract types:
+
+```typescript
+import type { 
+  MailBox, 
+  MailService, 
+  MockUSDC 
+} from 'mail_box_contracts/typechain-types';
+
+// Fully typed contract interactions
+const tx: ContractTransaction = await mailer.sendPriority(subject, body);
+const receipt: ContractReceipt = await tx.wait();
+```
+
 ## 📁 Project Structure
 
 ```

@@ -1,0 +1,50 @@
+# Development files
+.env
+.env.local
+.env.*.local
+.gitignore
+.git/
+.github/
+.vscode/
+.idea/
+
+# Build artifacts that shouldn't be published
+cache/
+node_modules/
+coverage/
+.nyc_output/
+
+# Test files
+test/
+tests/
+*.test.ts
+*.test.js
+*.spec.ts
+*.spec.js
+
+# Development scripts
+scripts/
+hardhat.config.ts
+tsconfig.json
+
+# Documentation that's not needed in npm package
+docs/
+DEVELOPMENT.md
+TESTING.md
+ARCHITECTURE.md
+CLAUDE.md
+
+# Temporary files
+*.log
+*.tmp
+*.swp
+.DS_Store
+Thumbs.db
+
+# Keep only what's needed for the npm package:
+# - dist/ (compiled TypeScript)
+# - typechain-types/ (contract bindings)
+# - artifacts/contracts/ (contract ABIs)
+# - package.json
+# - README.md
+# - LICENSE
