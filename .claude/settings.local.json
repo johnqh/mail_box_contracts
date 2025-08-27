@@ -23,7 +23,9 @@
       "WebFetch(domain:help.safe.global)",
       "Bash(npm run clean:*)",
       "WebFetch(domain:ethgasstation.info)",
-      "WebSearch"
+      "WebSearch",
+      "Bash(npx hardhat run:*)",
+      "Bash(node:*)"
     ],
     "deny": [],
     "defaultMode": "acceptEdits"

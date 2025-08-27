@@ -60,7 +60,7 @@ async function predictAndDeploy(
   factory: any,
   usdcToken: string,
   owner: string
-): Promise<{mailerAddress: string, mailServiceAddress: string}> {
+): Promise<{mailerAddress: string, mailServiceAddress: string, deploymentTx?: string}> {
   
   // Generate salts
   const mailerSalt = await factory.generateSalt(
@@ -147,9 +147,117 @@ async function predictAndDeploy(
     }
     
     console.log("✅ All deployments successful and verified");
+    return { mailerAddress, mailServiceAddress, deploymentTx: receipt.hash };
   }
   
   return { mailerAddress, mailServiceAddress };
+}
+
+// Network configuration for DEPLOYED.json
+const NETWORK_CONFIG = {
+  mainnet: { name: "Ethereum Mainnet", chainId: 1 },
+  sepolia: { name: "Sepolia Testnet", chainId: 11155111 },
+  polygon: { name: "Polygon", chainId: 137 },
+  optimism: { name: "Optimism", chainId: 10 },
+  base: { name: "Base", chainId: 8453 },
+};
+
+
+async function updateDeployedJson(
+  networkName: string,
+  deploymentInfo: any,
+  factoryAddress: string,
+  usdcAddress: string,
+  mailerAddress: string,
+  mailServiceAddress: string,
+  deploymentTx?: string
+) {
+  const deployedJsonPath = path.join(__dirname, '..', 'DEPLOYED.json');
+  
+  const networkInfo = NETWORK_CONFIG[networkName as keyof typeof NETWORK_CONFIG];
+  if (!networkInfo) {
+    console.log("⚠️  Network not configured for DEPLOYED.json update:", networkName);
+    return;
+  }
+
+  // USDC configuration per network
+  const USDC_CONFIG = {
+    mainnet: { address: "0xA0b86a33E6417a8c8df6D0e9D13A4DcF8C7d6E4b", type: "USDC", isTestnet: false },
+    polygon: { address: "0x2791Bca1f2de4661ED88A30C99A7a9449Aa84174", type: "USDC", isTestnet: false },
+    optimism: { address: "0x0b2C639c533813f4Aa9D7837CAf62653d097Ff85", type: "USDC", isTestnet: false },
+    base: { address: "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913", type: "USDC", isTestnet: false },
+    sepolia: { address: usdcAddress, type: "MockUSDC", isTestnet: true }
+  };
+
+  let deployedData: any = {
+    lastUpdated: new Date().toISOString(),
+    versions: {}
+  };
+
+  // Load existing data
+  if (fs.existsSync(deployedJsonPath)) {
+    try {
+      deployedData = JSON.parse(fs.readFileSync(deployedJsonPath, 'utf8'));
+    } catch (error) {
+      console.warn("⚠️  Could not parse existing DEPLOYED.json, creating new one");
+    }
+  }
+
+  // Update timestamp
+  deployedData.lastUpdated = new Date().toISOString();
+
+  const version = deploymentInfo.version;
+  const currentDate = new Date().toISOString().split('T')[0];
+
+  // Initialize version if it doesn't exist
+  if (!deployedData.versions[version]) {
+    deployedData.versions[version] = {
+      releaseDate: currentDate,
+      deployer: deploymentInfo.deployer,
+      owner: deploymentInfo.owner,
+      networks: {}
+    };
+
+    // Initialize all supported networks for this version
+    Object.keys(NETWORK_CONFIG).forEach(network => {
+      const config = NETWORK_CONFIG[network as keyof typeof NETWORK_CONFIG];
+      const usdcConfig = USDC_CONFIG[network as keyof typeof USDC_CONFIG];
+      
+      deployedData.versions[version].networks[network] = {
+        chainId: config.chainId,
+        usdc: usdcConfig,
+        status: "not_deployed"
+      };
+    });
+  }
+
+  // Update the specific network deployment
+  const networkData = {
+    chainId: networkInfo.chainId,
+    deploymentDate: currentDate,
+    contracts: {
+      MailBoxFactory: factoryAddress,
+      [networkName === 'sepolia' ? 'MockUSDC' : 'USDC']: usdcAddress,
+      Mailer: mailerAddress,
+      MailService: mailServiceAddress
+    },
+    transactions: deploymentTx ? {
+      deployment: deploymentTx
+    } : {},
+    contractSettings: {
+      sendFee: deploymentInfo.fees.sendFee,
+      registrationFee: deploymentInfo.fees.registrationFee,
+      delegationFee: deploymentInfo.fees.delegationFee
+    },
+    usdc: USDC_CONFIG[networkName as keyof typeof USDC_CONFIG],
+    status: "deployed"
+  };
+
+  deployedData.versions[version].networks[networkName] = networkData;
+
+  // Write the updated data
+  fs.writeFileSync(deployedJsonPath, JSON.stringify(deployedData, null, 2));
+  console.log("📊 DEPLOYED.json updated with deployment information");
 }
 
 async function main() {
@@ -207,7 +315,7 @@ async function main() {
     console.log("-".repeat(60));
 
     // Deploy contracts using factory
-    const { mailerAddress, mailServiceAddress } = await predictAndDeploy(
+    const { mailerAddress, mailServiceAddress, deploymentTx } = await predictAndDeploy(
       factory,
       usdcAddress,
       ownerAddress
@@ -277,6 +385,22 @@ async function main() {
     const deploymentFile = path.join(deploymentDir, `${networkName}-create2.json`);
     fs.writeFileSync(deploymentFile, JSON.stringify(deploymentInfo, null, 2));
     console.log("📄 Deployment info saved to:", deploymentFile);
+
+    // Update DEPLOYED.json with deployment information
+    try {
+      await updateDeployedJson(
+        networkName,
+        deploymentInfo,
+        factoryAddress,
+        usdcAddress,
+        mailerAddress,
+        mailServiceAddress,
+        deploymentTx
+      );
+    } catch (updateError) {
+      console.warn("⚠️  Failed to update DEPLOYED.json:", updateError);
+      // Don't fail the entire deployment for documentation update issues
+    }
 
   } catch (error) {
     console.error("❌ Deployment failed:");

@@ -89,9 +89,12 @@ ARBITRUM_RPC_URL=https://arb1.arbitrum.io/rpc
 # ... (see .env.example for all networks)
 
 # Block Explorer API Keys (for contract verification)
+# Recommended: Use Etherscan Multichain API Key (V2 API) for all networks
+ETHERSCAN_MULTICHAIN_API_KEY=your_multichain_key
+
+# Legacy: Individual API keys (fallback)
 ETHERSCAN_API_KEY=your_etherscan_key
 POLYGONSCAN_API_KEY=your_polygonscan_key
-ARBISCAN_API_KEY=your_arbiscan_key
 # ... (see .env.example for all explorers)
 
 # Optional: Custom USDC address override

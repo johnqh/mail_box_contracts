@@ -52,6 +52,11 @@ Create `.env.local` for local development:
 # Local development
 PRIVATE_KEY=0x...
 RPC_URL=http://localhost:8545
+
+# Recommended: Use Etherscan Multichain API Key (works for all networks)
+ETHERSCAN_MULTICHAIN_API_KEY=your_multichain_key_here
+
+# Legacy fallback
 ETHERSCAN_API_KEY=your_key_here
 ```
 
