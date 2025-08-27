@@ -163,9 +163,30 @@ const NETWORK_CONFIG = {
 };
 
 
+interface DeploymentInfo {
+  version: string;
+  deployer: string;
+  owner: string;
+  fees: {
+    sendFee: string;
+    registrationFee: string;
+    delegationFee: string;
+  };
+}
+
+interface DeployedData {
+  lastUpdated: string;
+  versions: Record<string, {
+    releaseDate: string;
+    deployer: string;
+    owner: string;
+    networks: Record<string, any>;
+  }>;
+}
+
 async function updateDeployedJson(
   networkName: string,
-  deploymentInfo: any,
+  deploymentInfo: DeploymentInfo,
   factoryAddress: string,
   usdcAddress: string,
   mailerAddress: string,
@@ -189,7 +210,7 @@ async function updateDeployedJson(
     sepolia: { address: usdcAddress, type: "MockUSDC", isTestnet: true }
   };
 
-  let deployedData: any = {
+  let deployedData: DeployedData = {
     lastUpdated: new Date().toISOString(),
     versions: {}
   };

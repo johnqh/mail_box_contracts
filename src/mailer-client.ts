@@ -1,5 +1,5 @@
 import { ethers } from "ethers";
-import { Mailer, Mailer__factory } from "../typechain-types";
+import { Mailer, Mailer__factory, MailService, MailService__factory } from "../typechain-types";
 
 export class MailerClient {
   private contract: Mailer;
@@ -18,33 +18,29 @@ export class MailerClient {
 
 
   async sendPriority(
-    to: string,
     subject: string,
     body: string
   ): Promise<ethers.ContractTransactionResponse> {
-    return await this.contract.sendPriority(to, subject, body);
+    return await this.contract.sendPriority(subject, body);
   }
 
   async sendPriorityPrepared(
-    to: string,
     mailId: string
   ): Promise<ethers.ContractTransactionResponse> {
-    return await this.contract.sendPriorityPrepared(to, mailId);
+    return await this.contract.sendPriorityPrepared(mailId);
   }
 
   async send(
-    to: string,
     subject: string,
     body: string
   ): Promise<ethers.ContractTransactionResponse> {
-    return await this.contract.send(to, subject, body);
+    return await this.contract.send(subject, body);
   }
 
   async sendPrepared(
-    to: string,
     mailId: string
   ): Promise<ethers.ContractTransactionResponse> {
-    return await this.contract.sendPrepared(to, mailId);
+    return await this.contract.sendPrepared(mailId);
   }
 
   async getSendFee(): Promise<bigint> {
@@ -86,5 +82,86 @@ export class MailerClient {
 
   getContract(): Mailer {
     return this.contract;
+  }
+}
+
+export class MailServiceClient {
+  private contract: MailService;
+
+  constructor(contractAddress: string, provider: ethers.Provider) {
+    this.contract = MailService__factory.connect(contractAddress, provider);
+  }
+
+  static async deploy(signer: ethers.Signer, usdcTokenAddress: string, ownerAddress: string): Promise<MailServiceClient> {
+    const factory = new MailService__factory(signer);
+    const contract = await factory.deploy(usdcTokenAddress, ownerAddress);
+    await contract.waitForDeployment();
+    const address = await contract.getAddress();
+    return new MailServiceClient(address, signer.provider!);
+  }
+
+  async delegateTo(delegate: string): Promise<ethers.ContractTransactionResponse> {
+    return await this.contract.delegateTo(delegate);
+  }
+
+  async rejectDelegation(delegatingAddress: string): Promise<ethers.ContractTransactionResponse> {
+    return await this.contract.rejectDelegation(delegatingAddress);
+  }
+
+  async registerDomain(domain: string, isExtension: boolean): Promise<ethers.ContractTransactionResponse> {
+    return await this.contract.registerDomain(domain, isExtension);
+  }
+
+  async getRegistrationFee(): Promise<bigint> {
+    return await this.contract.registrationFee();
+  }
+
+  async getDelegationFee(): Promise<bigint> {
+    return await this.contract.delegationFee();
+  }
+
+  async getDelegation(address: string): Promise<string> {
+    return await this.contract.delegations(address);
+  }
+
+  async getUsdcToken(): Promise<string> {
+    return await this.contract.usdcToken();
+  }
+
+  getAddress(): Promise<string> {
+    return this.contract.getAddress();
+  }
+
+  getContract(): MailService {
+    return this.contract;
+  }
+}
+
+export class MailBoxClient {
+  public mailer: MailerClient;
+  public mailService: MailServiceClient;
+
+  constructor(
+    mailerAddress: string,
+    mailServiceAddress: string,
+    provider: ethers.Provider
+  ) {
+    this.mailer = new MailerClient(mailerAddress, provider);
+    this.mailService = new MailServiceClient(mailServiceAddress, provider);
+  }
+
+  static async deployBoth(
+    signer: ethers.Signer,
+    usdcTokenAddress: string,
+    ownerAddress: string
+  ): Promise<MailBoxClient> {
+    const mailerClient = await MailerClient.deploy(signer, usdcTokenAddress, ownerAddress);
+    const mailServiceClient = await MailServiceClient.deploy(signer, usdcTokenAddress, ownerAddress);
+    
+    return new MailBoxClient(
+      await mailerClient.getAddress(),
+      await mailServiceClient.getAddress(),
+      signer.provider!
+    );
   }
 }

@@ -1,11 +1,13 @@
-name: Release TypeScript Client Library
+name: Build and Release to NPM
 
 on:
   push:
     branches:
       - main
-    paths:
-      - 'package.json'  # Trigger when version in package.json changes
+  pull_request:
+    branches:
+      - main
+    types: [closed]  # Only when PR is merged
   workflow_dispatch:    # Allow manual triggering
     inputs:
       dry_run:
@@ -15,13 +17,14 @@ on:
         type: boolean
 
 jobs:
-  check-version-change:
-    name: Check Version Change
+  check-trigger:
+    name: Check Release Trigger
     runs-on: ubuntu-latest
     outputs:
-      version_changed: ${{ steps.check.outputs.version_changed }}
+      should_release: ${{ steps.check.outputs.should_release }}
       new_version: ${{ steps.check.outputs.new_version }}
       version_tag: ${{ steps.check.outputs.version_tag }}
+      trigger_reason: ${{ steps.check.outputs.trigger_reason }}
     
     steps:
       - name: Checkout code
@@ -29,39 +32,43 @@ jobs:
         with:
           fetch-depth: 2  # Get current and previous commit
       
-      - name: Check if version changed
+      - name: Check release trigger
         id: check
         run: |
+          CURRENT_VERSION=$(node -e "console.log(require('./package.json').version)")
+          echo "new_version=$CURRENT_VERSION" >> $GITHUB_OUTPUT
+          echo "version_tag=v$CURRENT_VERSION" >> $GITHUB_OUTPUT
+          
           if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
-            # Manual dispatch always proceeds with current version
-            CURRENT_VERSION=$(node -e "console.log(require('./package.json').version)")
-            echo "version_changed=true" >> $GITHUB_OUTPUT
-            echo "new_version=$CURRENT_VERSION" >> $GITHUB_OUTPUT
-            echo "version_tag=v$CURRENT_VERSION" >> $GITHUB_OUTPUT
+            # Manual dispatch always proceeds
+            echo "should_release=true" >> $GITHUB_OUTPUT
+            echo "trigger_reason=Manual dispatch" >> $GITHUB_OUTPUT
             echo "🔧 Manual dispatch - proceeding with version $CURRENT_VERSION"
-          else
-            # Check if package.json version changed in this commit
-            CURRENT_VERSION=$(node -e "console.log(require('./package.json').version)")
-            PREV_VERSION=$(git show HEAD~1:package.json | node -e "const stdin=process.stdin,chunks=[];stdin.on('readable',()=>{const chunk=stdin.read();if(chunk)chunks.push(chunk);});stdin.on('end',()=>{const pkg=JSON.parse(Buffer.concat(chunks));console.log(pkg.version);});")
             
-            if [ "$CURRENT_VERSION" != "$PREV_VERSION" ]; then
-              echo "version_changed=true" >> $GITHUB_OUTPUT
-              echo "new_version=$CURRENT_VERSION" >> $GITHUB_OUTPUT
-              echo "version_tag=v$CURRENT_VERSION" >> $GITHUB_OUTPUT
-              echo "📈 Version changed: $PREV_VERSION -> $CURRENT_VERSION"
-            else
-              echo "version_changed=false" >> $GITHUB_OUTPUT
-              echo "new_version=$CURRENT_VERSION" >> $GITHUB_OUTPUT
-              echo "version_tag=v$CURRENT_VERSION" >> $GITHUB_OUTPUT
-              echo "📋 No version change detected ($CURRENT_VERSION)"
-            fi
+          elif [ "${{ github.event_name }}" = "pull_request" ] && [ "${{ github.event.pull_request.merged }}" = "true" ]; then
+            # PR merged to main - always release
+            echo "should_release=true" >> $GITHUB_OUTPUT
+            echo "trigger_reason=PR merged to main" >> $GITHUB_OUTPUT
+            echo "🔀 PR merged to main - proceeding with version $CURRENT_VERSION"
+            
+          elif [ "${{ github.event_name }}" = "push" ]; then
+            # Push to main - always release
+            echo "should_release=true" >> $GITHUB_OUTPUT
+            echo "trigger_reason=Push to main branch" >> $GITHUB_OUTPUT
+            echo "📤 Push to main - proceeding with version $CURRENT_VERSION"
+            
+          else
+            # Skip for other events
+            echo "should_release=false" >> $GITHUB_OUTPUT
+            echo "trigger_reason=Event not applicable for release" >> $GITHUB_OUTPUT
+            echo "⏭️ Skipping release for event: ${{ github.event_name }}"
           fi
 
   test:
     name: Run Tests
     runs-on: ubuntu-latest
-    needs: check-version-change
-    if: needs.check-version-change.outputs.version_changed == 'true'
+    needs: check-trigger
+    if: needs.check-trigger.outputs.should_release == 'true'
     
     steps:
       - name: Checkout code
@@ -88,8 +95,8 @@ jobs:
   security-audit:
     name: Security Audit
     runs-on: ubuntu-latest
-    needs: [check-version-change, test]
-    if: needs.check-version-change.outputs.version_changed == 'true'
+    needs: [check-trigger, test]
+    if: needs.check-trigger.outputs.should_release == 'true'
     
     steps:
       - name: Checkout code
@@ -113,8 +120,8 @@ jobs:
   create-tag:
     name: Create Git Tag
     runs-on: ubuntu-latest
-    needs: [check-version-change, test, security-audit]
-    if: needs.check-version-change.outputs.version_changed == 'true'
+    needs: [check-trigger, test, security-audit, publish-npm]
+    if: needs.check-trigger.outputs.should_release == 'true'
     
     steps:
       - name: Checkout code
@@ -122,15 +129,25 @@ jobs:
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
       
+      - name: Get published version
+        id: get_published_version
+        run: |
+          # Get the version that was just published to NPM
+          sleep 30  # Wait for NPM registry to sync
+          PUBLISHED_VERSION=$(npm view mail_box_contracts version)
+          echo "published_version=$PUBLISHED_VERSION" >> $GITHUB_OUTPUT
+          echo "version_tag=v$PUBLISHED_VERSION" >> $GITHUB_OUTPUT
+          echo "📦 Published version: $PUBLISHED_VERSION"
+      
       - name: Create and push tag
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           
-          TAG="${{ needs.check-version-change.outputs.version_tag }}"
+          TAG="${{ steps.get_published_version.outputs.version_tag }}"
           echo "🏷️ Creating tag: $TAG"
           
-          git tag "$TAG" -m "Release $TAG"
+          git tag "$TAG" -m "Release $TAG - Published to NPM"
           git push origin "$TAG"
           
           echo "✅ Tag $TAG created and pushed"
@@ -138,8 +155,8 @@ jobs:
   publish-npm:
     name: Publish to NPM
     runs-on: ubuntu-latest
-    needs: [check-version-change, test, security-audit, create-tag]
-    if: needs.check-version-change.outputs.version_changed == 'true'
+    needs: [check-trigger, test, security-audit, create-tag]
+    if: needs.check-trigger.outputs.should_release == 'true'
     
     steps:
       - name: Checkout code
@@ -163,11 +180,40 @@ jobs:
       - name: Build TypeScript library
         run: npm run build
       
+      - name: Auto-increment version
+        id: version_bump
+        run: |
+          # Get current version
+          CURRENT_VERSION=$(node -e "console.log(require('./package.json').version)")
+          echo "📦 Current version: $CURRENT_VERSION"
+          
+          # Extract version parts (assuming semver: MAJOR.MINOR.PATCH)
+          IFS='.' read -r -a VERSION_PARTS <<< "$CURRENT_VERSION"
+          MAJOR=${VERSION_PARTS[0]}
+          MINOR=${VERSION_PARTS[1]}
+          PATCH=${VERSION_PARTS[2]}
+          
+          # Increment patch version
+          NEW_PATCH=$((PATCH + 1))
+          NEW_VERSION="${MAJOR}.${MINOR}.${NEW_PATCH}"
+          
+          echo "📈 New version: $NEW_VERSION"
+          
+          # Update package.json
+          npm version $NEW_VERSION --no-git-tag-version
+          
+          # Set outputs
+          echo "old_version=$CURRENT_VERSION" >> $GITHUB_OUTPUT
+          echo "new_version=$NEW_VERSION" >> $GITHUB_OUTPUT
+          echo "version_tag=v$NEW_VERSION" >> $GITHUB_OUTPUT
+          
+          echo "✅ Version bumped from $CURRENT_VERSION to $NEW_VERSION"
+      
       - name: Set version info
         id: get_version
         run: |
-          VERSION="${{ needs.check-version-change.outputs.version_tag }}"
-          VERSION_NUMBER="${{ needs.check-version-change.outputs.new_version }}"
+          VERSION="${{ steps.version_bump.outputs.version_tag }}"
+          VERSION_NUMBER="${{ steps.version_bump.outputs.new_version }}"
           echo "version=${VERSION}" >> $GITHUB_OUTPUT
           echo "version_number=${VERSION_NUMBER}" >> $GITHUB_OUTPUT
           echo "📦 Publishing version: ${VERSION} (${VERSION_NUMBER})"
@@ -212,8 +258,8 @@ jobs:
   create-github-release:
     name: Create GitHub Release
     runs-on: ubuntu-latest
-    needs: [check-version-change, test, security-audit, create-tag]
-    if: needs.check-version-change.outputs.version_changed == 'true'
+    needs: [check-trigger, test, security-audit, create-tag, publish-npm]
+    if: needs.check-trigger.outputs.should_release == 'true'
     
     steps:
       - name: Checkout code
@@ -224,8 +270,11 @@ jobs:
       - name: Set version info
         id: get_version
         run: |
-          VERSION="${{ needs.check-version-change.outputs.version_tag }}"
+          # Get the published version from NPM
+          PUBLISHED_VERSION=$(npm view mail_box_contracts version)
+          VERSION="v$PUBLISHED_VERSION"
           echo "version=${VERSION}" >> $GITHUB_OUTPUT
+          echo "📦 Creating GitHub release for: $VERSION"
       
       - name: Generate changelog
         id: changelog
@@ -268,102 +317,12 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-  build-docker:
-    name: Build and Push Docker Image
-    runs-on: ubuntu-latest
-    needs: [check-version-change, test, security-audit, create-tag]
-    if: needs.check-version-change.outputs.version_changed == 'true'
-    
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-      
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
-      
-      - name: Login to Docker Hub
-        uses: docker/login-action@v3
-        with:
-          username: ${{ secrets.DOCKERHUB_USERNAME }}
-          password: ${{ secrets.DOCKERHUB_TOKEN }}
-      
-      - name: Set version info
-        id: get_version
-        run: |
-          VERSION="${{ needs.check-version-change.outputs.version_tag }}"
-          VERSION_NUMBER="${{ needs.check-version-change.outputs.new_version }}"
-          echo "version=${VERSION}" >> $GITHUB_OUTPUT
-          echo "version_number=${VERSION_NUMBER}" >> $GITHUB_OUTPUT
-      
-      - name: Create Dockerfile
-        run: |
-          cat > Dockerfile << 'EOF'
-          # Multi-stage build for MailBox Contracts
-          FROM node:18-alpine AS builder
-          
-          WORKDIR /app
-          
-          # Copy package files
-          COPY package*.json ./
-          
-          # Install dependencies
-          RUN npm ci
-          
-          # Copy source code
-          COPY . .
-          
-          # Compile contracts and build TypeScript
-          RUN npm run compile && npm run build
-          
-          # Production image
-          FROM node:18-alpine AS runtime
-          
-          WORKDIR /app
-          
-          # Copy only necessary files
-          COPY --from=builder /app/dist ./dist
-          COPY --from=builder /app/typechain-types ./typechain-types
-          COPY --from=builder /app/artifacts ./artifacts
-          COPY --from=builder /app/package*.json ./
-          
-          # Install only production dependencies
-          RUN npm ci --only=production && npm cache clean --force
-          
-          # Create non-root user
-          RUN addgroup -g 1001 -S nodejs && \
-              adduser -S mailbox -u 1001
-          
-          USER mailbox
-          
-          # Health check
-          HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
-            CMD node -e "console.log('MailBox Contracts v${{ steps.get_version.outputs.version_number }} healthy')" || exit 1
-          
-          EXPOSE 3000
-          
-          CMD ["node", "dist/src/index.js"]
-          EOF
-      
-      - name: Build and push Docker image
-        uses: docker/build-push-action@v5
-        with:
-          context: .
-          push: true
-          platforms: linux/amd64,linux/arm64
-          tags: |
-            ${{ secrets.DOCKERHUB_USERNAME }}/mail_box_contracts:latest
-            ${{ secrets.DOCKERHUB_USERNAME }}/mail_box_contracts:${{ steps.get_version.outputs.version_number }}
-            ${{ secrets.DOCKERHUB_USERNAME }}/mail_box_contracts:${{ steps.get_version.outputs.version }}
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
-          build-args: |
-            VERSION=${{ steps.get_version.outputs.version_number }}
 
   post-release:
     name: Post-Release Tasks
     runs-on: ubuntu-latest
-    needs: [check-version-change, publish-npm, create-github-release, build-docker]
-    if: needs.check-version-change.outputs.version_changed == 'true'
+    needs: [check-trigger, publish-npm, create-github-release, create-tag]
+    if: needs.check-trigger.outputs.should_release == 'true'
     
     steps:
       - name: Checkout code
@@ -372,8 +331,11 @@ jobs:
       - name: Set version info
         id: get_version
         run: |
-          VERSION="${{ needs.check-version-change.outputs.version_tag }}"
+          # Get the published version from NPM
+          PUBLISHED_VERSION=$(npm view mail_box_contracts version)
+          VERSION="v$PUBLISHED_VERSION"
           echo "version=${VERSION}" >> $GITHUB_OUTPUT
+          echo "📦 Post-release tasks for: $VERSION"
       
       - name: Verify NPM package
         run: |
@@ -386,24 +348,14 @@ jobs:
           echo "📦 Package is available at:"
           echo "https://www.npmjs.com/package/$PACKAGE_NAME/v/${{ steps.get_version.outputs.version }}"
       
-      - name: Verify Docker image
-        run: |
-          echo "🐳 Verifying Docker image..."
-          docker pull ${{ secrets.DOCKERHUB_USERNAME }}/mail_box_contracts:${{ steps.get_version.outputs.version }}
-          docker run --rm ${{ secrets.DOCKERHUB_USERNAME }}/mail_box_contracts:${{ steps.get_version.outputs.version }} node -e "console.log('Docker image verified')"
-          
-          echo "🐳 Docker image is available at:"
-          echo "https://hub.docker.com/r/${{ secrets.DOCKERHUB_USERNAME }}/mail_box_contracts"
       
       - name: Create release summary
         run: |
           echo "## 🎉 Release ${{ steps.get_version.outputs.version }} Complete!" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          echo "### 📦 Published Packages:" >> $GITHUB_STEP_SUMMARY
+          echo "### 📦 Published Package:" >> $GITHUB_STEP_SUMMARY
           echo "- **NPM**: \`npm install mail_box_contracts@${{ steps.get_version.outputs.version }}\`" >> $GITHUB_STEP_SUMMARY
-          echo "- **Docker**: \`docker pull ${{ secrets.DOCKERHUB_USERNAME }}/mail_box_contracts:${{ steps.get_version.outputs.version }}\`" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "### 🔗 Links:" >> $GITHUB_STEP_SUMMARY
           echo "- [NPM Package](https://www.npmjs.com/package/mail_box_contracts)" >> $GITHUB_STEP_SUMMARY
-          echo "- [Docker Hub](https://hub.docker.com/r/${{ secrets.DOCKERHUB_USERNAME }}/mail_box_contracts)" >> $GITHUB_STEP_SUMMARY
           echo "- [GitHub Release](https://github.com/${{ github.repository }}/releases/tag/${{ steps.get_version.outputs.version }})" >> $GITHUB_STEP_SUMMARY

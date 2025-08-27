@@ -25,7 +25,11 @@
       "WebFetch(domain:ethgasstation.info)",
       "WebSearch",
       "Bash(npx hardhat run:*)",
-      "Bash(node:*)"
+      "Bash(node:*)",
+      "Bash(npx tsc:*)",
+      "Bash(npx eslint:*)",
+      "Bash(npm run build:*)",
+      "Bash(npm audit:*)"
     ],
     "deny": [],
     "defaultMode": "acceptEdits"
