@@ -324,14 +324,32 @@ jobs:
               const exports = require('./dist/src/index.js');
               console.log('✅ Package exports:', Object.keys(exports));
               
-              // Test importing typechain factories
-              const { MailBox__factory } = exports;
-              if (MailBox__factory) {
-                console.log('✅ MailBox__factory available');
-              } else {
-                console.error('❌ MailBox__factory not found');
+              // Test importing essential typechain factories and clients
+              const { Mailer__factory, MailService__factory, MailerClient, MailServiceClient, MailBoxClient } = exports;
+              
+              const requiredExports = {
+                'Mailer__factory': Mailer__factory,
+                'MailService__factory': MailService__factory,
+                'MailerClient': MailerClient,
+                'MailServiceClient': MailServiceClient,
+                'MailBoxClient': MailBoxClient
+              };
+              
+              let hasError = false;
+              for (const [name, value] of Object.entries(requiredExports)) {
+                if (value) {
+                  console.log(\`✅ \${name} available\`);
+                } else {
+                  console.error(\`❌ \${name} not found\`);
+                  hasError = true;
+                }
+              }
+              
+              if (hasError) {
                 process.exit(1);
               }
+              
+              console.log('✅ All required exports are available');
             } catch (e) {
               console.error('❌ Package export failed:', e.message);
               process.exit(1);
