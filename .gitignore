@@ -23,7 +23,7 @@ build/
 
 # Hardhat files
 cache/
-typechain-types/
+# typechain-types/ - Now committing these for CI consistency
 
 # Deployment records (optional - you may want to commit these)
 # deployments/
