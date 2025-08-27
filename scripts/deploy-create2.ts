@@ -8,17 +8,10 @@ const USDC_ADDRESSES: Record<string, string> = {
   mainnet: "0xA0b86a33E6417a8c8df6D0e9D13A4DcF8C7d6E4b", // USDC on Ethereum
   polygon: "0x2791Bca1f2de4661ED88A30C99A7a9449Aa84174", // USDC on Polygon
   optimism: "0x0b2C639c533813f4Aa9D7837CAf62653d097Ff85", // USDC on Optimism
-  arbitrum: "0xaf88d065e77c8cC2239327C5EDb3A432268e5831", // USDC on Arbitrum
   base: "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913", // USDC on Base
-  avalanche: "0xB97EF9Ef8734C71904D8002F8b6Bc66Dd9c48a6E", // USDC on Avalanche
-  bsc: "0x8AC76a51cc950d9822D68b83fE1Ad97B32Cd580d", // USDC on BSC
-  gnosis: "0xDDAfbb505ad214D7b80b1f830fcCc89B60fb7A83", // USDC on Gnosis
-  celo: "0xcebA9300f2b948710d2653dD7B07f33A8B32118C", // USDC on Celo
   
   // Testnets - using zero address as placeholder (deploy mock USDC for testing)
   sepolia: "0x0000000000000000000000000000000000000000",
-  "base-sepolia": "0x0000000000000000000000000000000000000000",
-  "scroll-sepolia": "0x0000000000000000000000000000000000000000",
   
   // Local development
   hardhat: "0x0000000000000000000000000000000000000000",
@@ -188,7 +181,7 @@ async function main() {
   let usdcAddress = USDC_ADDRESSES[networkName];
   
   // For testnets and local networks, deploy mock USDC
-  const testNetworks = ["sepolia", "base-sepolia", "scroll-sepolia", "hardhat", "localhost"];
+  const testNetworks = ["sepolia", "hardhat", "localhost"];
   
   if (testNetworks.includes(networkName)) {
     if (process.env.USDC_ADDRESS) {

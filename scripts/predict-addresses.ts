@@ -6,12 +6,7 @@ const USDC_ADDRESSES: Record<string, string> = {
   mainnet: "0xA0b86a33E6417a8c8df6D0e9D13A4DcF8C7d6E4b",
   polygon: "0x2791Bca1f2de4661ED88A30C99A7a9449Aa84174",
   optimism: "0x0b2C639c533813f4Aa9D7837CAf62653d097Ff85",
-  arbitrum: "0xaf88d065e77c8cC2239327C5EDb3A432268e5831",
   base: "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913",
-  avalanche: "0xB97EF9Ef8734C71904D8002F8b6Bc66Dd9c48a6E",
-  bsc: "0x8AC76a51cc950d9822D68b83fE1Ad97B32Cd580d",
-  gnosis: "0xDDAfbb505ad214D7b80b1f830fcCc89B60fb7A83",
-  celo: "0xcebA9300f2b948710d2653dD7B07f33A8B32118C",
 };
 
 // Configuration for deterministic deployment
@@ -108,14 +103,10 @@ async function main() {
   // Define networks to predict for
   const networksToPredict = [
     { name: "mainnet", chainId: 1 },
+    { name: "sepolia", chainId: 11155111 },
     { name: "polygon", chainId: 137 },
     { name: "optimism", chainId: 10 },
-    { name: "arbitrum", chainId: 42161 },
     { name: "base", chainId: 8453 },
-    { name: "avalanche", chainId: 43114 },
-    { name: "bsc", chainId: 56 },
-    { name: "gnosis", chainId: 100 },
-    { name: "celo", chainId: 42220 },
   ];
 
   console.log("🌐 PREDICTED ADDRESSES BY NETWORK:");
@@ -131,7 +122,13 @@ async function main() {
   const tempFactoryAddress = await tempFactory.getAddress();
 
   for (const net of networksToPredict) {
-    const usdcAddress = USDC_ADDRESSES[net.name];
+    let usdcAddress = USDC_ADDRESSES[net.name];
+    
+    // For testnets, use a placeholder address since they would use MockUSDC
+    if (net.name === "sepolia" && !usdcAddress) {
+      usdcAddress = "0x1234567890123456789012345678901234567890"; // Placeholder for MockUSDC
+    }
+    
     if (!usdcAddress) continue;
 
     try {

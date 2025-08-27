@@ -1,0 +1,42 @@
+{
+  "timestamp": "2025-08-27T15:39:02.833Z",
+  "version": "v1.2.0",
+  "deployer": "0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266",
+  "owner": "0xACB43eF16A098E21d2f987d8F6b50555680A260C",
+  "tempFactoryAddress": "0x5FbDB2315678afecb367f032d93F642f64180aa3",
+  "networks": [
+    {
+      "network": "sepolia",
+      "chainId": 11155111,
+      "usdcAddress": "0x1234567890123456789012345678901234567890",
+      "factoryAddress": "0x5FbDB2315678afecb367f032d93F642f64180aa3",
+      "mailerAddress": "0x0012Aa598aD309939f61BFBd8693f81F36cC5Aa4",
+      "mailServiceAddress": "0x2649dCf4D5DeeD8Bb714cAb0c45ee7B1e86814c0"
+    },
+    {
+      "network": "polygon",
+      "chainId": 137,
+      "usdcAddress": "0x2791Bca1f2de4661ED88A30C99A7a9449Aa84174",
+      "factoryAddress": "0x5FbDB2315678afecb367f032d93F642f64180aa3",
+      "mailerAddress": "0xAc3fc09b858B1aA2A85B189471fd2b6a3b326A25",
+      "mailServiceAddress": "0xc68adfE1F8ecF22d1Cc9E61b25bAeF4902952B8F"
+    },
+    {
+      "network": "optimism",
+      "chainId": 10,
+      "usdcAddress": "0x0b2C639c533813f4Aa9D7837CAf62653d097Ff85",
+      "factoryAddress": "0x5FbDB2315678afecb367f032d93F642f64180aa3",
+      "mailerAddress": "0x5Ef2d7f896df163d63fBbd7A30D9282bbA6A1aEa",
+      "mailServiceAddress": "0x1A70984FB6f6B52a0714070E5ED07964337737d5"
+    },
+    {
+      "network": "base",
+      "chainId": 8453,
+      "usdcAddress": "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913",
+      "factoryAddress": "0x5FbDB2315678afecb367f032d93F642f64180aa3",
+      "mailerAddress": "0x7fe3F56B11F4716c87f8cd81B34c587C1855Bd46",
+      "mailServiceAddress": "0x37EF05BaBcf1792F2B0Ef743b3A43cAe9BeD9a60"
+    }
+  ],
+  "note": "These predictions assume same factory deployer and parameters across networks"
+}

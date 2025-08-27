@@ -21,7 +21,9 @@
       "Bash(sed:*)",
       "Bash(npm run deploy:local:*)",
       "WebFetch(domain:help.safe.global)",
-      "Bash(npm run clean:*)"
+      "Bash(npm run clean:*)",
+      "WebFetch(domain:ethgasstation.info)",
+      "WebSearch"
     ],
     "deny": [],
     "defaultMode": "acceptEdits"
