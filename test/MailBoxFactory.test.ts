@@ -1,6 +1,6 @@
 import { expect } from "chai";
 import { ethers } from "hardhat";
-import { MailBoxFactory, MockUSDC } from "../typechain-types";
+import type { MailBoxFactory, MockUSDC } from "../typechain-types";
 import { SignerWithAddress } from "@nomicfoundation/hardhat-ethers/signers";
 
 describe("MailBoxFactory", function () {
@@ -151,9 +151,9 @@ describe("MailBoxFactory", function () {
       const receipt = await tx.wait();
 
       // Check event
-      const event = receipt?.logs.find(log => {
+      const event = receipt?.logs.find((log: any) => {
         try {
-          const parsed = factory.interface.parseLog(log as any);
+          const parsed = factory.interface.parseLog(log);
           return parsed?.name === "ContractDeployed";
         } catch {
           return false;
@@ -192,9 +192,9 @@ describe("MailBoxFactory", function () {
       const receipt = await tx.wait();
 
       // Check event
-      const event = receipt?.logs.find(log => {
+      const event = receipt?.logs.find((log: any) => {
         try {
-          const parsed = factory.interface.parseLog(log as any);
+          const parsed = factory.interface.parseLog(log);
           return parsed?.name === "ContractDeployed";
         } catch {
           return false;
@@ -248,9 +248,9 @@ describe("MailBoxFactory", function () {
       const receipt = await tx.wait();
 
       // Check events
-      const contractEvents = receipt?.logs.filter(log => {
+      const contractEvents = receipt?.logs.filter((log: any) => {
         try {
-          const parsed = factory.interface.parseLog(log as any);
+          const parsed = factory.interface.parseLog(log);
           return parsed?.name === "ContractDeployed";
         } catch {
           return false;
