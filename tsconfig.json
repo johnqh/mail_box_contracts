@@ -13,11 +13,13 @@
     "sourceMap": true
   },
   "include": [
-    "./scripts/**/*",
-    "./test/**/*",
+    "./src/**/*",
     "./typechain-types/**/*"
   ],
-  "files": [
-    "./hardhat.config.ts"
+  "exclude": [
+    "./test/**/*",
+    "./scripts/**/*",
+    "node_modules",
+    "dist"
   ]
 }
