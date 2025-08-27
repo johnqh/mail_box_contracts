@@ -86,6 +86,14 @@ jobs:
       - name: Compile contracts
         run: npm run compile
       
+      - name: Debug - Check artifacts
+        run: |
+          echo "Checking if artifacts directory exists..."
+          ls -la artifacts/ || echo "No artifacts directory found"
+          echo "Checking if MailBoxFactory artifact exists..."
+          ls -la artifacts/contracts/ || echo "No contracts directory found"
+          find . -name "*MailBoxFactory*" -type f || echo "No MailBoxFactory files found"
+      
       - name: Run tests
         run: npm test
       
