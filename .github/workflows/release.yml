@@ -83,22 +83,23 @@ jobs:
       - name: Install dependencies
         run: npm ci
       
-      - name: Compile contracts
-        run: npm run compile
-      
-      - name: Debug - Check artifacts
+      - name: Clean and compile contracts
         run: |
-          echo "Checking if artifacts directory exists..."
-          ls -la artifacts/ || echo "No artifacts directory found"
-          echo "Checking if MailBoxFactory artifact exists..."
-          ls -la artifacts/contracts/ || echo "No contracts directory found"
-          find . -name "*MailBoxFactory*" -type f || echo "No MailBoxFactory files found"
+          npm run clean
+          npm run compile
       
-      - name: Run tests
-        run: npm test
+      - name: Verify compilation
+        run: |
+          echo "✅ Checking artifacts..."
+          ls -la artifacts/contracts/ || echo "❌ No contracts directory"
+          echo "✅ Checking TypeChain exports..."
+          grep "MailBoxFactory" typechain-types/index.ts || echo "❌ MailBoxFactory not exported"
       
       - name: Build TypeScript
         run: npm run build
+      
+      - name: Run tests
+        run: npm test
 
   security-audit:
     name: Security Audit
