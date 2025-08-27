@@ -29,7 +29,8 @@
       "Bash(npx tsc:*)",
       "Bash(npx eslint:*)",
       "Bash(npm run build:*)",
-      "Bash(npm audit:*)"
+      "Bash(npm audit:*)",
+      "Bash(npm version:*)"
     ],
     "deny": [],
     "defaultMode": "acceptEdits"
