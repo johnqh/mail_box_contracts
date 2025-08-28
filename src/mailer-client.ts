@@ -1,5 +1,5 @@
 import { ethers } from "ethers";
-import { Mailer, Mailer__factory, MailService, MailService__factory } from "../typechain-types";
+import { Mailer, Mailer__factory, MailService, MailService__factory, MailBoxFactory, MailBoxFactory__factory } from "../typechain-types";
 
 /**
  * @class MailerClient
@@ -236,5 +236,193 @@ export class MailBoxClient {
       await mailServiceClient.getAddress(),
       signer.provider!
     );
+  }
+}
+
+/**
+ * @class MailBoxFactoryClient
+ * @description High-level TypeScript client for the MailBoxFactory contract
+ * @notice Provides easy-to-use methods for CREATE2 deterministic deployment
+ * 
+ * ## Key Features:
+ * - **CREATE2 Deployment**: Deploy contracts with identical addresses across chains
+ * - **Address Prediction**: Predict addresses before deployment
+ * - **Salt Generation**: Generate deterministic salts for reproducible deployments
+ * - **Batch Deployment**: Deploy both contracts in single transaction
+ * 
+ * ## Usage Examples:
+ * ```typescript
+ * // Deploy factory
+ * const factory = await MailBoxFactoryClient.deploy(signer);
+ * 
+ * // Predict addresses
+ * const salt = await factory.generateSalt("MailBox", "1.0.0", "Mailer");
+ * const address = await factory.predictMailerAddress(usdcAddress, ownerAddress, salt);
+ * 
+ * // Deploy contracts
+ * const mailerAddress = await factory.deployMailer(usdcAddress, ownerAddress, salt);
+ * ```
+ */
+export class MailBoxFactoryClient {
+  private contract: MailBoxFactory;
+  private signer?: ethers.Signer;
+
+  /**
+   * @description Creates a new MailBoxFactoryClient instance
+   * @param contractAddress The deployed MailBoxFactory contract address
+   * @param signerOrProvider Ethereum signer or provider for blockchain connection
+   */
+  constructor(contractAddress: string, signerOrProvider: ethers.Signer | ethers.Provider) {
+    if ('signTransaction' in signerOrProvider) {
+      this.signer = signerOrProvider as ethers.Signer;
+      this.contract = MailBoxFactory__factory.connect(contractAddress, this.signer);
+    } else {
+      this.contract = MailBoxFactory__factory.connect(contractAddress, signerOrProvider);
+    }
+  }
+
+  /**
+   * @description Deploy a new MailBoxFactory contract and return a client instance
+   * @param signer Ethereum signer with deployment permissions
+   * @returns Promise resolving to a MailBoxFactoryClient instance
+   */
+  static async deploy(signer: ethers.Signer): Promise<MailBoxFactoryClient> {
+    const factory = new MailBoxFactory__factory(signer);
+    const contract = await factory.deploy();
+    await contract.waitForDeployment();
+    const address = await contract.getAddress();
+    return new MailBoxFactoryClient(address, signer);
+  }
+
+  /**
+   * @description Deploy a Mailer contract using CREATE2
+   * @param usdcToken Address of the USDC token contract
+   * @param owner Address that will own the deployed contract
+   * @param salt Salt value for deterministic deployment
+   * @returns Promise resolving to deployed Mailer address
+   */
+  async deployMailer(usdcToken: string, owner: string, salt: string): Promise<string> {
+    if (!this.signer) {
+      throw new Error("Signer required for deployment operations. Use constructor with signer or static deploy method.");
+    }
+    const tx = await this.contract.deployMailer(usdcToken, owner, salt);
+    const receipt = await tx.wait();
+    
+    const event = receipt?.logs.find(
+      (log: any) => log.fragment?.name === "MailerDeployed"
+    ) as any;
+    return event?.args[0];
+  }
+
+  /**
+   * @description Deploy a MailService contract using CREATE2
+   * @param usdcToken Address of the USDC token contract
+   * @param owner Address that will own the deployed contract
+   * @param salt Salt value for deterministic deployment
+   * @returns Promise resolving to deployed MailService address
+   */
+  async deployMailService(usdcToken: string, owner: string, salt: string): Promise<string> {
+    if (!this.signer) {
+      throw new Error("Signer required for deployment operations. Use constructor with signer or static deploy method.");
+    }
+    const tx = await this.contract.deployMailService(usdcToken, owner, salt);
+    const receipt = await tx.wait();
+    
+    const event = receipt?.logs.find(
+      (log: any) => log.fragment?.name === "MailServiceDeployed"
+    ) as any;
+    return event?.args[0];
+  }
+
+  /**
+   * @description Deploy both Mailer and MailService contracts in single transaction
+   * @param usdcToken Address of the USDC token contract
+   * @param owner Address that will own both contracts
+   * @param mailerSalt Salt for Mailer deployment
+   * @param mailServiceSalt Salt for MailService deployment
+   * @returns Promise resolving to both deployed addresses
+   */
+  async deployBoth(
+    usdcToken: string,
+    owner: string,
+    mailerSalt: string,
+    mailServiceSalt: string
+  ): Promise<{ mailer: string; mailService: string }> {
+    if (!this.signer) {
+      throw new Error("Signer required for deployment operations. Use constructor with signer or static deploy method.");
+    }
+    const tx = await this.contract.deployBoth(usdcToken, owner, mailerSalt, mailServiceSalt);
+    const receipt = await tx.wait();
+
+    const mailerEvent = receipt?.logs.find(
+      (log: any) => log.fragment?.name === "MailerDeployed"
+    ) as any;
+    const mailServiceEvent = receipt?.logs.find(
+      (log: any) => log.fragment?.name === "MailServiceDeployed"
+    ) as any;
+
+    return {
+      mailer: mailerEvent?.args[0],
+      mailService: mailServiceEvent?.args[0]
+    };
+  }
+
+  /**
+   * @description Predict the address of a Mailer contract before deployment
+   * @param usdcToken Address of the USDC token contract
+   * @param owner Address that will own the contract
+   * @param salt Salt value for deterministic deployment
+   * @returns Promise resolving to predicted address
+   */
+  async predictMailerAddress(usdcToken: string, owner: string, salt: string): Promise<string> {
+    return await this.contract.predictMailerAddress(usdcToken, owner, salt);
+  }
+
+  /**
+   * @description Predict the address of a MailService contract before deployment
+   * @param usdcToken Address of the USDC token contract
+   * @param owner Address that will own the contract
+   * @param salt Salt value for deterministic deployment
+   * @returns Promise resolving to predicted address
+   */
+  async predictMailServiceAddress(usdcToken: string, owner: string, salt: string): Promise<string> {
+    return await this.contract.predictMailServiceAddress(usdcToken, owner, salt);
+  }
+
+  /**
+   * @description Generate a deterministic salt for deployment
+   * @param projectName Name of the project
+   * @param version Version identifier
+   * @param contractType Type of contract ("Mailer" or "MailService")
+   * @returns Promise resolving to generated salt
+   */
+  async generateSalt(projectName: string, version: string, contractType: string): Promise<string> {
+    return await this.contract.generateSalt(projectName, version, contractType);
+  }
+
+  /**
+   * @description Check if a contract exists at the given address
+   * @param address Address to check
+   * @returns Promise resolving to true if contract exists
+   */
+  async isContractDeployed(address: string): Promise<boolean> {
+    return await this.contract.isContractDeployed(address);
+  }
+
+  /**
+   * @description Get the MailBoxFactory contract address
+   * @returns Promise resolving to contract address
+   */
+  getAddress(): Promise<string> {
+    return this.contract.getAddress();
+  }
+
+  /**
+   * @description Get the underlying ethers contract instance
+   * @returns The raw ethers MailBoxFactory contract instance
+   * @dev Use this for advanced operations not covered by the client API
+   */
+  getContract(): MailBoxFactory {
+    return this.contract;
   }
 }

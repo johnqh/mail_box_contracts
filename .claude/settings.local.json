@@ -35,7 +35,8 @@
       "Bash(git commit:*)",
       "Bash(git push:*)",
       "Bash(npm run predict-addresses:*)",
-      "Bash(npm run deploy:create2:local:*)"
+      "Bash(npm run deploy:create2:local:*)",
+      "Bash(git check-ignore:*)"
     ],
     "deny": [],
     "defaultMode": "acceptEdits"
