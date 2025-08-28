@@ -1,6 +1,38 @@
 {
-  "lastUpdated": "2024-12-27T00:00:00.000Z",
+  "lastUpdated": "2025-01-01T00:00:00.000Z",
   "versions": {
+    "v1.3.4": {
+      "releaseDate": "2025-01-01",
+      "deployer": "0x1996d64D8f6E47A5bF6fB92246EF4eFD6Ae881e0",
+      "owner": "0x9Ea94eDDF851bb1170828335f22F112Dd76D9C3d",
+      "networks": {
+        "sepolia": {
+          "chainId": 11155111,
+          "deploymentDate": "2025-01-01",
+          "contracts": {
+            "MailBoxFactory": "0x455418e4900E9AFd70bfEc62c3B089629e617Cb1",
+            "USDC": "0x1c7D4B196Cb0C7B01d743Fbc6116a902379C7238",
+            "Mailer": "0x248BD957EE6BB0a332a893d03509A299F6371770",
+            "MailService": "0xC94260A7f38A505E3954D63E9CC94BC7797c0Bba"
+          },
+          "salts": {
+            "mailer": "0xad4cf3a7e754d78aaa6822bde14b4d7407963ac21bf7020d38d58b7239b4578c",
+            "mailService": "0x0b83ca435ea66f693c984e9a7f4be9077e6ba2fb537135e4bd9fc7ba8ae00ca5"
+          },
+          "contractSettings": {
+            "sendFee": "0.1 USDC",
+            "registrationFee": "100.0 USDC",
+            "delegationFee": "10.0 USDC"
+          },
+          "usdc": {
+            "address": "0x1c7D4B196Cb0C7B01d743Fbc6116a902379C7238",
+            "type": "USDC",
+            "isTestnet": true
+          },
+          "deploymentMethod": "CREATE2"
+        }
+      }
+    },
     "v1.3.0": {
       "releaseDate": "2024-12-27",
       "deployer": "0x1996d64D8f6E47A5bF6fB92246EF4eFD6Ae881e0",
