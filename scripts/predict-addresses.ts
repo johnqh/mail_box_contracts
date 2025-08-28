@@ -1,232 +1,154 @@
 import { ethers } from "hardhat";
 
-// USDC token addresses for different networks
-const USDC_ADDRESSES: Record<string, string> = {
-  // Mainnets
-  mainnet: "0xA0b86a33E6417a8c8df6D0e9D13A4DcF8C7d6E4b",
+/**
+ * @title Address Prediction Script
+ * @notice Predict MailBox contract addresses before deployment across chains
+ * @dev Uses MailBoxFactory CREATE2 prediction without actual deployment
+ */
+
+// USDC addresses on different networks
+const USDC_ADDRESSES: { [key: string]: string } = {
+  mainnet: "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48",
   polygon: "0x2791Bca1f2de4661ED88A30C99A7a9449Aa84174",
-  optimism: "0x0b2C639c533813f4Aa9D7837CAf62653d097Ff85",
+  optimism: "0x7F5c764cBc14f9669B88837ca1490cCa17c31607",
+  arbitrum: "0xFF970A61A04b1cA14834A43f5dE4533eBDDB5CC8",
   base: "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913",
+  avalanche: "0xB97EF9Ef8734C71904D8002F8b6Bc66Dd9c48a6E",
+  bsc: "0x8AC76a51cc950d9822D68b83fE1Ad97B32Cd580d",
+  sepolia: "0x1c7D4B196Cb0C7B01d743Fbc6116a902379C7238",
+  "base-sepolia": "0x036CbD53842c5426634e7929541eC2318f3dCF7e",
+  "scroll-sepolia": "0x06eFdBFf2a14a7c8E15944D1F4A48F9F95F663A4"
 };
 
-// Configuration for deterministic deployment
-const DEPLOYMENT_CONFIG = {
-  projectName: "MailBox",
-  version: "v1.3.0",
-  factorySalt: "MailBoxFactory_v1.3.0",
-};
-
-interface NetworkDeployment {
-  network: string;
-  chainId: number;
-  usdcAddress: string;
-  factoryAddress: string;
-  mailerAddress: string;
-  mailServiceAddress: string;
-}
-
-function getBytecodeWithConstructor(contractFactory: any, ...constructorArgs: any[]) {
-  // Combine bytecode with encoded constructor args
-  const encodedArgs = ethers.AbiCoder.defaultAbiCoder().encode(
-    contractFactory.interface.deploy.inputs,
-    constructorArgs
-  );
-  return contractFactory.bytecode + encodedArgs.slice(2); // Remove '0x' prefix from encoded args
-}
-
-async function predictFactoryAddress(deployerAddress: string): Promise<string> {
-  // For this simplified example, we'll assume factory is deployed with normal deployment
-  // In practice, you might also want to use CREATE2 for the factory itself
-  console.log("⚠️  Note: Factory address will vary per deployer and deployment order");
-  console.log("   For consistent factory addresses, deploy factory with CREATE2 too");
-  return "0x1234567890123456789012345678901234567890"; // Placeholder
-}
-
-async function predictContractAddresses(
-  factoryAddress: string,
-  usdcAddress: string,
-  ownerAddress: string
-): Promise<{mailerAddress: string, mailServiceAddress: string}> {
-  
-  // Create factory instance for salt generation
-  const factory = await ethers.getContractAt("MailBoxFactory", factoryAddress);
-  
-  // Generate salts (these will be the same across all networks)
-  const mailerSalt = await factory.generateSalt(
-    DEPLOYMENT_CONFIG.projectName,
-    DEPLOYMENT_CONFIG.version,
-    "Mailer"
-  );
-  
-  const mailServiceSalt = await factory.generateSalt(
-    DEPLOYMENT_CONFIG.projectName,
-    DEPLOYMENT_CONFIG.version,
-    "MailService"
-  );
-  
-  // Get contract factories and bytecode
-  const MailerFactory = await ethers.getContractFactory("Mailer");
-  const MailServiceFactory = await ethers.getContractFactory("MailService");
-  
-  const mailerBytecode = getBytecodeWithConstructor(MailerFactory, usdcAddress, ownerAddress);
-  const mailServiceBytecode = getBytecodeWithConstructor(MailServiceFactory, usdcAddress, ownerAddress);
-  
-  // Predict addresses using the factory
-  const mailerAddress = await factory.predictAddress(mailerBytecode, mailerSalt, factoryAddress);
-  const mailServiceAddress = await factory.predictAddress(mailServiceBytecode, mailServiceSalt, factoryAddress);
-  
-  return { mailerAddress, mailServiceAddress };
-}
+const NETWORKS = [
+  "mainnet", "polygon", "optimism", "arbitrum", "base", 
+  "avalanche", "bsc", "sepolia", "base-sepolia", "scroll-sepolia"
+];
 
 async function main() {
   const [deployer] = await ethers.getSigners();
-  const ownerAddress = process.env.OWNER_ADDRESS || deployer.address;
-
-  console.log("=".repeat(80));
-  console.log("📍 CROSS-CHAIN ADDRESS PREDICTION (CREATE2)");
-  console.log("=".repeat(80));
-  console.log("Project:", DEPLOYMENT_CONFIG.projectName);
-  console.log("Version:", DEPLOYMENT_CONFIG.version);
+  
+  console.log("🔍 MailBox Address Prediction Tool");
   console.log("Deployer:", deployer.address);
+  
+  // Get owner address from environment or use deployer
+  const ownerAddress = process.env.OWNER_ADDRESS || deployer.address;
   console.log("Owner:", ownerAddress);
-  console.log("-".repeat(80));
 
-  // Note: For this demo, we'll assume the factory is deployed normally
-  // In production, you'd want to use CREATE2 for the factory too for consistency
-  const factoryAddress = await predictFactoryAddress(deployer.address);
-  console.log("🏭 Factory address:", factoryAddress);
-  console.log("   (Note: Factory address will vary by deployer unless using CREATE2)");
-  console.log("-".repeat(80));
-
-  const networks: NetworkDeployment[] = [];
-
-  // Define networks to predict for
-  const networksToPredict = [
-    { name: "mainnet", chainId: 1 },
-    { name: "sepolia", chainId: 11155111 },
-    { name: "polygon", chainId: 137 },
-    { name: "optimism", chainId: 10 },
-    { name: "base", chainId: 8453 },
-  ];
-
-  console.log("🌐 PREDICTED ADDRESSES BY NETWORK:");
-  console.log("=".repeat(80));
-  console.log("Network".padEnd(12), "Chain ID".padEnd(10), "Mailer".padEnd(44), "MailService");
-  console.log("-".repeat(80));
-
-  // Deploy a temporary factory for prediction purposes
-  console.log("🏗️  Deploying temporary factory for address prediction...");
+  // First deploy a factory locally to get the prediction functions
+  console.log("\n🏭 Deploying temporary MailBoxFactory for predictions...");
   const MailBoxFactory = await ethers.getContractFactory("MailBoxFactory");
-  const tempFactory = await MailBoxFactory.deploy();
-  await tempFactory.waitForDeployment();
-  const tempFactoryAddress = await tempFactory.getAddress();
+  const factory = await MailBoxFactory.deploy();
+  await factory.waitForDeployment();
+  const factoryAddress = await factory.getAddress();
+  console.log("Temporary factory at:", factoryAddress);
 
-  for (const net of networksToPredict) {
-    let usdcAddress = USDC_ADDRESSES[net.name];
-    
-    // For testnets, use a placeholder address since they would use MockUSDC
-    if (net.name === "sepolia" && !usdcAddress) {
-      usdcAddress = "0x1234567890123456789012345678901234567890"; // Placeholder for MockUSDC
-    }
-    
+  // Generate deterministic salts
+  const projectName = "MailBox";
+  const version = "1.0.0";
+  
+  const mailerSalt = await factory.generateSalt(projectName, version, "Mailer");
+  const mailServiceSalt = await factory.generateSalt(projectName, version, "MailService");
+  
+  console.log("\n🔮 Generated Salts:");
+  console.log("Mailer Salt:", mailerSalt);
+  console.log("MailService Salt:", mailServiceSalt);
+
+  console.log("\n📍 Predicted Addresses Across Networks:");
+  console.log("=" .repeat(90));
+  console.log("Note: Addresses assume same factory deployment address on each network");
+  console.log("=" .repeat(90));
+
+  const results: { [key: string]: { mailer: string; mailService: string; usdc: string } } = {};
+
+  for (const network of NETWORKS) {
+    const usdcAddress = USDC_ADDRESSES[network];
     if (!usdcAddress) continue;
 
-    try {
-      const { mailerAddress, mailServiceAddress } = await predictContractAddresses(
-        tempFactoryAddress, // Use temp factory for prediction
-        usdcAddress,
-        ownerAddress
-      );
+    // Predict addresses using the factory
+    const predictedMailer = await factory.predictMailerAddress(usdcAddress, ownerAddress, mailerSalt);
+    const predictedMailService = await factory.predictMailServiceAddress(usdcAddress, ownerAddress, mailServiceSalt);
 
-      networks.push({
-        network: net.name,
-        chainId: net.chainId,
-        usdcAddress,
-        factoryAddress: tempFactoryAddress,
-        mailerAddress,
-        mailServiceAddress
-      });
+    results[network] = {
+      mailer: predictedMailer,
+      mailService: predictedMailService,
+      usdc: usdcAddress
+    };
 
-      console.log(
-        net.name.padEnd(12),
-        net.chainId.toString().padEnd(10),
-        mailerAddress,
-        mailServiceAddress
-      );
-
-    } catch (error) {
-      console.log(net.name.padEnd(12), net.chainId.toString().padEnd(10), "❌ Error predicting addresses");
-    }
+    console.log(`\n${network.toUpperCase()}:`);
+    console.log(`  USDC:        ${usdcAddress}`);
+    console.log(`  Mailer:      ${predictedMailer}`);
+    console.log(`  MailService: ${predictedMailService}`);
   }
-
-  console.log("=".repeat(80));
-
-  // Verify addresses are identical (they should be with CREATE2)
-  if (networks.length > 1) {
-    const firstMailer = networks[0].mailerAddress;
-    const firstMailService = networks[0].mailServiceAddress;
-    
-    const allMailersMatch = networks.every(net => net.mailerAddress === firstMailer);
-    const allMailServicesMatch = networks.every(net => net.mailServiceAddress === firstMailService);
-
-    if (allMailersMatch && allMailServicesMatch) {
-      console.log("✅ SUCCESS: All contract addresses are IDENTICAL across networks!");
-      console.log("🎯 Universal Mailer address:", firstMailer);
-      console.log("🎯 Universal MailService address:", firstMailService);
-    } else {
-      console.log("❌ WARNING: Addresses are NOT identical across networks");
-      if (!allMailersMatch) console.log("   - Mailer addresses differ");
-      if (!allMailServicesMatch) console.log("   - MailService addresses differ");
-      console.log("   This might be due to different USDC addresses (expected)");
-    }
-  }
-
-  console.log("=".repeat(80));
-  
-  console.log("🔍 IMPORTANT NOTES:");
-  console.log("-".repeat(80));
-  console.log("• Contract addresses will be IDENTICAL if:");
-  console.log("  - Same factory deployer address");
-  console.log("  - Same owner address");
-  console.log("  - Same USDC addresses (or consistently different)");
-  console.log("  - Same project version and salts");
-  console.log();
-  console.log("• Different USDC addresses per network are EXPECTED");
-  console.log("• Factory address shown above is just for demonstration");
-  console.log("• Use 'deploy-create2.ts' for actual deployment");
-
-  console.log("=".repeat(80));
 
   // Generate deployment commands
-  console.log("📋 DEPLOYMENT COMMANDS:");
-  console.log("-".repeat(80));
+  console.log("\n" + "=".repeat(90));
+  console.log("📝 Deployment Commands:");
+  console.log("=".repeat(50));
   
-  for (const net of networks.slice(0, 3)) { // Show first 3 as examples
-    console.log(`# Deploy on ${net.network}:`);
-    console.log(`OWNER_ADDRESS=${ownerAddress} npx hardhat run scripts/deploy-create2.ts --network ${net.network}`);
-    console.log();
+  for (const network of NETWORKS) {
+    if (results[network]) {
+      console.log(`# Deploy to ${network}`);
+      console.log(`OWNER_ADDRESS=${ownerAddress} npx hardhat run scripts/deploy-create2.ts --network ${network}`);
+      console.log();
+    }
   }
-  console.log("# ... repeat for other networks");
 
-  // Save predictions to file
-  const predictionsFile = `address-predictions-${DEPLOYMENT_CONFIG.version}.json`;
-  const predictions = {
-    timestamp: new Date().toISOString(),
-    version: DEPLOYMENT_CONFIG.version,
-    deployer: deployer.address,
-    owner: ownerAddress,
-    tempFactoryAddress,
-    networks,
-    note: "These predictions assume same factory deployer and parameters across networks"
-  };
+  // Verify consistency
+  console.log("✅ Address Consistency Check:");
+  console.log("=".repeat(50));
+  const firstNetwork = NETWORKS[0];
+  const referenceAddresses = results[firstNetwork];
+  
+  let allConsistent = true;
+  for (const network of NETWORKS.slice(1)) {
+    if (results[network]) {
+      const mailerConsistent = results[network].mailer === referenceAddresses?.mailer;
+      const mailServiceConsistent = results[network].mailService === referenceAddresses?.mailService;
+      const consistent = mailerConsistent && mailServiceConsistent;
+      
+      console.log(`${network.padEnd(15)}: ${consistent ? "✅ Consistent" : "❌ Different"}`);
+      if (!consistent) {
+        console.log(`  Mailer: ${mailerConsistent ? "✅" : "❌"} ${results[network].mailer}`);
+        console.log(`  MailService: ${mailServiceConsistent ? "✅" : "❌"} ${results[network].mailService}`);
+        allConsistent = false;
+      }
+    }
+  }
+  
+  console.log("\n" + "=".repeat(50));
+  console.log(`Overall Result: ${allConsistent ? "✅ All addresses will be identical across networks" : "❌ Addresses will differ between networks"}`);
+  
+  if (allConsistent) {
+    console.log("\n🎉 Perfect! Your contracts will have the same addresses on all networks.");
+    console.log("This enables seamless cross-chain integration and user experience.");
+  } else {
+    console.log("\n⚠️  Warning: Address inconsistencies detected.");
+    console.log("This usually means different USDC addresses or owner addresses between networks.");
+  }
 
-  require('fs').writeFileSync(predictionsFile, JSON.stringify(predictions, null, 2));
-  console.log("💾 Predictions saved to:", predictionsFile);
-  console.log("=".repeat(80));
+  // Summary table
+  console.log("\n📊 Summary Table:");
+  console.log("=".repeat(90));
+  console.log("Network".padEnd(15) + "Mailer".padEnd(42) + "MailService");
+  console.log("-".repeat(90));
+  
+  for (const network of NETWORKS) {
+    if (results[network]) {
+      console.log(
+        network.padEnd(15) + 
+        results[network].mailer.padEnd(42) + 
+        results[network].mailService
+      );
+    }
+  }
+  
+  return results;
 }
 
-main().catch((error) => {
-  console.error("❌ Prediction failed:");
-  console.error(error);
-  process.exitCode = 1;
-});
+main()
+  .then(() => process.exit(0))
+  .catch((error) => {
+    console.error("❌ Prediction failed:", error);
+    process.exit(1);
+  });

@@ -12,6 +12,8 @@
     "prepack": "npm run build",
     "postinstall": "echo 'MailBox Contracts installed successfully!'",
     "deploy:local": "npx hardhat run scripts/deploy.ts --network hardhat",
+    "deploy:create2:local": "npx hardhat run scripts/deploy-create2.ts --network hardhat",
+    "predict-addresses": "npx hardhat run scripts/predict-addresses.ts",
     "deploy:localhost": "npx hardhat run scripts/deploy.ts --network localhost",
     "deploy:mainnet": "npx hardhat run scripts/deploy.ts --network mainnet",
     "deploy:sepolia": "npx hardhat run scripts/deploy.ts --network sepolia",
