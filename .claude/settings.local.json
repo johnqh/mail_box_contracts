@@ -36,7 +36,9 @@
       "Bash(git push:*)",
       "Bash(npm run predict-addresses:*)",
       "Bash(npm run deploy:create2:local:*)",
-      "Bash(git check-ignore:*)"
+      "Bash(git check-ignore:*)",
+      "Bash(OWNER_ADDRESS=0x9Ea94eDDF851bb1170828335f22F112Dd76D9C3d npx hardhat run scripts/deploy-create2.ts --network sepolia)",
+      "Bash(npm i)"
     ],
     "deny": [],
     "defaultMode": "acceptEdits"
