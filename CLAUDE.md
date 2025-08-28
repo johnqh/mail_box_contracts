@@ -2,35 +2,61 @@
 
 This file provides comprehensive guidance for AI assistants working with this decentralized mail service project.
 
-## Project Overview
+## 🚀 Project Overview
 
-**MailBox Contracts** is a Solidity-based decentralized email/messaging system with USDC fee integration and delegation features.
+**MailBox Contracts** is a Solidity-based decentralized email/messaging system with USDC fee integration, delegation features, and comprehensive AI-friendly documentation.
 
 ### Core Contracts
 
 1. **MailService.sol** - Domain registration and delegation management
 2. **Mailer.sol** - Message sending with revenue sharing
-3. **MailBoxFactory.sol** - CREATE2 factory for deterministic cross-chain deployment
-4. **MockUSDC.sol** - Test token for development
+3. **MockUSDC.sol** - Test token for development
 
-## Common Development Commands
+### 📁 Enhanced Project Structure
+
+```
+mail_box_contracts/
+├── contracts/              # Smart contracts (fully documented)
+│   ├── MailService.sol    # Domain registration & delegation
+│   ├── Mailer.sol         # Messaging with revenue sharing
+│   └── MockUSDC.sol       # Test USDC token
+├── src/                   # TypeScript client library (fully documented)
+│   └── mailer-client.ts   # High-level client wrappers with JSDoc
+├── test/                  # Comprehensive test suites (88 tests)
+│   ├── MailService.test.ts # 27 tests for MailService
+│   ├── Mailer.test.ts     # 54 tests for Mailer
+│   └── MailBoxClient.test.ts # 7 tests for client wrappers
+├── examples/              # Complete usage examples
+│   ├── basic-usage.ts     # Comprehensive examples with output
+│   └── README.md          # Example documentation
+├── typechain-types/       # Auto-generated TypeScript types
+├── scripts/               # Deployment scripts
+├── AI_DEVELOPMENT_GUIDE.md # Comprehensive AI assistant guide
+├── CLAUDE.md             # This file - AI assistant documentation
+└── README.md             # Main project documentation (AI-optimized)
+```
+
+## 🛠️ Common Development Commands
 
 ```bash
 # Essential Commands (run these frequently)
 npm run compile    # Compile contracts + generate TypeScript types
-npm test          # Run all tests (81 tests total)
+npm test          # Run all tests (88 tests total - updated count)
 npm run build     # Build TypeScript files
 
-# Deployment Commands
+# Deployment Commands  
 npm run deploy:local           # Deploy to local Hardhat network (standard)
-npx hardhat run scripts/deploy-create2.ts --network <network>  # Deterministic deployment
-npx hardhat run scripts/predict-addresses.ts                   # Predict cross-chain addresses
 npx hardhat node              # Start local blockchain
 
-# Utility Commands
+# Development Commands
 npm run clean          # Clean compiled artifacts
-npm run typecheck     # Type checking (if available)
-npm run lint          # Linting (if available)
+npm install           # Install dependencies
+npx ts-node examples/basic-usage.ts  # Run comprehensive examples
+
+# Testing Commands
+npm test -- --grep "MailService"  # Run only MailService tests
+npm test -- --grep "Mailer"       # Run only Mailer tests
+npm test -- --verbose            # Run tests with detailed output
 ```
 
 ## Smart Contract Architecture
@@ -74,7 +100,7 @@ npm run lint          # Linting (if available)
 - `sendPrepared(string mailId)` - 10% fee, pre-prepared message
 - `claimRecipientShare()` - Claim your 90% share within 60 days
 - `claimOwnerShare()` - Owner claims accumulated fees
-- `rejectDelegation(address)` - Owner reclaims expired shares
+- `claimExpiredShares(address)` - Owner reclaims expired shares
 
 **Revenue Model**:
 - **Priority functions**: Sender pays full fee, gets 90% back as claimable
@@ -88,8 +114,8 @@ npm run lint          # Linting (if available)
 
 ## Testing Architecture
 
-**Test Files**: `test/MailService.test.ts`, `test/Mailer.test.ts`, `test/MailBoxFactory.test.ts`
-**Total Tests**: 100+ passing tests (including factory tests)
+**Test Files**: `test/MailService.test.ts`, `test/Mailer.test.ts`, `test/MailBoxClient.test.ts`
+**Total Tests**: 88 passing tests (MailBoxFactory removed as per user requirements)
 **Test Categories**:
 
 ### MailService Tests (27 tests)
@@ -177,87 +203,104 @@ expect(finalBalance - initialBalance).to.equal(expectedFee);
 - **Test Environment**: Built-in Hardhat test network
 - **Deployment**: Uses standard Hardhat deployment patterns
 
-## Cross-Chain Deployment with CREATE2
+## 📚 AI-Friendly Documentation Structure
 
-### MailBoxFactory Contract (`contracts/MailBoxFactory.sol`)
+### Comprehensive Documentation Files:
 
-**Purpose**: Deterministic deployment of contracts across multiple EVM chains
-**Key Features**:
-- Uses CREATE2 for identical contract addresses across networks
-- Generates deterministic salts based on project/version/contract type
-- Provides address prediction before deployment
-- Batch deployment support
+1. **README.md** - Main project documentation with:
+   - Quick start guide
+   - NPM package usage
+   - Architecture overview
+   - Development commands
+   - TypeScript integration examples
 
-**Core Functions**:
-- `deployMailer(address usdcToken, address owner, bytes32 salt)` - Deploy Mailer with CREATE2
-- `deployMailService(address usdcToken, address owner, bytes32 salt)` - Deploy MailService with CREATE2
-- `deployBoth(...)` - Deploy both contracts in single transaction
-- `predictMailerAddress(...)` / `predictMailServiceAddress(...)` - Predict addresses before deployment
-- `generateSalt(string projectName, string version, string contractType)` - Generate deterministic salt
-- `isContractDeployed(address)` - Check if contract exists at address
+2. **AI_DEVELOPMENT_GUIDE.md** - Specialized guide for AI assistants with:
+   - Development patterns and workflows
+   - Common scenarios and solutions
+   - Testing strategies
+   - Code style guidelines
+   - Security best practices
+   - Performance optimization tips
 
-**Cross-Chain Deployment Process**:
-1. **Predict Addresses**: `npx hardhat run scripts/predict-addresses.ts`
-2. **Deploy Factory**: Same factory address on all chains with same deployer
-3. **Deploy Contracts**: `OWNER_ADDRESS=<addr> npx hardhat run scripts/deploy-create2.ts --network <network>`
-4. **Verify Consistency**: All networks will have identical contract addresses
+3. **examples/basic-usage.ts** - Comprehensive working examples with:
+   - Complete deployment workflow
+   - All major functionality demonstrated
+   - Error handling patterns
+   - Event listening examples
+   - Expected output documentation
 
-**Benefits**:
-- **Identical Addresses**: Same contract addresses across all EVM chains
-- **Predictable**: Know addresses before deployment
-- **Batch Deployment**: Deploy multiple contracts efficiently
-- **Version Control**: Salt includes version for upgrades
+4. **Contract Documentation** - All contracts have extensive inline documentation:
+   - NatSpec comments for all functions
+   - Parameter descriptions
+   - Usage examples in comments
+   - Error condition explanations
 
-### Deployment Scripts
+5. **Client Library Documentation** - TypeScript client with full JSDoc:
+   - Class-level documentation with usage examples
+   - Method-level documentation with parameters
+   - Return type descriptions
+   - Example code snippets
 
-**Standard Deployment** (`scripts/deploy.ts`):
-- Uses regular contract deployment
-- Different addresses per chain
-- Suitable for single-chain applications
+### Key AI Integration Points:
 
-**CREATE2 Deployment** (`scripts/deploy-create2.ts`):
-- Uses MailBoxFactory for deterministic addresses
-- Same addresses across all chains
-- Includes comprehensive address verification
-- Automatically handles USDC token detection per network
+**Smart Contract Comments**: Every function, event, and error is documented with NatSpec
+**TypeScript Client**: Full JSDoc with usage examples and parameter descriptions
+**Test Patterns**: Comprehensive test suites demonstrating all functionality
+**Example Code**: Working examples with expected output and error handling
+**Development Guides**: Step-by-step workflows for common AI development tasks
 
-**Address Prediction** (`scripts/predict-addresses.ts`):
-- Predicts contract addresses without deployment
-- Shows addresses for all supported networks
-- Generates deployment commands
-- Verifies address consistency
+## 🤖 Enhanced AI Assistant Instructions
 
-### Supported Networks
+### Critical Development Workflow:
+1. **Always run `npm run compile` after contract changes** - Regenerates TypeScript types
+2. **Run `npm test` to verify changes don't break existing functionality** - 88 comprehensive tests
+3. **Follow existing test patterns** documented in AI_DEVELOPMENT_GUIDE.md
+4. **Use MockUSDC for all USDC-related testing** - Never use real tokens
+5. **Check both positive and negative test cases** - Error conditions are critical
+6. **Verify event emissions match expected parameters** - Events drive UI updates
+7. **Consider fee calculations and revenue sharing implications** - Core business logic
+8. **Test edge cases like insufficient balances and permissions** - Security critical
 
-**Mainnets**: Ethereum, Polygon, Optimism, Arbitrum, Base, Avalanche, BSC, Gnosis, Celo
-**Testnets**: Sepolia, Base Sepolia, Scroll Sepolia
-**Local**: Hardhat, Localhost
+### AI-Specific Guidance:
 
-### Example Usage
+**Code Generation Patterns**:
+- Reference `examples/basic-usage.ts` for working patterns
+- Use existing client methods as templates for new functionality
+- Follow the established error handling patterns
+- Maintain consistency with existing naming conventions
 
-```bash
-# 1. Predict addresses across all networks
-npx hardhat run scripts/predict-addresses.ts
+**Testing Patterns**:
+- Fund test accounts with MockUSDC before testing
+- Approve contract spending before operations
+- Test both success and failure scenarios
+- Verify event emissions with expected parameters
+- Use time manipulation for claim expiration testing
 
-# 2. Deploy to Polygon with specific owner
-OWNER_ADDRESS=0x123... npx hardhat run scripts/deploy-create2.ts --network polygon
+**Documentation Standards**:
+- Add NatSpec comments to all new Solidity functions
+- Include JSDoc comments for all TypeScript methods
+- Provide usage examples in complex functions
+- Document error conditions and their causes
 
-# 3. Deploy to Arbitrum (same addresses as Polygon)
-OWNER_ADDRESS=0x123... npx hardhat run scripts/deploy-create2.ts --network arbitrum
-```
+**Security Considerations**:
+- Always use reentrancy protection on external functions
+- Validate all external inputs
+- Use custom errors instead of require statements
+- Test authorization and access control thoroughly
 
-## AI Assistant Instructions
+### Quick Reference Files for AI:
+- `AI_DEVELOPMENT_GUIDE.md` - Comprehensive development patterns
+- `examples/basic-usage.ts` - Working code examples
+- `examples/README.md` - Usage patterns documentation
+- `src/mailer-client.ts` - Full API reference with examples
+- `test/` directory - Comprehensive test patterns
 
-When working with this project:
-1. **Always run `npm run compile` after contract changes**
-2. **Run `npm test` to verify changes don't break existing functionality**
-3. **Follow existing test patterns** for new feature testing
-4. **Use MockUSDC for all USDC-related testing**
-5. **Check both positive and negative test cases**
-6. **Verify event emissions match expected parameters**
-7. **Consider fee calculations and revenue sharing implications**
-8. **Test edge cases like insufficient balances and permissions**
-9. **For cross-chain deployments, use CREATE2 factory pattern**
-10. **Always predict addresses before deployment to verify consistency**
+### Project Philosophy:
+This project emphasizes **security, comprehensive testing, AI-friendly documentation, and clear separation of concerns** between domain management and messaging functionality. All code should be self-documenting with extensive examples and clear usage patterns.
 
-This project emphasizes security, comprehensive testing, cross-chain consistency, and clear separation of concerns between domain management and messaging functionality.
+### Common AI Development Scenarios:
+1. **Adding new contract functions** - Follow MailService/Mailer patterns
+2. **Extending client library** - Use existing client methods as templates
+3. **Writing tests** - Reference existing comprehensive test suites
+4. **Debugging issues** - Check AI_DEVELOPMENT_GUIDE.md for common solutions
+5. **Understanding architecture** - Start with examples/basic-usage.ts walkthrough
