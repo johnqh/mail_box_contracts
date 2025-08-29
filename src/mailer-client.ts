@@ -181,14 +181,6 @@ export class MailServiceClient {
     return await this.contract.rejectDelegation(delegatingAddress);
   }
 
-  async registerDomain(domain: string, isExtension: boolean): Promise<ethers.ContractTransactionResponse> {
-    return await this.contract.registerDomain(domain, isExtension);
-  }
-
-  async getRegistrationFee(): Promise<bigint> {
-    return await this.contract.registrationFee();
-  }
-
   async getDelegationFee(): Promise<bigint> {
     return await this.contract.delegationFee();
   }

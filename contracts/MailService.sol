@@ -3,8 +3,8 @@ pragma solidity ^0.8.24;
 
 /**
  * @title MailService
- * @notice Decentralized domain registration and delegation management system
- * @dev Handles domain registration with USDC fees and delegation with rejection capability
+ * @notice Decentralized delegation management system
+ * @dev Handles delegation with rejection capability and USDC fees
  * @author MailBox Team
  */
 
@@ -20,9 +20,6 @@ contract MailService {
     /// @notice Reentrancy guard status
     uint256 private _status;
     
-    /// @notice Fee required for domain registration (100 USDC with 6 decimals)
-    uint256 public registrationFee = 100000000;
-    
     /// @notice Fee required for delegation operations (10 USDC with 6 decimals)
     uint256 public delegationFee = 10000000;
     
@@ -35,35 +32,10 @@ contract MailService {
     /// @param delegate The delegate address (address(0) for clearing)
     event DelegationSet(address indexed delegator, address indexed delegate);
     
-    /// @notice Emitted when a new domain is registered
-    /// @param domain The domain name being registered
-    /// @param registrar The address registering the domain
-    /// @param expiration Timestamp when the registration expires
-    event DomainRegistered(string indexed domain, address indexed registrar, uint256 expiration);
-    
-    /// @notice Emitted when a domain registration is extended
-    /// @param domain The domain name being extended
-    /// @param registrar The address extending the registration
-    /// @param newExpiration New timestamp when the registration expires
-    event DomainExtended(string indexed domain, address indexed registrar, uint256 newExpiration);
-    
-    /// @notice Emitted when a domain registration is released
-    /// @param domain The domain name being released
-    /// @param registrar The address releasing the domain
-    event DomainReleased(string indexed domain, address indexed registrar);
-    
-    /// @notice Emitted when registration fee is updated
-    /// @param oldFee Previous fee amount
-    /// @param newFee New fee amount
-    event RegistrationFeeUpdated(uint256 oldFee, uint256 newFee);
-    
     /// @notice Emitted when delegation fee is updated
     /// @param oldFee Previous fee amount
     /// @param newFee New fee amount
     event DelegationFeeUpdated(uint256 oldFee, uint256 newFee);
-    
-    /// @notice Thrown when attempting to register an empty domain
-    error EmptyDomain();
     
     /// @notice Thrown when non-owner attempts owner-only functions
     error OnlyOwner();
@@ -71,14 +43,8 @@ contract MailService {
     /// @notice Thrown when attempting to reject a non-existent delegation
     error NoDelegationToReject();
     
-    /// @notice Thrown when attempting to use disabled function
-    error FunctionDisabled();
-    
     /// @notice Thrown when fee payment fails
     error FeePaymentRequired();
-    
-    /// @notice Thrown when registration fee payment fails
-    error RegistrationFeeRequired();
     
     /// @notice Thrown when reentrancy is detected
     error ReentrancyGuard();
@@ -140,55 +106,12 @@ contract MailService {
         emit DelegationSet(delegatingAddress, address(0));
     }
     
-    /// @notice Register or extend a domain registration
-    /// @dev Charges registration fee in USDC. Emits different events for new vs extension
-    /// @param domain The domain name to register (must not be empty)
-    /// @param isExtension True if extending existing registration, false for new
-    function registerDomain(string calldata domain, bool isExtension) external nonReentrant {
-        if (bytes(domain).length == 0) {
-            revert EmptyDomain();
-        }
-        
-        if (!usdcToken.transferFrom(msg.sender, address(this), registrationFee)) {
-            revert RegistrationFeeRequired();
-        }
-        
-        uint256 expiration = block.timestamp + 365 days;
-        
-        if (isExtension) {
-            emit DomainExtended(domain, msg.sender, expiration);
-        } else {
-            emit DomainRegistered(domain, msg.sender, expiration);
-        }
-    }
-    
-    /// @notice Release a domain registration
-    /// @dev Disabled for security - domain releases should be handled by indexer logic
-    function releaseRegistration(string calldata /* domain */) external pure {
-        // Security Fix: Prevent arbitrary domain release events
-        revert FunctionDisabled();
-    }
-    
-    /// @notice Update the domain registration fee (owner only)
-    /// @param usdcAmount New fee amount in USDC (6 decimals)
-    function setRegistrationFee(uint256 usdcAmount) external onlyOwner {
-        uint256 oldFee = registrationFee;
-        registrationFee = usdcAmount;
-        emit RegistrationFeeUpdated(oldFee, usdcAmount);
-    }
-    
     /// @notice Update the delegation fee (owner only)
     /// @param usdcAmount New fee amount in USDC (6 decimals)
     function setDelegationFee(uint256 usdcAmount) external onlyOwner {
         uint256 oldFee = delegationFee;
         delegationFee = usdcAmount;
         emit DelegationFeeUpdated(oldFee, usdcAmount);
-    }
-    
-    /// @notice Get current domain registration fee
-    /// @return Current registration fee in USDC (6 decimals)
-    function getRegistrationFee() external view returns (uint256) {
-        return registrationFee;
     }
     
     /// @notice Get current delegation fee

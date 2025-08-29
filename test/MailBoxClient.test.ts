@@ -76,19 +76,7 @@ describe("MailBox Client", function () {
       expect(await mailServiceClient.getDelegation(addr1.address)).to.equal(ethers.ZeroAddress);
     });
 
-    it("Should handle domain registration", async function () {
-      const addr1MailServiceClient = new MailServiceClient(
-        await mailServiceClient.getAddress(),
-        addr1.provider
-      );
-
-      // Register a domain
-      await expect(addr1MailServiceClient.getContract().connect(addr1).registerDomain("test.mail", false))
-        .to.emit(addr1MailServiceClient.getContract(), "DomainRegistered");
-    });
-
     it("Should get fees correctly", async function () {
-      expect(await mailServiceClient.getRegistrationFee()).to.equal(ethers.parseUnits("100", 6));
       expect(await mailServiceClient.getDelegationFee()).to.equal(ethers.parseUnits("10", 6));
     });
   });
@@ -118,7 +106,7 @@ describe("MailBox Client", function () {
 
       // Test that both clients work through unified interface
       expect(await mailBoxClient.mailer.getSendFee()).to.equal(ethers.parseUnits("0.1", 6));
-      expect(await mailBoxClient.mailService.getRegistrationFee()).to.equal(ethers.parseUnits("100", 6));
+      expect(await mailBoxClient.mailService.getDelegationFee()).to.equal(ethers.parseUnits("10", 6));
     });
 
     it("Should deploy both contracts using deployBoth", async function () {
@@ -133,7 +121,7 @@ describe("MailBox Client", function () {
 
       // Verify they work
       expect(await unifiedClient.mailer.getSendFee()).to.equal(ethers.parseUnits("0.1", 6));
-      expect(await unifiedClient.mailService.getRegistrationFee()).to.equal(ethers.parseUnits("100", 6));
+      expect(await unifiedClient.mailService.getDelegationFee()).to.equal(ethers.parseUnits("10", 6));
     });
   });
 });

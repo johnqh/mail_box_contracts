@@ -158,7 +158,6 @@ describe("MailBoxFactory", function () {
 
       expect(await mailService.owner()).to.equal(owner.address);
       expect(await mailService.usdcToken()).to.equal(usdcAddress);
-      expect(await mailService.registrationFee()).to.equal(100000000); // 100 USDC
       expect(await mailService.delegationFee()).to.equal(10000000); // 10 USDC
     });
   });

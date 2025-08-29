@@ -13,8 +13,8 @@ import type {
   ContractDeployTransaction,
   ContractRunner,
 } from "ethers";
-import type { NonPayableOverrides } from "../../common";
-import type { Mailer, MailerInterface } from "../../Mailer.sol/Mailer";
+import type { NonPayableOverrides } from "../common";
+import type { Mailer, MailerInterface } from "../Mailer";
 
 const _abi = [
   {

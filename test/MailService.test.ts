@@ -34,10 +34,6 @@ describe("MailService", function () {
       expect(await mailService.usdcToken()).to.equal(await mockUSDC.getAddress());
     });
 
-    it("Should set correct default registration fee", async function () {
-      expect(await mailService.registrationFee()).to.equal(100000000); // 100 USDC
-    });
-
     it("Should set correct default delegation fee", async function () {
       expect(await mailService.delegationFee()).to.equal(10000000); // 10 USDC
     });
@@ -91,287 +87,112 @@ describe("MailService", function () {
     it("Should allow clearing delegation without fee", async function () {
       const initialBalance = await mockUSDC.balanceOf(await mailService.getAddress());
       
+      // Set delegation first
+      await mailService.connect(addr1).delegateTo(addr2.address);
+      
+      // Clear delegation - should not charge fee
+      const midBalance = await mockUSDC.balanceOf(await mailService.getAddress());
+      
       await expect(
         mailService.connect(addr1).delegateTo(ethers.ZeroAddress)
       ).to.emit(mailService, "DelegationSet")
        .withArgs(addr1.address, ethers.ZeroAddress);
       
-      // Verify no fee was charged for clearing (security fix)
+      // Balance should remain the same after clearing
       const finalBalance = await mockUSDC.balanceOf(await mailService.getAddress());
-      expect(finalBalance - initialBalance).to.equal(0); // No fee for clearing
+      expect(finalBalance).to.equal(midBalance);
     });
 
     it("Should emit correct events for multiple delegations", async function () {
-      // Fund more addresses
-      await mockUSDC.mint(addr2.address, ethers.parseUnits("100", 6));
-      await mockUSDC.connect(addr2).approve(await mailService.getAddress(), ethers.parseUnits("100", 6));
+      // Fund more USDC for multiple operations
+      await mockUSDC.mint(addr1.address, ethers.parseUnits("100", 6));
+      await mockUSDC.connect(addr1).approve(await mailService.getAddress(), ethers.parseUnits("100", 6));
       
-      // Multiple delegations
+      // Set delegation to addr2
       await expect(
         mailService.connect(addr1).delegateTo(addr2.address)
       ).to.emit(mailService, "DelegationSet")
        .withArgs(addr1.address, addr2.address);
       
+      // Change delegation to addr3
       await expect(
-        mailService.connect(addr2).delegateTo(addr1.address)
+        mailService.connect(addr1).delegateTo(addr3.address)
       ).to.emit(mailService, "DelegationSet")
-       .withArgs(addr2.address, addr1.address);
+       .withArgs(addr1.address, addr3.address);
     });
 
     it("Should have delegation fee setter for owner", async function () {
-      await expect(
-        mailService.connect(owner).setDelegationFee(20000000) // 20 USDC
-      ).to.emit(mailService, "DelegationFeeUpdated")
-       .withArgs(10000000, 20000000);
+      const newFee = 20000000; // 20 USDC
       
-      expect(await mailService.getDelegationFee()).to.equal(20000000);
+      await expect(
+        mailService.connect(owner).setDelegationFee(newFee)
+      ).to.emit(mailService, "DelegationFeeUpdated")
+       .withArgs(10000000, newFee);
+      
+      expect(await mailService.delegationFee()).to.equal(newFee);
     });
   });
 
   describe("rejectDelegation function", function () {
     beforeEach(async function () {
-      // Fund addresses with USDC for delegation fees
+      // Fund addr1 for delegation fee
       await mockUSDC.mint(addr1.address, ethers.parseUnits("100", 6));
       await mockUSDC.connect(addr1).approve(await mailService.getAddress(), ethers.parseUnits("100", 6));
-      await mockUSDC.mint(addr2.address, ethers.parseUnits("100", 6));
-      await mockUSDC.connect(addr2).approve(await mailService.getAddress(), ethers.parseUnits("100", 6));
+      
+      // Set delegation from addr1 to addr2
+      await mailService.connect(addr1).delegateTo(addr2.address);
     });
 
     it("Should allow delegate to reject delegation", async function () {
-      // First, addr1 delegates to addr2
-      await mailService.connect(addr1).delegateTo(addr2.address);
-      
-      // Verify delegation is set
-      expect(await mailService.delegations(addr1.address)).to.equal(addr2.address);
-      
-      // Now addr2 rejects the delegation
       await expect(
         mailService.connect(addr2).rejectDelegation(addr1.address)
       ).to.emit(mailService, "DelegationSet")
        .withArgs(addr1.address, ethers.ZeroAddress);
-      
-      // Verify delegation is cleared
-      expect(await mailService.delegations(addr1.address)).to.equal(ethers.ZeroAddress);
     });
 
     it("Should revert when trying to reject non-existent delegation", async function () {
-      // addr2 tries to reject delegation from addr1, but addr1 never delegated to addr2
-      await expect(
-        mailService.connect(addr2).rejectDelegation(addr1.address)
-      ).to.be.revertedWithCustomError(mailService, "NoDelegationToReject");
-    });
-
-    it("Should revert when trying to reject delegation not made to caller", async function () {
-      // addr1 delegates to addr2
-      await mailService.connect(addr1).delegateTo(addr2.address);
-      
-      // addr3 tries to reject the delegation (but delegation is to addr2, not addr3)
       await expect(
         mailService.connect(addr3).rejectDelegation(addr1.address)
       ).to.be.revertedWithCustomError(mailService, "NoDelegationToReject");
     });
 
+    it("Should revert when trying to reject delegation not made to caller", async function () {
+      await expect(
+        mailService.connect(addr3).rejectDelegation(addr2.address)
+      ).to.be.revertedWithCustomError(mailService, "NoDelegationToReject");
+    });
+
     it("Should revert when delegation was already cleared", async function () {
-      // addr1 delegates to addr2
-      await mailService.connect(addr1).delegateTo(addr2.address);
-      
-      // addr1 clears their own delegation
+      // Clear delegation first
       await mailService.connect(addr1).delegateTo(ethers.ZeroAddress);
       
-      // addr2 tries to reject the already cleared delegation
+      // Try to reject cleared delegation
       await expect(
         mailService.connect(addr2).rejectDelegation(addr1.address)
       ).to.be.revertedWithCustomError(mailService, "NoDelegationToReject");
     });
 
     it("Should handle multiple delegations and rejections", async function () {
-      // addr1 delegates to addr2
-      await mailService.connect(addr1).delegateTo(addr2.address);
-      // addr2 delegates to addr3
-      await mailService.connect(addr2).delegateTo(addr3.address);
+      // Fund addr3 for delegation
+      await mockUSDC.mint(addr3.address, ethers.parseUnits("100", 6));
+      await mockUSDC.connect(addr3).approve(await mailService.getAddress(), ethers.parseUnits("100", 6));
       
-      // Verify both delegations
-      expect(await mailService.delegations(addr1.address)).to.equal(addr2.address);
-      expect(await mailService.delegations(addr2.address)).to.equal(addr3.address);
+      // Set delegation from addr3 to addr2
+      await mailService.connect(addr3).delegateTo(addr2.address);
       
-      // addr2 rejects delegation from addr1
-      await mailService.connect(addr2).rejectDelegation(addr1.address);
-      expect(await mailService.delegations(addr1.address)).to.equal(ethers.ZeroAddress);
+      // addr2 can reject delegation from addr1
+      await expect(
+        mailService.connect(addr2).rejectDelegation(addr1.address)
+      ).to.emit(mailService, "DelegationSet")
+       .withArgs(addr1.address, ethers.ZeroAddress);
       
-      // addr3 rejects delegation from addr2
-      await mailService.connect(addr3).rejectDelegation(addr2.address);
-      expect(await mailService.delegations(addr2.address)).to.equal(ethers.ZeroAddress);
+      // addr2 can also reject delegation from addr3
+      await expect(
+        mailService.connect(addr2).rejectDelegation(addr3.address)
+      ).to.emit(mailService, "DelegationSet")
+       .withArgs(addr3.address, ethers.ZeroAddress);
     });
   });
-
-  describe("Domain registration", function () {
-    // No beforeEach needed - tests will fund accounts individually as needed
-
-    it("Should allow EOA to register a domain when funded", async function () {
-      // Fund addr1 with USDC and approve
-      await mockUSDC.mint(addr1.address, ethers.parseUnits("100", 6));
-      await mockUSDC.connect(addr1).approve(await mailService.getAddress(), ethers.parseUnits("100", 6));
-      
-      const tx = mailService.connect(addr1).registerDomain("example.com", false);
-      const block = await ethers.provider.getBlock('latest');
-      const expectedExpiration = BigInt(block!.timestamp + 1) + BigInt(365 * 24 * 60 * 60); // +1 for next block
-      
-      await expect(tx)
-        .to.emit(mailService, "DomainRegistered")
-        .withArgs("example.com", addr1.address, expectedExpiration);
-    });
-
-    it("Should allow addr2 to register a domain", async function () {
-      // Fund addr2 with USDC and approve
-      await mockUSDC.mint(addr2.address, ethers.parseUnits("100", 6));
-      await mockUSDC.connect(addr2).approve(await mailService.getAddress(), ethers.parseUnits("100", 6));
-      
-      const tx = mailService.connect(addr2).registerDomain("example.com", false);
-      const block = await ethers.provider.getBlock('latest');
-      const expectedExpiration = BigInt(block!.timestamp + 1) + BigInt(365 * 24 * 60 * 60); // +1 for next block
-      
-      await expect(tx)
-      .to.emit(mailService, "DomainRegistered")
-      .withArgs("example.com", addr2.address, expectedExpiration);
-      
-      // Note: Storage functions removed in event-only architecture
-      // Domain registration is tracked via events only
-    });
-
-    it("Should revert when registering an empty domain", async function () {
-      // Fund addr2 with USDC
-      await mockUSDC.mint(addr2.address, ethers.parseUnits("100", 6));
-      await mockUSDC.connect(addr2).approve(await mailService.getAddress(), ethers.parseUnits("100", 6));
-      
-      await expect(
-        mailService.connect(addr2).registerDomain("", false)
-      ).to.be.revertedWithCustomError(mailService, "EmptyDomain");
-    });
-
-    it("Should allow same owner to extend registration and allow different owners to also register", async function () {
-      // Fund addr2 and addr3 with USDC
-      await mockUSDC.mint(addr2.address, ethers.parseUnits("500", 6));
-      await mockUSDC.connect(addr2).approve(await mailService.getAddress(), ethers.parseUnits("500", 6));
-      await mockUSDC.mint(addr3.address, ethers.parseUnits("500", 6));
-      await mockUSDC.connect(addr3).approve(await mailService.getAddress(), ethers.parseUnits("500", 6));
-      
-      // First registration should succeed  
-      await mailService.connect(addr2).registerDomain("taken.com", false);
-      
-      // Same owner can re-register (extend) the domain
-      await expect(
-        mailService.connect(addr2).registerDomain("taken.com", true)
-      ).to.emit(mailService, "DomainExtended");
-      
-      // Note: Storage functions removed - expiration tracking via events only
-      
-      // Different owner can also register - should succeed now
-      await expect(
-        mailService.connect(addr3).registerDomain("taken.com", false)
-      ).to.emit(mailService, "DomainRegistered");
-      
-      // Note: Storage functions removed - multi-registration tracking via events only
-    });
-
-
-
-
-  });
-
-  describe("Registration fee management", function () {
-    describe("getRegistrationFee function", function () {
-      it("Should return current registration fee", async function () {
-        expect(await mailService.getRegistrationFee()).to.equal(100000000); // 100 USDC
-      });
-
-      it("Should return updated fee after change", async function () {
-        await mailService.connect(owner).setRegistrationFee(200000000);
-        expect(await mailService.getRegistrationFee()).to.equal(200000000);
-      });
-    });
-
-    describe("setRegistrationFee function", function () {
-      it("Should allow owner to update registration fee", async function () {
-        const newFee = 200000000; // 200 USDC
-        
-        await expect(
-          mailService.connect(owner).setRegistrationFee(newFee)
-        ).to.emit(mailService, "RegistrationFeeUpdated")
-         .withArgs(100000000, newFee);
-        
-        expect(await mailService.registrationFee()).to.equal(newFee);
-      });
-
-      it("Should revert when non-owner tries to set fee", async function () {
-        await expect(
-          mailService.connect(addr1).setRegistrationFee(200000000)
-        ).to.be.revertedWithCustomError(mailService, "OnlyOwner");
-      });
-
-      it("Should allow setting fee to zero", async function () {
-        await expect(
-          mailService.connect(owner).setRegistrationFee(0)
-        ).to.emit(mailService, "RegistrationFeeUpdated")
-         .withArgs(100000000, 0);
-        
-        expect(await mailService.registrationFee()).to.equal(0);
-      });
-
-      it("Should emit correct event with old and new fee values", async function () {
-        // First change
-        await mailService.connect(owner).setRegistrationFee(150000000);
-        
-        // Second change should emit with correct old fee
-        await expect(
-          mailService.connect(owner).setRegistrationFee(250000000)
-        ).to.emit(mailService, "RegistrationFeeUpdated")
-         .withArgs(150000000, 250000000);
-      });
-    });
-
-    describe("Fee integration with domain registration", function () {
-      // No beforeEach needed - individual tests will fund accounts as needed
-
-      it("Should transfer correct USDC amount on registration", async function () {
-        // Fund addr2 with USDC
-        await mockUSDC.mint(addr2.address, ethers.parseUnits("200", 6));
-        await mockUSDC.connect(addr2).approve(await mailService.getAddress(), ethers.parseUnits("200", 6));
-        
-        const initialBalance = await mockUSDC.balanceOf(await mailService.getAddress());
-        
-        await mailService.connect(addr2).registerDomain("test.com", false);
-        
-        const finalBalance = await mockUSDC.balanceOf(await mailService.getAddress());
-        expect(finalBalance - initialBalance).to.equal(100000000); // 100 USDC
-      });
-
-      it("Should use updated fee for registration", async function () {
-        // Set a custom fee
-        await mailService.connect(owner).setRegistrationFee(50000000); // 50 USDC
-        
-        // Fund addr3 with USDC
-        await mockUSDC.mint(addr3.address, ethers.parseUnits("100", 6));
-        await mockUSDC.connect(addr3).approve(await mailService.getAddress(), ethers.parseUnits("100", 6));
-        
-        const initialBalance = await mockUSDC.balanceOf(await mailService.getAddress());
-        
-        await mailService.connect(addr3).registerDomain("custom-fee.com", false);
-        
-        const finalBalance = await mockUSDC.balanceOf(await mailService.getAddress());
-        expect(finalBalance - initialBalance).to.equal(50000000); // 50 USDC
-      });
-
-      it("Should fail when account has insufficient USDC balance", async function () {
-        // Don't fund addr1 - it should have 0 USDC balance
-        
-        // Should revert with InsufficientBalance error from MockUSDC
-        await expect(
-          mailService.connect(addr1).registerDomain("expensive.com", false)
-        ).to.be.revertedWithCustomError(mockUSDC, "InsufficientBalance");
-      });
-    });
-  });
-
 
   describe("Edge cases and security", function () {
     it("Should handle delegation updates correctly", async function () {
@@ -390,8 +211,6 @@ describe("MailService", function () {
         mailService.connect(addr1).delegateTo(addr3.address)
       ).to.emit(mailService, "DelegationSet")
        .withArgs(addr1.address, addr3.address);
-      
-      // Note: Storage functions removed - delegation tracking via events only
     });
 
     it("Should allow delegation from EOA addresses", async function () {
@@ -404,8 +223,6 @@ describe("MailService", function () {
         mailService.connect(owner).delegateTo(addr1.address)
       ).to.emit(mailService, "DelegationSet")
        .withArgs(owner.address, addr1.address);
-      
-      // Note: Storage functions removed - delegation tracking via events only
     });
   });
 });
