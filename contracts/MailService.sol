@@ -23,10 +23,6 @@ contract MailService {
     /// @notice Fee required for delegation operations (10 USDC with 6 decimals)
     uint256 public delegationFee = 10000000;
     
-    /// @notice Mapping of delegator addresses to their chosen delegates
-    /// @dev address(0) indicates no delegation or cleared delegation
-    mapping(address => address) public delegations;
-    
     /// @notice Emitted when delegation is set or cleared
     /// @param delegator The address setting the delegation
     /// @param delegate The delegate address (address(0) for clearing)
@@ -39,9 +35,6 @@ contract MailService {
     
     /// @notice Thrown when non-owner attempts owner-only functions
     error OnlyOwner();
-    
-    /// @notice Thrown when attempting to reject a non-existent delegation
-    error NoDelegationToReject();
     
     /// @notice Thrown when fee payment fails
     error FeePaymentRequired();
@@ -81,7 +74,7 @@ contract MailService {
     }
     
     /// @notice Delegate mail handling to another address
-    /// @dev Charges delegation fee in USDC. Use address(0) to clear delegation
+    /// @dev Charges delegation fee in USDC. Emits event for indexer tracking
     /// @param delegate Address to delegate to, or address(0) to clear
     function delegateTo(address delegate) external nonReentrant {
         // If clearing delegation (setting to address(0)), no fee required
@@ -90,19 +83,13 @@ contract MailService {
                 revert FeePaymentRequired();
             }
         }
-        delegations[msg.sender] = delegate;
         emit DelegationSet(msg.sender, delegate);
     }
     
     /// @notice Reject a delegation made to you by another address
-    /// @dev Only the delegate can reject a delegation made to them
+    /// @dev Emits event for indexer tracking. No validation - relies on off-chain logic
     /// @param delegatingAddress Address that delegated to msg.sender
     function rejectDelegation(address delegatingAddress) external nonReentrant {
-        if (delegations[delegatingAddress] != msg.sender) {
-            revert NoDelegationToReject();
-        }
-        
-        delegations[delegatingAddress] = address(0);
         emit DelegationSet(delegatingAddress, address(0));
     }
     

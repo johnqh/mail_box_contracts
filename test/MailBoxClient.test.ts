@@ -51,16 +51,10 @@ describe("MailBox Client", function () {
         addr1.provider
       );
 
-      // Check initial delegation state
-      expect(await mailServiceClient.getDelegation(addr1.address)).to.equal(ethers.ZeroAddress);
-
       // Delegate from addr1 to addr2
       await expect(addr1MailServiceClient.getContract().connect(addr1).delegateTo(addr2.address))
         .to.emit(addr1MailServiceClient.getContract(), "DelegationSet")
         .withArgs(addr1.address, addr2.address);
-
-      // Verify delegation
-      expect(await mailServiceClient.getDelegation(addr1.address)).to.equal(addr2.address);
 
       // addr2 rejects the delegation
       const addr2MailServiceClient = new MailServiceClient(
@@ -72,8 +66,6 @@ describe("MailBox Client", function () {
         .to.emit(addr2MailServiceClient.getContract(), "DelegationSet")
         .withArgs(addr1.address, ethers.ZeroAddress);
 
-      // Verify delegation was cleared
-      expect(await mailServiceClient.getDelegation(addr1.address)).to.equal(ethers.ZeroAddress);
     });
 
     it("Should get fees correctly", async function () {

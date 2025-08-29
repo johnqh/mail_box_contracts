@@ -150,26 +150,31 @@ describe("MailService", function () {
        .withArgs(addr1.address, ethers.ZeroAddress);
     });
 
-    it("Should revert when trying to reject non-existent delegation", async function () {
+    it("Should allow any address to emit rejection events", async function () {
+      // Anyone can emit rejection events - validation is handled off-chain
       await expect(
         mailService.connect(addr3).rejectDelegation(addr1.address)
-      ).to.be.revertedWithCustomError(mailService, "NoDelegationToReject");
+      ).to.emit(mailService, "DelegationSet")
+       .withArgs(addr1.address, ethers.ZeroAddress);
     });
 
-    it("Should revert when trying to reject delegation not made to caller", async function () {
+    it("Should allow rejection without validation", async function () {
+      // No validation - anyone can reject any delegation
       await expect(
         mailService.connect(addr3).rejectDelegation(addr2.address)
-      ).to.be.revertedWithCustomError(mailService, "NoDelegationToReject");
+      ).to.emit(mailService, "DelegationSet")
+       .withArgs(addr2.address, ethers.ZeroAddress);
     });
 
-    it("Should revert when delegation was already cleared", async function () {
+    it("Should allow multiple rejection events for same address", async function () {
       // Clear delegation first
       await mailService.connect(addr1).delegateTo(ethers.ZeroAddress);
       
-      // Try to reject cleared delegation
+      // Can still emit rejection event
       await expect(
         mailService.connect(addr2).rejectDelegation(addr1.address)
-      ).to.be.revertedWithCustomError(mailService, "NoDelegationToReject");
+      ).to.emit(mailService, "DelegationSet")
+       .withArgs(addr1.address, ethers.ZeroAddress);
     });
 
     it("Should handle multiple delegations and rejections", async function () {

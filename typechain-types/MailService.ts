@@ -28,7 +28,6 @@ export interface MailServiceInterface extends Interface {
     nameOrSignature:
       | "delegateTo"
       | "delegationFee"
-      | "delegations"
       | "getDelegationFee"
       | "owner"
       | "rejectDelegation"
@@ -49,10 +48,6 @@ export interface MailServiceInterface extends Interface {
     values?: undefined
   ): string;
   encodeFunctionData(
-    functionFragment: "delegations",
-    values: [AddressLike]
-  ): string;
-  encodeFunctionData(
     functionFragment: "getDelegationFee",
     values?: undefined
   ): string;
@@ -70,10 +65,6 @@ export interface MailServiceInterface extends Interface {
   decodeFunctionResult(functionFragment: "delegateTo", data: BytesLike): Result;
   decodeFunctionResult(
     functionFragment: "delegationFee",
-    data: BytesLike
-  ): Result;
-  decodeFunctionResult(
-    functionFragment: "delegations",
     data: BytesLike
   ): Result;
   decodeFunctionResult(
@@ -169,8 +160,6 @@ export interface MailService extends BaseContract {
 
   delegationFee: TypedContractMethod<[], [bigint], "view">;
 
-  delegations: TypedContractMethod<[arg0: AddressLike], [string], "view">;
-
   getDelegationFee: TypedContractMethod<[], [bigint], "view">;
 
   owner: TypedContractMethod<[], [string], "view">;
@@ -199,9 +188,6 @@ export interface MailService extends BaseContract {
   getFunction(
     nameOrSignature: "delegationFee"
   ): TypedContractMethod<[], [bigint], "view">;
-  getFunction(
-    nameOrSignature: "delegations"
-  ): TypedContractMethod<[arg0: AddressLike], [string], "view">;
   getFunction(
     nameOrSignature: "getDelegationFee"
   ): TypedContractMethod<[], [bigint], "view">;

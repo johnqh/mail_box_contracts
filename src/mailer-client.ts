@@ -185,10 +185,6 @@ export class MailServiceClient {
     return await this.contract.delegationFee();
   }
 
-  async getDelegation(address: string): Promise<string> {
-    return await this.contract.delegations(address);
-  }
-
   async getUsdcToken(): Promise<string> {
     return await this.contract.usdcToken();
   }
