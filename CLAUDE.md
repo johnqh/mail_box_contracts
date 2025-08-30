@@ -1,33 +1,57 @@
 # CLAUDE.md - AI Assistant Guide
 
-This file provides comprehensive guidance for AI assistants working with this decentralized mail service project.
+This file provides comprehensive guidance for AI assistants working with this multi-chain decentralized messaging system.
 
 ## 🚀 Project Overview
 
-**MailBox Contracts** is a Solidity-based decentralized email/messaging system with USDC fee integration, delegation features, and comprehensive AI-friendly documentation.
+**MailBox Contracts** is a production-ready multi-chain decentralized messaging system with USDC fee integration, automatic wallet detection, and comprehensive AI-friendly documentation supporting both EVM chains and Solana.
 
-### Core Contracts
+### Core Components
 
-1. **MailService.sol** - Domain registration and delegation management
+#### EVM Implementation
+1. **MailService.sol** - Delegation management (domain registration removed)  
 2. **Mailer.sol** - Message sending with revenue sharing
 3. **MockUSDC.sol** - Test token for development
 
-### 📁 Enhanced Project Structure
+#### Solana Implementation  
+1. **mail_service** - Delegation management program
+2. **mailer** - Message sending with revenue sharing program
+3. **mail_box_factory** - Factory program for coordinated deployment
+
+#### Unified Client
+1. **UnifiedMailBoxClient** - Single interface for all chains
+2. **WalletDetector** - Automatic chain detection
+3. **Dynamic imports** - Chain-specific module loading
+
+### 📁 Enhanced Multi-Chain Project Structure
 
 ```
 mail_box_contracts/
-├── contracts/              # Smart contracts (fully documented)
-│   ├── MailService.sol    # Domain registration & delegation
-│   ├── Mailer.sol         # Messaging with revenue sharing
+├── contracts/              # EVM smart contracts (Solidity)
+│   ├── MailService.sol    # EVM delegation management
+│   ├── Mailer.sol         # EVM messaging with revenue sharing
 │   └── MockUSDC.sol       # Test USDC token
-├── src/                   # TypeScript client library (fully documented)
-│   └── mailer-client.ts   # High-level client wrappers with JSDoc
-├── test/                  # Comprehensive test suites (88 tests)
-│   ├── MailService.test.ts # 27 tests for MailService
-│   ├── Mailer.test.ts     # 54 tests for Mailer
-│   └── MailBoxClient.test.ts # 7 tests for client wrappers
+├── programs/               # Solana programs (Rust)
+│   ├── mail_service/      # Solana delegation management
+│   ├── mailer/           # Solana messaging program
+│   └── mail_box_factory/ # Solana factory program
+├── src/                   # Multi-chain TypeScript clients
+│   ├── evm/              # EVM-specific clients
+│   ├── solana/           # Solana-specific clients  
+│   ├── unified/          # Cross-chain unified client
+│   └── utils/            # Shared utilities & validation
+├── test/                  # Comprehensive test suites (105+ tests)
+│   ├── evm/              # EVM contract tests (105 tests)
+│   ├── solana/           # Solana program tests  
+│   └── unified/          # Cross-chain client tests
+├── scripts/               # Multi-chain deployment scripts
+│   ├── evm/              # EVM deployment scripts
+│   ├── solana/           # Solana deployment scripts
+│   └── unified/          # Multi-chain deployment
 ├── examples/              # Complete usage examples
-│   ├── basic-usage.ts     # Comprehensive examples with output
+│   ├── evm-usage.ts      # EVM-specific examples
+│   ├── solana-usage.ts   # Solana-specific examples
+│   └── unified-usage.ts  # Cross-chain examples
 │   └── README.md          # Example documentation
 ├── typechain-types/       # Auto-generated TypeScript types
 ├── scripts/               # Deployment scripts

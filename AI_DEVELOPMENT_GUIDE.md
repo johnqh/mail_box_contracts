@@ -1,323 +1,355 @@
-# AI Development Guide for MailBox Contracts
+# AI Development Guide - MailBox Multi-Chain System
 
-This guide provides comprehensive instructions for AI assistants working with the MailBox decentralized messaging system.
+This comprehensive guide provides AI assistants with everything needed to effectively develop, maintain, and extend the MailBox multi-chain messaging system.
 
-## 🎯 Quick Start for AI Assistants
+## 🎯 Project Overview for AI
+
+**MailBox Contracts** is a production-ready multi-chain decentralized messaging system supporting:
+- **EVM Chains**: Ethereum, Polygon, Arbitrum, Optimism, Base, etc.
+- **Solana**: Mainnet, Devnet, Testnet, Localnet
+- **Unified API**: Single client interface with automatic chain detection
+
+### Core Architecture
+```
+mail_box_contracts/
+├── contracts/              # Solidity smart contracts (EVM)
+├── programs/               # Rust programs (Solana)
+├── src/
+│   ├── evm/               # EVM TypeScript clients
+│   ├── solana/            # Solana TypeScript clients
+│   ├── unified/           # Multi-chain unified client
+│   └── utils/             # Shared utilities
+├── test/                  # Comprehensive test suites
+├── scripts/               # Deployment and management
+└── examples/              # Working usage examples
+```
+
+## 🚀 Quick Start for AI Development
 
 ### Essential Commands
 ```bash
-# Always run after contract changes
-npm run compile    # Regenerates TypeScript types
-npm test          # Runs 88 comprehensive tests
-npm run build     # Builds TypeScript client library
+# Build everything (contracts + clients)
+npm run compile    # EVM contracts + TypeScript types
+npm run build      # All TypeScript clients
 
-# Development workflow
-npx hardhat node              # Start local blockchain
-npm run deploy:local          # Deploy contracts locally
-npm run clean                # Clean artifacts when needed
+# Test everything
+npm test           # All tests
+npm run test:evm   # EVM tests only (105 tests)
+npm run test:unified # Unified client tests
+
+# Deploy
+npm run deploy:local        # Local EVM deployment
+npm run deploy:unified      # Multi-chain deployment
 ```
 
-### Project Architecture Overview
-```
-mail_box_contracts/
-├── contracts/              # Smart contracts (Solidity ^0.8.24)
-│   ├── MailService.sol    # Domain registration & delegation
-│   ├── Mailer.sol         # Messaging with revenue sharing
-│   └── MockUSDC.sol       # Test USDC token
-├── src/                   # TypeScript client library
-│   └── mailer-client.ts   # High-level client wrappers
-├── test/                  # Comprehensive test suites
-├── typechain-types/       # Auto-generated TypeScript types
-└── CLAUDE.md             # Detailed AI assistant documentation
-```
+### Key Files to Understand First
+1. `src/unified/mailbox-client.ts` - Main unified client
+2. `src/unified/wallet-detector.ts` - Automatic chain detection
+3. `examples/unified-usage.ts` - Complete usage patterns
+4. `PHASE_3_SUMMARY.md` - Architecture overview
 
-## 🧠 AI-Specific Development Patterns
+## 🧠 AI Development Patterns
 
-### 1. Contract Modification Workflow
+### 1. Adding New Chain Support
 
-**CRITICAL**: Always follow this sequence:
-```bash
-# 1. Modify Solidity contract
-# 2. Compile to regenerate types
-npm run compile
-# 3. Run tests to ensure no regressions
-npm test
-# 4. Update client if needed
-npm run build
-```
-
-**Why this matters**: TypeChain generates TypeScript types from contracts. Skipping compilation after contract changes causes type mismatches and compilation errors.
-
-### 2. Testing Patterns for AI
-
-**Fund Test Accounts Pattern**:
+**Pattern**: Follow the EVM/Solana structure
 ```typescript
-// Always use this pattern for USDC operations
-await mockUSDC.mint(testAddress, ethers.parseUnits("1000", 6));
-await mockUSDC.connect(testAccount).approve(contractAddress, ethers.parseUnits("100", 6));
+// 1. Create new chain directory: src/[chain]/
+// 2. Implement client interfaces matching unified/types.ts
+// 3. Add chain detection logic to wallet-detector.ts
+// 4. Update unified client routing
+// 5. Add tests following test/[chain]/ pattern
 ```
 
-**Event Testing Pattern**:
+### 2. Multi-Chain Client Development
+
+**Unified Client Extension**:
 ```typescript
-// Test both transaction success AND event emission
-await expect(contract.connect(signer).someFunction(args))
-  .to.emit(contract, "EventName")
-  .withArgs(expectedArg1, expectedArg2);
-```
-
-**Fee Calculation Pattern**:
-```typescript
-// Verify USDC transfers
-const initialBalance = await mockUSDC.balanceOf(contractAddress);
-await contract.someFunction();
-const finalBalance = await mockUSDC.balanceOf(contractAddress);
-expect(finalBalance - initialBalance).to.equal(expectedFeeInWei);
-```
-
-### 3. Revenue Sharing System (Critical for AI Understanding)
-
-**Key Concept**: Messages are sent TO the sender (self-messaging system)
-
-```typescript
-// Priority: Sender pays 0.1 USDC, gets 0.09 USDC back (claimable within 60 days)
-await mailer.connect(sender).sendPriority("Subject", "Body");
-// Event: MailSent(sender, sender, "Subject", "Body")
-
-// Standard: Sender pays 0.01 USDC, no revenue share
-await mailer.connect(sender).send("Subject", "Body");
-// Event: MailSent(sender, sender, "Subject", "Body")
-```
-
-**Revenue Flow**:
-1. Priority message: 100% fee paid → 90% claimable by sender, 10% to owner
-2. Standard message: 10% fee paid → 0% claimable, 10% to owner
-3. Claims expire after 60 days → go to owner
-
-### 4. Delegation System Understanding
-
-**Key Concept**: Address A can delegate email handling to Address B
-
-```typescript
-// A delegates to B (costs 10 USDC)
-await mailService.connect(A).delegateTo(B.address);
-
-// B can reject the delegation (free)
-await mailService.connect(B).rejectDelegation(A.address);
-
-// A can clear delegation (free)
-await mailService.connect(A).delegateTo(ethers.ZeroAddress);
-```
-
-## 🔍 Common AI Development Scenarios
-
-### Adding New Functionality
-
-**1. Contract Changes**:
-```solidity
-// Add to contract
-function newFunction(uint256 param) external {
-    // Implementation
-    emit NewEvent(msg.sender, param);
+class UnifiedMailBoxClient {
+  async newMethod(param: string): Promise<Result> {
+    if (this.chainType === 'evm') {
+      return this.newEVMMethod(param);
+    } else if (this.chainType === 'solana') {
+      return this.newSolanaMethod(param);
+    }
+    // Add other chains as needed
+  }
 }
 ```
 
-**2. Update Client**:
+**Error Handling Pattern**:
 ```typescript
-// Add to client class
-async newFunction(param: bigint): Promise<ethers.ContractTransactionResponse> {
-  return await this.contract.newFunction(param);
+try {
+  const result = await client.someOperation();
+  return result;
+} catch (error) {
+  const errorMessage = error instanceof Error ? error.message : String(error);
+  if (errorMessage.includes('insufficient funds')) {
+    throw new Error('Insufficient balance for operation');
+  }
+  if (errorMessage.includes('user rejected')) {
+    throw new Error('Transaction rejected by user');
+  }
+  throw new Error(`Operation failed: ${errorMessage}`);
 }
 ```
 
-**3. Add Tests**:
+### 3. Testing Patterns
+
+**EVM Test Structure**:
 ```typescript
-it("should handle new functionality", async function () {
-  await expect(contract.connect(addr1).newFunction(100))
-    .to.emit(contract, "NewEvent")
-    .withArgs(addr1.address, 100);
+describe('NewFeature', () => {
+  let contract: NewContract;
+  let mockUSDC: MockUSDC;
+  
+  beforeEach(async () => {
+    // Deploy contracts
+    mockUSDC = await deployMockUSDC();
+    contract = await deployNewContract(mockUSDC.address);
+    
+    // Fund test accounts
+    await mockUSDC.mint(addr1.address, ethers.parseUnits("100", 6));
+    await mockUSDC.connect(addr1).approve(contract.address, ethers.parseUnits("100", 6));
+  });
+  
+  it('Should perform operation correctly', async () => {
+    await expect(contract.connect(addr1).newFunction(123))
+      .to.emit(contract, 'NewEvent')
+      .withArgs(123, expectedResult);
+  });
 });
 ```
 
-### Debugging Common Issues
-
-**TypeScript Errors After Contract Changes**:
-```bash
-# Solution: Always recompile
-npm run compile
-```
-
-**Test Failures with "insufficient balance"**:
+**Unified Client Test Pattern**:
 ```typescript
-// Solution: Fund and approve USDC
-await mockUSDC.mint(addr1.address, ethers.parseUnits("1000", 6));
-await mockUSDC.connect(addr1).approve(contractAddress, ethers.parseUnits("100", 6));
+describe('UnifiedClient - NewFeature', () => {
+  it('should route to appropriate chain implementation', async () => {
+    const evmClient = new UnifiedMailBoxClient(evmWallet, testConfig);
+    const solanaClient = new UnifiedMailBoxClient(solanaWallet, testConfig);
+    
+    expect(evmClient.getChainType()).to.equal('evm');
+    expect(solanaClient.getChainType()).to.equal('solana');
+  });
+});
 ```
 
-**"No claimable amount" Errors**:
+## 🛠 Development Workflows
+
+### Adding New EVM Functionality
+
+1. **Contract Development**:
+   ```bash
+   # Edit contracts/Contract.sol
+   npm run compile
+   # Check typechain-types/ for new types
+   ```
+
+2. **Client Integration**:
+   ```typescript
+   // Update src/evm/client.ts
+   async newMethod(): Promise<Result> {
+     return await this.contract.newMethod();
+   }
+   ```
+
+3. **Unified Integration**:
+   ```typescript
+   // Update src/unified/mailbox-client.ts
+   async newMethod(): Promise<Result> {
+     if (this.chainType === 'evm') {
+       return this.newEVMMethod();
+     }
+   }
+   ```
+
+### Adding New Solana Functionality
+
+1. **Program Development**:
+   ```rust
+   // Edit programs/program_name/src/lib.rs
+   // Add instruction handlers
+   ```
+
+2. **Build & Generate Types**:
+   ```bash
+   npm run build:solana  # Builds programs + generates types
+   ```
+
+3. **Client Integration**:
+   ```typescript
+   // Update src/solana/client.ts
+   async newMethod(): Promise<Result> {
+     const tx = await this.program.methods.newInstruction().rpc();
+     return { transactionHash: tx };
+   }
+   ```
+
+## 📚 Code Examples & Snippets
+
+### Dynamic Import Pattern
 ```typescript
-// For recipient claims - need prior priority messages
-await mailer.connect(addr1).sendPriority("Subject", "Body");
-await mailer.connect(addr1).claimRecipientShare();
-```
-
-## 📊 Testing Strategy for AI
-
-### Test Categories (88 total tests):
-- **MailService** (27 tests): Domain registration, delegation, fees
-- **Mailer** (54 tests): Messaging, revenue sharing, claims
-- **MailBoxClient** (7 tests): Client wrapper functionality
-
-### Key Test Scenarios to Always Include:
-1. **Happy Path**: Normal successful operations
-2. **Error Cases**: Invalid inputs, insufficient funds
-3. **Edge Cases**: Zero amounts, address(0), boundary conditions
-4. **Security Cases**: Unauthorized access, reentrancy protection
-5. **Time-based Cases**: Claim expiration testing
-
-### Test Helper Patterns:
-```typescript
-// Time manipulation for claim testing
-await network.provider.send("evm_increaseTime", [60 * 24 * 60 * 60]); // 60 days
-await network.provider.send("evm_mine");
-
-// Multiple signer setup
-const [owner, addr1, addr2, addr3] = await ethers.getSigners();
-
-// Contract deployment with MockUSDC
-const MockUSDC = await ethers.getContractFactory("MockUSDC");
-const mockUSDC = await MockUSDC.deploy();
-const Mailer = await ethers.getContractFactory("Mailer");
-const mailer = await Mailer.deploy(await mockUSDC.getAddress(), owner.address);
-```
-
-## 🎨 Code Style Guidelines
-
-### Solidity Contracts:
-- Use NatSpec comments (`@notice`, `@param`, `@return`)
-- Custom errors over require statements
-- Reentrancy protection on external functions
-- Event emission for all state changes
-
-### TypeScript Client:
-- Comprehensive JSDoc comments
-- Usage examples in documentation
-- Type-safe parameter handling
-- Promise-based async API
-
-### Testing:
-- Descriptive test names explaining the scenario
-- Arrange-Act-Assert pattern
-- Comprehensive error testing
-- Event emission verification
-
-## ⚡ Performance Optimization Tips
-
-### For AI Code Generation:
-1. **Batch Operations**: When multiple independent calls are needed, suggest batching
-2. **Gas Optimization**: Prefer custom errors over require strings
-3. **Type Safety**: Always use proper TypeScript types from typechain-types
-4. **Event Filtering**: Use indexed parameters for efficient event filtering
-
-### Development Efficiency:
-1. **Hot Reload**: Use `npx hardhat node` for persistent local blockchain
-2. **Test Isolation**: Each test should be independent and resettable
-3. **Mock Usage**: Always use MockUSDC for testing, never real tokens
-4. **Incremental Testing**: Test small changes frequently
-
-## 🔐 Security Best Practices for AI
-
-### Critical Security Patterns:
-```solidity
-// Always use reentrancy protection
-modifier nonReentrant() {
-    if (_status == 1) revert ReentrancyGuard();
-    _status = 1;
-    _;
-    _status = 0;
-}
-
-// Validate external calls
-if (!usdcToken.transferFrom(msg.sender, address(this), amount)) {
-    revert FeePaymentRequired();
-}
-
-// Owner-only functions
-modifier onlyOwner() {
-    if (msg.sender != owner) revert OnlyOwner();
-    _;
-}
-```
-
-### Never Do These:
-- ❌ Skip USDC approval in tests
-- ❌ Use `require` instead of custom errors
-- ❌ Forget reentrancy protection on external functions
-- ❌ Skip event emission testing
-- ❌ Use real token addresses in tests
-
-## 📚 Advanced AI Integration Patterns
-
-### Client Library Design:
-```typescript
-// High-level client with easy-to-use methods
-export class MailerClient {
-  // Simple methods that hide complexity
-  async sendPriority(subject: string, body: string) {
-    return await this.contract.sendPriority(subject, body);
+// Always use dynamic imports for chain-specific code
+private async getEVMModules() {
+  if (!this.cachedEVMModules) {
+    this.cachedEVMModules = await import('../evm');
   }
-  
-  // Informational methods with clear return types
-  async getRecipientClaimable(recipient: string): Promise<{
-    amount: bigint,
-    expiresAt: bigint,
-    isExpired: boolean
-  }> {
-    // Implementation with clear data structure
-  }
+  return this.cachedEVMModules;
 }
 ```
 
-### Error Handling Patterns:
+### Configuration Pattern
 ```typescript
-// Provide clear error context in clients
-try {
-  await mailer.sendPriority(subject, body);
-} catch (error) {
-  if (error.reason === "FeePaymentRequired") {
-    throw new Error("Insufficient USDC balance or approval");
-  }
-  throw error;
+// Chain configurations should be extensible
+interface ChainConfig {
+  evm?: {
+    rpc: string;
+    chainId: number;
+    contracts: { [key: string]: string };
+  };
+  solana?: {
+    rpc: string;
+    programs: { [key: string]: string };
+    usdcMint: string;
+  };
 }
 ```
 
-## 🚀 Deployment Considerations for AI
-
-### Local Development:
-```bash
-# Terminal 1: Start blockchain
-npx hardhat node
-
-# Terminal 2: Deploy contracts
-npm run deploy:local
+### Timeout Protection Pattern
+```typescript
+// Always add timeouts to network calls
+const result = await Promise.race([
+  networkOperation(),
+  new Promise((_, reject) => 
+    setTimeout(() => reject(new Error('Timeout')), 10000)
+  )
+]);
 ```
 
-### Network Configuration:
-- **Local**: Hardhat network (chainId 31337)
-- **Test Networks**: Use appropriate USDC addresses per network
-- **Production**: Verify all contracts on Etherscan after deployment
+## 🔍 Debugging Guidelines
 
-## 📈 Monitoring and Maintenance
+### Common Issues & Solutions
 
-### Key Metrics to Track:
-- Test coverage (aim for >95%)
-- Gas usage per function
-- Contract size limits
-- Type safety coverage
+1. **TypeScript Compilation Errors**:
+   ```bash
+   # Always recompile after contract changes
+   npm run compile
+   npm run build
+   ```
 
-### Regular Maintenance Tasks:
-1. Update dependencies regularly
-2. Run full test suite before any changes
-3. Verify contract compilation after Solidity version changes
-4. Update documentation when adding features
+2. **Test Failures**:
+   ```bash
+   # Run specific test suites
+   npm run test:evm
+   npm run test:unified
+   ```
 
-This guide ensures AI assistants can effectively work with the MailBox contracts while maintaining code quality, security, and functionality.
+3. **Chain Detection Issues**:
+   ```typescript
+   // Debug wallet detection
+   console.log('Wallet properties:', Object.keys(wallet));
+   console.log('Detected type:', WalletDetector.detectWalletType(wallet));
+   ```
+
+## 🚨 Security Best Practices
+
+1. **Input Validation**:
+   ```typescript
+   // Always validate addresses
+   if (this.chainType === 'evm' && !ethers.isAddress(address)) {
+     throw new Error('Invalid EVM address');
+   }
+   ```
+
+2. **Amount Validation**:
+   ```typescript
+   // Validate amounts and prevent overflows
+   if (amount <= 0 || amount > Number.MAX_SAFE_INTEGER) {
+     throw new Error('Invalid amount');
+   }
+   ```
+
+3. **Transaction Verification**:
+   ```typescript
+   // Always verify transactions completed
+   const receipt = await tx.wait();
+   if (!receipt || receipt.status !== 1) {
+     throw new Error('Transaction failed');
+   }
+   ```
+
+## 📖 Documentation Standards
+
+### Function Documentation
+```typescript
+/**
+ * @description Clear description of what the function does
+ * @param param1 - Description of parameter with type info
+ * @returns Promise resolving to result description
+ * @throws Error description of when errors occur
+ * 
+ * @example
+ * ```typescript
+ * const result = await client.method('param1');
+ * console.log('Result:', result.hash);
+ * ```
+ */
+async method(param1: string): Promise<Result> {
+  // Implementation
+}
+```
+
+## 🎯 AI-Specific Guidelines
+
+### Dynamic Imports Best Practices
+```typescript
+// ✅ Good: Dynamic imports for chain-specific heavy modules
+const evmModules = await import('../evm');
+const solanaModules = await import('../solana');
+
+// ❌ Avoid: Static imports that load everything upfront
+import { EvmClient } from '../evm/client';
+import { SolanaClient } from '../solana/client';
+```
+
+### Error Message Patterns
+```typescript
+// ✅ Good: Specific, actionable error messages
+throw new Error('Insufficient USDC balance. Required: 0.1 USDC, Available: 0.05 USDC');
+
+// ❌ Avoid: Generic error messages
+throw new Error('Transaction failed');
+```
+
+## 🔄 Maintenance Workflows
+
+### Regular Maintenance Tasks
+1. **Dependency Updates**:
+   ```bash
+   npm audit        # Check for vulnerabilities
+   npm update       # Update dependencies
+   npm test         # Verify everything still works
+   ```
+
+2. **Type Generation**:
+   ```bash
+   # After contract changes
+   npm run compile  # Regenerates TypeScript types
+   ```
+
+### Pre-Deployment Checklist
+- [ ] All tests passing (`npm test`)
+- [ ] TypeScript builds without errors (`npm run build`)
+- [ ] Examples work with new changes
+- [ ] Documentation updated
+- [ ] Security considerations reviewed
+
+## 🎉 Success Metrics
+
+The AI development environment is working well when:
+- ✅ New features can be added following established patterns
+- ✅ Tests provide clear feedback on breaking changes
+- ✅ Documentation enables self-service development
+- ✅ Error messages guide developers to solutions
+- ✅ Examples demonstrate real-world usage patterns
+
+This guide evolves with the project. Always update it when adding new patterns or discovering better approaches!
