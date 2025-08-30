@@ -163,7 +163,8 @@
     "@coral-xyz/borsh": "^0.30.1",
     "@solana/spl-token": "^0.4.13",
     "@solana/web3.js": "^1.98.4",
-    "dotenv": "^17.2.1"
+    "dotenv": "^17.2.1",
+    "viem": "^2.36.0"
   },
   "overrides": {
     "bigint-buffer": "1.1.5"

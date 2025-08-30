@@ -1,9 +1,40 @@
-import { ethers } from "ethers";
-import { Mailer, Mailer__factory, MailService, MailService__factory, MailBoxFactory, MailBoxFactory__factory } from "../../typechain-types";
+import { 
+  Account,
+  Address,
+  Chain,
+  Client,
+  Hash,
+  PublicClient,
+  Transport,
+  WalletClient,
+  getContract,
+  getAddress,
+  parseUnits,
+  formatUnits,
+  decodeEventLog,
+  encodeDeployData,
+  encodeFunctionData,
+  decodeFunctionResult
+} from "viem";
+import { 
+  Mailer__factory, 
+  MailService__factory, 
+  MailBoxFactory__factory 
+} from "../../typechain-types";
+
+// Get ABI from typechain-generated factories
+const MAILER_ABI = Mailer__factory.abi;
+const MAIL_SERVICE_ABI = MailService__factory.abi;
+const MAILBOX_FACTORY_ABI = MailBoxFactory__factory.abi;
+
+// Get bytecode from typechain-generated factories
+const MAILER_BYTECODE = Mailer__factory.bytecode as `0x${string}`;
+const MAIL_SERVICE_BYTECODE = MailService__factory.bytecode as `0x${string}`;
+const MAILBOX_FACTORY_BYTECODE = MailBoxFactory__factory.bytecode as `0x${string}`;
 
 /**
  * @class MailerClient
- * @description High-level TypeScript client for the Mailer contract
+ * @description High-level TypeScript client for the Mailer contract using viem
  * @notice Provides easy-to-use methods for sending messages with USDC fees and revenue sharing
  * 
  * ## Key Features:
@@ -15,74 +46,125 @@ import { Mailer, Mailer__factory, MailService, MailService__factory, MailBoxFact
  * ## Usage Examples:
  * ```typescript
  * // Connect to existing contract
- * const provider = new ethers.JsonRpcProvider('RPC_URL');
- * const mailer = new MailerClient('CONTRACT_ADDRESS', provider);
+ * import { createPublicClient, createWalletClient, http } from 'viem';
+ * import { mainnet } from 'viem/chains';
+ * 
+ * const publicClient = createPublicClient({
+ *   chain: mainnet,
+ *   transport: http()
+ * });
+ * 
+ * const mailer = new MailerClient('CONTRACT_ADDRESS', publicClient);
  * 
  * // Send priority message (with revenue sharing)
- * const signer = new ethers.Wallet('PRIVATE_KEY', provider);
- * await mailer.connect(signer).sendPriority('Subject', 'Body');
+ * const walletClient = createWalletClient({
+ *   chain: mainnet,
+ *   transport: http()
+ * });
+ * 
+ * await mailer.sendPriority('Subject', 'Body', walletClient, account);
  * 
  * // Claim your revenue share
- * await mailer.claimRecipientShare();
+ * await mailer.claimRecipientShare(walletClient, account);
  * ```
  */
 export class MailerClient {
-  private contract: Mailer;
+  private contractAddress: Address;
+  private publicClient: PublicClient;
 
   /**
    * @description Creates a new MailerClient instance
    * @param contractAddress The deployed Mailer contract address
-   * @param provider Ethereum provider for blockchain connection
+   * @param publicClient Viem public client for reading blockchain state
    */
-  constructor(contractAddress: string, provider: ethers.Provider) {
-    this.contract = Mailer__factory.connect(contractAddress, provider);
+  constructor(contractAddress: string, publicClient: PublicClient) {
+    this.contractAddress = getAddress(contractAddress);
+    this.publicClient = publicClient;
   }
 
   /**
    * @description Deploy a new Mailer contract and return a client instance
-   * @param signer Ethereum signer with deployment permissions
+   * @param walletClient Viem wallet client with deployment permissions
+   * @param account Account to deploy from
    * @param usdcTokenAddress Address of the USDC token contract
    * @param ownerAddress Address that will own the deployed contract
    * @returns Promise resolving to a MailerClient instance
    */
-  static async deploy(signer: ethers.Signer, usdcTokenAddress: string, ownerAddress: string): Promise<MailerClient> {
-    const factory = new Mailer__factory(signer);
-    const contract = await factory.deploy(usdcTokenAddress, ownerAddress);
-    await contract.waitForDeployment();
-    const address = await contract.getAddress();
-    return new MailerClient(address, signer.provider!);
-  }
+  static async deploy(
+    walletClient: WalletClient,
+    publicClient: PublicClient,
+    account: Account | Address,
+    usdcTokenAddress: string,
+    ownerAddress: string
+  ): Promise<MailerClient> {
+    const hash = await walletClient.deployContract({
+      abi: MAILER_ABI,
+      bytecode: MAILER_BYTECODE,
+      args: [getAddress(usdcTokenAddress), getAddress(ownerAddress)],
+      account,
+      chain: walletClient.chain,
+    });
 
+    const receipt = await publicClient.waitForTransactionReceipt({ hash });
+    
+    if (!receipt.contractAddress) {
+      throw new Error("Contract deployment failed");
+    }
+
+    return new MailerClient(receipt.contractAddress, publicClient);
+  }
 
   /**
    * @description Send a priority message with full fee and 90% revenue share
    * @notice Sender pays 0.1 USDC, gets 90% back as claimable revenue within 60 days
    * @param subject Message subject line
    * @param body Message content
-   * @returns Promise resolving to transaction response
+   * @param walletClient Viem wallet client for transaction
+   * @param account Account to send from
+   * @returns Promise resolving to transaction hash
    * @example
    * ```typescript
-   * const tx = await mailer.connect(signer).sendPriority('Hello', 'This is a priority message');
-   * await tx.wait();
+   * const hash = await mailer.sendPriority('Hello', 'This is a priority message', walletClient, account);
+   * await publicClient.waitForTransactionReceipt({ hash });
    * ```
    */
   async sendPriority(
     subject: string,
-    body: string
-  ): Promise<ethers.ContractTransactionResponse> {
-    return await this.contract.sendPriority(subject, body);
+    body: string,
+    walletClient: WalletClient,
+    account: Account | Address
+  ): Promise<Hash> {
+    return await walletClient.writeContract({
+      address: this.contractAddress,
+      abi: MAILER_ABI,
+      functionName: 'sendPriority',
+      args: [subject, body],
+      account,
+      chain: walletClient.chain,
+    });
   }
 
   /**
    * @description Send a priority message using a pre-prepared mail ID
    * @notice Sender pays 0.1 USDC, gets 90% back as claimable revenue within 60 days
    * @param mailId Pre-prepared message identifier
-   * @returns Promise resolving to transaction response
+   * @param walletClient Viem wallet client for transaction
+   * @param account Account to send from
+   * @returns Promise resolving to transaction hash
    */
   async sendPriorityPrepared(
-    mailId: string
-  ): Promise<ethers.ContractTransactionResponse> {
-    return await this.contract.sendPriorityPrepared(mailId);
+    mailId: string,
+    walletClient: WalletClient,
+    account: Account | Address
+  ): Promise<Hash> {
+    return await walletClient.writeContract({
+      address: this.contractAddress,
+      abi: MAILER_ABI,
+      functionName: 'sendPriorityPrepared',
+      args: [mailId],
+      account,
+      chain: walletClient.chain,
+    });
   }
 
   /**
@@ -90,58 +172,123 @@ export class MailerClient {
    * @notice Sender pays 0.01 USDC with no revenue share back
    * @param subject Message subject line
    * @param body Message content
-   * @returns Promise resolving to transaction response
+   * @param walletClient Viem wallet client for transaction
+   * @param account Account to send from
+   * @returns Promise resolving to transaction hash
    * @example
    * ```typescript
-   * const tx = await mailer.connect(signer).send('Subject', 'Standard message');
-   * await tx.wait();
+   * const hash = await mailer.send('Subject', 'Standard message', walletClient, account);
+   * await publicClient.waitForTransactionReceipt({ hash });
    * ```
    */
   async send(
     subject: string,
-    body: string
-  ): Promise<ethers.ContractTransactionResponse> {
-    return await this.contract.send(subject, body);
+    body: string,
+    walletClient: WalletClient,
+    account: Account | Address
+  ): Promise<Hash> {
+    return await walletClient.writeContract({
+      address: this.contractAddress,
+      abi: MAILER_ABI,
+      functionName: 'send',
+      args: [subject, body],
+      account,
+      chain: walletClient.chain,
+    });
   }
 
   /**
    * @description Send a standard message using a pre-prepared mail ID
    * @notice Sender pays 0.01 USDC with no revenue share back
    * @param mailId Pre-prepared message identifier
-   * @returns Promise resolving to transaction response
+   * @param walletClient Viem wallet client for transaction
+   * @param account Account to send from
+   * @returns Promise resolving to transaction hash
    */
   async sendPrepared(
-    mailId: string
-  ): Promise<ethers.ContractTransactionResponse> {
-    return await this.contract.sendPrepared(mailId);
+    mailId: string,
+    walletClient: WalletClient,
+    account: Account | Address
+  ): Promise<Hash> {
+    return await walletClient.writeContract({
+      address: this.contractAddress,
+      abi: MAILER_ABI,
+      functionName: 'sendPrepared',
+      args: [mailId],
+      account,
+      chain: walletClient.chain,
+    });
   }
 
   async getSendFee(): Promise<bigint> {
-    return await this.contract.sendFee();
+    return await this.publicClient.readContract({
+      address: this.contractAddress,
+      abi: MAILER_ABI,
+      functionName: 'sendFee',
+    }) as bigint;
   }
 
-  async getUsdcToken(): Promise<string> {
-    return await this.contract.usdcToken();
+  async getUsdcToken(): Promise<Address> {
+    return await this.publicClient.readContract({
+      address: this.contractAddress,
+      abi: MAILER_ABI,
+      functionName: 'usdcToken',
+    }) as Address;
   }
 
-  getAddress(): Promise<string> {
-    return this.contract.getAddress();
+  getAddress(): Address {
+    return this.contractAddress;
   }
 
-  async claimRecipientShare(): Promise<ethers.ContractTransactionResponse> {
-    return await this.contract.claimRecipientShare();
+  async claimRecipientShare(
+    walletClient: WalletClient,
+    account: Account | Address
+  ): Promise<Hash> {
+    return await walletClient.writeContract({
+      address: this.contractAddress,
+      abi: MAILER_ABI,
+      functionName: 'claimRecipientShare',
+      account,
+      chain: walletClient.chain,
+    });
   }
 
-  async claimOwnerShare(): Promise<ethers.ContractTransactionResponse> {
-    return await this.contract.claimOwnerShare();
+  async claimOwnerShare(
+    walletClient: WalletClient,
+    account: Account | Address
+  ): Promise<Hash> {
+    return await walletClient.writeContract({
+      address: this.contractAddress,
+      abi: MAILER_ABI,
+      functionName: 'claimOwnerShare',
+      account,
+      chain: walletClient.chain,
+    });
   }
 
-  async claimExpiredShares(recipient: string): Promise<ethers.ContractTransactionResponse> {
-    return await this.contract.claimExpiredShares(recipient);
+  async claimExpiredShares(
+    recipient: string,
+    walletClient: WalletClient,
+    account: Account | Address
+  ): Promise<Hash> {
+    return await walletClient.writeContract({
+      address: this.contractAddress,
+      abi: MAILER_ABI,
+      functionName: 'claimExpiredShares',
+      args: [getAddress(recipient)],
+      account,
+      chain: walletClient.chain,
+    });
   }
 
   async getRecipientClaimable(recipient: string): Promise<{amount: bigint, expiresAt: bigint, isExpired: boolean}> {
-    const result = await this.contract.getRecipientClaimable(recipient);
+    const result = await this.publicClient.readContract({
+      address: this.contractAddress,
+      abi: MAILER_ABI,
+      functionName: 'getRecipientClaimable',
+      args: [getAddress(recipient)],
+    }) as [bigint, bigint, boolean];
+    
     return {
       amount: result[0],
       expiresAt: result[1], 
@@ -150,51 +297,95 @@ export class MailerClient {
   }
 
   async getOwnerClaimable(): Promise<bigint> {
-    return await this.contract.getOwnerClaimable();
-  }
-
-  getContract(): Mailer {
-    return this.contract;
+    return await this.publicClient.readContract({
+      address: this.contractAddress,
+      abi: MAILER_ABI,
+      functionName: 'getOwnerClaimable',
+    }) as bigint;
   }
 }
 
 export class MailServiceClient {
-  private contract: MailService;
+  private contractAddress: Address;
+  private publicClient: PublicClient;
 
-  constructor(contractAddress: string, provider: ethers.Provider) {
-    this.contract = MailService__factory.connect(contractAddress, provider);
+  constructor(contractAddress: string, publicClient: PublicClient) {
+    this.contractAddress = getAddress(contractAddress);
+    this.publicClient = publicClient;
   }
 
-  static async deploy(signer: ethers.Signer, usdcTokenAddress: string, ownerAddress: string): Promise<MailServiceClient> {
-    const factory = new MailService__factory(signer);
-    const contract = await factory.deploy(usdcTokenAddress, ownerAddress);
-    await contract.waitForDeployment();
-    const address = await contract.getAddress();
-    return new MailServiceClient(address, signer.provider!);
+  static async deploy(
+    walletClient: WalletClient,
+    publicClient: PublicClient,
+    account: Account | Address,
+    usdcTokenAddress: string,
+    ownerAddress: string
+  ): Promise<MailServiceClient> {
+    const hash = await walletClient.deployContract({
+      abi: MAIL_SERVICE_ABI,
+      bytecode: MAIL_SERVICE_BYTECODE,
+      args: [getAddress(usdcTokenAddress), getAddress(ownerAddress)],
+      account,
+      chain: walletClient.chain,
+    });
+
+    const receipt = await publicClient.waitForTransactionReceipt({ hash });
+    
+    if (!receipt.contractAddress) {
+      throw new Error("Contract deployment failed");
+    }
+
+    return new MailServiceClient(receipt.contractAddress, publicClient);
   }
 
-  async delegateTo(delegate: string): Promise<ethers.ContractTransactionResponse> {
-    return await this.contract.delegateTo(delegate);
+  async delegateTo(
+    delegate: string,
+    walletClient: WalletClient,
+    account: Account | Address
+  ): Promise<Hash> {
+    return await walletClient.writeContract({
+      address: this.contractAddress,
+      abi: MAIL_SERVICE_ABI,
+      functionName: 'delegateTo',
+      args: [getAddress(delegate)],
+      account,
+      chain: walletClient.chain,
+    });
   }
 
-  async rejectDelegation(delegatingAddress: string): Promise<ethers.ContractTransactionResponse> {
-    return await this.contract.rejectDelegation(delegatingAddress);
+  async rejectDelegation(
+    delegatingAddress: string,
+    walletClient: WalletClient,
+    account: Account | Address
+  ): Promise<Hash> {
+    return await walletClient.writeContract({
+      address: this.contractAddress,
+      abi: MAIL_SERVICE_ABI,
+      functionName: 'rejectDelegation',
+      args: [getAddress(delegatingAddress)],
+      account,
+      chain: walletClient.chain,
+    });
   }
 
   async getDelegationFee(): Promise<bigint> {
-    return await this.contract.delegationFee();
+    return await this.publicClient.readContract({
+      address: this.contractAddress,
+      abi: MAIL_SERVICE_ABI,
+      functionName: 'delegationFee',
+    }) as bigint;
   }
 
-  async getUsdcToken(): Promise<string> {
-    return await this.contract.usdcToken();
+  async getUsdcToken(): Promise<Address> {
+    return await this.publicClient.readContract({
+      address: this.contractAddress,
+      abi: MAIL_SERVICE_ABI,
+      functionName: 'usdcToken',
+    }) as Address;
   }
 
-  getAddress(): Promise<string> {
-    return this.contract.getAddress();
-  }
-
-  getContract(): MailService {
-    return this.contract;
+  getAddress(): Address {
+    return this.contractAddress;
   }
 }
 
@@ -205,31 +396,33 @@ export class MailBoxClient {
   constructor(
     mailerAddress: string,
     mailServiceAddress: string,
-    provider: ethers.Provider
+    publicClient: PublicClient
   ) {
-    this.mailer = new MailerClient(mailerAddress, provider);
-    this.mailService = new MailServiceClient(mailServiceAddress, provider);
+    this.mailer = new MailerClient(mailerAddress, publicClient);
+    this.mailService = new MailServiceClient(mailServiceAddress, publicClient);
   }
 
   static async deployBoth(
-    signer: ethers.Signer,
+    walletClient: WalletClient,
+    publicClient: PublicClient,
+    account: Account | Address,
     usdcTokenAddress: string,
     ownerAddress: string
   ): Promise<MailBoxClient> {
-    const mailerClient = await MailerClient.deploy(signer, usdcTokenAddress, ownerAddress);
-    const mailServiceClient = await MailServiceClient.deploy(signer, usdcTokenAddress, ownerAddress);
+    const mailerClient = await MailerClient.deploy(walletClient, publicClient, account, usdcTokenAddress, ownerAddress);
+    const mailServiceClient = await MailServiceClient.deploy(walletClient, publicClient, account, usdcTokenAddress, ownerAddress);
     
     return new MailBoxClient(
-      await mailerClient.getAddress(),
-      await mailServiceClient.getAddress(),
-      signer.provider!
+      mailerClient.getAddress(),
+      mailServiceClient.getAddress(),
+      publicClient
     );
   }
 }
 
 /**
  * @class MailBoxFactoryClient
- * @description High-level TypeScript client for the MailBoxFactory contract
+ * @description High-level TypeScript client for the MailBoxFactory contract using viem
  * @notice Provides easy-to-use methods for CREATE2 deterministic deployment
  * 
  * ## Key Features:
@@ -241,45 +434,55 @@ export class MailBoxClient {
  * ## Usage Examples:
  * ```typescript
  * // Deploy factory
- * const factory = await MailBoxFactoryClient.deploy(signer);
+ * const factory = await MailBoxFactoryClient.deploy(walletClient, account);
  * 
  * // Predict addresses
  * const salt = await factory.generateSalt("MailBox", "1.0.0", "Mailer");
  * const address = await factory.predictMailerAddress(usdcAddress, ownerAddress, salt);
  * 
  * // Deploy contracts
- * const mailerAddress = await factory.deployMailer(usdcAddress, ownerAddress, salt);
+ * const mailerAddress = await factory.deployMailer(usdcAddress, ownerAddress, salt, walletClient, account);
  * ```
  */
 export class MailBoxFactoryClient {
-  private contract: MailBoxFactory;
-  private signer?: ethers.Signer;
+  private contractAddress: Address;
+  private publicClient: PublicClient;
 
   /**
    * @description Creates a new MailBoxFactoryClient instance
    * @param contractAddress The deployed MailBoxFactory contract address
-   * @param signerOrProvider Ethereum signer or provider for blockchain connection
+   * @param publicClient Viem public client for reading blockchain state
    */
-  constructor(contractAddress: string, signerOrProvider: ethers.Signer | ethers.Provider) {
-    if ('signTransaction' in signerOrProvider) {
-      this.signer = signerOrProvider as ethers.Signer;
-      this.contract = MailBoxFactory__factory.connect(contractAddress, this.signer);
-    } else {
-      this.contract = MailBoxFactory__factory.connect(contractAddress, signerOrProvider);
-    }
+  constructor(contractAddress: string, publicClient: PublicClient) {
+    this.contractAddress = getAddress(contractAddress);
+    this.publicClient = publicClient;
   }
 
   /**
    * @description Deploy a new MailBoxFactory contract and return a client instance
-   * @param signer Ethereum signer with deployment permissions
+   * @param walletClient Viem wallet client with deployment permissions
+   * @param account Account to deploy from
    * @returns Promise resolving to a MailBoxFactoryClient instance
    */
-  static async deploy(signer: ethers.Signer): Promise<MailBoxFactoryClient> {
-    const factory = new MailBoxFactory__factory(signer);
-    const contract = await factory.deploy();
-    await contract.waitForDeployment();
-    const address = await contract.getAddress();
-    return new MailBoxFactoryClient(address, signer);
+  static async deploy(
+    walletClient: WalletClient,
+    publicClient: PublicClient,
+    account: Account | Address
+  ): Promise<MailBoxFactoryClient> {
+    const hash = await walletClient.deployContract({
+      abi: MAILBOX_FACTORY_ABI,
+      bytecode: MAILBOX_FACTORY_BYTECODE,
+      account,
+      chain: walletClient.chain,
+    });
+
+    const receipt = await publicClient.waitForTransactionReceipt({ hash });
+    
+    if (!receipt.contractAddress) {
+      throw new Error("Contract deployment failed");
+    }
+
+    return new MailBoxFactoryClient(receipt.contractAddress, publicClient);
   }
 
   /**
@@ -287,19 +490,46 @@ export class MailBoxFactoryClient {
    * @param usdcToken Address of the USDC token contract
    * @param owner Address that will own the deployed contract
    * @param salt Salt value for deterministic deployment
+   * @param walletClient Viem wallet client for transaction
+   * @param account Account to deploy from
    * @returns Promise resolving to deployed Mailer address
    */
-  async deployMailer(usdcToken: string, owner: string, salt: string): Promise<string> {
-    if (!this.signer) {
-      throw new Error("Signer required for deployment operations. Use constructor with signer or static deploy method.");
-    }
-    const tx = await this.contract.deployMailer(usdcToken, owner, salt);
-    const receipt = await tx.wait();
+  async deployMailer(
+    usdcToken: string,
+    owner: string,
+    salt: string,
+    walletClient: WalletClient,
+    account: Account | Address
+  ): Promise<Address> {
+    const hash = await walletClient.writeContract({
+      address: this.contractAddress,
+      abi: MAILBOX_FACTORY_ABI,
+      functionName: 'deployMailer',
+      args: [getAddress(usdcToken), getAddress(owner), salt as `0x${string}`],
+      account,
+      chain: walletClient.chain,
+    });
+
+    const receipt = await this.publicClient.waitForTransactionReceipt({ hash });
     
-    const event = receipt?.logs.find(
-      (log: any) => log.fragment?.name === "MailerDeployed"
-    ) as any;
-    return event?.args[0];
+    // Find the MailerDeployed event in the logs
+    for (const log of receipt.logs) {
+      try {
+        const decoded = decodeEventLog({
+          abi: MAILBOX_FACTORY_ABI,
+          data: log.data,
+          topics: log.topics,
+        });
+        
+        if (decoded.eventName === 'MailerDeployed') {
+          return (decoded.args as any).mailer;
+        }
+      } catch {
+        // Continue if this log is not the event we're looking for
+      }
+    }
+    
+    throw new Error("MailerDeployed event not found");
   }
 
   /**
@@ -307,19 +537,46 @@ export class MailBoxFactoryClient {
    * @param usdcToken Address of the USDC token contract
    * @param owner Address that will own the deployed contract
    * @param salt Salt value for deterministic deployment
+   * @param walletClient Viem wallet client for transaction
+   * @param account Account to deploy from
    * @returns Promise resolving to deployed MailService address
    */
-  async deployMailService(usdcToken: string, owner: string, salt: string): Promise<string> {
-    if (!this.signer) {
-      throw new Error("Signer required for deployment operations. Use constructor with signer or static deploy method.");
-    }
-    const tx = await this.contract.deployMailService(usdcToken, owner, salt);
-    const receipt = await tx.wait();
+  async deployMailService(
+    usdcToken: string,
+    owner: string,
+    salt: string,
+    walletClient: WalletClient,
+    account: Account | Address
+  ): Promise<Address> {
+    const hash = await walletClient.writeContract({
+      address: this.contractAddress,
+      abi: MAILBOX_FACTORY_ABI,
+      functionName: 'deployMailService',
+      args: [getAddress(usdcToken), getAddress(owner), salt as `0x${string}`],
+      account,
+      chain: walletClient.chain,
+    });
+
+    const receipt = await this.publicClient.waitForTransactionReceipt({ hash });
     
-    const event = receipt?.logs.find(
-      (log: any) => log.fragment?.name === "MailServiceDeployed"
-    ) as any;
-    return event?.args[0];
+    // Find the MailServiceDeployed event in the logs
+    for (const log of receipt.logs) {
+      try {
+        const decoded = decodeEventLog({
+          abi: MAILBOX_FACTORY_ABI,
+          data: log.data,
+          topics: log.topics,
+        });
+        
+        if (decoded.eventName === 'MailServiceDeployed') {
+          return (decoded.args as any).mailService;
+        }
+      } catch {
+        // Continue if this log is not the event we're looking for
+      }
+    }
+    
+    throw new Error("MailServiceDeployed event not found");
   }
 
   /**
@@ -328,30 +585,63 @@ export class MailBoxFactoryClient {
    * @param owner Address that will own both contracts
    * @param mailerSalt Salt for Mailer deployment
    * @param mailServiceSalt Salt for MailService deployment
+   * @param walletClient Viem wallet client for transaction
+   * @param account Account to deploy from
    * @returns Promise resolving to both deployed addresses
    */
   async deployBoth(
     usdcToken: string,
     owner: string,
     mailerSalt: string,
-    mailServiceSalt: string
-  ): Promise<{ mailer: string; mailService: string }> {
-    if (!this.signer) {
-      throw new Error("Signer required for deployment operations. Use constructor with signer or static deploy method.");
-    }
-    const tx = await this.contract.deployBoth(usdcToken, owner, mailerSalt, mailServiceSalt);
-    const receipt = await tx.wait();
+    mailServiceSalt: string,
+    walletClient: WalletClient,
+    account: Account | Address
+  ): Promise<{ mailer: Address; mailService: Address }> {
+    const hash = await walletClient.writeContract({
+      address: this.contractAddress,
+      abi: MAILBOX_FACTORY_ABI,
+      functionName: 'deployBoth',
+      args: [
+        getAddress(usdcToken), 
+        getAddress(owner), 
+        mailerSalt as `0x${string}`, 
+        mailServiceSalt as `0x${string}`
+      ],
+      account,
+      chain: walletClient.chain,
+    });
 
-    const mailerEvent = receipt?.logs.find(
-      (log: any) => log.fragment?.name === "MailerDeployed"
-    ) as any;
-    const mailServiceEvent = receipt?.logs.find(
-      (log: any) => log.fragment?.name === "MailServiceDeployed"
-    ) as any;
+    const receipt = await this.publicClient.waitForTransactionReceipt({ hash });
+
+    let mailerAddress: Address | undefined;
+    let mailServiceAddress: Address | undefined;
+
+    // Find events in the logs
+    for (const log of receipt.logs) {
+      try {
+        const decoded = decodeEventLog({
+          abi: MAILBOX_FACTORY_ABI,
+          data: log.data,
+          topics: log.topics,
+        });
+        
+        if (decoded.eventName === 'MailerDeployed') {
+          mailerAddress = (decoded.args as any).mailer;
+        } else if (decoded.eventName === 'MailServiceDeployed') {
+          mailServiceAddress = (decoded.args as any).mailService;
+        }
+      } catch {
+        // Continue if this log is not the event we're looking for
+      }
+    }
+
+    if (!mailerAddress || !mailServiceAddress) {
+      throw new Error("Deployment events not found");
+    }
 
     return {
-      mailer: mailerEvent?.args[0],
-      mailService: mailServiceEvent?.args[0]
+      mailer: mailerAddress,
+      mailService: mailServiceAddress
     };
   }
 
@@ -362,8 +652,13 @@ export class MailBoxFactoryClient {
    * @param salt Salt value for deterministic deployment
    * @returns Promise resolving to predicted address
    */
-  async predictMailerAddress(usdcToken: string, owner: string, salt: string): Promise<string> {
-    return await this.contract.predictMailerAddress(usdcToken, owner, salt);
+  async predictMailerAddress(usdcToken: string, owner: string, salt: string): Promise<Address> {
+    return await this.publicClient.readContract({
+      address: this.contractAddress,
+      abi: MAILBOX_FACTORY_ABI,
+      functionName: 'predictMailerAddress',
+      args: [getAddress(usdcToken), getAddress(owner), salt as `0x${string}`],
+    }) as Address;
   }
 
   /**
@@ -373,8 +668,13 @@ export class MailBoxFactoryClient {
    * @param salt Salt value for deterministic deployment
    * @returns Promise resolving to predicted address
    */
-  async predictMailServiceAddress(usdcToken: string, owner: string, salt: string): Promise<string> {
-    return await this.contract.predictMailServiceAddress(usdcToken, owner, salt);
+  async predictMailServiceAddress(usdcToken: string, owner: string, salt: string): Promise<Address> {
+    return await this.publicClient.readContract({
+      address: this.contractAddress,
+      abi: MAILBOX_FACTORY_ABI,
+      functionName: 'predictMailServiceAddress',
+      args: [getAddress(usdcToken), getAddress(owner), salt as `0x${string}`],
+    }) as Address;
   }
 
   /**
@@ -384,8 +684,13 @@ export class MailBoxFactoryClient {
    * @param contractType Type of contract ("Mailer" or "MailService")
    * @returns Promise resolving to generated salt
    */
-  async generateSalt(projectName: string, version: string, contractType: string): Promise<string> {
-    return await this.contract.generateSalt(projectName, version, contractType);
+  async generateSalt(projectName: string, version: string, contractType: string): Promise<`0x${string}`> {
+    return await this.publicClient.readContract({
+      address: this.contractAddress,
+      abi: MAILBOX_FACTORY_ABI,
+      functionName: 'generateSalt',
+      args: [projectName, version, contractType],
+    }) as `0x${string}`;
   }
 
   /**
@@ -394,23 +699,19 @@ export class MailBoxFactoryClient {
    * @returns Promise resolving to true if contract exists
    */
   async isContractDeployed(address: string): Promise<boolean> {
-    return await this.contract.isContractDeployed(address);
+    return await this.publicClient.readContract({
+      address: this.contractAddress,
+      abi: MAILBOX_FACTORY_ABI,
+      functionName: 'isContractDeployed',
+      args: [getAddress(address)],
+    }) as boolean;
   }
 
   /**
    * @description Get the MailBoxFactory contract address
-   * @returns Promise resolving to contract address
+   * @returns Contract address
    */
-  getAddress(): Promise<string> {
-    return this.contract.getAddress();
-  }
-
-  /**
-   * @description Get the underlying ethers contract instance
-   * @returns The raw ethers MailBoxFactory contract instance
-   * @dev Use this for advanced operations not covered by the client API
-   */
-  getContract(): MailBoxFactory {
-    return this.contract;
+  getAddress(): Address {
+    return this.contractAddress;
   }
 }

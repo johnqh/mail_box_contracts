@@ -146,12 +146,12 @@ export class UnifiedMailBoxClient {
   private async getEVMModules() {
     if (!UnifiedMailBoxClient.evmModules) {
       try {
-        const [ethersModule, evmModule] = await Promise.all([
-          import('ethers'),
+        const [viemModule, evmModule] = await Promise.all([
+          import('viem'),
           import('../evm')
         ]);
         UnifiedMailBoxClient.evmModules = {
-          ethers: ethersModule.ethers,
+          viem: viemModule,
           MailerClient: evmModule.MailerClient,
           MailServiceClient: evmModule.MailServiceClient
         };
@@ -187,7 +187,7 @@ export class UnifiedMailBoxClient {
   // Private methods for EVM implementation
   private async sendEVMMessage(subject: string, body: string, priority: boolean): Promise<MessageResult> {
     try {
-      const { ethers, MailerClient } = await this.getEVMModules();
+      const { viem, MailerClient } = await this.getEVMModules();
 
       if (!this.config.evm) {
         throw new Error('EVM configuration not provided');
@@ -197,25 +197,42 @@ export class UnifiedMailBoxClient {
         throw new Error('EVM Mailer contract address not configured');
       }
 
-      // Create provider and connect wallet
-      const provider = new ethers.JsonRpcProvider(this.config.evm.rpc);
+      // Create clients
+      const publicClient = viem.createPublicClient({
+        transport: viem.http(this.config.evm.rpc),
+        chain: {
+          id: this.config.evm.chainId,
+          name: 'Custom Chain',
+          nativeCurrency: { name: 'ETH', symbol: 'ETH', decimals: 18 },
+          rpcUrls: {
+            default: { http: [this.config.evm.rpc] }
+          }
+        }
+      });
+
+      const walletClient = viem.createWalletClient({
+        transport: viem.http(this.config.evm.rpc),
+        chain: {
+          id: this.config.evm.chainId,
+          name: 'Custom Chain',
+          nativeCurrency: { name: 'ETH', symbol: 'ETH', decimals: 18 },
+          rpcUrls: {
+            default: { http: [this.config.evm.rpc] }
+          }
+        }
+      });
       
       // Test connection
       try {
         await Promise.race([
-          provider.getNetwork(),
+          publicClient.getChainId(),
           new Promise((_, reject) => setTimeout(() => reject(new Error('Connection timeout')), 10000))
         ]);
       } catch (error) {
         throw new Error(`Failed to connect to EVM network: ${error instanceof Error ? error.message : String(error)}`);
       }
 
-      const signer = this.wallet.signTransaction && typeof this.wallet.signTransaction === 'function' ? 
-        new ethers.Wallet(this.wallet as any, provider) : // For direct private key
-        provider.getSigner(this.wallet.address); // For connected wallet
-
-      const client = new MailerClient(this.config.evm.contracts.mailer, provider);
-      const connectedContract = client.getContract().connect(signer);
+      const client = new MailerClient(this.config.evm.contracts.mailer, publicClient);
       
       // Validate message before sending
       if (!subject || subject.length > 200) {
@@ -225,12 +242,12 @@ export class UnifiedMailBoxClient {
         throw new Error('Body must be 1-10000 characters');
       }
       
-      let tx: any;
+      let txHash: `0x${string}`;
       try {
         if (priority) {
-          tx = await connectedContract.sendPriority(subject, body);
+          txHash = await client.sendPriority(subject, body, walletClient, this.wallet.address);
         } else {
-          tx = await connectedContract.send(subject, body);
+          txHash = await client.send(subject, body, walletClient, this.wallet.address);
         }
       } catch (error) {
         const errorMessage = error instanceof Error ? error.message : String(error);
@@ -245,14 +262,14 @@ export class UnifiedMailBoxClient {
 
       // Wait for confirmation with timeout
       const receipt = await Promise.race([
-        tx.wait(),
-        new Promise((_, reject) => 
+        publicClient.waitForTransactionReceipt({ hash: txHash }),
+        new Promise<never>((_, reject) => 
           setTimeout(() => reject(new Error('Transaction confirmation timeout')), 60000)
         )
       ]);
 
       return {
-        transactionHash: tx.hash,
+        transactionHash: txHash,
         chainType: 'evm',
         messageId: undefined, // Could extract from logs if needed
         fee: BigInt(priority ? '100000' : '10000'), // 0.1 or 0.01 USDC in micro-USDC
@@ -270,35 +287,48 @@ export class UnifiedMailBoxClient {
   }
 
   private async delegateEVM(delegate: string): Promise<DelegationResult> {
-    const { ethers } = await import('ethers');
-    const { MailServiceClient } = await import('../evm');
+    const { viem, MailServiceClient } = await this.getEVMModules();
 
     if (!this.config.evm) {
       throw new Error('EVM configuration not provided');
     }
 
     // Validate EVM address format
-    if (!ethers.isAddress(delegate)) {
+    if (!viem.isAddress(delegate)) {
       throw new Error('Invalid EVM address format for delegate');
     }
 
-    const provider = new ethers.JsonRpcProvider(this.config.evm.rpc);
-    let signer: import('ethers').Signer;
-    if (this.wallet.signTransaction && typeof this.wallet.signTransaction === 'function') {
-      signer = new ethers.Wallet(this.wallet as any, provider);
-    } else {
-      signer = await provider.getSigner(this.wallet.address);
-    }
+    const publicClient = viem.createPublicClient({
+      transport: viem.http(this.config.evm.rpc),
+      chain: {
+        id: this.config.evm.chainId,
+        name: 'Custom Chain',
+        nativeCurrency: { name: 'ETH', symbol: 'ETH', decimals: 18 },
+        rpcUrls: {
+          default: { http: [this.config.evm.rpc] }
+        }
+      }
+    });
 
-    const client = new MailServiceClient(this.config.evm.contracts.mailService, provider);
-    const connectedContract = client.getContract().connect(signer);
+    const walletClient = viem.createWalletClient({
+      transport: viem.http(this.config.evm.rpc),
+      chain: {
+        id: this.config.evm.chainId,
+        name: 'Custom Chain',
+        nativeCurrency: { name: 'ETH', symbol: 'ETH', decimals: 18 },
+        rpcUrls: {
+          default: { http: [this.config.evm.rpc] }
+        }
+      }
+    });
+
+    const client = new MailServiceClient(this.config.evm.contracts.mailService, publicClient);
     
-    const tx = await connectedContract.delegateTo(delegate);
-    await tx.wait();
-    const receipt = await tx.wait();
+    const txHash = await client.delegateTo(delegate, walletClient, this.wallet.address);
+    const receipt = await publicClient.waitForTransactionReceipt({ hash: txHash });
 
     return {
-      transactionHash: tx.hash,
+      transactionHash: txHash,
       chainType: 'evm',
       delegator: this.wallet.address,
       delegate: delegate,
@@ -307,33 +337,47 @@ export class UnifiedMailBoxClient {
   }
 
   private async claimEVMRevenue(): Promise<UnifiedTransaction> {
-    const { ethers } = await import('ethers');
-    const { MailerClient } = await import('../evm');
+    const { viem, MailerClient } = await this.getEVMModules();
 
     if (!this.config.evm) {
       throw new Error('EVM configuration not provided');
     }
 
-    const provider = new ethers.JsonRpcProvider(this.config.evm.rpc);
-    let signer: import('ethers').Signer;
-    if (this.wallet.signTransaction && typeof this.wallet.signTransaction === 'function') {
-      signer = new ethers.Wallet(this.wallet as any, provider);
-    } else {
-      signer = await provider.getSigner(this.wallet.address);
-    }
+    const publicClient = viem.createPublicClient({
+      transport: viem.http(this.config.evm.rpc),
+      chain: {
+        id: this.config.evm.chainId,
+        name: 'Custom Chain',
+        nativeCurrency: { name: 'ETH', symbol: 'ETH', decimals: 18 },
+        rpcUrls: {
+          default: { http: [this.config.evm.rpc] }
+        }
+      }
+    });
 
-    const client = new MailerClient(this.config.evm.contracts.mailer, provider);
-    const connectedContract = client.getContract().connect(signer);
+    const walletClient = viem.createWalletClient({
+      transport: viem.http(this.config.evm.rpc),
+      chain: {
+        id: this.config.evm.chainId,
+        name: 'Custom Chain',
+        nativeCurrency: { name: 'ETH', symbol: 'ETH', decimals: 18 },
+        rpcUrls: {
+          default: { http: [this.config.evm.rpc] }
+        }
+      }
+    });
+
+    const client = new MailerClient(this.config.evm.contracts.mailer, publicClient);
     
-    const tx = await connectedContract.claimRecipientShare();
-    const receipt = await tx.wait();
-    const block = receipt ? await provider.getBlock(receipt.blockNumber) : null;
+    const txHash = await client.claimRecipientShare(walletClient, this.wallet.address);
+    const receipt = await publicClient.waitForTransactionReceipt({ hash: txHash });
+    const block = await publicClient.getBlock({ blockNumber: receipt.blockNumber });
 
     return {
-      hash: tx.hash,
+      hash: txHash,
       chainType: 'evm',
-      blockNumber: receipt ? receipt.blockNumber : undefined,
-      timestamp: block?.timestamp ? block.timestamp * 1000 : Date.now()
+      blockNumber: receipt.blockNumber,
+      timestamp: Number(block.timestamp) * 1000
     };
   }
 
