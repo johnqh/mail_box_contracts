@@ -1,5 +1,5 @@
 import { ethers } from "ethers";
-import { Mailer, Mailer__factory, MailService, MailService__factory, MailBoxFactory, MailBoxFactory__factory } from "../typechain-types";
+import { Mailer, Mailer__factory, MailService, MailService__factory, MailBoxFactory, MailBoxFactory__factory } from "../../typechain-types";
 
 /**
  * @class MailerClient

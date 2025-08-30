@@ -1,0 +1,27 @@
+[features]
+resolution = true
+skip-lint = false
+
+[programs.localnet]
+mail_service = "8EKjCLZjz6LKRxZcQ6LwwF5V8P3TCEgM2CdQg4pZxXHE"
+mailer = "9FLkBDGpZBcR8LMsQ7MwwV6X9P4TDFgN3DeRh5qYyHJF"
+mail_box_factory = "FactoryABC123def456GHI789jkl012MNO345pqr678STU"
+
+[programs.devnet]
+mail_service = "8EKjCLZjz6LKRxZcQ6LwwF5V8P3TCEgM2CdQg4pZxXHE"
+mailer = "9FLkBDGpZBcR8LMsQ7MwwV6X9P4TDFgN3DeRh5qYyHJF"
+mail_box_factory = "FactoryABC123def456GHI789jkl012MNO345pqr678STU"
+
+[registry]
+url = "https://api.apr.dev"
+
+[provider]
+cluster = "localnet"
+wallet = "~/.config/solana/id.json"
+
+[scripts]
+test = "npm run test:solana"
+
+[[test.genesis]]
+address = "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v"
+program = "spl_token"

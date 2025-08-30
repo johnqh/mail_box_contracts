@@ -1,7 +1,7 @@
 import { expect } from "chai";
 import { ethers } from "hardhat";
-import { MailBoxFactoryClient } from "../src/mailer-client";
-import { MockUSDC } from "../typechain-types";
+import { MailBoxFactoryClient } from "../../src/evm/mailer-client";
+import { MockUSDC } from "../../typechain-types";
 import { SignerWithAddress } from "@nomicfoundation/hardhat-ethers/signers";
 
 describe("MailBoxFactoryClient", function () {
@@ -133,7 +133,7 @@ describe("MailBoxFactoryClient", function () {
       const mailerAddress = await factoryClient.deployMailer(usdcAddress, owner.address, salt);
       
       // Connect using MailerClient from existing codebase
-      const { MailerClient } = await import("../src/mailer-client");
+      const { MailerClient } = await import("../../src/evm/mailer-client");
       const mailerClient = new MailerClient(mailerAddress, owner.provider!);
       
       // Verify it works

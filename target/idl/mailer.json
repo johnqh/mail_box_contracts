@@ -1,0 +1,20 @@
+{
+  "version": "0.1.0",
+  "name": "mailer",
+  "instructions": [
+    {
+      "name": "initialize",
+      "accounts": [],
+      "args": []
+    }
+  ],
+  "accounts": [
+    {
+      "name": "mailerState",
+      "type": {
+        "kind": "struct",
+        "fields": []
+      }
+    }
+  ]
+}

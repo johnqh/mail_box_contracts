@@ -1,48 +1,89 @@
-# MailBox Contracts - Decentralized Messaging System
+# MailBox Contracts - Multi-Chain Decentralized Messaging System
 
-A comprehensive Solidity-based decentralized email/messaging system with USDC fee integration, domain registration, and revenue sharing capabilities.
+A comprehensive multi-chain decentralized email/messaging system supporting both **EVM chains** and **Solana** with USDC fee integration, delegation management, and revenue sharing capabilities.
 
 ## 🏗️ Project Overview
 
-**MailBox Contracts** enables decentralized messaging with built-in economic incentives through a two-tier fee system and revenue sharing mechanism.
+**MailBox Contracts** enables decentralized messaging with built-in economic incentives through a two-tier fee system and revenue sharing mechanism. The system automatically detects your wallet type and routes to the appropriate blockchain implementation.
 
-### Core Features
+### 🌟 Core Features
 
-- **Domain Registration**: Register and manage email domains with USDC fees
-- **Delegation System**: Delegate email handling with rejection capability  
-- **Two-Tier Messaging**: Priority (revenue share) vs Standard (fee-only) tiers
-- **Revenue Sharing**: 90% back to senders, 10% to platform
-- **Time-based Claims**: 60-day claim period for revenue shares
+- **🔗 Multi-Chain Support**: Works seamlessly on EVM chains (Ethereum, Polygon, etc.) and Solana
+- **🤖 Automatic Chain Detection**: Detects wallet type and routes to appropriate implementation
+- **👥 Delegation System**: Delegate message handling with rejection capability  
+- **📧 Two-Tier Messaging**: Priority (revenue share) vs Standard (fee-only) tiers
+- **💰 Revenue Sharing**: 90% back to senders, 10% to platform
+- **⏰ Time-based Claims**: 60-day claim period for revenue shares
+- **🛡️ Type-Safe**: Full TypeScript support across all chains
 
 ## 📦 NPM Package Installation
 
 ```bash
-# Install the TypeScript client library
-npm install mail_box_contracts
+# Install the unified multi-chain TypeScript client library
+npm install @johnqh/mail_box_contracts
 
 # Or with yarn
-yarn add mail_box_contracts
+yarn add @johnqh/mail_box_contracts
 ```
 
-### Quick Start
+## 🚀 Quick Start - Unified Multi-Chain Client
 
 ```typescript
-import { MailBox__factory, MailService__factory } from 'mail_box_contracts';
+import { UnifiedMailBoxClient, TESTNET_CHAIN_CONFIG } from '@johnqh/mail_box_contracts';
+
+// Works with ANY wallet - automatically detects chain!
+const client = new UnifiedMailBoxClient(wallet, TESTNET_CHAIN_CONFIG);
+
+// Same API works for both EVM and Solana
+await client.sendMessage("Hello Multi-Chain!", "This works on any blockchain!", true);
+await client.delegateTo("delegate-address"); // Format automatically validated
+await client.claimRevenue(); // Chain-agnostic revenue claiming
+
+console.log('Running on:', client.getChainType()); // 'evm' or 'solana'
+```
+
+## 🔧 Chain-Specific Usage
+
+### EVM Chains (Ethereum, Polygon, Arbitrum, etc.)
+
+```typescript
+import { MailerClient, MailServiceClient } from '@johnqh/mail_box_contracts/evm';
 import { ethers } from 'ethers';
 
-// Connect to contracts
 const provider = new ethers.JsonRpcProvider('YOUR_RPC_URL');
 const signer = new ethers.Wallet('YOUR_PRIVATE_KEY', provider);
 
-// Initialize contracts
-const mailer = MailBox__factory.connect('CONTRACT_ADDRESS', signer);
-const mailService = MailService__factory.connect('CONTRACT_ADDRESS', signer);
+const mailer = new MailerClient('CONTRACT_ADDRESS', provider);
+const mailService = new MailServiceClient('CONTRACT_ADDRESS', provider);
 
-// Send a priority message with revenue sharing
-await mailer.sendPriority("Hello Web3!", "This is a decentralized message");
+// Send priority message with revenue sharing
+await mailer.connect(signer).sendPriority("Hello EVM!", "Decentralized message");
 
-// Register a domain
-await mailService.registerDomain("example.mailbox", false);
+// Delegate to another address
+await mailService.connect(signer).delegateTo("0x...");
+
+// Claim revenue share
+await mailer.connect(signer).claimRecipientShare();
+```
+
+### Solana
+
+```typescript
+import { MailerClient, MailServiceClient } from '@johnqh/mail_box_contracts/solana';
+import { Connection, PublicKey } from '@solana/web3.js';
+import { Wallet } from '@coral-xyz/anchor';
+
+const connection = new Connection('https://api.devnet.solana.com');
+const wallet = new Wallet(keypair);
+
+const mailer = new MailerClient(connection, wallet, PROGRAM_ID, USDC_MINT);
+const mailService = new MailServiceClient(connection, wallet, PROGRAM_ID, USDC_MINT);
+
+// Send priority message with revenue sharing
+await mailer.sendPriority("Hello Solana!", "Decentralized message");
+
+// Delegate to another address  
+await mailService.delegateTo(new PublicKey("..."));
 
 // Claim revenue share
 await mailer.claimRecipientShare();

@@ -1,7 +1,7 @@
 import { expect } from "chai";
 import { ethers } from "hardhat";
-import { MailerClient, MailServiceClient, MailBoxClient } from "../src/mailer-client";
-import { MockUSDC } from "../typechain-types";
+import { MailerClient, MailServiceClient, MailBoxClient } from "../../src/evm/mailer-client";
+import { MockUSDC } from "../../typechain-types";
 import { SignerWithAddress } from "@nomicfoundation/hardhat-ethers/signers";
 
 describe("MailBox Client", function () {

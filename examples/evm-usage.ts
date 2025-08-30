@@ -5,7 +5,7 @@
  */
 
 import { ethers } from "ethers";
-import { MailerClient, MailServiceClient, MailBoxClient } from "../src/mailer-client";
+import { MailerClient, MailServiceClient, MailBoxClient } from "../src/evm/mailer-client";
 import { MockUSDC__factory } from "../typechain-types";
 
 // Configuration

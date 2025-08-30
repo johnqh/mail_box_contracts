@@ -1,0 +1,19 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "outDir": "dist/unified"
+  },
+  "include": [
+    "src/unified/**/*",
+    "src/utils/**/*",
+    "src/evm/**/*",
+    "src/solana/**/*",
+    "typechain-types/**/*",
+    "target/types/**/*"
+  ],
+  "exclude": [
+    "node_modules",
+    "dist",
+    "test/**/*"
+  ]
+}

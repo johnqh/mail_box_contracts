@@ -1,0 +1,20 @@
+{
+  "version": "0.1.0",
+  "name": "mail_box_factory",
+  "instructions": [
+    {
+      "name": "initialize",
+      "accounts": [],
+      "args": []
+    }
+  ],
+  "accounts": [
+    {
+      "name": "factoryState",
+      "type": {
+        "kind": "struct",
+        "fields": []
+      }
+    }
+  ]
+}

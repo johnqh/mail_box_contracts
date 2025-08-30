@@ -1,0 +1,16 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "outDir": "dist/evm"
+  },
+  "include": [
+    "src/evm/**/*",
+    "typechain-types/**/*"
+  ],
+  "exclude": [
+    "node_modules",
+    "dist",
+    "src/solana",
+    "src/unified"
+  ]
+}
