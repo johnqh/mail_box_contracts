@@ -53,7 +53,8 @@
       "Bash(npx mocha test/unified/*.test.ts:*)",
       "Bash(npx ts-node:*)",
       "Bash(git checkout:*)",
-      "Bash(npm run test:evm:*)"
+      "Bash(npm run test:evm:*)",
+      "Bash(npm update)"
     ],
     "deny": [],
     "defaultMode": "acceptEdits"
