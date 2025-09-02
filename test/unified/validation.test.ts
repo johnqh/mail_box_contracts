@@ -96,7 +96,7 @@ describe("Validation Utilities", function () {
       const validSolanaAddresses = [
         "DjVE6JNiYqPL2QXyCUUh8rNjHrbz9hXHNYt99MQ59qw1",
         "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v",
-        "11111111111111111111111111111112"
+        "So11111111111111111111111111111111111111112"
       ];
 
       validSolanaAddresses.forEach(address => {

@@ -59,7 +59,7 @@ export function validateAddress(address: string, chainType: 'evm' | 'solana'): b
 
 export function validateAmount(amount: string | number | bigint): bigint {
   // Check for null, undefined, or empty string
-  if (amount === null || amount === undefined || amount === '') {
+  if (amount === null || amount === undefined || amount === '' || (typeof amount === 'string' && amount.trim() === '')) {
     throw new Error('Invalid amount format');
   }
 
