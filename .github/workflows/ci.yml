@@ -278,7 +278,8 @@ jobs:
       - name: Run npm audit for dependency tracking
         run: |
           echo "🔍 Running dependency security audit..."
-          npm audit --audit-level moderate || echo "⚠️ Known development-only vulnerabilities documented in SECURITY.md"
+          npm audit --audit-level moderate || true
+          echo "⚠️ Known development-only vulnerabilities documented in SECURITY.md"
           echo "✅ See security-audit job for detailed vulnerability assessment"
         continue-on-error: true
       
