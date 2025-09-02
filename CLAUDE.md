@@ -57,7 +57,24 @@ mail_box_contracts/
 ├── scripts/               # Deployment scripts
 ├── AI_DEVELOPMENT_GUIDE.md # Comprehensive AI assistant guide
 ├── CLAUDE.md             # This file - AI assistant documentation
+├── docs/                   # AI optimization documentation
+│   └── ai-development-patterns.md  # Comprehensive AI patterns guide
+├── .ai-config.json         # AI assistant configuration
+├── .vscode/               # VS Code AI-friendly settings
+│   ├── settings.json      # Language and editor configuration
+│   └── tasks.json         # Build and test automation
 └── README.md             # Main project documentation (AI-optimized)
+```
+
+## 🛠️ AI-Optimized Development Commands
+
+```bash
+# AI Workflow Automation (NEW!)
+npm run ai:workflow status           # Check project health
+npm run ai:workflow list            # List available workflows  
+npm run ai:workflow run full-build  # Complete build process
+npm run ai:workflow run test-all    # Comprehensive testing
+npm run ai:workflow run quick-check # Fast validation
 ```
 
 ## 🛠️ Common Development Commands
@@ -115,13 +132,13 @@ npm test -- --verbose            # Run tests with detailed output
 - Two fee tiers: Priority (100% fee) and Standard (10% fee)
 - Revenue sharing: 90% to sender, 10% to owner
 - 60-day claim period for recipients
-- No "to" parameter - messages sent to msg.sender
+- Messages can be sent to any address via "to" parameter
 
 **Core Functions**:
-- `sendPriority(string subject, string body)` - Full fee, 90% revenue share
-- `sendPriorityPrepared(string mailId)` - Full fee, pre-prepared message
-- `send(string subject, string body)` - 10% fee only
-- `sendPrepared(string mailId)` - 10% fee, pre-prepared message
+- `sendPriority(address to, string subject, string body)` - Full fee, 90% revenue share
+- `sendPriorityPrepared(address to, string mailId)` - Full fee, pre-prepared message
+- `send(address to, string subject, string body)` - 10% fee only
+- `sendPrepared(address to, string mailId)` - 10% fee, pre-prepared message
 - `claimRecipientShare()` - Claim your 90% share within 60 days
 - `claimOwnerShare()` - Owner claims accumulated fees
 - `claimExpiredShares(address)` - Owner reclaims expired shares
@@ -129,7 +146,7 @@ npm test -- --verbose            # Run tests with detailed output
 **Revenue Model**:
 - **Priority functions**: Sender pays full fee, gets 90% back as claimable
 - **Standard functions**: Sender pays 10% fee only
-- All messages are sent to sender (msg.sender) - self-messaging system
+- Messages are sent to specified recipient address via "to" parameter
 
 **Storage**:
 - `mapping(address => ClaimableAmount) recipientClaims` - 90% revenue shares
@@ -205,7 +222,7 @@ expect(finalBalance - initialBalance).to.equal(expectedFee);
 **Common Pitfalls**:
 - Don't forget to fund test accounts with USDC + approvals
 - Remember address(0) represents cleared delegation
-- Mailer sends messages to sender (not external recipient)
+- Mailer now sends messages to specified recipient (not just sender)
 - Fee amounts are in 6-decimal USDC format
 
 **File Structure**:
@@ -313,7 +330,11 @@ expect(finalBalance - initialBalance).to.equal(expectedFee);
 - Test authorization and access control thoroughly
 
 ### Quick Reference Files for AI:
-- `AI_DEVELOPMENT_GUIDE.md` - Comprehensive development patterns
+- `docs/ai-development-patterns.md` - **PRIMARY REFERENCE** - Comprehensive AI patterns guide  
+- `.ai-config.json` - Project configuration and metadata for AI assistants
+- `scripts/ai-helpers/dev-workflow.ts` - Automated workflow scripts
+- `src/types/common.ts` - Comprehensive type definitions and utilities
+- `AI_DEVELOPMENT_GUIDE.md` - Extended development patterns
 - `examples/basic-usage.ts` - Working code examples
 - `examples/README.md` - Usage patterns documentation
 - `src/mailer-client.ts` - Full API reference with examples

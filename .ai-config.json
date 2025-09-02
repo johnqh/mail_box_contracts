@@ -1,0 +1,112 @@
+{
+  "name": "MailBox Contracts",
+  "description": "Multi-chain decentralized messaging system with USDC fees and revenue sharing",
+  "version": "1.4.2",
+  "type": "multi-chain-dapp",
+  "chains": ["ethereum", "solana"],
+  "languages": ["solidity", "rust", "typescript"],
+  "frameworks": ["hardhat", "anchor", "ethers", "viem"],
+  
+  "ai_development": {
+    "primary_tasks": [
+      "smart_contract_development",
+      "multi_chain_integration",
+      "testing_and_validation",
+      "client_library_development"
+    ],
+    
+    "key_patterns": {
+      "contract_modification": "Always compile after changes: npm run compile",
+      "testing": "Run full test suite: npm test (88+ tests)",
+      "deployment": "Local development: npm run deploy:local",
+      "debugging": "Use comprehensive logging and error handling"
+    },
+    
+    "common_workflows": {
+      "new_feature": [
+        "1. Modify contracts (EVM + Solana)",
+        "2. Run npm run compile",
+        "3. Update TypeScript clients",
+        "4. Add comprehensive tests",
+        "5. Run npm test",
+        "6. Update documentation"
+      ],
+      "bug_fix": [
+        "1. Identify issue in tests",
+        "2. Fix contract or client code",
+        "3. Run npm run compile",
+        "4. Verify fix with tests",
+        "5. Add regression test"
+      ]
+    },
+    
+    "architecture": {
+      "evm_contracts": {
+        "location": "contracts/",
+        "main_files": ["MailService.sol", "Mailer.sol", "MockUSDC.sol"],
+        "compilation": "npx hardhat compile",
+        "testing": "npx hardhat test"
+      },
+      "solana_programs": {
+        "location": "programs/",
+        "main_programs": ["mail_service", "mailer", "mail_box_factory"],
+        "compilation": "anchor build",
+        "testing": "anchor test"
+      },
+      "typescript_clients": {
+        "location": "src/",
+        "structure": ["evm/", "solana/", "unified/", "utils/"],
+        "types": "Auto-generated in typechain-types/"
+      }
+    },
+    
+    "testing_strategy": {
+      "total_tests": "88+",
+      "categories": ["unit", "integration", "multi_chain"],
+      "test_files": ["test/evm/", "test/solana/", "test/unified/"],
+      "mock_contracts": ["MockUSDC.sol"],
+      "patterns": [
+        "Always fund test accounts with MockUSDC",
+        "Test both success and error conditions",
+        "Verify event emissions",
+        "Test fee calculations precisely"
+      ]
+    }
+  },
+  
+  "code_style": {
+    "solidity": {
+      "style": "Modern Solidity with custom errors",
+      "patterns": ["reentrancy protection", "precise fee calculations", "comprehensive events"],
+      "naming": "camelCase for functions, PascalCase for contracts"
+    },
+    "rust": {
+      "style": "Anchor framework patterns",
+      "patterns": ["PDA seeds", "account validation", "CPI calls"],
+      "naming": "snake_case for functions, PascalCase for structs"
+    },
+    "typescript": {
+      "style": "Strict TypeScript with comprehensive types",
+      "patterns": ["async/await", "proper error handling", "type safety"],
+      "naming": "camelCase for variables, PascalCase for classes"
+    }
+  },
+  
+  "quick_commands": {
+    "compile": "npm run compile",
+    "test": "npm test",
+    "deploy_local": "npm run deploy:local",
+    "clean": "npm run clean",
+    "build": "npm run build",
+    "lint": "npm run lint",
+    "typecheck": "npm run typecheck"
+  },
+  
+  "ai_assistance_notes": {
+    "always_compile_after_contract_changes": true,
+    "run_tests_before_committing": true,
+    "update_documentation_with_changes": true,
+    "maintain_cross_chain_compatibility": true,
+    "follow_existing_patterns": true
+  }
+}

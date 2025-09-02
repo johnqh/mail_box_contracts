@@ -102,20 +102,20 @@ export interface MailerInterface extends Interface {
   ): string;
   encodeFunctionData(
     functionFragment: "send",
-    values: [string, string]
+    values: [AddressLike, string, string]
   ): string;
   encodeFunctionData(functionFragment: "sendFee", values?: undefined): string;
   encodeFunctionData(
     functionFragment: "sendPrepared",
-    values: [string]
+    values: [AddressLike, string]
   ): string;
   encodeFunctionData(
     functionFragment: "sendPriority",
-    values: [string, string]
+    values: [AddressLike, string, string]
   ): string;
   encodeFunctionData(
     functionFragment: "sendPriorityPrepared",
-    values: [string]
+    values: [AddressLike, string]
   ): string;
   encodeFunctionData(
     functionFragment: "setFee",
@@ -381,23 +381,27 @@ export interface Mailer extends BaseContract {
   >;
 
   send: TypedContractMethod<
-    [subject: string, body: string],
+    [to: AddressLike, subject: string, body: string],
     [void],
     "nonpayable"
   >;
 
   sendFee: TypedContractMethod<[], [bigint], "view">;
 
-  sendPrepared: TypedContractMethod<[mailId: string], [void], "nonpayable">;
+  sendPrepared: TypedContractMethod<
+    [to: AddressLike, mailId: string],
+    [void],
+    "nonpayable"
+  >;
 
   sendPriority: TypedContractMethod<
-    [subject: string, body: string],
+    [to: AddressLike, subject: string, body: string],
     [void],
     "nonpayable"
   >;
 
   sendPriorityPrepared: TypedContractMethod<
-    [mailId: string],
+    [to: AddressLike, mailId: string],
     [void],
     "nonpayable"
   >;
@@ -462,19 +466,35 @@ export interface Mailer extends BaseContract {
   >;
   getFunction(
     nameOrSignature: "send"
-  ): TypedContractMethod<[subject: string, body: string], [void], "nonpayable">;
+  ): TypedContractMethod<
+    [to: AddressLike, subject: string, body: string],
+    [void],
+    "nonpayable"
+  >;
   getFunction(
     nameOrSignature: "sendFee"
   ): TypedContractMethod<[], [bigint], "view">;
   getFunction(
     nameOrSignature: "sendPrepared"
-  ): TypedContractMethod<[mailId: string], [void], "nonpayable">;
+  ): TypedContractMethod<
+    [to: AddressLike, mailId: string],
+    [void],
+    "nonpayable"
+  >;
   getFunction(
     nameOrSignature: "sendPriority"
-  ): TypedContractMethod<[subject: string, body: string], [void], "nonpayable">;
+  ): TypedContractMethod<
+    [to: AddressLike, subject: string, body: string],
+    [void],
+    "nonpayable"
+  >;
   getFunction(
     nameOrSignature: "sendPriorityPrepared"
-  ): TypedContractMethod<[mailId: string], [void], "nonpayable">;
+  ): TypedContractMethod<
+    [to: AddressLike, mailId: string],
+    [void],
+    "nonpayable"
+  >;
   getFunction(
     nameOrSignature: "setFee"
   ): TypedContractMethod<[usdcAmount: BigNumberish], [void], "nonpayable">;

@@ -54,7 +54,8 @@
       "Bash(npx ts-node:*)",
       "Bash(git checkout:*)",
       "Bash(npm run test:evm:*)",
-      "Bash(npm update)"
+      "Bash(npm update)",
+      "Bash(chmod:*)"
     ],
     "deny": [],
     "defaultMode": "acceptEdits"

@@ -121,6 +121,7 @@ pub mod mailer {
     /// ```
     pub fn send_priority(
         ctx: Context<SendMessage>,
+        to: Pubkey,
         subject: String,
         body: String,
     ) -> Result<()> {
@@ -148,7 +149,7 @@ pub mod mailer {
 
         emit!(MailSent {
             from: sender,
-            to: sender, // Messages are sent to self
+            to,
             subject,
             body,
         });
@@ -180,6 +181,7 @@ pub mod mailer {
     /// ```
     pub fn send_priority_prepared(
         ctx: Context<SendMessage>,
+        to: Pubkey,
         mail_id: String,
     ) -> Result<()> {
         let sender = ctx.accounts.sender.key();
@@ -206,7 +208,7 @@ pub mod mailer {
 
         emit!(PreparedMailSent {
             from: sender,
-            to: sender, // Messages are sent to self
+            to,
             mail_id,
         });
 
@@ -237,6 +239,7 @@ pub mod mailer {
     /// ```
     pub fn send(
         ctx: Context<SendMessage>,
+        to: Pubkey,
         subject: String,
         body: String,
     ) -> Result<()> {
@@ -259,7 +262,7 @@ pub mod mailer {
 
         emit!(MailSent {
             from: sender,
-            to: sender, // Messages are sent to self
+            to,
             subject,
             body,
         });
@@ -290,6 +293,7 @@ pub mod mailer {
     /// ```
     pub fn send_prepared(
         ctx: Context<SendMessage>,
+        to: Pubkey,
         mail_id: String,
     ) -> Result<()> {
         let sender = ctx.accounts.sender.key();
@@ -311,7 +315,7 @@ pub mod mailer {
 
         emit!(PreparedMailSent {
             from: sender,
-            to: sender, // Messages are sent to self
+            to,
             mail_id,
         });
 

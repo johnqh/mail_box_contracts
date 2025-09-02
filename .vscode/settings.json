@@ -1,3 +1,66 @@
 {
-  "cSpell.enabled": false
+  "cSpell.enabled": false,
+  
+  // Language associations
+  "files.associations": {
+    "*.sol": "solidity",
+    "*.rs": "rust"
+  },
+  
+  // Solidity configuration
+  "solidity.defaultCompiler": "remote",
+  "solidity.compileUsingRemoteVersion": "v0.8.24",
+  "solidity.enabledAsYouTypeCompilationErrorCheck": true,
+  
+  // Rust configuration
+  "rust-analyzer.linkedProjects": ["programs/mail_service/Cargo.toml", "programs/mailer/Cargo.toml", "programs/mail_box_factory/Cargo.toml"],
+  "rust-analyzer.checkOnSave.command": "clippy",
+  
+  // TypeScript configuration
+  "typescript.preferences.importModuleSpecifier": "relative",
+  "typescript.suggest.includeCompletionsForModuleExports": true,
+  "typescript.preferences.includePackageJsonAutoImports": "on",
+  "typescript.inlayHints.parameterNames.enabled": "all",
+  "typescript.inlayHints.variableTypes.enabled": true,
+  "typescript.inlayHints.functionLikeReturnTypes.enabled": true,
+  "typescript.preferences.quoteStyle": "single",
+  
+  // Editor settings for AI assistance
+  "editor.formatOnSave": true,
+  "editor.codeActionsOnSave": {
+    "source.fixAll": "explicit"
+  },
+  "editor.suggest.showStatusBar": true,
+  "editor.parameterHints.enabled": true,
+  "editor.quickSuggestions": {
+    "other": "on",
+    "comments": "on",
+    "strings": "on"
+  },
+  
+  // File management
+  "files.exclude": {
+    "**/node_modules": true,
+    "**/target": true,
+    "**/artifacts": true,
+    "**/cache": true,
+    "**/typechain-types": false
+  },
+  "search.exclude": {
+    "**/node_modules": true,
+    "**/target": true,
+    "**/artifacts": true,
+    "**/cache": true
+  },
+  
+  // Prettier configuration
+  "prettier.singleQuote": true,
+  "prettier.trailingComma": "es5",
+  
+  // Git settings
+  "git.enableSmartCommit": true,
+  "git.confirmSync": false,
+  
+  // Terminal settings
+  "terminal.integrated.defaultProfile.osx": "zsh"
 }

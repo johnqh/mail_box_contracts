@@ -100,6 +100,7 @@ contract Mailer {
     
     
     function sendPriority(
+        address to,
         string calldata subject,
         string calldata body
     ) external nonReentrant {
@@ -107,20 +108,22 @@ contract Mailer {
             revert FeePaymentRequired();
         }
         _recordShares(msg.sender, sendFee);
-        emit MailSent(msg.sender, msg.sender, subject, body);
+        emit MailSent(msg.sender, to, subject, body);
     }
     
     function sendPriorityPrepared(
+        address to,
         string calldata mailId
     ) external nonReentrant {
         if (!usdcToken.transferFrom(msg.sender, address(this), sendFee)) {
             revert FeePaymentRequired();
         }
         _recordShares(msg.sender, sendFee);
-        emit PreparedMailSent(msg.sender, msg.sender, mailId);
+        emit PreparedMailSent(msg.sender, to, mailId);
     }
     
     function send(
+        address to,
         string calldata subject,
         string calldata body
     ) external nonReentrant {
@@ -129,10 +132,11 @@ contract Mailer {
             revert FeePaymentRequired();
         }
         ownerClaimable += ownerFee;
-        emit MailSent(msg.sender, msg.sender, subject, body);
+        emit MailSent(msg.sender, to, subject, body);
     }
     
     function sendPrepared(
+        address to,
         string calldata mailId
     ) external nonReentrant {
         uint256 ownerFee = (sendFee * OWNER_SHARE) / 100;
@@ -140,7 +144,7 @@ contract Mailer {
             revert FeePaymentRequired();
         }
         ownerClaimable += ownerFee;
-        emit PreparedMailSent(msg.sender, msg.sender, mailId);
+        emit PreparedMailSent(msg.sender, to, mailId);
     }
     
     function setFee(uint256 usdcAmount) external onlyOwner {
