@@ -31,6 +31,7 @@
     "typecheck": "tsc --noEmit",
     "format": "prettier --write \"**/*.{ts,js,json,md}\"",
     "format:check": "prettier --check \"**/*.{ts,js,json,md}\"",
+    "security:audit": "bash scripts/security-audit.sh",
     "postinstall": "echo 'MailBox Contracts installed successfully!'",
     "deploy:evm:local": "npx hardhat run scripts/evm/deploy.ts --network hardhat",
     "deploy:evm:create2:local": "npx hardhat run scripts/evm/deploy-create2.ts --network hardhat",
@@ -185,9 +186,13 @@
     "viem": "^2.36.0"
   },
   "overrides": {
-    "bigint-buffer": "1.1.5"
+    "bigint-buffer": "^1.1.5",
+    "@solana/buffer-layout-utils": {
+      "bigint-buffer": "^1.1.5"
+    }
   },
   "resolutions": {
-    "bigint-buffer": "1.1.5"
+    "bigint-buffer": "^1.1.5",
+    "@solana/buffer-layout-utils/bigint-buffer": "^1.1.5"
   }
 }
