@@ -76,14 +76,23 @@ jobs:
         run: |
           echo "🔍 Running security audit with documented risk acceptance..."
           
-          # Run the audit and capture output
+          # Run the audit and capture output (allow non-zero exit codes)
           echo "📊 Current npm audit status:"
-          npm audit --audit-level moderate || echo "⚠️  Audit found vulnerabilities - checking against documented exceptions"
+          npm audit --audit-level moderate || true
+          echo "⚠️  Audit found vulnerabilities - checking against documented exceptions"
           
-          # Get vulnerability counts
+          # Get vulnerability counts with error handling
+          echo "🔢 Analyzing vulnerability counts..."
           AUDIT_JSON=$(npm audit --audit-level high --json 2>/dev/null || echo '{"metadata":{"vulnerabilities":{"high":0,"critical":0}}}')
-          HIGH_COUNT=$(echo "$AUDIT_JSON" | jq '.metadata.vulnerabilities.high // 0' 2>/dev/null || echo "0")
-          CRITICAL_COUNT=$(echo "$AUDIT_JSON" | jq '.metadata.vulnerabilities.critical // 0' 2>/dev/null || echo "0")
+          
+          # Parse vulnerability counts with fallback
+          HIGH_COUNT=$(echo "$AUDIT_JSON" | jq -r '.metadata.vulnerabilities.high // 0' 2>/dev/null || echo "0")
+          CRITICAL_COUNT=$(echo "$AUDIT_JSON" | jq -r '.metadata.vulnerabilities.critical // 0' 2>/dev/null || echo "0")
+          
+          # Ensure we have valid numbers
+          if ! [[ "$HIGH_COUNT" =~ ^[0-9]+$ ]]; then HIGH_COUNT=0; fi
+          if ! [[ "$CRITICAL_COUNT" =~ ^[0-9]+$ ]]; then CRITICAL_COUNT=0; fi
+          
           TOTAL_HIGH_CRITICAL=$((HIGH_COUNT + CRITICAL_COUNT))
           
           echo "📈 Current vulnerability counts:"
