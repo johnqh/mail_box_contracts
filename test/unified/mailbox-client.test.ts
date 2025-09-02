@@ -1,8 +1,12 @@
 import { expect } from "chai";
+import chaiAsPromised from "chai-as-promised";
+import chai from "chai";
 import { Keypair } from "@solana/web3.js";
 import { Wallet } from "@coral-xyz/anchor";
 import { UnifiedMailBoxClient } from "../../src/unified/mailbox-client";
 import { ChainConfig } from "../../src/unified/types";
+
+chai.use(chaiAsPromised);
 
 describe("UnifiedMailBoxClient", function () {
   let testConfig: ChainConfig;

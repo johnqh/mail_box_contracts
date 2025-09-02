@@ -44,6 +44,8 @@ export function validateAddress(address: string, chainType: 'evm' | 'solana'): b
       throw new Error('Invalid EVM address format');
     }
   } else if (chainType === 'solana') {
+    // Solana addresses are base58 encoded, typically 32-44 characters
+    // Base58 alphabet excludes 0, O, I, l to avoid confusion
     const solanaRegex = /^[1-9A-HJ-NP-Za-km-z]{32,44}$/;
     if (!solanaRegex.test(address)) {
       throw new Error('Invalid Solana address format');
@@ -56,15 +58,30 @@ export function validateAddress(address: string, chainType: 'evm' | 'solana'): b
 }
 
 export function validateAmount(amount: string | number | bigint): bigint {
+  // Check for null, undefined, or empty string
+  if (amount === null || amount === undefined || amount === '') {
+    throw new Error('Invalid amount format');
+  }
+
   let amountBigInt: bigint;
   
   try {
     if (typeof amount === 'string') {
+      // Check for non-numeric strings
+      if (!/^-?\d+$/.test(amount.trim())) {
+        throw new Error('Invalid amount format');
+      }
       amountBigInt = BigInt(amount);
     } else if (typeof amount === 'number') {
+      // Check for NaN or Infinity
+      if (!Number.isFinite(amount)) {
+        throw new Error('Invalid amount format');
+      }
       amountBigInt = BigInt(Math.floor(amount));
-    } else {
+    } else if (typeof amount === 'bigint') {
       amountBigInt = amount;
+    } else {
+      throw new Error('Invalid amount format');
     }
   } catch (error) {
     throw new Error('Invalid amount format');

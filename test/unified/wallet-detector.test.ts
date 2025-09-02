@@ -83,7 +83,7 @@ describe("WalletDetector", function () {
 
     it("should validate known Solana addresses", function () {
       const validAddresses = [
-        "DQf2W8p7L5Q8r3K1mN6x9V7z2B4c3H8j5E6nYpRtUiOp",
+        "DjVE6JNiYqPL2QXyCUUh8rNjHrbz9hXHNYt99MQ59qw1",
         "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v",
         "11111111111111111111111111111112"
       ];
