@@ -1,14 +1,24 @@
 // Main export file for unified multi-chain MailBox client
 
-// Export unified client and utilities (Phase 3)
+// Export unified client and utilities
 export * from './unified';
-export * from './utils';
 
-// Export EVM-specific clients
-export * from './evm';
+// Export specific clients with explicit names to avoid conflicts
+export { 
+  MailerClient as EVMMailerClient, 
+  MailServiceClient as EVMMailServiceClient, 
+  MailBoxClient as EVMMailBoxClient 
+} from './evm/mailer-client';
 
-// Export Solana-specific clients (placeholder for Phase 2)
-export * from './solana';
+export { 
+  MailerClient as SolanaMailerClient
+} from './solana/mailer-client';
 
-// Re-export for backward compatibility
-export { MailerClient as EVMMailerClient, MailServiceClient as EVMMailServiceClient, MailBoxClient as EVMMailBoxClient } from './evm/mailer-client';
+// Export utilities with explicit names
+export { 
+  NETWORK_CONFIGS, 
+  validateAddress, 
+  validateMessage, 
+  validateDomain, 
+  validateAmount 
+} from './utils';

@@ -45,15 +45,15 @@ describe("Mailer", function () {
   describe("send function", function () {
     it("Should emit MailSent event when USDC transfer succeeds", async function () {
       await expect(
-        mailer.connect(addr1).sendPriority("Test Subject", "Test Body")
+        mailer.connect(addr1).sendPriority(addr2.address, "Test Subject", "Test Body")
       ).to.emit(mailer, "MailSent")
-       .withArgs(addr1.address, addr1.address, "Test Subject", "Test Body");
+       .withArgs(addr1.address, addr2.address, "Test Subject", "Test Body");
     });
 
     it("Should not emit event when USDC transfer fails (insufficient balance)", async function () {
       // addr2 has no USDC balance
       await expect(
-        mailer.connect(addr2).sendPriority("Test Subject", "Test Body")
+        mailer.connect(addr2).sendPriority(addr1.address, "Test Subject", "Test Body")
       ).to.be.revertedWithCustomError(mockUSDC, "InsufficientBalance");
     });
 
@@ -62,14 +62,14 @@ describe("Mailer", function () {
       await mockUSDC.mint(addr2.address, ethers.parseUnits("1", 6));
       
       await expect(
-        mailer.connect(addr2).sendPriority("Test Subject", "Test Body")
+        mailer.connect(addr2).sendPriority(addr1.address, "Test Subject", "Test Body")
       ).to.be.revertedWithCustomError(mockUSDC, "InsufficientAllowance");
     });
 
     it("Should transfer correct USDC amount to contract", async function () {
       const initialBalance = await mockUSDC.balanceOf(await mailer.getAddress());
       
-      await mailer.connect(addr1).sendPriority("Test Subject", "Test Body");
+      await mailer.connect(addr1).sendPriority(addr2.address, "Test Subject", "Test Body");
       
       const finalBalance = await mockUSDC.balanceOf(await mailer.getAddress());
       expect(finalBalance - initialBalance).to.equal(100000); // 0.1 USDC
@@ -79,15 +79,15 @@ describe("Mailer", function () {
   describe("sendPrepared function", function () {
     it("Should emit PreparedMailSent event when USDC transfer succeeds", async function () {
       await expect(
-        mailer.connect(addr1).sendPriorityPrepared("mail-123")
+        mailer.connect(addr1).sendPriorityPrepared(addr2.address, "mail-123")
       ).to.emit(mailer, "PreparedMailSent")
-       .withArgs(addr1.address, addr1.address, "mail-123");
+       .withArgs(addr1.address, addr2.address, "mail-123");
     });
 
     it("Should not emit event when USDC transfer fails (insufficient balance)", async function () {
       // addr2 has no USDC balance
       await expect(
-        mailer.connect(addr2).sendPriorityPrepared("mail-456")
+        mailer.connect(addr2).sendPriorityPrepared(addr1.address, "mail-456")
       ).to.be.revertedWithCustomError(mockUSDC, "InsufficientBalance");
     });
 
@@ -96,14 +96,14 @@ describe("Mailer", function () {
       await mockUSDC.mint(addr2.address, ethers.parseUnits("1", 6));
       
       await expect(
-        mailer.connect(addr2).sendPriorityPrepared("mail-789")
+        mailer.connect(addr2).sendPriorityPrepared(addr1.address, "mail-789")
       ).to.be.revertedWithCustomError(mockUSDC, "InsufficientAllowance");
     });
 
     it("Should transfer correct USDC amount to contract", async function () {
       const initialBalance = await mockUSDC.balanceOf(await mailer.getAddress());
       
-      await mailer.connect(addr1).sendPriorityPrepared("mail-999");
+      await mailer.connect(addr1).sendPriorityPrepared(addr2.address, "mail-999");
       
       const finalBalance = await mockUSDC.balanceOf(await mailer.getAddress());
       expect(finalBalance - initialBalance).to.equal(100000); // 0.1 USDC
@@ -112,9 +112,9 @@ describe("Mailer", function () {
     it("Should handle different mailId strings", async function () {
       // Test with various mailId formats
       await expect(
-        mailer.connect(addr1).sendPriorityPrepared("abc-123-xyz")
+        mailer.connect(addr1).sendPriorityPrepared(addr2.address, "abc-123-xyz")
       ).to.emit(mailer, "PreparedMailSent")
-       .withArgs(addr1.address, addr1.address, "abc-123-xyz");
+       .withArgs(addr1.address, addr2.address, "abc-123-xyz");
     });
   });
 
@@ -189,7 +189,7 @@ describe("Mailer", function () {
       it("Should use updated fee in send function", async function () {
         const initialBalance = await mockUSDC.balanceOf(await mailer.getAddress());
         
-        await mailer.connect(addr1).sendPriority("Test", "Body");
+        await mailer.connect(addr1).sendPriority(addr2.address, "Test", "Body");
         
         const finalBalance = await mockUSDC.balanceOf(await mailer.getAddress());
         expect(finalBalance - initialBalance).to.equal(50000); // Updated fee
@@ -198,7 +198,7 @@ describe("Mailer", function () {
       it("Should use updated fee in sendPrepared function", async function () {
         const initialBalance = await mockUSDC.balanceOf(await mailer.getAddress());
         
-        await mailer.connect(addr1).sendPriorityPrepared("test-mail");
+        await mailer.connect(addr1).sendPriorityPrepared(addr2.address, "test-mail");
         
         const finalBalance = await mockUSDC.balanceOf(await mailer.getAddress());
         expect(finalBalance - initialBalance).to.equal(50000); // Updated fee
@@ -210,7 +210,7 @@ describe("Mailer", function () {
         
         // addr1 only has 10 USDC, should fail
         await expect(
-          mailer.connect(addr1).sendPriority("Test", "Body")
+          mailer.connect(addr1).sendPriority(addr2.address, "Test", "Body")
         ).to.be.revertedWithCustomError(mockUSDC, "InsufficientBalance");
       });
 
@@ -220,9 +220,9 @@ describe("Mailer", function () {
         const initialBalance = await mockUSDC.balanceOf(await mailer.getAddress());
         
         await expect(
-          mailer.connect(addr1).sendPriority("Test", "Body")
+          mailer.connect(addr1).sendPriority(addr2.address, "Test", "Body")
         ).to.emit(mailer, "MailSent")
-         .withArgs(addr1.address, addr1.address, "Test", "Body");
+         .withArgs(addr1.address, addr2.address, "Test", "Body");
         
         const finalBalance = await mockUSDC.balanceOf(await mailer.getAddress());
         expect(finalBalance - initialBalance).to.equal(0);
@@ -230,14 +230,14 @@ describe("Mailer", function () {
 
       it("Should handle fee changes mid-transaction flow", async function () {
         // Send with original fee
-        await mailer.connect(addr1).sendPriority("Test1", "Body1");
+        await mailer.connect(addr1).sendPriority(addr2.address, "Test1", "Body1");
         
         // Change fee
         await mailer.connect(owner).setFee(75000); // 0.075 USDC
         
         // Send with new fee
         const initialBalance = await mockUSDC.balanceOf(await mailer.getAddress());
-        await mailer.connect(addr1).sendPriority("Test2", "Body2");
+        await mailer.connect(addr1).sendPriority(addr2.address, "Test2", "Body2");
         const finalBalance = await mockUSDC.balanceOf(await mailer.getAddress());
         
         expect(finalBalance - initialBalance).to.equal(75000); // New fee
@@ -254,15 +254,15 @@ describe("Mailer", function () {
 
     it("Should emit MailSent event when USDC transfer succeeds", async function () {
       await expect(
-        mailer.connect(addr2).send("Test Subject", "Test Body")
+        mailer.connect(addr2).send(addr1.address, "Test Subject", "Test Body")
       ).to.emit(mailer, "MailSent")
-       .withArgs(addr2.address, addr2.address, "Test Subject", "Test Body");
+       .withArgs(addr2.address, addr1.address, "Test Subject", "Test Body");
     });
 
     it("Should not emit event when sender has no USDC balance", async function () {
       // owner has USDC but no allowance, so it fails on allowance check
       await expect(
-        mailer.connect(owner).send("No Balance", "Should Fail")
+        mailer.connect(owner).send(addr1.address, "No Balance", "Should Fail")
       ).to.be.revertedWithCustomError(mockUSDC, "InsufficientAllowance");
     });
 
@@ -271,7 +271,7 @@ describe("Mailer", function () {
       await mockUSDC.mint(owner.address, ethers.parseUnits("1", 6));
       
       await expect(
-        mailer.connect(owner).send("No Allowance", "Should Fail")
+        mailer.connect(owner).send(addr1.address, "No Allowance", "Should Fail")
       ).to.be.revertedWithCustomError(mockUSDC, "InsufficientAllowance");
     });
 
@@ -279,7 +279,7 @@ describe("Mailer", function () {
       const initialBalance = await mockUSDC.balanceOf(await mailer.getAddress());
       const initialOwnerClaimable = await mailer.getOwnerClaimable();
       
-      await mailer.connect(addr2).send("Test", "Body");
+      await mailer.connect(addr2).send(addr1.address, "Test", "Body");
       
       const finalBalance = await mockUSDC.balanceOf(await mailer.getAddress());
       const finalOwnerClaimable = await mailer.getOwnerClaimable();
@@ -293,9 +293,9 @@ describe("Mailer", function () {
 
     it("Should work with empty strings", async function () {
       await expect(
-        mailer.connect(addr2).send("", "")
+        mailer.connect(addr2).send(addr1.address, "", "")
       ).to.emit(mailer, "MailSent")
-       .withArgs(addr2.address, addr2.address, "", "");
+       .withArgs(addr2.address, addr1.address, "", "");
     });
 
     it("Should work with long strings", async function () {
@@ -303,9 +303,9 @@ describe("Mailer", function () {
       const longBody = "B".repeat(5000);
       
       await expect(
-        mailer.connect(addr2).send(longSubject, longBody)
+        mailer.connect(addr2).send(addr1.address, longSubject, longBody)
       ).to.emit(mailer, "MailSent")
-       .withArgs(addr2.address, addr2.address, longSubject, longBody);
+       .withArgs(addr2.address, addr1.address, longSubject, longBody);
     });
   });
 
@@ -318,15 +318,15 @@ describe("Mailer", function () {
 
     it("Should emit PreparedMailSent event when USDC transfer succeeds", async function () {
       await expect(
-        mailer.connect(addr2).sendPrepared("mail-123")
+        mailer.connect(addr2).sendPrepared(addr1.address, "mail-123")
       ).to.emit(mailer, "PreparedMailSent")
-       .withArgs(addr2.address, addr2.address, "mail-123");
+       .withArgs(addr2.address, addr1.address, "mail-123");
     });
 
     it("Should not emit event when sender has no USDC balance", async function () {
       // owner has USDC but no allowance, so it fails on allowance check
       await expect(
-        mailer.connect(owner).sendPrepared("no-balance-mail")
+        mailer.connect(owner).sendPrepared(addr1.address, "no-balance-mail")
       ).to.be.revertedWithCustomError(mockUSDC, "InsufficientAllowance");
     });
 
@@ -335,7 +335,7 @@ describe("Mailer", function () {
       await mockUSDC.mint(owner.address, ethers.parseUnits("1", 6));
       
       await expect(
-        mailer.connect(owner).sendPrepared("no-allowance-mail")
+        mailer.connect(owner).sendPrepared(addr1.address, "no-allowance-mail")
       ).to.be.revertedWithCustomError(mockUSDC, "InsufficientAllowance");
     });
 
@@ -343,7 +343,7 @@ describe("Mailer", function () {
       const initialBalance = await mockUSDC.balanceOf(await mailer.getAddress());
       const initialOwnerClaimable = await mailer.getOwnerClaimable();
       
-      await mailer.connect(addr2).sendPrepared("prepared-test");
+      await mailer.connect(addr2).sendPrepared(addr1.address, "prepared-test");
       
       const finalBalance = await mockUSDC.balanceOf(await mailer.getAddress());
       const finalOwnerClaimable = await mailer.getOwnerClaimable();
@@ -357,27 +357,27 @@ describe("Mailer", function () {
 
     it("Should work with empty mailId", async function () {
       await expect(
-        mailer.connect(addr2).sendPrepared("")
+        mailer.connect(addr2).sendPrepared(addr1.address, "")
       ).to.emit(mailer, "PreparedMailSent")
-       .withArgs(addr2.address, addr2.address, "");
+       .withArgs(addr2.address, addr1.address, "");
     });
 
     it("Should work with long mailId", async function () {
       const longMailId = "long-mail-id-" + "x".repeat(1000);
       
       await expect(
-        mailer.connect(addr2).sendPrepared(longMailId)
+        mailer.connect(addr2).sendPrepared(addr1.address, longMailId)
       ).to.emit(mailer, "PreparedMailSent")
-       .withArgs(addr2.address, addr2.address, longMailId);
+       .withArgs(addr2.address, addr1.address, longMailId);
     });
 
     it("Should handle special characters in mailId", async function () {
       const specialMailId = "mail-123!@#$%^&*()_+-=[]{}|;:,.<>?";
       
       await expect(
-        mailer.connect(addr2).sendPrepared(specialMailId)
+        mailer.connect(addr2).sendPrepared(addr1.address, specialMailId)
       ).to.emit(mailer, "PreparedMailSent")
-       .withArgs(addr2.address, addr2.address, specialMailId);
+       .withArgs(addr2.address, addr1.address, specialMailId);
     });
   });
 
@@ -395,7 +395,7 @@ describe("Mailer", function () {
         const expectedOwnerShare = fee - expectedRecipientShare; // 10000
 
         await expect(
-          mailer.connect(addr1).sendPriority("Test", "Body")
+          mailer.connect(addr1).sendPriority(addr2.address, "Test", "Body")
         ).to.emit(mailer, "SharesRecorded")
          .withArgs(addr1.address, expectedRecipientShare, expectedOwnerShare);
 
@@ -412,7 +412,7 @@ describe("Mailer", function () {
         const expectedOwnerShare = fee - expectedRecipientShare;
 
         await expect(
-          mailer.connect(addr1).sendPriorityPrepared("mail-123")
+          mailer.connect(addr1).sendPriorityPrepared(addr2.address, "mail-123")
         ).to.emit(mailer, "SharesRecorded")
          .withArgs(addr1.address, expectedRecipientShare, expectedOwnerShare);
       });
@@ -422,8 +422,8 @@ describe("Mailer", function () {
         const expectedRecipientShare = (fee * 90n) / 100n;
 
         // Send two messages to same recipient
-        await mailer.connect(addr1).sendPriority("Test1", "Body1");
-        await mailer.connect(addr1).sendPriority("Test2", "Body2");
+        await mailer.connect(addr1).sendPriority(addr2.address, "Test1", "Body1");
+        await mailer.connect(addr1).sendPriority(addr2.address, "Test2", "Body2");
 
         const [amount, , ] = await mailer.getRecipientClaimable(addr1.address);
         expect(amount).to.equal(expectedRecipientShare * 2n);
@@ -433,7 +433,7 @@ describe("Mailer", function () {
     describe("Recipient Claims", function () {
       beforeEach(async function () {
         // Send a message to create claimable amount
-        await mailer.connect(addr1).sendPriority("Test", "Body");
+        await mailer.connect(addr1).sendPriority(addr2.address, "Test", "Body");
       });
 
       it("Should allow recipient to claim their share", async function () {
@@ -496,7 +496,7 @@ describe("Mailer", function () {
     describe("Owner Claims", function () {
       beforeEach(async function () {
         // Send a message to create claimable amount
-        await mailer.connect(addr1).sendPriority("Test", "Body");
+        await mailer.connect(addr1).sendPriority(addr2.address, "Test", "Body");
       });
 
       it("Should allow owner to claim their share", async function () {
@@ -535,7 +535,7 @@ describe("Mailer", function () {
 
     describe("Expired Share Management", function () {
       beforeEach(async function () {
-        await mailer.connect(addr1).sendPriority("Test", "Body");
+        await mailer.connect(addr1).sendPriority(addr2.address, "Test", "Body");
       });
 
       it("Should allow owner to claim expired shares", async function () {
@@ -584,7 +584,7 @@ describe("Mailer", function () {
         expect(isExpired).to.be.false;
 
         // After sending a message
-        await mailer.connect(addr1).sendPriority("Test", "Body");
+        await mailer.connect(addr1).sendPriority(addr2.address, "Test", "Body");
         [amount, expiresAt, isExpired] = await mailer.getRecipientClaimable(addr1.address);
         
         const fee = await mailer.sendFee();
@@ -600,7 +600,7 @@ describe("Mailer", function () {
       it("Should return correct owner claimable amount", async function () {
         expect(await mailer.getOwnerClaimable()).to.equal(0);
 
-        await mailer.connect(addr1).sendPriority("Test", "Body");
+        await mailer.connect(addr1).sendPriority(addr2.address, "Test", "Body");
         
         const fee = await mailer.sendFee();
         const expectedAmount = fee - (fee * 90n) / 100n; // 10%

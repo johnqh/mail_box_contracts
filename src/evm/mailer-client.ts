@@ -117,6 +117,7 @@ export class MailerClient {
   /**
    * @description Send a priority message with full fee and 90% revenue share
    * @notice Sender pays 0.1 USDC, gets 90% back as claimable revenue within 60 days
+   * @param to Recipient address
    * @param subject Message subject line
    * @param body Message content
    * @param walletClient Viem wallet client for transaction
@@ -124,11 +125,12 @@ export class MailerClient {
    * @returns Promise resolving to transaction hash
    * @example
    * ```typescript
-   * const hash = await mailer.sendPriority('Hello', 'This is a priority message', walletClient, account);
+   * const hash = await mailer.sendPriority('0x...', 'Hello', 'This is a priority message', walletClient, account);
    * await publicClient.waitForTransactionReceipt({ hash });
    * ```
    */
   async sendPriority(
+    to: Address,
     subject: string,
     body: string,
     walletClient: WalletClient,
@@ -138,7 +140,7 @@ export class MailerClient {
       address: this.contractAddress,
       abi: MAILER_ABI,
       functionName: 'sendPriority',
-      args: [subject, body],
+      args: [to, subject, body],
       account,
       chain: walletClient.chain,
     });
@@ -147,12 +149,14 @@ export class MailerClient {
   /**
    * @description Send a priority message using a pre-prepared mail ID
    * @notice Sender pays 0.1 USDC, gets 90% back as claimable revenue within 60 days
+   * @param to Recipient address
    * @param mailId Pre-prepared message identifier
    * @param walletClient Viem wallet client for transaction
    * @param account Account to send from
    * @returns Promise resolving to transaction hash
    */
   async sendPriorityPrepared(
+    to: Address,
     mailId: string,
     walletClient: WalletClient,
     account: Account | Address
@@ -161,7 +165,7 @@ export class MailerClient {
       address: this.contractAddress,
       abi: MAILER_ABI,
       functionName: 'sendPriorityPrepared',
-      args: [mailId],
+      args: [to, mailId],
       account,
       chain: walletClient.chain,
     });
@@ -170,6 +174,7 @@ export class MailerClient {
   /**
    * @description Send a standard message with 10% fee only (no revenue share)
    * @notice Sender pays 0.01 USDC with no revenue share back
+   * @param to Recipient address
    * @param subject Message subject line
    * @param body Message content
    * @param walletClient Viem wallet client for transaction
@@ -177,11 +182,12 @@ export class MailerClient {
    * @returns Promise resolving to transaction hash
    * @example
    * ```typescript
-   * const hash = await mailer.send('Subject', 'Standard message', walletClient, account);
+   * const hash = await mailer.send('0x...', 'Subject', 'Standard message', walletClient, account);
    * await publicClient.waitForTransactionReceipt({ hash });
    * ```
    */
   async send(
+    to: Address,
     subject: string,
     body: string,
     walletClient: WalletClient,
@@ -191,7 +197,7 @@ export class MailerClient {
       address: this.contractAddress,
       abi: MAILER_ABI,
       functionName: 'send',
-      args: [subject, body],
+      args: [to, subject, body],
       account,
       chain: walletClient.chain,
     });
@@ -200,12 +206,14 @@ export class MailerClient {
   /**
    * @description Send a standard message using a pre-prepared mail ID
    * @notice Sender pays 0.01 USDC with no revenue share back
+   * @param to Recipient address
    * @param mailId Pre-prepared message identifier
    * @param walletClient Viem wallet client for transaction
    * @param account Account to send from
    * @returns Promise resolving to transaction hash
    */
   async sendPrepared(
+    to: Address,
     mailId: string,
     walletClient: WalletClient,
     account: Account | Address
@@ -214,7 +222,7 @@ export class MailerClient {
       address: this.contractAddress,
       abi: MAILER_ABI,
       functionName: 'sendPrepared',
-      args: [mailId],
+      args: [to, mailId],
       account,
       chain: walletClient.chain,
     });

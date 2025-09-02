@@ -55,7 +55,12 @@
       "Bash(git checkout:*)",
       "Bash(npm run test:evm:*)",
       "Bash(npm update)",
-      "Bash(chmod:*)"
+      "Bash(chmod:*)",
+      "Bash(npm run:*)",
+      "Bash(npx mocha test:*)",
+      "Bash(npx hardhat node:*)",
+      "Bash(cat:*)",
+      "Bash(npx mocha:*)"
     ],
     "deny": [],
     "defaultMode": "acceptEdits"
