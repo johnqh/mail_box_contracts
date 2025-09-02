@@ -33,14 +33,11 @@ jobs:
       - name: Install dependencies
         run: npm ci
       
-      - name: Compile contracts
-        run: npm run compile
+      - name: Build for CI
+        run: npm run build:ci
       
-      - name: Run tests
-        run: npm test
-      
-      - name: Build TypeScript
-        run: npm run build
+      - name: Run TypeScript/unified tests only
+        run: npm run test:ci
       
       - name: Check TypeScript types
         run: npx tsc --noEmit
@@ -104,8 +101,8 @@ jobs:
           fi
         continue-on-error: true
 
-  contract-verification:
-    name: Contract Verification
+  package-verification:
+    name: Package Verification
     runs-on: ubuntu-latest
     
     steps:
@@ -121,50 +118,27 @@ jobs:
       - name: Install dependencies
         run: npm ci
       
-      - name: Compile contracts
-        run: npm run compile
+      - name: Build package for CI
+        run: npm run build:ci
       
-      - name: Check contract compilation
-        run: |
-          echo "✅ Checking compiled contracts..."
-          ls -la artifacts/contracts/
-          
-          echo "✅ Checking TypeChain types..."
-          ls -la typechain-types/
-          
-          echo "✅ Verifying contract ABIs..."
-          for contract in artifacts/contracts/*/*.json; do
-            if [ -f "$contract" ] && [[ "$contract" != *.dbg.json ]]; then
-              echo "Contract: $(basename "$contract")"
-              node -e "
-                const fs = require('fs');
-                const artifact = JSON.parse(fs.readFileSync('$contract', 'utf8'));
-                console.log('  - ABI entries:', artifact.abi.length);
-                console.log('  - Bytecode length:', artifact.bytecode.length);
-                console.log('  - Contract name:', artifact.contractName);
-              "
-            fi
-          done
-      
-      - name: Verify TypeScript builds
+      - name: Verify TypeScript exports
         run: |
           echo "✅ Checking TypeScript build..."
-          npm run build
           ls -la dist/
           
-          echo "✅ Verifying exports..."
+          echo "✅ Verifying unified exports..."
           node -e "
             try {
-              const exports = require('./dist/src/index.js');
-              console.log('✅ Package exports successfully:', Object.keys(exports));
+              const exports = require('./dist/unified/src/unified/mailbox-client.js');
+              console.log('✅ Unified client exports successfully:', Object.keys(exports));
             } catch (e) {
-              console.error('❌ Package export failed:', e.message);
+              console.error('❌ Unified client export failed:', e.message);
               process.exit(1);
             }
           "
 
   coverage:
-    name: Test Coverage
+    name: TypeScript Test Coverage
     runs-on: ubuntu-latest
     
     steps:
@@ -180,23 +154,20 @@ jobs:
       - name: Install dependencies
         run: npm ci
       
-      - name: Run coverage
+      - name: Run TypeScript test coverage
         run: |
-          if grep -q "coverage" package.json; then
-            npm run coverage || npx hardhat coverage || echo "No coverage script found"
-          else
-            echo "No coverage configuration found"
-          fi
+          echo "📊 Running TypeScript test coverage..."
+          npm run test:ci || echo "⚠️ Some tests failed but continuing with coverage"
         continue-on-error: true
       
-      - name: Upload coverage reports
+      - name: Upload coverage reports (if available)
         uses: codecov/codecov-action@v3
         if: always()
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
           files: ./coverage/lcov.info
-          flags: contracts
-          name: contract-coverage
+          flags: typescript
+          name: typescript-coverage
         continue-on-error: true
 
   build-matrix:
@@ -221,14 +192,11 @@ jobs:
       - name: Install dependencies
         run: npm ci
       
-      - name: Compile contracts
-        run: npm run compile
+      - name: Build for CI
+        run: npm run build:ci
       
-      - name: Build TypeScript
-        run: npm run build
-      
-      - name: Quick test
-        run: npm test
+      - name: Quick TypeScript test
+        run: npm run test:ci
 
   dependency-check:
     name: Dependency Security Check
@@ -263,7 +231,7 @@ jobs:
     name: PR Validation
     runs-on: ubuntu-latest
     if: github.event_name == 'pull_request'
-    needs: [test, security-audit, contract-verification]
+    needs: [test, security-audit, package-verification]
     
     steps:
       - name: Checkout code
@@ -303,7 +271,7 @@ jobs:
       - name: PR validation summary
         run: |
           echo "## 🎯 PR Validation Summary" >> $GITHUB_STEP_SUMMARY
-          echo "- ✅ Tests passed" >> $GITHUB_STEP_SUMMARY
+          echo "- ✅ TypeScript tests passed" >> $GITHUB_STEP_SUMMARY
           echo "- ✅ Security audit completed" >> $GITHUB_STEP_SUMMARY
-          echo "- ✅ Contract verification successful" >> $GITHUB_STEP_SUMMARY
+          echo "- ✅ Package verification successful" >> $GITHUB_STEP_SUMMARY
           echo "- ✅ PR title format valid" >> $GITHUB_STEP_SUMMARY

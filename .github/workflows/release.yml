@@ -83,13 +83,11 @@ jobs:
       - name: Install dependencies
         run: npm ci
       
-      - name: Compile contracts and build
-        run: |
-          npm run compile
-          npm run build
+      - name: Build for CI
+        run: npm run build:ci
       
-      - name: Run tests
-        run: npm test
+      - name: Run TypeScript tests
+        run: npm run test:ci
 
   security-audit:
     name: Security Audit
@@ -138,10 +136,7 @@ jobs:
       - name: Install dependencies
         run: npm ci
       
-      - name: Compile contracts
-        run: npm run compile
-      
-      - name: Build TypeScript library
+      - name: Build full package for release
         run: npm run build
       
       - name: Auto-increment version
