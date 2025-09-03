@@ -38,13 +38,16 @@
     "strings": "on"
   },
   
-  // File management
+  // File management optimized for AI development
   "files.exclude": {
     "**/node_modules": true,
-    "**/target": true,
+    "**/target/debug": true,
+    "**/target/release": true,
     "**/artifacts": true,
     "**/cache": true,
-    "**/typechain-types": false
+    "**/typechain-types": false,
+    "**/test-ledger": true,
+    "**/.git": false
   },
   "search.exclude": {
     "**/node_modules": true,
@@ -61,6 +64,40 @@
   "git.enableSmartCommit": true,
   "git.confirmSync": false,
   
-  // Terminal settings
-  "terminal.integrated.defaultProfile.osx": "zsh"
+  // Terminal settings for multi-chain development
+  "terminal.integrated.defaultProfile.osx": "zsh",
+  "terminal.integrated.env.osx": {
+    "PATH": "${env:PATH}:${workspaceFolder}/node_modules/.bin:${env:HOME}/.cargo/bin"
+  },
+  
+  // AI development specific settings
+  "json.schemas": [
+    {
+      "fileMatch": [".ai-config.json"],
+      "schema": {
+        "type": "object",
+        "properties": {
+          "name": {"type": "string"},
+          "version": {"type": "string"},
+          "ai_development": {"type": "object"}
+        }
+      }
+    }
+  ],
+  
+  // Explorer file nesting for better organization
+  "explorer.fileNesting.enabled": true,
+  "explorer.fileNesting.patterns": {
+    "*.sol": "${capture}.abi.json",
+    "package.json": "package-lock.json, .npmrc",
+    "Cargo.toml": "Cargo.lock",
+    "Anchor.toml": "target/",
+    ".env": ".env.*, .env.local",
+    "CLAUDE.md": "AI_DEVELOPMENT_GUIDE.md, .ai-config.json",
+    "README.md": "docs/"
+  },
+  
+  // Enhanced search for multi-language projects
+  "search.showLineNumbers": true,
+  "search.smartCase": true
 }

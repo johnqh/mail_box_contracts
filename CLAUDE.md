@@ -69,12 +69,18 @@ mail_box_contracts/
 ## 🛠️ AI-Optimized Development Commands
 
 ```bash
-# AI Workflow Automation (NEW!)
-npm run ai:workflow status           # Check project health
-npm run ai:workflow list            # List available workflows  
-npm run ai:workflow run full-build  # Complete build process
-npm run ai:workflow run test-all    # Comprehensive testing
-npm run ai:workflow run quick-check # Fast validation
+# AI Workflow Automation (ENHANCED!)
+npm run ai:status                   # Check project health & environment
+npm run ai:build                    # AI-optimized complete build workflow  
+npm run ai:test                     # Comprehensive multi-chain testing
+npm run ai:check                    # Fast validation and quick checks
+npm run ai:workflow <command>       # Advanced workflow automation
+
+# Advanced AI Workflows
+npm run ai:workflow status          # Detailed project status
+npm run ai:workflow run full-build  # Complete build with validation
+npm run ai:workflow run test-all    # Multi-chain test execution
+npm run ai:workflow run quick-check # Fast development validation
 ```
 
 ## 🛠️ Common Development Commands
@@ -330,9 +336,11 @@ expect(finalBalance - initialBalance).to.equal(expectedFee);
 - Test authorization and access control thoroughly
 
 ### Quick Reference Files for AI:
+- `docs/AI_QUICK_START.md` - **START HERE** - Essential commands and workflows
 - `docs/ai-development-patterns.md` - **PRIMARY REFERENCE** - Comprehensive AI patterns guide  
-- `.ai-config.json` - Project configuration and metadata for AI assistants
-- `scripts/ai-helpers/dev-workflow.ts` - Automated workflow scripts
+- `.ai-config.json` - Project configuration and metadata for AI assistants (UPDATED)
+- `scripts/ai-helpers/dev-workflow.ts` - Automated workflow scripts (ENHANCED)
+- `.vscode/` - VS Code configuration optimized for AI development (NEW)
 - `src/types/common.ts` - Comprehensive type definitions and utilities
 - `AI_DEVELOPMENT_GUIDE.md` - Extended development patterns
 - `examples/basic-usage.ts` - Working code examples

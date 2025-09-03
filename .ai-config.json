@@ -1,7 +1,7 @@
 {
   "name": "MailBox Contracts",
   "description": "Multi-chain decentralized messaging system with USDC fees and revenue sharing",
-  "version": "1.4.2",
+  "version": "1.5.0",
   "type": "multi-chain-dapp",
   "chains": ["ethereum", "solana"],
   "languages": ["solidity", "rust", "typescript"],
@@ -50,8 +50,15 @@
       "solana_programs": {
         "location": "programs/",
         "main_programs": ["mail_service", "mailer", "mail_box_factory"],
-        "compilation": "anchor build",
-        "testing": "anchor test"
+        "compilation": "cargo build-sbf --manifest-path programs/{program}/Cargo.toml",
+        "anchor_compilation": "anchor build (requires proper Anchor CLI setup)",
+        "testing": "npm run test:solana",
+        "build_status": "Successfully built with Rust 1.75.0 and Anchor 0.28.0",
+        "runtime_requirements": {
+          "rust": "1.75.0",
+          "anchor": "0.28.0",
+          "solana_cli": "latest"
+        }
       },
       "typescript_clients": {
         "location": "src/",
