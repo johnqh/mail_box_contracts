@@ -16,6 +16,11 @@ on:
         default: false
         type: boolean
 
+permissions:
+  contents: write    # Allow creating tags and releases
+  packages: write    # Allow publishing packages
+  pull-requests: write  # Allow updating PRs
+
 jobs:
   check-trigger:
     name: Check Release Trigger
@@ -241,9 +246,14 @@ jobs:
           echo "📦 Published version: $PUBLISHED_VERSION"
       
       - name: Create and push tag
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          
+          # Configure git to use the GitHub token for authentication
+          git remote set-url origin https://x-access-token:${GITHUB_TOKEN}@github.com/${{ github.repository }}.git
           
           TAG="${{ steps.get_published_version.outputs.version_tag }}"
           echo "🏷️ Creating tag: $TAG"
