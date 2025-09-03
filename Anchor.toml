@@ -1,3 +1,6 @@
+[toolchain]
+anchor_version = "0.28.0"
+
 [features]
 resolution = true
 skip-lint = false
@@ -5,12 +8,12 @@ skip-lint = false
 [programs.localnet]
 mail_service = "8EKjCLZjz6LKRxZcQ6LwwF5V8P3TCEgM2CdQg4pZxXHE"
 mailer = "9FLkBDGpZBcR8LMsQ7MwwV6X9P4TDFgN3DeRh5qYyHJF"
-mail_box_factory = "FactoryABC123def456GHI789jkl012MNO345pqr678STU"
+mail_box_factory = "HVjrAxX7X5thfCcqHbBi7zKoZp2xdX9tE66zS76U6HxQ"
 
 [programs.devnet]
 mail_service = "8EKjCLZjz6LKRxZcQ6LwwF5V8P3TCEgM2CdQg4pZxXHE"
 mailer = "9FLkBDGpZBcR8LMsQ7MwwV6X9P4TDFgN3DeRh5qYyHJF"
-mail_box_factory = "FactoryABC123def456GHI789jkl012MNO345pqr678STU"
+mail_box_factory = "HVjrAxX7X5thfCcqHbBi7zKoZp2xdX9tE66zS76U6HxQ"
 
 [registry]
 url = "https://api.apr.dev"

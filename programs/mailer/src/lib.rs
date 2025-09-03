@@ -86,7 +86,7 @@ pub mod mailer {
         mailer.usdc_mint = usdc_mint;
         mailer.send_fee = SEND_FEE;
         mailer.owner_claimable = 0;
-        mailer.bump = ctx.bumps.mailer;
+        mailer.bump = *ctx.bumps.get("mailer").unwrap();
         Ok(())
     }
 

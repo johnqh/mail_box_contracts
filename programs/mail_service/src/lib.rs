@@ -15,7 +15,7 @@ pub mod mail_service {
         service.owner = ctx.accounts.owner.key();
         service.usdc_mint = usdc_mint;
         service.delegation_fee = DELEGATION_FEE;
-        service.bump = ctx.bumps.mail_service;
+        service.bump = *ctx.bumps.get("mail_service").unwrap();
         Ok(())
     }
 
@@ -42,7 +42,7 @@ pub mod mail_service {
         // Update delegation
         delegation.delegator = delegator;
         delegation.delegate = delegate;
-        delegation.bump = ctx.bumps.delegation;
+        delegation.bump = *ctx.bumps.get("delegation").unwrap();
 
         emit!(DelegationSet {
             delegator,

@@ -11,7 +11,7 @@ pub mod mail_box_factory {
         factory.owner = ctx.accounts.owner.key();
         factory.version = version;
         factory.deployment_count = 0;
-        factory.bump = ctx.bumps.factory;
+        factory.bump = *ctx.bumps.get("factory").unwrap();
         Ok(())
     }
 
@@ -29,7 +29,7 @@ pub mod mail_box_factory {
         deployment.network = network.clone();
         deployment.deployer = ctx.accounts.owner.key();
         deployment.timestamp = Clock::get()?.unix_timestamp;
-        deployment.bump = ctx.bumps.deployment;
+        deployment.bump = *ctx.bumps.get("deployment").unwrap();
         
         factory.deployment_count += 1;
 
