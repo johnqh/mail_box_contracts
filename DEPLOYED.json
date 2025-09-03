@@ -1,6 +1,50 @@
 {
-  "lastUpdated": "2025-01-01T00:00:00.000Z",
+  "lastUpdated": "2025-09-03T17:30:00.000Z",
   "versions": {
+    "v1.5.0": {
+      "releaseDate": "2025-09-03",
+      "deployer": "8GHjprn5r4K4s4JWy2BhKwYMBsMNedR8RaufhfY92Pqs",
+      "networks": {
+        "solana-devnet": {
+          "cluster": "devnet",
+          "rpcUrl": "https://api.devnet.solana.com",
+          "deploymentDate": "2025-09-03",
+          "programs": {
+            "mail_service": {
+              "programId": "99U2sAJ1ESKFk5Jz5WYjBWUzdnNyGUc2KLfpaXs5dqi3",
+              "programDataAddress": "3BXNG7Qhhccyn9jvgA6Yc7uRMVqcZEjPZb1AcBRFq3dz",
+              "authority": "8GHjprn5r4K4s4JWy2BhKwYMBsMNedR8RaufhfY92Pqs",
+              "dataLength": 345008,
+              "deploymentSlot": 405475148,
+              "status": "deployed"
+            },
+            "mailer": {
+              "programId": "TBD",
+              "status": "pending_deployment",
+              "estimatedCost": "2.7 SOL"
+            },
+            "mail_box_factory": {
+              "programId": "TBD", 
+              "status": "pending_deployment",
+              "estimatedCost": "2.3 SOL"
+            }
+          },
+          "deploymentCosts": {
+            "mail_service": "2.40245976 SOL",
+            "totalEstimated": "7.4 SOL"
+          },
+          "wallet": {
+            "publicKey": "8GHjprn5r4K4s4JWy2BhKwYMBsMNedR8RaufhfY92Pqs",
+            "currentBalance": "1.69 SOL"
+          },
+          "programSettings": {
+            "sendFee": "TBD",
+            "registrationFee": "TBD", 
+            "delegationFee": "TBD"
+          }
+        }
+      }
+    },
     "v1.3.4": {
       "releaseDate": "2025-01-01",
       "deployer": "0x1996d64D8f6E47A5bF6fB92246EF4eFD6Ae881e0",
