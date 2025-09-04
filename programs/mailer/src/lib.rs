@@ -202,6 +202,12 @@ pub enum MailerInstruction {
     /// 4. `[writable]` Mailer USDC account
     /// 5. `[]` Token program
     DistributeClaimableFunds { recipient: Pubkey },
+
+    /// Emergency unpause without fund distribution (owner only)
+    /// Accounts:
+    /// 0. `[signer]` Owner
+    /// 1. `[writable]` Mailer state account (PDA)
+    EmergencyUnpause,
 }
 
 /// Custom program errors
@@ -279,6 +285,9 @@ pub fn process_instruction(
         }
         MailerInstruction::DistributeClaimableFunds { recipient } => {
             process_distribute_claimable_funds(program_id, accounts, recipient)
+        }
+        MailerInstruction::EmergencyUnpause => {
+            process_emergency_unpause(program_id, accounts)
         }
     }
 }
@@ -635,6 +644,11 @@ fn process_set_fee(_program_id: &Pubkey, accounts: &[AccountInfo], new_fee: u64)
         return Err(MailerError::OnlyOwner.into());
     }
 
+    // Check if contract is paused
+    if mailer_state.paused {
+        return Err(MailerError::ContractPaused.into());
+    }
+
     let old_fee = mailer_state.send_fee;
     mailer_state.send_fee = new_fee;
     mailer_state.serialize(&mut &mut mailer_data[8..])?;
@@ -798,6 +812,11 @@ fn process_set_delegation_fee(
         return Err(MailerError::OnlyOwner.into());
     }
 
+    // Check if contract is paused
+    if mailer_state.paused {
+        return Err(MailerError::ContractPaused.into());
+    }
+
     let old_fee = mailer_state.delegation_fee;
     mailer_state.delegation_fee = new_fee;
     mailer_state.serialize(&mut &mut mailer_data[8..])?;
@@ -927,6 +946,38 @@ fn process_unpause(_program_id: &Pubkey, accounts: &[AccountInfo]) -> ProgramRes
     mailer_state.serialize(&mut &mut mailer_data[8..])?;
     
     msg!("Contract unpaused by owner: {}", owner.key);
+    Ok(())
+}
+
+/// Emergency unpause without fund distribution (owner only)
+fn process_emergency_unpause(_program_id: &Pubkey, accounts: &[AccountInfo]) -> ProgramResult {
+    let account_iter = &mut accounts.iter();
+    let owner = next_account_info(account_iter)?;
+    let mailer_account = next_account_info(account_iter)?;
+
+    if !owner.is_signer {
+        return Err(ProgramError::MissingRequiredSignature);
+    }
+
+    // Load and update mailer state
+    let mut mailer_data = mailer_account.try_borrow_mut_data()?;
+    let mut mailer_state: MailerState = BorshDeserialize::deserialize(&mut &mailer_data[8..])?;
+
+    // Verify owner
+    if mailer_state.owner != *owner.key {
+        return Err(MailerError::OnlyOwner.into());
+    }
+
+    // Check if not paused
+    if !mailer_state.paused {
+        return Err(MailerError::ContractNotPaused.into());
+    }
+
+    // Set unpaused state without fund distribution
+    mailer_state.paused = false;
+    mailer_state.serialize(&mut &mut mailer_data[8..])?;
+    
+    msg!("Contract emergency unpaused by owner: {} - funds can be claimed manually", owner.key);
     Ok(())
 }
 

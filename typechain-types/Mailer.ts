@@ -35,6 +35,7 @@ export interface MailerInterface extends Interface {
       | "delegateTo"
       | "delegationFee"
       | "distributeClaimableFunds"
+      | "emergencyUnpause"
       | "getDelegationFee"
       | "getFee"
       | "getOwnerClaimable"
@@ -63,6 +64,7 @@ export interface MailerInterface extends Interface {
       | "ContractUnpaused"
       | "DelegationFeeUpdated"
       | "DelegationSet"
+      | "EmergencyUnpaused"
       | "ExpiredSharesClaimed"
       | "FeeUpdated"
       | "FundsDistributed"
@@ -108,6 +110,10 @@ export interface MailerInterface extends Interface {
   encodeFunctionData(
     functionFragment: "distributeClaimableFunds",
     values: [AddressLike]
+  ): string;
+  encodeFunctionData(
+    functionFragment: "emergencyUnpause",
+    values?: undefined
   ): string;
   encodeFunctionData(
     functionFragment: "getDelegationFee",
@@ -197,6 +203,10 @@ export interface MailerInterface extends Interface {
   ): Result;
   decodeFunctionResult(
     functionFragment: "distributeClaimableFunds",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(
+    functionFragment: "emergencyUnpause",
     data: BytesLike
   ): Result;
   decodeFunctionResult(
@@ -291,6 +301,16 @@ export namespace DelegationSetEvent {
     delegator: string;
     delegate: string;
   }
+  export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
+  export type Filter = TypedDeferredTopicFilter<Event>;
+  export type Log = TypedEventLog<Event>;
+  export type LogDescription = TypedLogDescription<Event>;
+}
+
+export namespace EmergencyUnpausedEvent {
+  export type InputTuple = [];
+  export type OutputTuple = [];
+  export interface OutputObject {}
   export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
   export type Filter = TypedDeferredTopicFilter<Event>;
   export type Log = TypedEventLog<Event>;
@@ -495,6 +515,8 @@ export interface Mailer extends BaseContract {
     "nonpayable"
   >;
 
+  emergencyUnpause: TypedContractMethod<[], [void], "nonpayable">;
+
   getDelegationFee: TypedContractMethod<[], [bigint], "view">;
 
   getFee: TypedContractMethod<[], [bigint], "view">;
@@ -604,6 +626,9 @@ export interface Mailer extends BaseContract {
   getFunction(
     nameOrSignature: "distributeClaimableFunds"
   ): TypedContractMethod<[recipient: AddressLike], [void], "nonpayable">;
+  getFunction(
+    nameOrSignature: "emergencyUnpause"
+  ): TypedContractMethod<[], [void], "nonpayable">;
   getFunction(
     nameOrSignature: "getDelegationFee"
   ): TypedContractMethod<[], [bigint], "view">;
@@ -728,6 +753,13 @@ export interface Mailer extends BaseContract {
     DelegationSetEvent.OutputObject
   >;
   getEvent(
+    key: "EmergencyUnpaused"
+  ): TypedContractEvent<
+    EmergencyUnpausedEvent.InputTuple,
+    EmergencyUnpausedEvent.OutputTuple,
+    EmergencyUnpausedEvent.OutputObject
+  >;
+  getEvent(
     key: "ExpiredSharesClaimed"
   ): TypedContractEvent<
     ExpiredSharesClaimedEvent.InputTuple,
@@ -827,6 +859,17 @@ export interface Mailer extends BaseContract {
       DelegationSetEvent.InputTuple,
       DelegationSetEvent.OutputTuple,
       DelegationSetEvent.OutputObject
+    >;
+
+    "EmergencyUnpaused()": TypedContractEvent<
+      EmergencyUnpausedEvent.InputTuple,
+      EmergencyUnpausedEvent.OutputTuple,
+      EmergencyUnpausedEvent.OutputObject
+    >;
+    EmergencyUnpaused: TypedContractEvent<
+      EmergencyUnpausedEvent.InputTuple,
+      EmergencyUnpausedEvent.OutputTuple,
+      EmergencyUnpausedEvent.OutputObject
     >;
 
     "ExpiredSharesClaimed(address,uint256)": TypedContractEvent<

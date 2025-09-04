@@ -851,6 +851,41 @@ describe("Mailer", function () {
           mailer.connect(addr1).send(addr2.address, "Test", "Test")
         ).to.emit(mailer, "MailSent");
       });
+
+      it("Should allow emergency unpause by owner", async function () {
+        await mailer.connect(owner).pause();
+        
+        await expect(mailer.connect(owner).emergencyUnpause())
+          .to.emit(mailer, "EmergencyUnpaused");
+
+        expect(await mailer.isPaused()).to.be.false;
+      });
+
+      it("Should revert emergency unpause when not paused", async function () {
+        await expect(
+          mailer.connect(owner).emergencyUnpause()
+        ).to.be.revertedWithCustomError(mailer, "ContractNotPaused");
+      });
+
+      it("Should revert emergency unpause when non-owner calls", async function () {
+        await mailer.connect(owner).pause();
+        
+        await expect(
+          mailer.connect(addr1).emergencyUnpause()
+        ).to.be.revertedWithCustomError(mailer, "OnlyOwner");
+      });
+
+      it("Should prevent fee changes when paused", async function () {
+        await mailer.connect(owner).pause();
+        
+        await expect(
+          mailer.connect(owner).setFee(ethers.parseUnits("0.2", 6))
+        ).to.be.revertedWithCustomError(mailer, "ContractIsPaused");
+
+        await expect(
+          mailer.connect(owner).setDelegationFee(ethers.parseUnits("20", 6))
+        ).to.be.revertedWithCustomError(mailer, "ContractIsPaused");
+      });
     });
   });
 });

@@ -87,6 +87,9 @@ contract Mailer {
     /// @notice Emitted when contract is unpaused
     event ContractUnpaused();
     
+    /// @notice Emitted when contract is emergency unpaused without fund distribution
+    event EmergencyUnpaused();
+    
     /// @notice Emitted when funds are auto-distributed during pause
     /// @param recipient Address receiving funds
     /// @param amount Amount distributed
@@ -183,7 +186,7 @@ contract Mailer {
         emit PreparedMailSent(msg.sender, to, mailId);
     }
     
-    function setFee(uint256 usdcAmount) external onlyOwner {
+    function setFee(uint256 usdcAmount) external onlyOwner whenNotPaused {
         uint256 oldFee = sendFee;
         sendFee = usdcAmount;
         emit FeeUpdated(oldFee, usdcAmount);
@@ -306,7 +309,7 @@ contract Mailer {
     
     /// @notice Update the delegation fee (owner only)
     /// @param usdcAmount New fee amount in USDC (6 decimals)
-    function setDelegationFee(uint256 usdcAmount) external onlyOwner {
+    function setDelegationFee(uint256 usdcAmount) external onlyOwner whenNotPaused {
         uint256 oldFee = delegationFee;
         delegationFee = usdcAmount;
         emit DelegationFeeUpdated(oldFee, usdcAmount);
@@ -345,7 +348,9 @@ contract Mailer {
     }
     
     /// @notice Distribute a specific recipient's claimable funds during pause
-    /// @dev Can only be called when paused. Distributes funds regardless of expiration
+    /// @dev Can only be called when paused. Anyone can call this function to help distribute funds.
+    ///      Funds are always sent to their rightful owner (recipient), so this is safe for public access.
+    ///      Distributes funds regardless of expiration to prevent fund loss during emergency.
     /// @param recipient Address to distribute funds for
     function distributeClaimableFunds(address recipient) external {
         if (!paused) {
@@ -380,6 +385,17 @@ contract Mailer {
         
         paused = false;
         emit ContractUnpaused();
+    }
+    
+    /// @notice Emergency unpause without fund distribution (owner only)
+    /// @dev Use when pause() failed due to transfer issues. Owner can still manually claim funds later
+    function emergencyUnpause() external onlyOwner {
+        if (!paused) {
+            revert ContractNotPaused();
+        }
+        
+        paused = false;
+        emit EmergencyUnpaused();
     }
     
     /// @notice Check if contract is currently paused
