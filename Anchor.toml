@@ -6,14 +6,10 @@ resolution = true
 skip-lint = false
 
 [programs.localnet]
-mail_service = "8EKjCLZjz6LKRxZcQ6LwwF5V8P3TCEgM2CdQg4pZxXHE"
 mailer = "9FLkBDGpZBcR8LMsQ7MwwV6X9P4TDFgN3DeRh5qYyHJF"
-mail_box_factory = "HVjrAxX7X5thfCcqHbBi7zKoZp2xdX9tE66zS76U6HxQ"
 
 [programs.devnet]
-mail_service = "8EKjCLZjz6LKRxZcQ6LwwF5V8P3TCEgM2CdQg4pZxXHE"
-mailer = "9FLkBDGpZBcR8LMsQ7MwwV6X9P4TDFgN3DeRh5qYyHJF"
-mail_box_factory = "HVjrAxX7X5thfCcqHbBi7zKoZp2xdX9tE66zS76U6HxQ"
+mailer = "LXnAjV225sxynbhbjMtQy8gnEatzVH97467D9UqNRBc"
 
 [registry]
 url = "https://api.apr.dev"

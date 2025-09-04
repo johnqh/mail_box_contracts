@@ -7,7 +7,6 @@ import {
     getAssociatedTokenAddressSync,
     createAssociatedTokenAccountInstruction
 } from "@solana/spl-token";
-import { MailService } from "../target/types/mail_service";
 import { Mailer } from "../target/types/mailer";
 import * as fs from 'fs';
 import * as path from 'path';
@@ -26,7 +25,6 @@ interface DeploymentInfo {
     deployer: string;
     owner: string;
     usdcMint: string;
-    mailService: string;
     mailer: string;
     timestamp: string;
 }
@@ -73,7 +71,7 @@ export class MailBoxDeployer {
         const owner = ownerPubkey || deployer;
         
         console.log('='.repeat(50));
-        console.log('MAILBOX SOLANA DEPLOYMENT');
+        console.log('MAILBOX SOLANA DEPLOYMENT (CONSOLIDATED)');
         console.log('='.repeat(50));
         console.log('Cluster:', cluster);
         console.log('Deployer:', deployer.toString());
@@ -102,35 +100,11 @@ export class MailBoxDeployer {
         console.log('USDC Mint:', usdcMint.toString());
         console.log('-'.repeat(50));
         
-        // Load programs
-        const mailServiceProgram = anchor.workspace.MailService as Program<MailService>;
+        // Load program
         const mailerProgram = anchor.workspace.Mailer as Program<Mailer>;
         
-        // Deploy MailService
-        console.log('📬 Deploying MailService...');
-        const [mailServicePda] = PublicKey.findProgramAddressSync(
-            [Buffer.from('mail_service')],
-            mailServiceProgram.programId
-        );
-        
-        await (mailServiceProgram.methods as any)
-            .initialize(usdcMint)
-            .accounts({
-                mailService: mailServicePda,
-                owner: owner,
-                systemProgram: SystemProgram.programId,
-            })
-            .signers(owner.equals(deployer) ? [] : [])
-            .rpc();
-            
-        console.log('✅ MailService deployed:', mailServicePda.toString());
-        
-        // Create associated token account for MailService
-        const mailServiceUsdcAccount = getAssociatedTokenAddressSync(usdcMint, mailServicePda, true);
-        await this.createATAIfNeeded(usdcMint, mailServicePda, mailServiceUsdcAccount);
-        
-        // Deploy Mailer
-        console.log('📧 Deploying Mailer...');
+        // Deploy Mailer (with integrated delegation functionality)
+        console.log('📧 Deploying Mailer with integrated delegation management...');
         const [mailerPda] = PublicKey.findProgramAddressSync(
             [Buffer.from('mailer')],
             mailerProgram.programId
@@ -158,7 +132,6 @@ export class MailBoxDeployer {
             deployer: deployer.toString(),
             owner: owner.toString(),
             usdcMint: usdcMint.toString(),
-            mailService: mailServicePda.toString(),
             mailer: mailerPda.toString(),
             timestamp: new Date().toISOString(),
         };
@@ -169,8 +142,7 @@ export class MailBoxDeployer {
         console.log('='.repeat(50));
         console.log('🎉 DEPLOYMENT COMPLETED!');
         console.log('='.repeat(50));
-        console.log('MailService:', mailServicePda.toString());
-        console.log('Mailer:', mailerPda.toString());
+        console.log('Mailer (with delegation):', mailerPda.toString());
         console.log('USDC Mint:', usdcMint.toString());
         console.log('='.repeat(50));
         

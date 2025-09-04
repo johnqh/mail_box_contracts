@@ -32,23 +32,30 @@ export interface MailerInterface extends Interface {
       | "claimExpiredShares"
       | "claimOwnerShare"
       | "claimRecipientShare"
+      | "delegateTo"
+      | "delegationFee"
+      | "getDelegationFee"
       | "getFee"
       | "getOwnerClaimable"
       | "getRecipientClaimable"
       | "owner"
       | "ownerClaimable"
       | "recipientClaims"
+      | "rejectDelegation"
       | "send"
       | "sendFee"
       | "sendPrepared"
       | "sendPriority"
       | "sendPriorityPrepared"
+      | "setDelegationFee"
       | "setFee"
       | "usdcToken"
   ): FunctionFragment;
 
   getEvent(
     nameOrSignatureOrTopic:
+      | "DelegationFeeUpdated"
+      | "DelegationSet"
       | "ExpiredSharesClaimed"
       | "FeeUpdated"
       | "MailSent"
@@ -82,6 +89,18 @@ export interface MailerInterface extends Interface {
     functionFragment: "claimRecipientShare",
     values?: undefined
   ): string;
+  encodeFunctionData(
+    functionFragment: "delegateTo",
+    values: [AddressLike]
+  ): string;
+  encodeFunctionData(
+    functionFragment: "delegationFee",
+    values?: undefined
+  ): string;
+  encodeFunctionData(
+    functionFragment: "getDelegationFee",
+    values?: undefined
+  ): string;
   encodeFunctionData(functionFragment: "getFee", values?: undefined): string;
   encodeFunctionData(
     functionFragment: "getOwnerClaimable",
@@ -101,6 +120,10 @@ export interface MailerInterface extends Interface {
     values: [AddressLike]
   ): string;
   encodeFunctionData(
+    functionFragment: "rejectDelegation",
+    values: [AddressLike]
+  ): string;
+  encodeFunctionData(
     functionFragment: "send",
     values: [AddressLike, string, string]
   ): string;
@@ -116,6 +139,10 @@ export interface MailerInterface extends Interface {
   encodeFunctionData(
     functionFragment: "sendPriorityPrepared",
     values: [AddressLike, string]
+  ): string;
+  encodeFunctionData(
+    functionFragment: "setDelegationFee",
+    values: [BigNumberish]
   ): string;
   encodeFunctionData(
     functionFragment: "setFee",
@@ -147,6 +174,15 @@ export interface MailerInterface extends Interface {
     functionFragment: "claimRecipientShare",
     data: BytesLike
   ): Result;
+  decodeFunctionResult(functionFragment: "delegateTo", data: BytesLike): Result;
+  decodeFunctionResult(
+    functionFragment: "delegationFee",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(
+    functionFragment: "getDelegationFee",
+    data: BytesLike
+  ): Result;
   decodeFunctionResult(functionFragment: "getFee", data: BytesLike): Result;
   decodeFunctionResult(
     functionFragment: "getOwnerClaimable",
@@ -165,6 +201,10 @@ export interface MailerInterface extends Interface {
     functionFragment: "recipientClaims",
     data: BytesLike
   ): Result;
+  decodeFunctionResult(
+    functionFragment: "rejectDelegation",
+    data: BytesLike
+  ): Result;
   decodeFunctionResult(functionFragment: "send", data: BytesLike): Result;
   decodeFunctionResult(functionFragment: "sendFee", data: BytesLike): Result;
   decodeFunctionResult(
@@ -179,8 +219,38 @@ export interface MailerInterface extends Interface {
     functionFragment: "sendPriorityPrepared",
     data: BytesLike
   ): Result;
+  decodeFunctionResult(
+    functionFragment: "setDelegationFee",
+    data: BytesLike
+  ): Result;
   decodeFunctionResult(functionFragment: "setFee", data: BytesLike): Result;
   decodeFunctionResult(functionFragment: "usdcToken", data: BytesLike): Result;
+}
+
+export namespace DelegationFeeUpdatedEvent {
+  export type InputTuple = [oldFee: BigNumberish, newFee: BigNumberish];
+  export type OutputTuple = [oldFee: bigint, newFee: bigint];
+  export interface OutputObject {
+    oldFee: bigint;
+    newFee: bigint;
+  }
+  export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
+  export type Filter = TypedDeferredTopicFilter<Event>;
+  export type Log = TypedEventLog<Event>;
+  export type LogDescription = TypedLogDescription<Event>;
+}
+
+export namespace DelegationSetEvent {
+  export type InputTuple = [delegator: AddressLike, delegate: AddressLike];
+  export type OutputTuple = [delegator: string, delegate: string];
+  export interface OutputObject {
+    delegator: string;
+    delegate: string;
+  }
+  export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
+  export type Filter = TypedDeferredTopicFilter<Event>;
+  export type Log = TypedEventLog<Event>;
+  export type LogDescription = TypedLogDescription<Event>;
 }
 
 export namespace ExpiredSharesClaimedEvent {
@@ -354,6 +424,16 @@ export interface Mailer extends BaseContract {
 
   claimRecipientShare: TypedContractMethod<[], [void], "nonpayable">;
 
+  delegateTo: TypedContractMethod<
+    [delegate: AddressLike],
+    [void],
+    "nonpayable"
+  >;
+
+  delegationFee: TypedContractMethod<[], [bigint], "view">;
+
+  getDelegationFee: TypedContractMethod<[], [bigint], "view">;
+
   getFee: TypedContractMethod<[], [bigint], "view">;
 
   getOwnerClaimable: TypedContractMethod<[], [bigint], "view">;
@@ -380,6 +460,12 @@ export interface Mailer extends BaseContract {
     "view"
   >;
 
+  rejectDelegation: TypedContractMethod<
+    [delegatingAddress: AddressLike],
+    [void],
+    "nonpayable"
+  >;
+
   send: TypedContractMethod<
     [to: AddressLike, subject: string, body: string],
     [void],
@@ -402,6 +488,12 @@ export interface Mailer extends BaseContract {
 
   sendPriorityPrepared: TypedContractMethod<
     [to: AddressLike, mailId: string],
+    [void],
+    "nonpayable"
+  >;
+
+  setDelegationFee: TypedContractMethod<
+    [usdcAmount: BigNumberish],
     [void],
     "nonpayable"
   >;
@@ -432,6 +524,15 @@ export interface Mailer extends BaseContract {
   getFunction(
     nameOrSignature: "claimRecipientShare"
   ): TypedContractMethod<[], [void], "nonpayable">;
+  getFunction(
+    nameOrSignature: "delegateTo"
+  ): TypedContractMethod<[delegate: AddressLike], [void], "nonpayable">;
+  getFunction(
+    nameOrSignature: "delegationFee"
+  ): TypedContractMethod<[], [bigint], "view">;
+  getFunction(
+    nameOrSignature: "getDelegationFee"
+  ): TypedContractMethod<[], [bigint], "view">;
   getFunction(
     nameOrSignature: "getFee"
   ): TypedContractMethod<[], [bigint], "view">;
@@ -465,6 +566,13 @@ export interface Mailer extends BaseContract {
     "view"
   >;
   getFunction(
+    nameOrSignature: "rejectDelegation"
+  ): TypedContractMethod<
+    [delegatingAddress: AddressLike],
+    [void],
+    "nonpayable"
+  >;
+  getFunction(
     nameOrSignature: "send"
   ): TypedContractMethod<
     [to: AddressLike, subject: string, body: string],
@@ -496,12 +604,29 @@ export interface Mailer extends BaseContract {
     "nonpayable"
   >;
   getFunction(
+    nameOrSignature: "setDelegationFee"
+  ): TypedContractMethod<[usdcAmount: BigNumberish], [void], "nonpayable">;
+  getFunction(
     nameOrSignature: "setFee"
   ): TypedContractMethod<[usdcAmount: BigNumberish], [void], "nonpayable">;
   getFunction(
     nameOrSignature: "usdcToken"
   ): TypedContractMethod<[], [string], "view">;
 
+  getEvent(
+    key: "DelegationFeeUpdated"
+  ): TypedContractEvent<
+    DelegationFeeUpdatedEvent.InputTuple,
+    DelegationFeeUpdatedEvent.OutputTuple,
+    DelegationFeeUpdatedEvent.OutputObject
+  >;
+  getEvent(
+    key: "DelegationSet"
+  ): TypedContractEvent<
+    DelegationSetEvent.InputTuple,
+    DelegationSetEvent.OutputTuple,
+    DelegationSetEvent.OutputObject
+  >;
   getEvent(
     key: "ExpiredSharesClaimed"
   ): TypedContractEvent<
@@ -553,6 +678,28 @@ export interface Mailer extends BaseContract {
   >;
 
   filters: {
+    "DelegationFeeUpdated(uint256,uint256)": TypedContractEvent<
+      DelegationFeeUpdatedEvent.InputTuple,
+      DelegationFeeUpdatedEvent.OutputTuple,
+      DelegationFeeUpdatedEvent.OutputObject
+    >;
+    DelegationFeeUpdated: TypedContractEvent<
+      DelegationFeeUpdatedEvent.InputTuple,
+      DelegationFeeUpdatedEvent.OutputTuple,
+      DelegationFeeUpdatedEvent.OutputObject
+    >;
+
+    "DelegationSet(address,address)": TypedContractEvent<
+      DelegationSetEvent.InputTuple,
+      DelegationSetEvent.OutputTuple,
+      DelegationSetEvent.OutputObject
+    >;
+    DelegationSet: TypedContractEvent<
+      DelegationSetEvent.InputTuple,
+      DelegationSetEvent.OutputTuple,
+      DelegationSetEvent.OutputObject
+    >;
+
     "ExpiredSharesClaimed(address,uint256)": TypedContractEvent<
       ExpiredSharesClaimedEvent.InputTuple,
       ExpiredSharesClaimedEvent.OutputTuple,

@@ -1,23 +1,25 @@
 //! # Mailer Program
 //!
-//! A Solana program for decentralized messaging with USDC fees and revenue sharing.
+//! A Solana program for decentralized messaging with delegation management, USDC fees and revenue sharing.
 //!
 //! ## Key Features
 //!
+//! - **Delegation Management**: Delegate mail handling with rejection capability  
 //! - **Priority Messages**: Full fee (0.1 USDC) with 90% revenue share back to sender
 //! - **Standard Messages**: 10% fee only (0.01 USDC) with no revenue share
 //! - **Revenue Claims**: 60-day claim period for priority message revenue shares
-//! - **Self-messaging**: All messages are sent to the sender's own address
 //!
 //! ## Program Architecture
 //!
 //! The program uses Program Derived Addresses (PDAs) for:
 //! - Mailer state: `[b"mailer"]`
 //! - Recipient claims: `[b"claim", recipient.key()]`
+//! - Delegations: `[b"delegation", delegator.key()]`
 //!
 //! ## Fee Structure
 //!
 //! - Send Fee: 0.1 USDC (100,000 with 6 decimals)
+//! - Delegation Fee: 10 USDC (10,000,000 with 6 decimals)
 //! - Priority: Sender pays full fee, gets 90% back as claimable
 //! - Standard: Sender pays 10% fee only
 //! - Owner gets 10% of all fees
@@ -27,6 +29,9 @@
 //! ```rust
 //! // Initialize the program
 //! initialize(ctx, usdc_mint_pubkey)?;
+//!
+//! // Delegate to another address
+//! delegate_to(ctx, Some(delegate_pubkey))?;
 //!
 //! // Send priority message (with revenue sharing)
 //! send_priority(ctx, "Subject".to_string(), "Body".to_string())?;
@@ -44,6 +49,9 @@ declare_id!("9FLkBDGpZBcR8LMsQ7MwwV6X9P4TDFgN3DeRh5qYyHJF");
 
 /// Base sending fee in USDC (with 6 decimals): 0.1 USDC
 const SEND_FEE: u64 = 100_000;
+
+/// Delegation fee in USDC (with 6 decimals): 10 USDC
+const DELEGATION_FEE: u64 = 10_000_000;
 
 /// Claim period for revenue shares: 60 days in seconds
 const CLAIM_PERIOD: i64 = 60 * 24 * 60 * 60;
@@ -85,6 +93,7 @@ pub mod mailer {
         mailer.owner = ctx.accounts.owner.key();
         mailer.usdc_mint = usdc_mint;
         mailer.send_fee = SEND_FEE;
+        mailer.delegation_fee = DELEGATION_FEE;
         mailer.owner_claimable = 0;
         mailer.bump = *ctx.bumps.get("mailer").unwrap();
         Ok(())
@@ -429,6 +438,116 @@ pub mod mailer {
 
         Ok(())
     }
+
+    /// Delegate mail handling to another address
+    /// 
+    /// This function allows a user to delegate their mail handling to another address.
+    /// If setting delegation (not clearing), a fee is charged in USDC.
+    /// 
+    /// # Arguments
+    /// * `ctx` - Anchor context with required accounts
+    /// * `delegate` - Optional delegate address (None to clear delegation)
+    pub fn delegate_to(ctx: Context<DelegateTo>, delegate: Option<Pubkey>) -> Result<()> {
+        let delegation = &mut ctx.accounts.delegation;
+        let delegator = ctx.accounts.delegator.key();
+        
+        // If setting delegation (not clearing), charge fee
+        if let Some(delegate_key) = delegate {
+            if delegate_key != Pubkey::default() {
+                // Transfer delegation fee from delegator to mailer
+                let transfer_ctx = CpiContext::new(
+                    ctx.accounts.token_program.to_account_info(),
+                    Transfer {
+                        from: ctx.accounts.delegator_usdc_account.to_account_info(),
+                        to: ctx.accounts.mailer_usdc_account.to_account_info(),
+                        authority: ctx.accounts.delegator.to_account_info(),
+                    },
+                );
+                token::transfer(transfer_ctx, ctx.accounts.mailer.delegation_fee)?;
+            }
+        }
+
+        // Update delegation
+        delegation.delegator = delegator;
+        delegation.delegate = delegate;
+        delegation.bump = *ctx.bumps.get("delegation").unwrap();
+
+        emit!(DelegationSet {
+            delegator,
+            delegate,
+        });
+
+        Ok(())
+    }
+
+    /// Reject a delegation made to you by another address
+    /// 
+    /// # Arguments
+    /// * `ctx` - Anchor context with required accounts
+    pub fn reject_delegation(ctx: Context<RejectDelegation>) -> Result<()> {
+        let delegation = &mut ctx.accounts.delegation;
+        
+        // Verify the rejector is the current delegate
+        require!(
+            delegation.delegate == Some(ctx.accounts.rejector.key()),
+            MailerError::NoDelegationToReject
+        );
+
+        let delegator = delegation.delegator;
+        
+        // Clear the delegation
+        delegation.delegate = None;
+
+        emit!(DelegationSet {
+            delegator,
+            delegate: None,
+        });
+
+        Ok(())
+    }
+
+    /// Update the delegation fee (owner only)
+    /// 
+    /// # Arguments
+    /// * `ctx` - Anchor context with required accounts
+    /// * `new_fee` - New delegation fee amount in USDC (6 decimals)
+    pub fn set_delegation_fee(ctx: Context<SetFee>, new_fee: u64) -> Result<()> {
+        let mailer = &mut ctx.accounts.mailer;
+        let old_fee = mailer.delegation_fee;
+        mailer.delegation_fee = new_fee;
+
+        emit!(DelegationFeeUpdated {
+            old_fee,
+            new_fee,
+        });
+
+        Ok(())
+    }
+
+    /// Withdraw fees from the contract (owner only)
+    /// 
+    /// # Arguments
+    /// * `ctx` - Anchor context with required accounts
+    /// * `amount` - Amount to withdraw in USDC (6 decimals)
+    pub fn withdraw_fees(ctx: Context<WithdrawFees>, amount: u64) -> Result<()> {
+        // Transfer USDC from mailer to owner
+        let bump = ctx.accounts.mailer.bump;
+        let seeds = &[b"mailer".as_ref(), &[bump]];
+        let signer_seeds = &[&seeds[..]];
+        
+        let transfer_ctx = CpiContext::new_with_signer(
+            ctx.accounts.token_program.to_account_info(),
+            Transfer {
+                from: ctx.accounts.mailer_usdc_account.to_account_info(),
+                to: ctx.accounts.owner_usdc_account.to_account_info(),
+                authority: ctx.accounts.mailer.to_account_info(),
+            },
+            signer_seeds,
+        );
+        token::transfer(transfer_ctx, amount)?;
+
+        Ok(())
+    }
 }
 
 fn record_shares(
@@ -608,12 +727,94 @@ pub struct SetFee<'info> {
     pub owner: Signer<'info>,
 }
 
+#[derive(Accounts)]
+pub struct DelegateTo<'info> {
+    #[account(
+        init_if_needed,
+        payer = delegator,
+        space = 8 + Delegation::INIT_SPACE,
+        seeds = [b"delegation", delegator.key().as_ref()],
+        bump
+    )]
+    pub delegation: Account<'info, Delegation>,
+    
+    #[account(seeds = [b"mailer"], bump = mailer.bump)]
+    pub mailer: Account<'info, MailerState>,
+    
+    #[account(mut)]
+    pub delegator: Signer<'info>,
+    
+    #[account(
+        mut,
+        associated_token::mint = mailer.usdc_mint,
+        associated_token::authority = delegator
+    )]
+    pub delegator_usdc_account: Account<'info, TokenAccount>,
+    
+    #[account(
+        mut,
+        associated_token::mint = mailer.usdc_mint,
+        associated_token::authority = mailer
+    )]
+    pub mailer_usdc_account: Account<'info, TokenAccount>,
+    
+    pub token_program: Program<'info, Token>,
+    pub associated_token_program: Program<'info, AssociatedToken>,
+    pub system_program: Program<'info, System>,
+}
+
+#[derive(Accounts)]
+pub struct RejectDelegation<'info> {
+    #[account(
+        mut,
+        seeds = [b"delegation", delegation.delegator.as_ref()],
+        bump = delegation.bump,
+        has_one = delegator @ MailerError::InvalidDelegator
+    )]
+    pub delegation: Account<'info, Delegation>,
+    
+    /// CHECK: This is the original delegator, validated by the delegation account
+    pub delegator: UncheckedAccount<'info>,
+    
+    pub rejector: Signer<'info>,
+}
+
+#[derive(Accounts)]
+pub struct WithdrawFees<'info> {
+    #[account(
+        seeds = [b"mailer"],
+        bump = mailer.bump,
+        has_one = owner @ MailerError::OnlyOwner
+    )]
+    pub mailer: Account<'info, MailerState>,
+    
+    #[account(mut)]
+    pub owner: Signer<'info>,
+    
+    #[account(
+        mut,
+        associated_token::mint = mailer.usdc_mint,
+        associated_token::authority = mailer
+    )]
+    pub mailer_usdc_account: Account<'info, TokenAccount>,
+    
+    #[account(
+        mut,
+        associated_token::mint = mailer.usdc_mint,
+        associated_token::authority = owner
+    )]
+    pub owner_usdc_account: Account<'info, TokenAccount>,
+    
+    pub token_program: Program<'info, Token>,
+}
+
 #[account]
 #[derive(InitSpace)]
 pub struct MailerState {
     pub owner: Pubkey,
     pub usdc_mint: Pubkey,
     pub send_fee: u64,
+    pub delegation_fee: u64,
     pub owner_claimable: u64,
     pub bump: u8,
 }
@@ -624,6 +825,14 @@ pub struct RecipientClaim {
     pub recipient: Pubkey,
     pub amount: u64,
     pub timestamp: i64,
+    pub bump: u8,
+}
+
+#[account]
+#[derive(InitSpace)]
+pub struct Delegation {
+    pub delegator: Pubkey,
+    pub delegate: Option<Pubkey>,
     pub bump: u8,
 }
 
@@ -672,6 +881,18 @@ pub struct ExpiredSharesClaimed {
     pub amount: u64,
 }
 
+#[event]
+pub struct DelegationSet {
+    pub delegator: Pubkey,
+    pub delegate: Option<Pubkey>,
+}
+
+#[event]
+pub struct DelegationFeeUpdated {
+    pub old_fee: u64,
+    pub new_fee: u64,
+}
+
 #[error_code]
 pub enum MailerError {
     #[msg("Only the owner can perform this action")]
@@ -684,4 +905,8 @@ pub enum MailerError {
     ClaimPeriodNotExpired,
     #[msg("Invalid recipient")]
     InvalidRecipient,
+    #[msg("No delegation to reject")]
+    NoDelegationToReject,
+    #[msg("Invalid delegator")]
+    InvalidDelegator,
 }

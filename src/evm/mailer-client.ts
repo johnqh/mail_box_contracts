@@ -38,10 +38,10 @@ const MAILBOX_FACTORY_BYTECODE = MailBoxFactory__factory.bytecode as `0x${string
  * @notice Provides easy-to-use methods for sending messages with USDC fees and revenue sharing
  * 
  * ## Key Features:
+ * - **Delegation Management**: Delegate mail handling with rejection capability
  * - **Priority Messages**: Full fee (0.1 USDC) with 90% revenue share back to sender
  * - **Standard Messages**: 10% fee only (0.01 USDC) with no revenue share
  * - **Revenue Claims**: 60-day claim period for priority message revenue shares
- * - **Self-messaging**: All messages are sent to the sender's own address
  * 
  * ## Usage Examples:
  * ```typescript
@@ -310,6 +310,86 @@ export class MailerClient {
       abi: MAILER_ABI,
       functionName: 'getOwnerClaimable',
     }) as bigint;
+  }
+
+  // Delegation functionality
+
+  /**
+   * Delegate mail handling to another address
+   * @param delegate Address to delegate to (or 0x0 to clear delegation)
+   * @param walletClient Connected wallet client
+   * @param account Account to send transaction from
+   * @returns Transaction hash
+   */
+  async delegateTo(
+    delegate: string,
+    walletClient: WalletClient,
+    account: Account | Address
+  ): Promise<Hash> {
+    return await walletClient.writeContract({
+      address: this.contractAddress,
+      abi: MAILER_ABI,
+      functionName: 'delegateTo',
+      args: [getAddress(delegate)],
+      account,
+      chain: walletClient.chain,
+    });
+  }
+
+  /**
+   * Reject a delegation made to you by another address
+   * @param delegatingAddress Address that delegated to you
+   * @param walletClient Connected wallet client
+   * @param account Account to send transaction from
+   * @returns Transaction hash
+   */
+  async rejectDelegation(
+    delegatingAddress: string,
+    walletClient: WalletClient,
+    account: Account | Address
+  ): Promise<Hash> {
+    return await walletClient.writeContract({
+      address: this.contractAddress,
+      abi: MAILER_ABI,
+      functionName: 'rejectDelegation',
+      args: [getAddress(delegatingAddress)],
+      account,
+      chain: walletClient.chain,
+    });
+  }
+
+  /**
+   * Get current delegation fee in USDC (6 decimals)
+   * @returns Delegation fee amount
+   */
+  async getDelegationFee(): Promise<bigint> {
+    return await this.publicClient.readContract({
+      address: this.contractAddress,
+      abi: MAILER_ABI,
+      functionName: 'getDelegationFee',
+    }) as bigint;
+  }
+
+  /**
+   * Update delegation fee (owner only)
+   * @param newFee New fee amount in USDC (6 decimals) 
+   * @param walletClient Connected wallet client
+   * @param account Account to send transaction from
+   * @returns Transaction hash
+   */
+  async setDelegationFee(
+    newFee: bigint,
+    walletClient: WalletClient,
+    account: Account | Address
+  ): Promise<Hash> {
+    return await walletClient.writeContract({
+      address: this.contractAddress,
+      abi: MAILER_ABI,
+      functionName: 'setDelegationFee',
+      args: [newFee],
+      account,
+      chain: walletClient.chain,
+    });
   }
 }
 

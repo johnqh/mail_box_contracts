@@ -40,6 +40,10 @@ describe("Mailer", function () {
     it("Should set owner as deployer", async function () {
       expect(await mailer.owner()).to.equal(owner.address);
     });
+
+    it("Should set correct default delegation fee", async function () {
+      expect(await mailer.delegationFee()).to.equal(10000000); // 10 USDC
+    });
   });
 
   describe("send function", function () {
@@ -605,6 +609,96 @@ describe("Mailer", function () {
         const fee = await mailer.sendFee();
         const expectedAmount = fee - (fee * 90n) / 100n; // 10%
         expect(await mailer.getOwnerClaimable()).to.equal(expectedAmount);
+      });
+    });
+
+    describe("Delegation functionality", function () {
+      beforeEach(async function () {
+        // Fund addresses with additional USDC for delegation fees  
+        await mockUSDC.mint(addr1.address, ethers.parseUnits("100", 6));
+        await mockUSDC.connect(addr1).approve(await mailer.getAddress(), ethers.parseUnits("100", 6));
+        
+        await mockUSDC.mint(addr2.address, ethers.parseUnits("100", 6));
+        await mockUSDC.connect(addr2).approve(await mailer.getAddress(), ethers.parseUnits("100", 6));
+      });
+
+      describe("delegateTo function", function () {
+        it("Should allow delegation and charge fee", async function () {
+          const initialBalance = await mockUSDC.balanceOf(await mailer.getAddress());
+          
+          await expect(
+            mailer.connect(addr1).delegateTo(addr2.address)
+          ).to.emit(mailer, "DelegationSet")
+           .withArgs(addr1.address, addr2.address);
+          
+          const finalBalance = await mockUSDC.balanceOf(await mailer.getAddress());
+          const delegationFee = await mailer.delegationFee();
+          expect(finalBalance - initialBalance).to.equal(delegationFee);
+        });
+
+        it("Should allow clearing delegation without fee", async function () {
+          // First set delegation
+          await mailer.connect(addr1).delegateTo(addr2.address);
+          
+          const initialBalance = await mockUSDC.balanceOf(await mailer.getAddress());
+          
+          await expect(
+            mailer.connect(addr1).delegateTo(ethers.ZeroAddress)
+          ).to.emit(mailer, "DelegationSet")
+           .withArgs(addr1.address, ethers.ZeroAddress);
+          
+          const finalBalance = await mockUSDC.balanceOf(await mailer.getAddress());
+          expect(finalBalance).to.equal(initialBalance);
+        });
+
+        it("Should revert if USDC transfer fails", async function () {
+          // Remove approval
+          await mockUSDC.connect(addr1).approve(await mailer.getAddress(), 0);
+          
+          await expect(
+            mailer.connect(addr1).delegateTo(addr2.address)
+          ).to.be.reverted; // Just check that it reverts, not the specific error
+        });
+      });
+
+      describe("rejectDelegation function", function () {
+        it("Should emit DelegationSet event with zero address", async function () {
+          await expect(
+            mailer.connect(addr2).rejectDelegation(addr1.address)
+          ).to.emit(mailer, "DelegationSet")
+           .withArgs(addr1.address, ethers.ZeroAddress);
+        });
+
+        it("Should work without checking actual delegation state", async function () {
+          // Should work even if no delegation exists
+          await expect(
+            mailer.connect(addr2).rejectDelegation(addr1.address)
+          ).to.emit(mailer, "DelegationSet")
+           .withArgs(addr1.address, ethers.ZeroAddress);
+        });
+      });
+
+      describe("Delegation fee management", function () {
+        it("Should allow owner to update delegation fee", async function () {
+          const newFee = ethers.parseUnits("5", 6); // 5 USDC
+          
+          await expect(
+            mailer.connect(owner).setDelegationFee(newFee)
+          ).to.emit(mailer, "DelegationFeeUpdated")
+           .withArgs(10000000, newFee);
+          
+          expect(await mailer.delegationFee()).to.equal(newFee);
+        });
+
+        it("Should revert when non-owner tries to update delegation fee", async function () {
+          await expect(
+            mailer.connect(addr1).setDelegationFee(ethers.parseUnits("5", 6))
+          ).to.be.revertedWithCustomError(mailer, "OnlyOwner");
+        });
+
+        it("Should return current delegation fee", async function () {
+          expect(await mailer.getDelegationFee()).to.equal(10000000);
+        });
       });
     });
   });

@@ -91,7 +91,8 @@
       "Bash(~/.cargo/bin/anchor:*)",
       "Bash(RUSTFLAGS=\"-Z next-lockfile-bump\" cargo generate-lockfile)",
       "Bash(RUSTFLAGS=\"-Z next-lockfile-bump\" ~/.cargo/bin/anchor build --skip-lint)",
-      "Bash(npm uninstall:*)"
+      "Bash(npm uninstall:*)",
+      "Bash(RUSTFLAGS=\"-Z next-lockfile-bump\" cargo build-sbf --manifest-path programs/mailer/Cargo.toml)"
     ],
     "deny": [],
     "defaultMode": "acceptEdits"

@@ -3,8 +3,8 @@ pragma solidity ^0.8.24;
 
 /**
  * @title Mailer
- * @notice Decentralized messaging system with USDC fees and revenue sharing
- * @dev Two-tier fee system: Priority (full fee + 90% share) and Standard (10% fee only)
+ * @notice Decentralized messaging system with delegation management, USDC fees and revenue sharing
+ * @dev Two-tier messaging fee system + delegation management with rejection capability
  * @author MailBox Team
  */
 
@@ -28,6 +28,9 @@ contract Mailer {
     
     /// @notice Percentage of fee that goes to contract owner
     uint256 public constant OWNER_SHARE = 10; // 10%
+    
+    /// @notice Fee required for delegation operations (10 USDC with 6 decimals)
+    uint256 public delegationFee = 10000000;
     
     /// @notice Structure for tracking claimable amounts with timestamp
     /// @param amount USDC amount claimable by recipient
@@ -64,6 +67,16 @@ contract Mailer {
     event RecipientClaimed(address indexed recipient, uint256 amount);
     event OwnerClaimed(uint256 amount);
     event ExpiredSharesClaimed(address indexed recipient, uint256 amount);
+    
+    /// @notice Emitted when delegation is set or cleared
+    /// @param delegator The address setting the delegation
+    /// @param delegate The delegate address (address(0) for clearing)
+    event DelegationSet(address indexed delegator, address indexed delegate);
+    
+    /// @notice Emitted when delegation fee is updated
+    /// @param oldFee Previous fee amount
+    /// @param newFee New fee amount
+    event DelegationFeeUpdated(uint256 oldFee, uint256 newFee);
     
     error OnlyOwner();
     error NoClaimableAmount();
@@ -246,5 +259,39 @@ contract Mailer {
     
     function getOwnerClaimable() external view returns (uint256) {
         return ownerClaimable;
+    }
+    
+    /// @notice Delegate mail handling to another address
+    /// @dev Charges delegation fee in USDC. Emits event for indexer tracking
+    /// @param delegate Address to delegate to, or address(0) to clear
+    function delegateTo(address delegate) external nonReentrant {
+        // If clearing delegation (setting to address(0)), no fee required
+        if (delegate != address(0)) {
+            if (!usdcToken.transferFrom(msg.sender, address(this), delegationFee)) {
+                revert FeePaymentRequired();
+            }
+        }
+        emit DelegationSet(msg.sender, delegate);
+    }
+    
+    /// @notice Reject a delegation made to you by another address
+    /// @dev Emits event for indexer tracking. No validation - relies on off-chain logic
+    /// @param delegatingAddress Address that delegated to msg.sender
+    function rejectDelegation(address delegatingAddress) external nonReentrant {
+        emit DelegationSet(delegatingAddress, address(0));
+    }
+    
+    /// @notice Update the delegation fee (owner only)
+    /// @param usdcAmount New fee amount in USDC (6 decimals)
+    function setDelegationFee(uint256 usdcAmount) external onlyOwner {
+        uint256 oldFee = delegationFee;
+        delegationFee = usdcAmount;
+        emit DelegationFeeUpdated(oldFee, usdcAmount);
+    }
+    
+    /// @notice Get current delegation fee
+    /// @return Current delegation fee in USDC (6 decimals)
+    function getDelegationFee() external view returns (uint256) {
+        return delegationFee;
     }
 }

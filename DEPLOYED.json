@@ -1,5 +1,5 @@
 {
-  "lastUpdated": "2025-09-04T00:03:00.609Z",
+  "lastUpdated": "2025-09-04T16:03:36.396Z",
   "versions": {
     "v1.5.0": {
       "releaseDate": "2025-09-03",
@@ -22,7 +22,8 @@
               "programId": "LXnAjV225sxynbhbjMtQy8gnEatzVH97467D9UqNRBc",
               "status": "pending_deployment",
               "estimatedCost": "2.7 SOL",
-              "buildStatus": "completed"
+              "buildStatus": "completed",
+              "features": "Integrated messaging and delegation functionality"
             },
             "mail_box_factory": {
               "programId": "DDciTwx3Xf4NxWDKZVVHymaWYWzFn37AWRn5uuLtGGHN",

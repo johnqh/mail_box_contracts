@@ -79,8 +79,8 @@ async function main() {
   console.log("-".repeat(50));
 
   try {
-    // Deploy Mailer
-    console.log("📧 Deploying Mailer...");
+    // Deploy Mailer (with integrated MailService functionality)
+    console.log("📧 Deploying Mailer with integrated delegation management...");
     const Mailer = await ethers.getContractFactory("Mailer");
     const mailer = await Mailer.deploy(usdcAddress, ownerAddress);
     await mailer.waitForDeployment();
@@ -89,20 +89,8 @@ async function main() {
     console.log("✅ Mailer deployed to:", mailerAddress);
     
     const sendFee = await mailer.sendFee();
+    const delegationFee = await mailer.delegationFee();
     console.log("   - Send fee:", ethers.formatUnits(sendFee, 6), "USDC");
-
-    // Deploy MailService
-    console.log("📬 Deploying MailService...");
-    const MailService = await ethers.getContractFactory("MailService");
-    const mailService = await MailService.deploy(usdcAddress, ownerAddress);
-    await mailService.waitForDeployment();
-    
-    const mailServiceAddress = await mailService.getAddress();
-    console.log("✅ MailService deployed to:", mailServiceAddress);
-    
-    const registrationFee = await mailService.registrationFee();
-    const delegationFee = await mailService.delegationFee();
-    console.log("   - Registration fee:", ethers.formatUnits(registrationFee, 6), "USDC");
     console.log("   - Delegation fee:", ethers.formatUnits(delegationFee, 6), "USDC");
 
     console.log("=".repeat(50));
@@ -111,8 +99,7 @@ async function main() {
     console.log("Network:", networkName);
     console.log("Chain ID:", network.config.chainId);
     console.log("USDC Token:", usdcAddress);
-    console.log("Mailer:", mailerAddress);
-    console.log("MailService:", mailServiceAddress);
+    console.log("Mailer (with delegation):", mailerAddress);
     console.log("=".repeat(50));
 
     // Save deployment info to file
@@ -124,12 +111,10 @@ async function main() {
       owner: ownerAddress,
       contracts: {
         usdc: usdcAddress,
-        mailer: mailerAddress,
-        mailService: mailServiceAddress
+        mailer: mailerAddress
       },
       fees: {
         sendFee: ethers.formatUnits(sendFee, 6) + " USDC",
-        registrationFee: ethers.formatUnits(registrationFee, 6) + " USDC",
         delegationFee: ethers.formatUnits(delegationFee, 6) + " USDC"
       }
     };
