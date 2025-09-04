@@ -49,6 +49,9 @@ contract Mailer {
     /// @notice Reentrancy guard status
     uint256 private _status;
     
+    /// @notice Contract pause state - when true, all functions are paused and funds are distributed
+    bool public paused;
+    
     event MailSent(
         address indexed from,
         address indexed to,
@@ -78,6 +81,17 @@ contract Mailer {
     /// @param newFee New fee amount
     event DelegationFeeUpdated(uint256 oldFee, uint256 newFee);
     
+    /// @notice Emitted when contract is paused and funds are distributed
+    event ContractPaused();
+    
+    /// @notice Emitted when contract is unpaused
+    event ContractUnpaused();
+    
+    /// @notice Emitted when funds are auto-distributed during pause
+    /// @param recipient Address receiving funds
+    /// @param amount Amount distributed
+    event FundsDistributed(address indexed recipient, uint256 amount);
+    
     error OnlyOwner();
     error NoClaimableAmount();
     error ClaimPeriodNotExpired();
@@ -86,6 +100,8 @@ contract Mailer {
     error ReentrancyGuard();
     error InvalidAddress();
     error MathOverflow();
+    error ContractIsPaused();
+    error ContractNotPaused();
     
     modifier onlyOwner() {
         if (msg.sender != owner) {
@@ -103,6 +119,13 @@ contract Mailer {
         _status = 0;
     }
     
+    modifier whenNotPaused() {
+        if (paused) {
+            revert ContractIsPaused();
+        }
+        _;
+    }
+    
     constructor(address _usdcToken, address _owner) {
         if (_usdcToken == address(0) || _owner == address(0)) {
             revert InvalidAddress();
@@ -116,7 +139,7 @@ contract Mailer {
         address to,
         string calldata subject,
         string calldata body
-    ) external nonReentrant {
+    ) external nonReentrant whenNotPaused {
         if (!usdcToken.transferFrom(msg.sender, address(this), sendFee)) {
             revert FeePaymentRequired();
         }
@@ -127,7 +150,7 @@ contract Mailer {
     function sendPriorityPrepared(
         address to,
         string calldata mailId
-    ) external nonReentrant {
+    ) external nonReentrant whenNotPaused {
         if (!usdcToken.transferFrom(msg.sender, address(this), sendFee)) {
             revert FeePaymentRequired();
         }
@@ -139,7 +162,7 @@ contract Mailer {
         address to,
         string calldata subject,
         string calldata body
-    ) external nonReentrant {
+    ) external nonReentrant whenNotPaused {
         uint256 ownerFee = (sendFee * OWNER_SHARE) / 100;
         if (!usdcToken.transferFrom(msg.sender, address(this), ownerFee)) {
             revert FeePaymentRequired();
@@ -151,7 +174,7 @@ contract Mailer {
     function sendPrepared(
         address to,
         string calldata mailId
-    ) external nonReentrant {
+    ) external nonReentrant whenNotPaused {
         uint256 ownerFee = (sendFee * OWNER_SHARE) / 100;
         if (!usdcToken.transferFrom(msg.sender, address(this), ownerFee)) {
             revert FeePaymentRequired();
@@ -264,7 +287,7 @@ contract Mailer {
     /// @notice Delegate mail handling to another address
     /// @dev Charges delegation fee in USDC. Emits event for indexer tracking
     /// @param delegate Address to delegate to, or address(0) to clear
-    function delegateTo(address delegate) external nonReentrant {
+    function delegateTo(address delegate) external nonReentrant whenNotPaused {
         // If clearing delegation (setting to address(0)), no fee required
         if (delegate != address(0)) {
             if (!usdcToken.transferFrom(msg.sender, address(this), delegationFee)) {
@@ -277,7 +300,7 @@ contract Mailer {
     /// @notice Reject a delegation made to you by another address
     /// @dev Emits event for indexer tracking. No validation - relies on off-chain logic
     /// @param delegatingAddress Address that delegated to msg.sender
-    function rejectDelegation(address delegatingAddress) external nonReentrant {
+    function rejectDelegation(address delegatingAddress) external nonReentrant whenNotPaused {
         emit DelegationSet(delegatingAddress, address(0));
     }
     
@@ -293,5 +316,75 @@ contract Mailer {
     /// @return Current delegation fee in USDC (6 decimals)
     function getDelegationFee() external view returns (uint256) {
         return delegationFee;
+    }
+    
+    /// @notice Pause the contract and distribute all claimable funds to their rightful owners
+    /// @dev Only owner can pause. All recipient shares and owner claimable funds are distributed
+    function pause() external onlyOwner {
+        if (paused) {
+            revert ContractIsPaused();
+        }
+        
+        paused = true;
+        
+        // Distribute owner claimable funds first
+        if (ownerClaimable > 0) {
+            uint256 ownerAmount = ownerClaimable;
+            ownerClaimable = 0;
+            
+            bool success = usdcToken.transfer(owner, ownerAmount);
+            if (success) {
+                emit FundsDistributed(owner, ownerAmount);
+            } else {
+                // If transfer fails, restore the balance
+                ownerClaimable = ownerAmount;
+            }
+        }
+        
+        emit ContractPaused();
+    }
+    
+    /// @notice Distribute a specific recipient's claimable funds during pause
+    /// @dev Can only be called when paused. Distributes funds regardless of expiration
+    /// @param recipient Address to distribute funds for
+    function distributeClaimableFunds(address recipient) external {
+        if (!paused) {
+            revert ContractNotPaused();
+        }
+        
+        ClaimableAmount storage claim = recipientClaims[recipient];
+        if (claim.amount == 0) {
+            revert NoClaimableAmount();
+        }
+        
+        uint256 amount = claim.amount;
+        claim.amount = 0;
+        claim.timestamp = 0;
+        
+        bool success = usdcToken.transfer(recipient, amount);
+        if (success) {
+            emit FundsDistributed(recipient, amount);
+        } else {
+            // If transfer fails, restore the balance
+            claim.amount = amount;
+            claim.timestamp = block.timestamp;
+        }
+    }
+    
+    /// @notice Unpause the contract to resume normal operations
+    /// @dev Only owner can unpause
+    function unpause() external onlyOwner {
+        if (!paused) {
+            revert ContractNotPaused();
+        }
+        
+        paused = false;
+        emit ContractUnpaused();
+    }
+    
+    /// @notice Check if contract is currently paused
+    /// @return True if contract is paused, false otherwise
+    function isPaused() external view returns (bool) {
+        return paused;
     }
 }

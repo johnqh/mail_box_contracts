@@ -701,5 +701,156 @@ describe("Mailer", function () {
         });
       });
     });
+
+    describe("Pause functionality", function () {
+      it("Should allow owner to pause contract", async function () {
+        await expect(
+          mailer.connect(owner).pause()
+        ).to.emit(mailer, "ContractPaused");
+
+        expect(await mailer.isPaused()).to.equal(true);
+      });
+
+      it("Should revert when non-owner tries to pause", async function () {
+        await expect(
+          mailer.connect(addr1).pause()
+        ).to.be.revertedWithCustomError(mailer, "OnlyOwner");
+      });
+
+      it("Should revert when trying to pause already paused contract", async function () {
+        await mailer.connect(owner).pause();
+        
+        await expect(
+          mailer.connect(owner).pause()
+        ).to.be.revertedWithCustomError(mailer, "ContractIsPaused");
+      });
+
+      it("Should distribute owner claimable funds when pausing", async function () {
+        // First send a standard message to accumulate owner fees
+        await mockUSDC.connect(addr1).approve(await mailer.getAddress(), ethers.parseUnits("1", 6));
+        await mailer.connect(addr1).send(addr2.address, "Test", "Test");
+
+        const ownerBalanceBefore = await mockUSDC.balanceOf(owner.address);
+        const contractBalanceBefore = await mockUSDC.balanceOf(await mailer.getAddress());
+
+        // Pause contract - should distribute owner claimable funds
+        await expect(
+          mailer.connect(owner).pause()
+        ).to.emit(mailer, "FundsDistributed");
+
+        const ownerBalanceAfter = await mockUSDC.balanceOf(owner.address);
+        const contractBalanceAfter = await mockUSDC.balanceOf(await mailer.getAddress());
+
+        // Owner should receive their claimable amount
+        expect(ownerBalanceAfter).to.be.gt(ownerBalanceBefore);
+        expect(contractBalanceAfter).to.be.lt(contractBalanceBefore);
+      });
+
+      it("Should prevent all functions when paused", async function () {
+        await mailer.connect(owner).pause();
+
+        await mockUSDC.connect(addr1).approve(await mailer.getAddress(), ethers.parseUnits("1", 6));
+
+        await expect(
+          mailer.connect(addr1).sendPriority(addr2.address, "Test", "Test")
+        ).to.be.revertedWithCustomError(mailer, "ContractIsPaused");
+
+        await expect(
+          mailer.connect(addr1).send(addr2.address, "Test", "Test")
+        ).to.be.revertedWithCustomError(mailer, "ContractIsPaused");
+
+        await expect(
+          mailer.connect(addr1).delegateTo(addr2.address)
+        ).to.be.revertedWithCustomError(mailer, "ContractIsPaused");
+      });
+
+      it("Should allow owner to unpause contract", async function () {
+        await mailer.connect(owner).pause();
+        
+        await expect(
+          mailer.connect(owner).unpause()
+        ).to.emit(mailer, "ContractUnpaused");
+
+        expect(await mailer.isPaused()).to.equal(false);
+      });
+
+      it("Should revert when non-owner tries to unpause", async function () {
+        await mailer.connect(owner).pause();
+        
+        await expect(
+          mailer.connect(addr1).unpause()
+        ).to.be.revertedWithCustomError(mailer, "OnlyOwner");
+      });
+
+      it("Should revert when trying to unpause non-paused contract", async function () {
+        await expect(
+          mailer.connect(owner).unpause()
+        ).to.be.revertedWithCustomError(mailer, "ContractNotPaused");
+      });
+
+      it("Should allow anyone to distribute claimable funds when paused", async function () {
+        // Create fresh setup for this test
+        const [testOwner, testAddr1, testAddr2, testAddr3] = await ethers.getSigners();
+        
+        // Deploy fresh contracts for isolated test
+        const MockUSDC = await ethers.getContractFactory("MockUSDC");
+        const testMockUSDC = await MockUSDC.deploy();
+        await testMockUSDC.waitForDeployment();
+        
+        const Mailer = await ethers.getContractFactory("Mailer");
+        const testMailer = await Mailer.deploy(await testMockUSDC.getAddress(), testOwner.address);
+        await testMailer.waitForDeployment();
+        
+        // Setup USDC for test - need enough for send fee (0.1 USDC)
+        await testMockUSDC.mint(testAddr1.address, ethers.parseUnits("1", 6));
+        await testMockUSDC.connect(testAddr1).approve(await testMailer.getAddress(), ethers.parseUnits("1", 6));
+        
+        // Send priority message to create claimable amount (90% goes back to sender)
+        await testMailer.connect(testAddr1).sendPriority(testAddr2.address, "Test", "Test");
+
+        // Verify sender has claimable amount before pause (sender gets 90% back in priority messages)
+        const [claimableAmount] = await testMailer.getRecipientClaimable(testAddr1.address);
+        expect(claimableAmount).to.be.gt(0);
+
+        // Pause contract (only owner funds get distributed automatically)
+        await testMailer.connect(testOwner).pause();
+
+        // Verify sender still has claimable amount after pause (pause doesn't auto-distribute sender funds)
+        const [claimableAmountAfterPause] = await testMailer.getRecipientClaimable(testAddr1.address);
+        expect(claimableAmountAfterPause).to.equal(claimableAmount); // Should be unchanged
+
+        const senderBalanceBefore = await testMockUSDC.balanceOf(testAddr1.address);
+
+        // Anyone can distribute claimable funds when paused
+        await expect(
+          testMailer.connect(testAddr3).distributeClaimableFunds(testAddr1.address)
+        ).to.emit(testMailer, "FundsDistributed")
+         .withArgs(testAddr1.address, claimableAmount);
+
+        const senderBalanceAfter = await testMockUSDC.balanceOf(testAddr1.address);
+        expect(senderBalanceAfter).to.equal(senderBalanceBefore + claimableAmount);
+        
+        // Verify claimable amount is now 0
+        const [finalClaimableAmount] = await testMailer.getRecipientClaimable(testAddr1.address);
+        expect(finalClaimableAmount).to.equal(0);
+      });
+
+      it("Should revert distribute when contract not paused", async function () {
+        await expect(
+          mailer.connect(addr1).distributeClaimableFunds(addr2.address)
+        ).to.be.revertedWithCustomError(mailer, "ContractNotPaused");
+      });
+
+      it("Should resume normal operations after unpause", async function () {
+        await mailer.connect(owner).pause();
+        await mailer.connect(owner).unpause();
+
+        // Should be able to send messages again
+        await mockUSDC.connect(addr1).approve(await mailer.getAddress(), ethers.parseUnits("1", 6));
+        await expect(
+          mailer.connect(addr1).send(addr2.address, "Test", "Test")
+        ).to.emit(mailer, "MailSent");
+      });
+    });
   });
 });

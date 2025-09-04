@@ -64,11 +64,12 @@ pub struct MailerState {
     pub send_fee: u64,
     pub delegation_fee: u64,
     pub owner_claimable: u64,
+    pub paused: bool,
     pub bump: u8,
 }
 
 impl MailerState {
-    pub const LEN: usize = 32 + 32 + 8 + 8 + 8 + 1; // 89 bytes
+    pub const LEN: usize = 32 + 32 + 8 + 8 + 8 + 1 + 1; // 90 bytes
 }
 
 /// Recipient claim account
@@ -176,6 +177,31 @@ pub enum MailerInstruction {
     /// 0. `[signer]` Owner
     /// 1. `[writable]` Mailer state account (PDA)
     SetDelegationFee { new_fee: u64 },
+    
+    /// Pause the contract (owner only)
+    /// Accounts:
+    /// 0. `[signer]` Owner
+    /// 1. `[writable]` Mailer state account (PDA)
+    /// 2. `[writable]` Owner USDC account
+    /// 3. `[writable]` Mailer USDC account  
+    /// 4. `[]` Token program
+    Pause,
+    
+    /// Unpause the contract (owner only)
+    /// Accounts:
+    /// 0. `[signer]` Owner
+    /// 1. `[writable]` Mailer state account (PDA)
+    Unpause,
+    
+    /// Distribute claimable funds (when paused)
+    /// Accounts:
+    /// 0. `[signer]` Anyone can call
+    /// 1. `[]` Mailer state account (PDA)
+    /// 2. `[writable]` Recipient claim account (PDA)
+    /// 3. `[writable]` Recipient USDC account
+    /// 4. `[writable]` Mailer USDC account
+    /// 5. `[]` Token program
+    DistributeClaimableFunds { recipient: Pubkey },
 }
 
 /// Custom program errors
@@ -203,6 +229,10 @@ pub enum MailerError {
     InvalidPDA,
     #[error("Invalid account owner")]
     InvalidAccountOwner,
+    #[error("Contract is paused")]
+    ContractPaused,
+    #[error("Contract is not paused")]
+    ContractNotPaused,
 }
 
 impl From<MailerError> for ProgramError {
@@ -240,6 +270,15 @@ pub fn process_instruction(
         MailerInstruction::RejectDelegation => process_reject_delegation(program_id, accounts),
         MailerInstruction::SetDelegationFee { new_fee } => {
             process_set_delegation_fee(program_id, accounts, new_fee)
+        }
+        MailerInstruction::Pause => {
+            process_pause(program_id, accounts)
+        }
+        MailerInstruction::Unpause => {
+            process_unpause(program_id, accounts)
+        }
+        MailerInstruction::DistributeClaimableFunds { recipient } => {
+            process_distribute_claimable_funds(program_id, accounts, recipient)
         }
     }
 }
@@ -292,6 +331,7 @@ fn process_initialize(
         send_fee: SEND_FEE,
         delegation_fee: DELEGATION_FEE,
         owner_claimable: 0,
+        paused: false,
         bump,
     };
 
@@ -326,6 +366,11 @@ fn process_send_priority(
     let mailer_data = mailer_account.try_borrow_data()?;
     let mailer_state: MailerState = BorshDeserialize::deserialize(&mut &mailer_data[8..])?;
     drop(mailer_data);
+
+    // Check if contract is paused
+    if mailer_state.paused {
+        return Err(MailerError::ContractPaused.into());
+    }
 
     // Create or load recipient claim account
     let (claim_pda, claim_bump) = Pubkey::find_program_address(
@@ -397,7 +442,7 @@ fn process_send_priority(
 
 /// Send standard message with 10% fee
 fn process_send(
-    program_id: &Pubkey,
+    _program_id: &Pubkey,
     accounts: &[AccountInfo],
     to: Pubkey,
     subject: String,
@@ -419,6 +464,11 @@ fn process_send(
     let mailer_data = mailer_account.try_borrow_data()?;
     let mailer_state: MailerState = BorshDeserialize::deserialize(&mut &mailer_data[8..])?;
     drop(mailer_data);
+
+    // Check if contract is paused
+    if mailer_state.paused {
+        return Err(MailerError::ContractPaused.into());
+    }
 
     let owner_fee = mailer_state.send_fee / 10; // 10% of send_fee
 
@@ -617,6 +667,11 @@ fn process_delegate_to(
     let mailer_state: MailerState = BorshDeserialize::deserialize(&mut &mailer_data[8..])?;
     drop(mailer_data);
 
+    // Check if contract is paused
+    if mailer_state.paused {
+        return Err(MailerError::ContractPaused.into());
+    }
+
     // Verify delegation account PDA
     let (delegation_pda, delegation_bump) = Pubkey::find_program_address(
         &[b"delegation", delegator.key.as_ref()], 
@@ -780,6 +835,161 @@ fn record_shares(
     mailer_state.serialize(&mut &mut mailer_data[8..])?;
 
     msg!("Shares recorded: recipient {}, owner {}", recipient_amount, owner_amount);
+    Ok(())
+}
+
+/// Pause the contract and distribute owner claimable funds
+fn process_pause(_program_id: &Pubkey, accounts: &[AccountInfo]) -> ProgramResult {
+    let account_iter = &mut accounts.iter();
+    let owner = next_account_info(account_iter)?;
+    let mailer_account = next_account_info(account_iter)?;
+    let owner_usdc = next_account_info(account_iter)?;
+    let mailer_usdc = next_account_info(account_iter)?;
+    let token_program = next_account_info(account_iter)?;
+
+    if !owner.is_signer {
+        return Err(ProgramError::MissingRequiredSignature);
+    }
+
+    // Load and update mailer state
+    let mut mailer_data = mailer_account.try_borrow_mut_data()?;
+    let mut mailer_state: MailerState = BorshDeserialize::deserialize(&mut &mailer_data[8..])?;
+
+    // Verify owner
+    if mailer_state.owner != *owner.key {
+        return Err(MailerError::OnlyOwner.into());
+    }
+
+    // Check if already paused
+    if mailer_state.paused {
+        return Err(MailerError::ContractPaused.into());
+    }
+
+    // Set paused state
+    mailer_state.paused = true;
+
+    // Distribute owner claimable funds if any
+    if mailer_state.owner_claimable > 0 {
+        let amount = mailer_state.owner_claimable;
+        mailer_state.owner_claimable = 0;
+
+        // Transfer USDC from mailer to owner
+        let (mailer_pda, bump) = Pubkey::find_program_address(&[b"mailer"], _program_id);
+        invoke_signed(
+            &spl_token::instruction::transfer(
+                token_program.key,
+                mailer_usdc.key,
+                owner_usdc.key,
+                &mailer_pda,
+                &[],
+                amount,
+            )?,
+            &[mailer_usdc.clone(), owner_usdc.clone(), token_program.clone()],
+            &[&[b"mailer", &[bump]]],
+        )?;
+
+        msg!("Distributed owner funds during pause: {}", amount);
+    }
+
+    // Save updated state
+    mailer_state.serialize(&mut &mut mailer_data[8..])?;
+    
+    msg!("Contract paused by owner: {}", owner.key);
+    Ok(())
+}
+
+/// Unpause the contract
+fn process_unpause(_program_id: &Pubkey, accounts: &[AccountInfo]) -> ProgramResult {
+    let account_iter = &mut accounts.iter();
+    let owner = next_account_info(account_iter)?;
+    let mailer_account = next_account_info(account_iter)?;
+
+    if !owner.is_signer {
+        return Err(ProgramError::MissingRequiredSignature);
+    }
+
+    // Load and update mailer state
+    let mut mailer_data = mailer_account.try_borrow_mut_data()?;
+    let mut mailer_state: MailerState = BorshDeserialize::deserialize(&mut &mailer_data[8..])?;
+
+    // Verify owner
+    if mailer_state.owner != *owner.key {
+        return Err(MailerError::OnlyOwner.into());
+    }
+
+    // Check if not paused
+    if !mailer_state.paused {
+        return Err(MailerError::ContractNotPaused.into());
+    }
+
+    // Set unpaused state
+    mailer_state.paused = false;
+    mailer_state.serialize(&mut &mut mailer_data[8..])?;
+    
+    msg!("Contract unpaused by owner: {}", owner.key);
+    Ok(())
+}
+
+/// Distribute claimable funds when contract is paused
+fn process_distribute_claimable_funds(
+    _program_id: &Pubkey,
+    accounts: &[AccountInfo],
+    recipient: Pubkey,
+) -> ProgramResult {
+    let account_iter = &mut accounts.iter();
+    let _caller = next_account_info(account_iter)?; // Anyone can call
+    let mailer_account = next_account_info(account_iter)?;
+    let recipient_claim_account = next_account_info(account_iter)?;
+    let recipient_usdc = next_account_info(account_iter)?;
+    let mailer_usdc = next_account_info(account_iter)?;
+    let token_program = next_account_info(account_iter)?;
+
+    // Load mailer state to check if paused
+    let mailer_data = mailer_account.try_borrow_data()?;
+    let mailer_state: MailerState = BorshDeserialize::deserialize(&mut &mailer_data[8..])?;
+    drop(mailer_data);
+
+    // Check if contract is paused
+    if !mailer_state.paused {
+        return Err(MailerError::ContractNotPaused.into());
+    }
+
+    // Verify recipient claim PDA
+    let (claim_pda, _) = Pubkey::find_program_address(&[b"claim", recipient.as_ref()], _program_id);
+    if recipient_claim_account.key != &claim_pda {
+        return Err(MailerError::InvalidPDA.into());
+    }
+
+    // Load and update recipient claim
+    let mut claim_data = recipient_claim_account.try_borrow_mut_data()?;
+    let mut claim_state: RecipientClaim = BorshDeserialize::deserialize(&mut &claim_data[8..])?;
+
+    if claim_state.amount == 0 {
+        return Err(MailerError::NoClaimableAmount.into());
+    }
+
+    let amount = claim_state.amount;
+    claim_state.amount = 0;
+    claim_state.timestamp = 0;
+
+    // Transfer USDC from mailer to recipient
+    let (mailer_pda, bump) = Pubkey::find_program_address(&[b"mailer"], _program_id);
+    invoke_signed(
+        &spl_token::instruction::transfer(
+            token_program.key,
+            mailer_usdc.key,
+            recipient_usdc.key,
+            &mailer_pda,
+            &[],
+            amount,
+        )?,
+        &[mailer_usdc.clone(), recipient_usdc.clone(), token_program.clone()],
+        &[&[b"mailer", &[bump]]],
+    )?;
+
+    claim_state.serialize(&mut &mut claim_data[8..])?;
+    
+    msg!("Distributed claimable funds to {}: {}", recipient, amount);
     Ok(())
 }
 
