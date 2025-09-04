@@ -8,12 +8,12 @@
     "src/utils/**/*",
     "src/evm/**/*",
     "src/solana/**/*",
-    "typechain-types/**/*",
-    "target/types/**/*"
+    "typechain-types/**/*"
   ],
   "exclude": [
     "node_modules",
     "dist",
-    "test/**/*"
+    "test/**/*",
+    "target/types/**/*"
   ]
 }

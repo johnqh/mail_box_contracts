@@ -43,7 +43,12 @@ export interface MessageResult {
   chainType: 'evm' | 'solana';
   messageId?: string;
   gasUsed?: bigint;
-  fee: bigint;
+  fee: bigint | number;
+  recipient?: string;
+  subject?: string;
+  body?: string;
+  slot?: number;
+  timestamp?: number;
 }
 
 export interface DomainResult {

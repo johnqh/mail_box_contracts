@@ -2,7 +2,8 @@ import { PublicKey } from '@solana/web3.js';
 
 export interface ClaimableInfo {
     amount: number;
-    expiresAt: number;
+    timestamp: number;
+    recipient: string;
     isExpired: boolean;
 }
 

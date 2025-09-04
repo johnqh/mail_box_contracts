@@ -1,20 +1,10 @@
 import { 
   Account,
   Address,
-  Chain,
-  Client,
   Hash,
   PublicClient,
-  Transport,
   WalletClient,
-  getContract,
-  getAddress,
-  parseUnits,
-  formatUnits,
-  decodeEventLog,
-  encodeDeployData,
-  encodeFunctionData,
-  decodeFunctionResult
+  getAddress
 } from "viem";
 import { 
   Mailer__factory

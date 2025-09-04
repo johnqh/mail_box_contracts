@@ -5,11 +5,11 @@ import { MailBoxFactory, MockUSDC, Mailer, MailService } from "../typechain-type
 describe("MailBoxFactory", function () {
   let mailBoxFactory: MailBoxFactory;
   let mockUSDC: MockUSDC;
-  let owner: any, addr1: any, addr2: any;
+  let owner: any, addr1: any;
   let usdcAddress: string;
 
   beforeEach(async function () {
-    [owner, addr1, addr2] = await ethers.getSigners();
+    [owner, addr1] = await ethers.getSigners();
 
     // Deploy MockUSDC
     const MockUSDC = await ethers.getContractFactory("MockUSDC");

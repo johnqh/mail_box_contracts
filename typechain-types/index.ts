@@ -3,14 +3,10 @@
 /* eslint-disable */
 import type * as interfaces from "./interfaces";
 export type { interfaces };
-export type { MailBoxFactory } from "./MailBoxFactory";
-export type { MailService } from "./MailService";
 export type { Mailer } from "./Mailer";
 export type { MockUSDC } from "./MockUSDC";
 export * as factories from "./factories";
 export type { IERC20 } from "./interfaces/IERC20";
 export { IERC20__factory } from "./factories/interfaces/IERC20__factory";
-export { MailBoxFactory__factory } from "./factories/MailBoxFactory__factory";
 export { Mailer__factory } from "./factories/Mailer__factory";
-export { MailService__factory } from "./factories/MailService__factory";
 export { MockUSDC__factory } from "./factories/MockUSDC__factory";

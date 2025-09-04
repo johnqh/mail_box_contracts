@@ -1,7 +1,7 @@
 [package]
 name = "mailer"
 version = "0.1.0"
-description = "MailBox Solana - Messaging system with USDC fees and revenue sharing"
+description = "MailBox Solana - Native messaging system with USDC fees and revenue sharing"
 edition = "2021"
 
 [lib]
@@ -10,11 +10,17 @@ name = "mailer"
 
 [features]
 no-entrypoint = []
-no-idl = []
-no-log-ix-name = []
-cpi = ["no-entrypoint"]
 default = []
 
 [dependencies]
-anchor-lang = { workspace = true, features = ["init-if-needed"] }
-anchor-spl.workspace = true
+solana-program = "1.16"
+spl-token = { version = "3.5", features = ["no-entrypoint"] }
+borsh = "0.10"
+thiserror = "1.0"
+
+[dev-dependencies]
+solana-program-test = "1.16"
+solana-sdk = "1.16"
+spl-token = { version = "3.5", features = ["no-entrypoint"] }
+tokio = { version = "1.0", features = ["full"] }
+

@@ -1,0 +1,22 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "allowJs": true
+  },
+  "include": [
+    "./src/**/*",
+    "./typechain-types/**/*",
+    "./test/**/*",
+    "./scripts/**/*",
+    "./examples/**/*",
+    "./hardhat.config.ts"
+  ],
+  "exclude": [
+    "node_modules",
+    "dist",
+    "artifacts",
+    "cache",
+    "target",
+    "test-ledger"
+  ]
+}

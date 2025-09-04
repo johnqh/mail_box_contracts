@@ -1,4 +1,6 @@
 const js = require('@eslint/js');
+const tsPlugin = require('@typescript-eslint/eslint-plugin');
+const tsParser = require('@typescript-eslint/parser');
 
 module.exports = [
   // Global ignores - these override all other configs
@@ -48,17 +50,24 @@ module.exports = [
     },
   },
 
-  // TypeScript files - basic rules only since we don't have TS parser properly configured
+  // TypeScript files - properly configured with TypeScript parser
   {
     files: ['**/*.ts'],
     languageOptions: {
+      parser: tsParser,
       ecmaVersion: 2020,
       sourceType: 'module',
     },
+    plugins: {
+      '@typescript-eslint': tsPlugin,
+    },
     rules: {
-      // Very basic rules that work without TypeScript parser
+      ...tsPlugin.configs.recommended.rules,
       'no-console': 'off',
-      'no-unused-vars': 'off', // Will be handled by TypeScript compiler
+      '@typescript-eslint/no-unused-vars': ['error', { argsIgnorePattern: '^_' }],
+      '@typescript-eslint/explicit-function-return-type': 'off',
+      '@typescript-eslint/no-explicit-any': 'warn',
+      '@typescript-eslint/no-non-null-assertion': 'off',
     },
   },
   
@@ -67,13 +76,18 @@ module.exports = [
     rules: {
       // More lenient rules for test files
       'no-unused-expressions': 'off', // For chai assertions
+      '@typescript-eslint/no-unused-expressions': 'off', // For chai assertions
+      '@typescript-eslint/no-explicit-any': 'off', // Allow any in tests for simplicity
     },
   },
   {
-    files: ['scripts/**/*.ts'],
+    files: ['scripts/**/*.ts', 'examples/**/*.ts'],
     rules: {
-      // Allow console.log in scripts
+      // Allow console.log in scripts and examples
       'no-console': 'off',
+      '@typescript-eslint/no-unused-vars': 'off', // Allow unused vars in examples/scripts
+      '@typescript-eslint/no-explicit-any': 'off', // Allow any in scripts for flexibility
+      '@typescript-eslint/no-require-imports': 'off', // Allow require() in scripts
     },
   },
 ];

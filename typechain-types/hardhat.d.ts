@@ -18,17 +18,9 @@ declare module "hardhat/types/runtime" {
       signerOrOptions?: ethers.Signer | FactoryOptions
     ): Promise<Contracts.IERC20__factory>;
     getContractFactory(
-      name: "MailBoxFactory",
-      signerOrOptions?: ethers.Signer | FactoryOptions
-    ): Promise<Contracts.MailBoxFactory__factory>;
-    getContractFactory(
       name: "Mailer",
       signerOrOptions?: ethers.Signer | FactoryOptions
     ): Promise<Contracts.Mailer__factory>;
-    getContractFactory(
-      name: "MailService",
-      signerOrOptions?: ethers.Signer | FactoryOptions
-    ): Promise<Contracts.MailService__factory>;
     getContractFactory(
       name: "MockUSDC",
       signerOrOptions?: ethers.Signer | FactoryOptions
@@ -40,20 +32,10 @@ declare module "hardhat/types/runtime" {
       signer?: ethers.Signer
     ): Promise<Contracts.IERC20>;
     getContractAt(
-      name: "MailBoxFactory",
-      address: string | ethers.Addressable,
-      signer?: ethers.Signer
-    ): Promise<Contracts.MailBoxFactory>;
-    getContractAt(
       name: "Mailer",
       address: string | ethers.Addressable,
       signer?: ethers.Signer
     ): Promise<Contracts.Mailer>;
-    getContractAt(
-      name: "MailService",
-      address: string | ethers.Addressable,
-      signer?: ethers.Signer
-    ): Promise<Contracts.MailService>;
     getContractAt(
       name: "MockUSDC",
       address: string | ethers.Addressable,
@@ -65,17 +47,9 @@ declare module "hardhat/types/runtime" {
       signerOrOptions?: ethers.Signer | DeployContractOptions
     ): Promise<Contracts.IERC20>;
     deployContract(
-      name: "MailBoxFactory",
-      signerOrOptions?: ethers.Signer | DeployContractOptions
-    ): Promise<Contracts.MailBoxFactory>;
-    deployContract(
       name: "Mailer",
       signerOrOptions?: ethers.Signer | DeployContractOptions
     ): Promise<Contracts.Mailer>;
-    deployContract(
-      name: "MailService",
-      signerOrOptions?: ethers.Signer | DeployContractOptions
-    ): Promise<Contracts.MailService>;
     deployContract(
       name: "MockUSDC",
       signerOrOptions?: ethers.Signer | DeployContractOptions
@@ -87,20 +61,10 @@ declare module "hardhat/types/runtime" {
       signerOrOptions?: ethers.Signer | DeployContractOptions
     ): Promise<Contracts.IERC20>;
     deployContract(
-      name: "MailBoxFactory",
-      args: any[],
-      signerOrOptions?: ethers.Signer | DeployContractOptions
-    ): Promise<Contracts.MailBoxFactory>;
-    deployContract(
       name: "Mailer",
       args: any[],
       signerOrOptions?: ethers.Signer | DeployContractOptions
     ): Promise<Contracts.Mailer>;
-    deployContract(
-      name: "MailService",
-      args: any[],
-      signerOrOptions?: ethers.Signer | DeployContractOptions
-    ): Promise<Contracts.MailService>;
     deployContract(
       name: "MockUSDC",
       args: any[],

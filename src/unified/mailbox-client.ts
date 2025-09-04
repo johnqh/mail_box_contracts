@@ -14,9 +14,12 @@ export class UnifiedMailBoxClient {
   private config: ChainConfig;
   
   // Performance optimization: cache imported modules
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   private static evmModules: any = null;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   private static solanaModules: any = null;
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   constructor(wallet: any, config: ChainConfig) {
     try {
       this.chainType = WalletDetector.detectWalletType(wallet);
@@ -68,6 +71,7 @@ export class UnifiedMailBoxClient {
     }
   }
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   private validateWallet(wallet: any): void {
     if (!wallet.signTransaction && typeof wallet.signTransaction !== 'function') {
       throw new Error('Wallet must have signTransaction method');
@@ -152,8 +156,7 @@ export class UnifiedMailBoxClient {
         ]);
         UnifiedMailBoxClient.evmModules = {
           viem: viemModule,
-          MailerClient: evmModule.MailerClient,
-          MailServiceClient: evmModule.MailServiceClient
+          MailerClient: evmModule.MailerClient
         };
       } catch (error) {
         throw new Error(`Failed to load EVM modules: ${error instanceof Error ? error.message : String(error)}`);
@@ -165,15 +168,12 @@ export class UnifiedMailBoxClient {
   private async getSolanaModules() {
     if (!UnifiedMailBoxClient.solanaModules) {
       try {
-        const [solanaModule, anchorModule, web3Module] = await Promise.all([
+        const [solanaModule, web3Module] = await Promise.all([
           import('../solana'),
-          import('@coral-xyz/anchor'),
           import('@solana/web3.js')
         ]);
         UnifiedMailBoxClient.solanaModules = {
           MailerClient: solanaModule.MailerClient,
-          MailServiceClient: solanaModule.MailServiceClient,
-          anchor: anchorModule,
           PublicKey: web3Module.PublicKey,
           Connection: web3Module.Connection
         };
@@ -281,13 +281,13 @@ export class UnifiedMailBoxClient {
     }
   }
 
-  private async registerEVMDomain(domain: string, isExtension: boolean): Promise<DomainResult> {
+  private async registerEVMDomain(_domain: string, _isExtension: boolean): Promise<DomainResult> {
     // Domain registration not implemented in current EVM version (delegation-only)
     throw new Error('Domain registration not yet implemented in EVM version - use delegation instead');
   }
 
   private async delegateEVM(delegate: string): Promise<DelegationResult> {
-    const { viem, MailServiceClient } = await this.getEVMModules();
+    const { viem } = await this.getEVMModules();
 
     if (!this.config.evm) {
       throw new Error('EVM configuration not provided');
@@ -298,42 +298,8 @@ export class UnifiedMailBoxClient {
       throw new Error('Invalid EVM address format for delegate');
     }
 
-    const publicClient = viem.createPublicClient({
-      transport: viem.http(this.config.evm.rpc),
-      chain: {
-        id: this.config.evm.chainId,
-        name: 'Custom Chain',
-        nativeCurrency: { name: 'ETH', symbol: 'ETH', decimals: 18 },
-        rpcUrls: {
-          default: { http: [this.config.evm.rpc] }
-        }
-      }
-    });
-
-    const walletClient = viem.createWalletClient({
-      transport: viem.http(this.config.evm.rpc),
-      chain: {
-        id: this.config.evm.chainId,
-        name: 'Custom Chain',
-        nativeCurrency: { name: 'ETH', symbol: 'ETH', decimals: 18 },
-        rpcUrls: {
-          default: { http: [this.config.evm.rpc] }
-        }
-      }
-    });
-
-    const client = new MailServiceClient(this.config.evm.contracts.mailService, publicClient);
-    
-    const txHash = await client.delegateTo(delegate, walletClient, this.wallet.address);
-    const receipt = await publicClient.waitForTransactionReceipt({ hash: txHash });
-
-    return {
-      transactionHash: txHash,
-      chainType: 'evm',
-      delegator: this.wallet.address,
-      delegate: delegate,
-      fee: BigInt('10000000') // 10 USDC in micro-USDC
-    };
+    // Note: Domain functionality is now integrated into the Mailer contract
+    throw new Error('Domain delegation is now handled through the Mailer contract - use MailerClient instead');
   }
 
   private async claimEVMRevenue(): Promise<UnifiedTransaction> {
@@ -384,7 +350,7 @@ export class UnifiedMailBoxClient {
   // Private methods for Solana implementation
   private async sendSolanaMessage(subject: string, body: string, priority: boolean): Promise<MessageResult> {
     try {
-      const { MailerClient, PublicKey, Connection, anchor } = await this.getSolanaModules();
+      const { MailerClient, PublicKey, Connection } = await this.getSolanaModules();
 
       if (!this.config.solana) {
         throw new Error('Solana configuration not provided');
@@ -403,53 +369,44 @@ export class UnifiedMailBoxClient {
           new Promise((_, reject) => setTimeout(() => reject(new Error('Connection timeout')), 10000))
         ]);
       } catch (error) {
-        throw new Error(`Failed to connect to Solana network: ${error instanceof Error ? error.message : String(error)}`);
+        throw new Error(`Failed to connect to Solana RPC: ${error instanceof Error ? error.message : String(error)}`);
       }
 
-      const wallet = new anchor.Wallet(this.wallet as any); // Cast for Solana wallet
+      // Create wallet adapter for native client  
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const wallet = MailerClient.createWallet(this.wallet as any);
       const programId = new PublicKey(this.config.solana.programs.mailer);
       const usdcMint = new PublicKey(this.config.solana.usdcMint);
-
-      // Validate message before sending
-      if (!subject || subject.length > 200) {
-        throw new Error('Subject must be 1-200 characters');
-      }
-      if (!body || body.length > 10000) {
-        throw new Error('Body must be 1-10000 characters');
-      }
+      // For now, send to the wallet itself (self-messaging)
+      const recipientKey = new PublicKey(this.wallet.address);
 
       const client = new MailerClient(connection, wallet, programId, usdcMint);
+
+      // Get current fees
+      const fees = await client.getFees();
       
       let txHash: string;
-      try {
-        if (priority) {
-          txHash = await client.sendPriority(subject, body);
-        } else {
-          txHash = await client.send(subject, body);
-        }
-      } catch (error) {
-        const errorMessage = error instanceof Error ? error.message : String(error);
-        if (errorMessage.includes('insufficient funds')) {
-          throw new Error('Insufficient SOL balance for transaction fees');
-        }
-        if (errorMessage.includes('insufficient balance')) {
-          throw new Error('Insufficient USDC balance to send message');
-        }
-        if (errorMessage.includes('user rejected')) {
-          throw new Error('Transaction rejected by user');
-        }
-        throw new Error(`Transaction failed: ${errorMessage}`);
+      if (priority) {
+        txHash = await client.sendPriority(recipientKey.toBase58(), subject, body);
+      } else {
+        txHash = await client.send(recipientKey.toBase58(), subject, body);
       }
 
+      // Get transaction details
+      const tx = await connection.getTransaction(txHash, { commitment: 'confirmed', maxSupportedTransactionVersion: 0 });
+      
       // Get current slot for transaction info
       const slot = await connection.getSlot();
       
       return {
         transactionHash: txHash,
         chainType: 'solana',
-        messageId: undefined, // Solana doesn't return message ID in same way
-        fee: BigInt(priority ? 100000 : 10000), // 0.1 or 0.01 USDC in micro-USDC
-        gasUsed: undefined // Solana doesn't use gas
+        fee: priority ? fees.sendFee : fees.sendFee / 10,
+        recipient: recipientKey.toBase58(),
+        subject,
+        body,
+        slot,
+        timestamp: tx?.blockTime ? tx.blockTime * 1000 : Date.now()
       };
       
     } catch (error) {
@@ -457,50 +414,30 @@ export class UnifiedMailBoxClient {
     }
   }
 
-  private async registerSolanaDomain(domain: string, isExtension: boolean): Promise<DomainResult> {
+  private async registerSolanaDomain(_domain: string, _isExtension: boolean): Promise<DomainResult> {
     // Domain registration not implemented in current Solana version
     throw new Error('Domain registration not yet implemented in Solana version - use delegation instead');
   }
 
-  private async delegateSolana(delegate: string): Promise<DelegationResult> {
-    const { MailServiceClient } = await import('../solana');
-    const { PublicKey, Connection } = await import('@solana/web3.js');
-    const anchor = await import('@coral-xyz/anchor');
-
+  private async delegateSolana(_delegate: string): Promise<DelegationResult> {
     if (!this.config.solana) {
       throw new Error('Solana configuration not provided');
     }
 
-    const connection = new Connection(this.config.solana.rpc, 'confirmed');
-    const wallet = new anchor.Wallet(this.wallet as any);
-    const programId = new PublicKey(this.config.solana.programs.mailService);
-    const usdcMint = new PublicKey(this.config.solana.usdcMint);
-
-    const client = new MailServiceClient(connection, wallet, programId, usdcMint);
-    const delegateKey = new PublicKey(delegate);
-    
-    const txHash = await client.delegateTo(delegateKey);
-
-    return {
-      transactionHash: txHash,
-      chainType: 'solana',
-      delegator: this.wallet.address,
-      delegate: delegate,
-      fee: BigInt(10000000) // 10 USDC in micro-USDC
-    };
+    // Note: Domain functionality is now integrated into the Mailer contract
+    throw new Error('Domain delegation is now handled through the Mailer contract - use MailerClient instead');
   }
 
   private async claimSolanaRevenue(): Promise<UnifiedTransaction> {
-    const { MailerClient } = await import('../solana');
-    const { PublicKey, Connection } = await import('@solana/web3.js');
-    const anchor = await import('@coral-xyz/anchor');
+    const { MailerClient, PublicKey, Connection } = await this.getSolanaModules();
 
     if (!this.config.solana) {
       throw new Error('Solana configuration not provided');
     }
 
     const connection = new Connection(this.config.solana.rpc, 'confirmed');
-    const wallet = new anchor.Wallet(this.wallet as any);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const wallet = MailerClient.createWallet(this.wallet as any);
     const programId = new PublicKey(this.config.solana.programs.mailer);
     const usdcMint = new PublicKey(this.config.solana.usdcMint);
 

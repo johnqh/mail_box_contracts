@@ -2,7 +2,5 @@
 /* tslint:disable */
 /* eslint-disable */
 export * as interfaces from "./interfaces";
-export { MailBoxFactory__factory } from "./MailBoxFactory__factory";
-export { MailService__factory } from "./MailService__factory";
 export { Mailer__factory } from "./Mailer__factory";
 export { MockUSDC__factory } from "./MockUSDC__factory";

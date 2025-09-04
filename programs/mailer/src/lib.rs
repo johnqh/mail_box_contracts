@@ -1,6 +1,7 @@
-//! # Mailer Program
+//! # Native Solana Mailer Program
 //!
-//! A Solana program for decentralized messaging with delegation management, USDC fees and revenue sharing.
+//! A native Solana program for decentralized messaging with delegation management, 
+//! USDC fees and revenue sharing - no Anchor dependencies.
 //!
 //! ## Key Features
 //!
@@ -23,29 +24,25 @@
 //! - Priority: Sender pays full fee, gets 90% back as claimable
 //! - Standard: Sender pays 10% fee only
 //! - Owner gets 10% of all fees
-//!
-//! ## Usage Examples
-//!
-//! ```rust
-//! // Initialize the program
-//! initialize(ctx, usdc_mint_pubkey)?;
-//!
-//! // Delegate to another address
-//! delegate_to(ctx, Some(delegate_pubkey))?;
-//!
-//! // Send priority message (with revenue sharing)
-//! send_priority(ctx, "Subject".to_string(), "Body".to_string())?;
-//!
-//! // Claim revenue share within 60 days
-//! claim_recipient_share(ctx)?;
-//! ```
 
-use anchor_lang::prelude::*;
-use anchor_spl::token::{self, Token, TokenAccount, Transfer};
-use anchor_spl::associated_token::AssociatedToken;
 
-// Program ID for the Mailer program
-declare_id!("9FLkBDGpZBcR8LMsQ7MwwV6X9P4TDFgN3DeRh5qYyHJF");
+use borsh::{BorshDeserialize, BorshSerialize};
+use solana_program::{
+    account_info::{next_account_info, AccountInfo},
+    clock::Clock,
+    entrypoint::ProgramResult,
+    msg,
+    program::{invoke, invoke_signed},
+    program_error::ProgramError,
+    pubkey::Pubkey,
+    rent::Rent,
+    system_instruction,
+    sysvar::Sysvar,
+};
+use thiserror::Error;
+
+// Program ID for the Native Mailer program
+solana_program::declare_id!("9FLkBDGpZBcR8LMsQ7MwwV6X9P4TDFgN3DeRh5qYyHJF");
 
 /// Base sending fee in USDC (with 6 decimals): 0.1 USDC
 const SEND_FEE: u64 = 100_000;
@@ -56,760 +53,11 @@ const DELEGATION_FEE: u64 = 10_000_000;
 /// Claim period for revenue shares: 60 days in seconds
 const CLAIM_PERIOD: i64 = 60 * 24 * 60 * 60;
 
-/// Percentage of fee that goes to message sender as revenue share: 90%
-const RECIPIENT_SHARE: u64 = 90;
-
-/// Percentage of fee that goes to program owner: 10%
-const OWNER_SHARE: u64 = 10;
-
-#[program]
-pub mod mailer {
-    use super::*;
-
-    /// Initialize the Mailer program with USDC mint and owner
-    ///
-    /// This instruction creates the main program state account with default fees
-    /// and configuration. Only needs to be called once per program deployment.
-    ///
-    /// # Arguments
-    /// * `ctx` - Anchor context with required accounts
-    /// * `usdc_mint` - Public key of the USDC token mint (must have 6 decimals)
-    ///
-    /// # Accounts
-    /// * `mailer` - The main program state account (PDA)
-    /// * `owner` - Program owner with administrative privileges
-    /// * `system_program` - System program for account creation
-    ///
-    /// # Errors
-    /// Returns an error if account initialization fails
-    ///
-    /// # Example
-    /// ```rust
-    /// let usdc_mint = Pubkey::from_str("EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v")?;
-    /// initialize(ctx, usdc_mint)?;
-    /// ```
-    pub fn initialize(ctx: Context<Initialize>, usdc_mint: Pubkey) -> Result<()> {
-        let mailer = &mut ctx.accounts.mailer;
-        mailer.owner = ctx.accounts.owner.key();
-        mailer.usdc_mint = usdc_mint;
-        mailer.send_fee = SEND_FEE;
-        mailer.delegation_fee = DELEGATION_FEE;
-        mailer.owner_claimable = 0;
-        mailer.bump = *ctx.bumps.get("mailer").unwrap();
-        Ok(())
-    }
-
-    /// Send a priority message with full fee and 90% revenue sharing
-    ///
-    /// Priority messages cost the full send fee (0.1 USDC) but the sender receives
-    /// 90% back as claimable revenue within 60 days. This creates an incentive
-    /// system where frequent users can recover most of their costs.
-    ///
-    /// # Arguments
-    /// * `ctx` - Anchor context with required accounts
-    /// * `subject` - Message subject line (plain text)
-    /// * `body` - Message content (plain text)
-    ///
-    /// # Accounts
-    /// * `recipient_claim` - PDA to store claimable revenue for sender
-    /// * `mailer` - Main program state account
-    /// * `sender` - User sending the message (signer)
-    /// * `sender_usdc_account` - Sender's USDC associated token account
-    /// * `mailer_usdc_account` - Program's USDC associated token account
-    /// * `token_program` - SPL Token program
-    /// * `associated_token_program` - Associated Token program
-    /// * `system_program` - System program
-    ///
-    /// # Errors
-    /// * `InsufficientFunds` - If sender doesn't have enough USDC
-    /// * `TokenTransferFailed` - If USDC transfer fails
-    ///
-    /// # Example
-    /// ```rust
-    /// send_priority(ctx, "Important Update".to_string(), "This is urgent!".to_string())?;
-    /// ```
-    pub fn send_priority(
-        ctx: Context<SendMessage>,
-        to: Pubkey,
-        subject: String,
-        body: String,
-    ) -> Result<()> {
-        let sender = ctx.accounts.sender.key();
-        
-        // Transfer full send fee from sender to mailer contract
-        let transfer_ctx = CpiContext::new(
-            ctx.accounts.token_program.to_account_info(),
-            Transfer {
-                from: ctx.accounts.sender_usdc_account.to_account_info(),
-                to: ctx.accounts.mailer_usdc_account.to_account_info(),
-                authority: ctx.accounts.sender.to_account_info(),
-            },
-        );
-        let send_fee = ctx.accounts.mailer.send_fee;
-        token::transfer(transfer_ctx, send_fee)?;
-
-        // Record shares for revenue sharing
-        record_shares(
-            &mut ctx.accounts.recipient_claim,
-            &mut ctx.accounts.mailer,
-            sender,
-            send_fee,
-        )?;
-
-        emit!(MailSent {
-            from: sender,
-            to,
-            subject,
-            body,
-        });
-
-        Ok(())
-    }
-
-    /// Send a priority message using a pre-prepared mail identifier
-    ///
-    /// Similar to send_priority but uses a pre-prepared message ID instead of
-    /// subject/body. Useful for messages stored off-chain (IPFS, databases, etc.)
-    /// with the same fee structure and revenue sharing.
-    ///
-    /// # Arguments
-    /// * `ctx` - Anchor context with required accounts
-    /// * `mail_id` - Pre-prepared message identifier (e.g., IPFS hash, UUID)
-    ///
-    /// # Accounts
-    /// Same as send_priority
-    ///
-    /// # Errors
-    /// * `InsufficientFunds` - If sender doesn't have enough USDC
-    /// * `TokenTransferFailed` - If USDC transfer fails
-    ///
-    /// # Example
-    /// ```rust
-    /// let ipfs_hash = "QmX7Y8Z9...".to_string();
-    /// send_priority_prepared(ctx, ipfs_hash)?;
-    /// ```
-    pub fn send_priority_prepared(
-        ctx: Context<SendMessage>,
-        to: Pubkey,
-        mail_id: String,
-    ) -> Result<()> {
-        let sender = ctx.accounts.sender.key();
-        
-        // Transfer full send fee from sender to mailer contract
-        let transfer_ctx = CpiContext::new(
-            ctx.accounts.token_program.to_account_info(),
-            Transfer {
-                from: ctx.accounts.sender_usdc_account.to_account_info(),
-                to: ctx.accounts.mailer_usdc_account.to_account_info(),
-                authority: ctx.accounts.sender.to_account_info(),
-            },
-        );
-        let send_fee = ctx.accounts.mailer.send_fee;
-        token::transfer(transfer_ctx, send_fee)?;
-
-        // Record shares for revenue sharing
-        record_shares(
-            &mut ctx.accounts.recipient_claim,
-            &mut ctx.accounts.mailer,
-            sender,
-            send_fee,
-        )?;
-
-        emit!(PreparedMailSent {
-            from: sender,
-            to,
-            mail_id,
-        });
-
-        Ok(())
-    }
-
-    /// Send a standard message with 10% fee only (no revenue sharing)
-    ///
-    /// Standard messages are more cost-effective, charging only 10% of the base
-    /// fee (0.01 USDC) with no revenue share back to the sender. All fee goes
-    /// to the program owner.
-    ///
-    /// # Arguments
-    /// * `ctx` - Anchor context with required accounts
-    /// * `subject` - Message subject line (plain text)
-    /// * `body` - Message content (plain text)
-    ///
-    /// # Accounts
-    /// Same as send_priority (recipient_claim account still required but not used)
-    ///
-    /// # Errors
-    /// * `InsufficientFunds` - If sender doesn't have enough USDC
-    /// * `TokenTransferFailed` - If USDC transfer fails
-    ///
-    /// # Example
-    /// ```rust
-    /// send(ctx, "Regular Update".to_string(), "Standard message".to_string())?;
-    /// ```
-    pub fn send(
-        ctx: Context<SendMessage>,
-        to: Pubkey,
-        subject: String,
-        body: String,
-    ) -> Result<()> {
-        let sender = ctx.accounts.sender.key();
-        let owner_fee = (ctx.accounts.mailer.send_fee * OWNER_SHARE) / 100;
-        
-        // Transfer only owner fee (10%) from sender to mailer contract
-        let transfer_ctx = CpiContext::new(
-            ctx.accounts.token_program.to_account_info(),
-            Transfer {
-                from: ctx.accounts.sender_usdc_account.to_account_info(),
-                to: ctx.accounts.mailer_usdc_account.to_account_info(),
-                authority: ctx.accounts.sender.to_account_info(),
-            },
-        );
-        token::transfer(transfer_ctx, owner_fee)?;
-
-        // Only add to owner claimable, no revenue sharing
-        ctx.accounts.mailer.owner_claimable += owner_fee;
-
-        emit!(MailSent {
-            from: sender,
-            to,
-            subject,
-            body,
-        });
-
-        Ok(())
-    }
-
-    /// Send a standard message using a pre-prepared mail identifier
-    ///
-    /// Cost-effective variant of send() using pre-prepared message IDs.
-    /// Charges only 10% fee with no revenue sharing.
-    ///
-    /// # Arguments
-    /// * `ctx` - Anchor context with required accounts
-    /// * `mail_id` - Pre-prepared message identifier
-    ///
-    /// # Accounts
-    /// Same as send_priority
-    ///
-    /// # Errors
-    /// * `InsufficientFunds` - If sender doesn't have enough USDC
-    /// * `TokenTransferFailed` - If USDC transfer fails
-    ///
-    /// # Example
-    /// ```rust
-    /// let message_uuid = "msg-12345".to_string();
-    /// send_prepared(ctx, message_uuid)?;
-    /// ```
-    pub fn send_prepared(
-        ctx: Context<SendMessage>,
-        to: Pubkey,
-        mail_id: String,
-    ) -> Result<()> {
-        let sender = ctx.accounts.sender.key();
-        let owner_fee = (ctx.accounts.mailer.send_fee * OWNER_SHARE) / 100;
-        
-        // Transfer only owner fee (10%) from sender to mailer contract
-        let transfer_ctx = CpiContext::new(
-            ctx.accounts.token_program.to_account_info(),
-            Transfer {
-                from: ctx.accounts.sender_usdc_account.to_account_info(),
-                to: ctx.accounts.mailer_usdc_account.to_account_info(),
-                authority: ctx.accounts.sender.to_account_info(),
-            },
-        );
-        token::transfer(transfer_ctx, owner_fee)?;
-
-        // Only add to owner claimable, no revenue sharing
-        ctx.accounts.mailer.owner_claimable += owner_fee;
-
-        emit!(PreparedMailSent {
-            from: sender,
-            to,
-            mail_id,
-        });
-
-        Ok(())
-    }
-
-    pub fn claim_recipient_share(ctx: Context<ClaimRecipientShare>) -> Result<()> {
-        let claim = &mut ctx.accounts.recipient_claim;
-        let recipient = ctx.accounts.recipient.key();
-        
-        require!(claim.amount > 0, MailerError::NoClaimableAmount);
-        
-        // Check if claim period has expired
-        let current_time = Clock::get()?.unix_timestamp;
-        require!(
-            current_time <= claim.timestamp + CLAIM_PERIOD,
-            MailerError::ClaimPeriodExpired
-        );
-
-        let amount = claim.amount;
-        claim.amount = 0;
-        claim.timestamp = 0;
-
-        // Transfer USDC from mailer to recipient
-        let bump = ctx.accounts.mailer.bump;
-        let seeds = &[b"mailer".as_ref(), &[bump]];
-        let signer_seeds = &[&seeds[..]];
-        
-        let transfer_ctx = CpiContext::new_with_signer(
-            ctx.accounts.token_program.to_account_info(),
-            Transfer {
-                from: ctx.accounts.mailer_usdc_account.to_account_info(),
-                to: ctx.accounts.recipient_usdc_account.to_account_info(),
-                authority: ctx.accounts.mailer.to_account_info(),
-            },
-            signer_seeds,
-        );
-        token::transfer(transfer_ctx, amount)?;
-
-        emit!(RecipientClaimed {
-            recipient,
-            amount,
-        });
-
-        Ok(())
-    }
-
-    pub fn claim_owner_share(ctx: Context<ClaimOwnerShare>) -> Result<()> {
-        let mailer = &mut ctx.accounts.mailer;
-        
-        require!(mailer.owner_claimable > 0, MailerError::NoClaimableAmount);
-
-        let amount = mailer.owner_claimable;
-        mailer.owner_claimable = 0;
-
-        // Transfer USDC from mailer to owner
-        let bump = mailer.bump;
-        let seeds = &[b"mailer".as_ref(), &[bump]];
-        let signer_seeds = &[&seeds[..]];
-        
-        let transfer_ctx = CpiContext::new_with_signer(
-            ctx.accounts.token_program.to_account_info(),
-            Transfer {
-                from: ctx.accounts.mailer_usdc_account.to_account_info(),
-                to: ctx.accounts.owner_usdc_account.to_account_info(),
-                authority: ctx.accounts.mailer.to_account_info(),
-            },
-            signer_seeds,
-        );
-        token::transfer(transfer_ctx, amount)?;
-
-        emit!(OwnerClaimed { amount });
-
-        Ok(())
-    }
-
-    pub fn claim_expired_shares(ctx: Context<ClaimExpiredShares>) -> Result<()> {
-        let recipient_key = ctx.accounts.recipient_claim.recipient;
-        let claim = &mut ctx.accounts.recipient_claim;
-        
-        require!(claim.amount > 0, MailerError::NoClaimableAmount);
-        
-        // Check if claim period has expired
-        let current_time = Clock::get()?.unix_timestamp;
-        require!(
-            current_time > claim.timestamp + CLAIM_PERIOD,
-            MailerError::ClaimPeriodNotExpired
-        );
-
-        let amount = claim.amount;
-        claim.amount = 0;
-        claim.timestamp = 0;
-
-        // Add expired amount to owner claimable
-        ctx.accounts.mailer.owner_claimable += amount;
-
-        emit!(ExpiredSharesClaimed {
-            recipient: recipient_key,
-            amount,
-        });
-
-        Ok(())
-    }
-
-    pub fn set_fee(ctx: Context<SetFee>, new_fee: u64) -> Result<()> {
-        let mailer = &mut ctx.accounts.mailer;
-        let old_fee = mailer.send_fee;
-        mailer.send_fee = new_fee;
-
-        emit!(FeeUpdated { old_fee, new_fee });
-
-        Ok(())
-    }
-
-    /// Delegate mail handling to another address
-    /// 
-    /// This function allows a user to delegate their mail handling to another address.
-    /// If setting delegation (not clearing), a fee is charged in USDC.
-    /// 
-    /// # Arguments
-    /// * `ctx` - Anchor context with required accounts
-    /// * `delegate` - Optional delegate address (None to clear delegation)
-    pub fn delegate_to(ctx: Context<DelegateTo>, delegate: Option<Pubkey>) -> Result<()> {
-        let delegation = &mut ctx.accounts.delegation;
-        let delegator = ctx.accounts.delegator.key();
-        
-        // If setting delegation (not clearing), charge fee
-        if let Some(delegate_key) = delegate {
-            if delegate_key != Pubkey::default() {
-                // Transfer delegation fee from delegator to mailer
-                let transfer_ctx = CpiContext::new(
-                    ctx.accounts.token_program.to_account_info(),
-                    Transfer {
-                        from: ctx.accounts.delegator_usdc_account.to_account_info(),
-                        to: ctx.accounts.mailer_usdc_account.to_account_info(),
-                        authority: ctx.accounts.delegator.to_account_info(),
-                    },
-                );
-                token::transfer(transfer_ctx, ctx.accounts.mailer.delegation_fee)?;
-            }
-        }
-
-        // Update delegation
-        delegation.delegator = delegator;
-        delegation.delegate = delegate;
-        delegation.bump = *ctx.bumps.get("delegation").unwrap();
-
-        emit!(DelegationSet {
-            delegator,
-            delegate,
-        });
-
-        Ok(())
-    }
-
-    /// Reject a delegation made to you by another address
-    /// 
-    /// # Arguments
-    /// * `ctx` - Anchor context with required accounts
-    pub fn reject_delegation(ctx: Context<RejectDelegation>) -> Result<()> {
-        let delegation = &mut ctx.accounts.delegation;
-        
-        // Verify the rejector is the current delegate
-        require!(
-            delegation.delegate == Some(ctx.accounts.rejector.key()),
-            MailerError::NoDelegationToReject
-        );
-
-        let delegator = delegation.delegator;
-        
-        // Clear the delegation
-        delegation.delegate = None;
-
-        emit!(DelegationSet {
-            delegator,
-            delegate: None,
-        });
-
-        Ok(())
-    }
-
-    /// Update the delegation fee (owner only)
-    /// 
-    /// # Arguments
-    /// * `ctx` - Anchor context with required accounts
-    /// * `new_fee` - New delegation fee amount in USDC (6 decimals)
-    pub fn set_delegation_fee(ctx: Context<SetFee>, new_fee: u64) -> Result<()> {
-        let mailer = &mut ctx.accounts.mailer;
-        let old_fee = mailer.delegation_fee;
-        mailer.delegation_fee = new_fee;
-
-        emit!(DelegationFeeUpdated {
-            old_fee,
-            new_fee,
-        });
-
-        Ok(())
-    }
-
-    /// Withdraw fees from the contract (owner only)
-    /// 
-    /// # Arguments
-    /// * `ctx` - Anchor context with required accounts
-    /// * `amount` - Amount to withdraw in USDC (6 decimals)
-    pub fn withdraw_fees(ctx: Context<WithdrawFees>, amount: u64) -> Result<()> {
-        // Transfer USDC from mailer to owner
-        let bump = ctx.accounts.mailer.bump;
-        let seeds = &[b"mailer".as_ref(), &[bump]];
-        let signer_seeds = &[&seeds[..]];
-        
-        let transfer_ctx = CpiContext::new_with_signer(
-            ctx.accounts.token_program.to_account_info(),
-            Transfer {
-                from: ctx.accounts.mailer_usdc_account.to_account_info(),
-                to: ctx.accounts.owner_usdc_account.to_account_info(),
-                authority: ctx.accounts.mailer.to_account_info(),
-            },
-            signer_seeds,
-        );
-        token::transfer(transfer_ctx, amount)?;
-
-        Ok(())
-    }
-}
-
-fn record_shares(
-    claim: &mut Account<RecipientClaim>,
-    mailer: &mut Account<MailerState>,
-    recipient: Pubkey,
-    total_amount: u64,
-) -> Result<()> {
-    // Calculate owner amount first for precision
-    let owner_amount = (total_amount * OWNER_SHARE) / 100;
-    let recipient_amount = total_amount - owner_amount;
-
-    // Update recipient's claimable amount and set timestamp only if not already set
-    claim.recipient = recipient;
-    claim.amount += recipient_amount;
-    if claim.timestamp == 0 {
-        claim.timestamp = Clock::get()?.unix_timestamp;
-    }
-
-    // Update owner's claimable amount
-    mailer.owner_claimable += owner_amount;
-
-    emit!(SharesRecorded {
-        recipient,
-        recipient_amount,
-        owner_amount,
-    });
-
-    Ok(())
-}
-
-#[derive(Accounts)]
-pub struct Initialize<'info> {
-    #[account(
-        init,
-        payer = owner,
-        space = 8 + MailerState::INIT_SPACE,
-        seeds = [b"mailer"],
-        bump
-    )]
-    pub mailer: Account<'info, MailerState>,
-    
-    #[account(mut)]
-    pub owner: Signer<'info>,
-    
-    pub system_program: Program<'info, System>,
-}
-
-#[derive(Accounts)]
-pub struct SendMessage<'info> {
-    #[account(
-        init_if_needed,
-        payer = sender,
-        space = 8 + RecipientClaim::INIT_SPACE,
-        seeds = [b"claim", sender.key().as_ref()],
-        bump
-    )]
-    pub recipient_claim: Account<'info, RecipientClaim>,
-    
-    #[account(seeds = [b"mailer"], bump = mailer.bump)]
-    pub mailer: Account<'info, MailerState>,
-    
-    #[account(mut)]
-    pub sender: Signer<'info>,
-    
-    #[account(
-        mut,
-        associated_token::mint = mailer.usdc_mint,
-        associated_token::authority = sender
-    )]
-    pub sender_usdc_account: Account<'info, TokenAccount>,
-    
-    #[account(
-        mut,
-        associated_token::mint = mailer.usdc_mint,
-        associated_token::authority = mailer
-    )]
-    pub mailer_usdc_account: Account<'info, TokenAccount>,
-    
-    pub token_program: Program<'info, Token>,
-    pub associated_token_program: Program<'info, AssociatedToken>,
-    pub system_program: Program<'info, System>,
-}
-
-#[derive(Accounts)]
-pub struct ClaimRecipientShare<'info> {
-    #[account(
-        mut,
-        seeds = [b"claim", recipient.key().as_ref()],
-        bump,
-        has_one = recipient @ MailerError::InvalidRecipient
-    )]
-    pub recipient_claim: Account<'info, RecipientClaim>,
-    
-    #[account(seeds = [b"mailer"], bump = mailer.bump)]
-    pub mailer: Account<'info, MailerState>,
-    
-    pub recipient: Signer<'info>,
-    
-    #[account(
-        mut,
-        associated_token::mint = mailer.usdc_mint,
-        associated_token::authority = recipient
-    )]
-    pub recipient_usdc_account: Account<'info, TokenAccount>,
-    
-    #[account(
-        mut,
-        associated_token::mint = mailer.usdc_mint,
-        associated_token::authority = mailer
-    )]
-    pub mailer_usdc_account: Account<'info, TokenAccount>,
-    
-    pub token_program: Program<'info, Token>,
-}
-
-#[derive(Accounts)]
-pub struct ClaimOwnerShare<'info> {
-    #[account(
-        mut,
-        seeds = [b"mailer"],
-        bump = mailer.bump,
-        has_one = owner @ MailerError::OnlyOwner
-    )]
-    pub mailer: Account<'info, MailerState>,
-    
-    #[account(mut)]
-    pub owner: Signer<'info>,
-    
-    #[account(
-        mut,
-        associated_token::mint = mailer.usdc_mint,
-        associated_token::authority = owner
-    )]
-    pub owner_usdc_account: Account<'info, TokenAccount>,
-    
-    #[account(
-        mut,
-        associated_token::mint = mailer.usdc_mint,
-        associated_token::authority = mailer
-    )]
-    pub mailer_usdc_account: Account<'info, TokenAccount>,
-    
-    pub token_program: Program<'info, Token>,
-}
-
-#[derive(Accounts)]
-pub struct ClaimExpiredShares<'info> {
-    #[account(
-        mut,
-        seeds = [b"claim", recipient_claim.recipient.as_ref()],
-        bump
-    )]
-    pub recipient_claim: Account<'info, RecipientClaim>,
-    
-    #[account(
-        mut,
-        seeds = [b"mailer"],
-        bump = mailer.bump,
-        has_one = owner @ MailerError::OnlyOwner
-    )]
-    pub mailer: Account<'info, MailerState>,
-    
-    pub owner: Signer<'info>,
-}
-
-#[derive(Accounts)]
-pub struct SetFee<'info> {
-    #[account(
-        mut,
-        seeds = [b"mailer"],
-        bump = mailer.bump,
-        has_one = owner @ MailerError::OnlyOwner
-    )]
-    pub mailer: Account<'info, MailerState>,
-    
-    pub owner: Signer<'info>,
-}
-
-#[derive(Accounts)]
-pub struct DelegateTo<'info> {
-    #[account(
-        init_if_needed,
-        payer = delegator,
-        space = 8 + Delegation::INIT_SPACE,
-        seeds = [b"delegation", delegator.key().as_ref()],
-        bump
-    )]
-    pub delegation: Account<'info, Delegation>,
-    
-    #[account(seeds = [b"mailer"], bump = mailer.bump)]
-    pub mailer: Account<'info, MailerState>,
-    
-    #[account(mut)]
-    pub delegator: Signer<'info>,
-    
-    #[account(
-        mut,
-        associated_token::mint = mailer.usdc_mint,
-        associated_token::authority = delegator
-    )]
-    pub delegator_usdc_account: Account<'info, TokenAccount>,
-    
-    #[account(
-        mut,
-        associated_token::mint = mailer.usdc_mint,
-        associated_token::authority = mailer
-    )]
-    pub mailer_usdc_account: Account<'info, TokenAccount>,
-    
-    pub token_program: Program<'info, Token>,
-    pub associated_token_program: Program<'info, AssociatedToken>,
-    pub system_program: Program<'info, System>,
-}
-
-#[derive(Accounts)]
-pub struct RejectDelegation<'info> {
-    #[account(
-        mut,
-        seeds = [b"delegation", delegation.delegator.as_ref()],
-        bump = delegation.bump,
-        has_one = delegator @ MailerError::InvalidDelegator
-    )]
-    pub delegation: Account<'info, Delegation>,
-    
-    /// CHECK: This is the original delegator, validated by the delegation account
-    pub delegator: UncheckedAccount<'info>,
-    
-    pub rejector: Signer<'info>,
-}
-
-#[derive(Accounts)]
-pub struct WithdrawFees<'info> {
-    #[account(
-        seeds = [b"mailer"],
-        bump = mailer.bump,
-        has_one = owner @ MailerError::OnlyOwner
-    )]
-    pub mailer: Account<'info, MailerState>,
-    
-    #[account(mut)]
-    pub owner: Signer<'info>,
-    
-    #[account(
-        mut,
-        associated_token::mint = mailer.usdc_mint,
-        associated_token::authority = mailer
-    )]
-    pub mailer_usdc_account: Account<'info, TokenAccount>,
-    
-    #[account(
-        mut,
-        associated_token::mint = mailer.usdc_mint,
-        associated_token::authority = owner
-    )]
-    pub owner_usdc_account: Account<'info, TokenAccount>,
-    
-    pub token_program: Program<'info, Token>,
-}
-
-#[account]
-#[derive(InitSpace)]
+#[cfg(not(feature = "no-entrypoint"))]
+solana_program::entrypoint!(process_instruction);
+
+/// Program state account
+#[derive(BorshSerialize, BorshDeserialize, Debug, Clone)]
 pub struct MailerState {
     pub owner: Pubkey,
     pub usdc_mint: Pubkey,
@@ -819,8 +67,12 @@ pub struct MailerState {
     pub bump: u8,
 }
 
-#[account]
-#[derive(InitSpace)]
+impl MailerState {
+    pub const LEN: usize = 32 + 32 + 8 + 8 + 8 + 1; // 89 bytes
+}
+
+/// Recipient claim account
+#[derive(BorshSerialize, BorshDeserialize, Debug, Clone)]
 pub struct RecipientClaim {
     pub recipient: Pubkey,
     pub amount: u64,
@@ -828,85 +80,715 @@ pub struct RecipientClaim {
     pub bump: u8,
 }
 
-#[account]
-#[derive(InitSpace)]
+impl RecipientClaim {
+    pub const LEN: usize = 32 + 8 + 8 + 1; // 49 bytes
+}
+
+/// Delegation account
+#[derive(BorshSerialize, BorshDeserialize, Debug, Clone)]
 pub struct Delegation {
     pub delegator: Pubkey,
     pub delegate: Option<Pubkey>,
     pub bump: u8,
 }
 
-#[event]
-pub struct MailSent {
-    pub from: Pubkey,
-    pub to: Pubkey,
-    pub subject: String,
-    pub body: String,
+impl Delegation {
+    pub const LEN: usize = 32 + 1 + 32 + 1; // 66 bytes (max with Some(Pubkey))
 }
 
-#[event]
-pub struct PreparedMailSent {
-    pub from: Pubkey,
-    pub to: Pubkey,
-    pub mail_id: String,
+/// Instructions
+#[derive(BorshSerialize, BorshDeserialize, Debug)]
+pub enum MailerInstruction {
+    /// Initialize the program
+    /// Accounts:
+    /// 0. `[writable, signer]` Owner account
+    /// 1. `[writable]` Mailer state account (PDA)
+    /// 2. `[]` System program
+    Initialize { usdc_mint: Pubkey },
+
+    /// Send priority message with revenue sharing
+    /// Accounts:
+    /// 0. `[signer]` Sender
+    /// 1. `[writable]` Recipient claim account (PDA)
+    /// 2. `[]` Mailer state account (PDA)
+    /// 3. `[writable]` Sender USDC account
+    /// 4. `[writable]` Mailer USDC account
+    /// 5. `[]` Token program
+    /// 6. `[]` System program
+    SendPriority {
+        to: Pubkey,
+        subject: String,
+        _body: String,
+    },
+
+    /// Send standard message with 10% fee
+    /// Same accounts as SendPriority
+    Send {
+        to: Pubkey,
+        subject: String,
+        _body: String,
+    },
+
+    /// Claim recipient share
+    /// Accounts:
+    /// 0. `[signer]` Recipient
+    /// 1. `[writable]` Recipient claim account (PDA)
+    /// 2. `[]` Mailer state account (PDA)
+    /// 3. `[writable]` Recipient USDC account
+    /// 4. `[writable]` Mailer USDC account
+    /// 5. `[]` Token program
+    ClaimRecipientShare,
+
+    /// Claim owner share
+    /// Accounts:
+    /// 0. `[signer]` Owner
+    /// 1. `[writable]` Mailer state account (PDA)
+    /// 2. `[writable]` Owner USDC account
+    /// 3. `[writable]` Mailer USDC account
+    /// 4. `[]` Token program
+    ClaimOwnerShare,
+
+    /// Set send fee (owner only)
+    /// Accounts:
+    /// 0. `[signer]` Owner
+    /// 1. `[writable]` Mailer state account (PDA)
+    SetFee { new_fee: u64 },
+
+    /// Delegate to another address
+    /// Accounts:
+    /// 0. `[signer]` Delegator
+    /// 1. `[writable]` Delegation account (PDA)
+    /// 2. `[]` Mailer state account (PDA)
+    /// 3. `[writable]` Delegator USDC account
+    /// 4. `[writable]` Mailer USDC account
+    /// 5. `[]` Token program
+    /// 6. `[]` System program
+    DelegateTo { delegate: Option<Pubkey> },
+
+    /// Reject delegation
+    /// Accounts:
+    /// 0. `[signer]` Rejector
+    /// 1. `[writable]` Delegation account (PDA)
+    RejectDelegation,
+
+    /// Set delegation fee (owner only)
+    /// Accounts:
+    /// 0. `[signer]` Owner
+    /// 1. `[writable]` Mailer state account (PDA)
+    SetDelegationFee { new_fee: u64 },
 }
 
-#[event]
-pub struct FeeUpdated {
-    pub old_fee: u64,
-    pub new_fee: u64,
-}
-
-#[event]
-pub struct SharesRecorded {
-    pub recipient: Pubkey,
-    pub recipient_amount: u64,
-    pub owner_amount: u64,
-}
-
-#[event]
-pub struct RecipientClaimed {
-    pub recipient: Pubkey,
-    pub amount: u64,
-}
-
-#[event]
-pub struct OwnerClaimed {
-    pub amount: u64,
-}
-
-#[event]
-pub struct ExpiredSharesClaimed {
-    pub recipient: Pubkey,
-    pub amount: u64,
-}
-
-#[event]
-pub struct DelegationSet {
-    pub delegator: Pubkey,
-    pub delegate: Option<Pubkey>,
-}
-
-#[event]
-pub struct DelegationFeeUpdated {
-    pub old_fee: u64,
-    pub new_fee: u64,
-}
-
-#[error_code]
+/// Custom program errors
+#[derive(Error, Debug, Copy, Clone)]
 pub enum MailerError {
-    #[msg("Only the owner can perform this action")]
+    #[error("Only the owner can perform this action")]
     OnlyOwner,
-    #[msg("No claimable amount available")]
+    #[error("No claimable amount available")]
     NoClaimableAmount,
-    #[msg("Claim period has expired")]
+    #[error("Claim period has expired")]
     ClaimPeriodExpired,
-    #[msg("Claim period has not expired yet")]
+    #[error("Claim period has not expired yet")]
     ClaimPeriodNotExpired,
-    #[msg("Invalid recipient")]
+    #[error("Invalid recipient")]
     InvalidRecipient,
-    #[msg("No delegation to reject")]
+    #[error("No delegation to reject")]
     NoDelegationToReject,
-    #[msg("Invalid delegator")]
+    #[error("Invalid delegator")]
     InvalidDelegator,
+    #[error("Account already initialized")]
+    AlreadyInitialized,
+    #[error("Account not initialized")]
+    NotInitialized,
+    #[error("Invalid PDA")]
+    InvalidPDA,
+    #[error("Invalid account owner")]
+    InvalidAccountOwner,
+}
+
+impl From<MailerError> for ProgramError {
+    fn from(e: MailerError) -> Self {
+        ProgramError::Custom(e as u32)
+    }
+}
+
+/// Main instruction processor
+pub fn process_instruction(
+    program_id: &Pubkey,
+    accounts: &[AccountInfo],
+    instruction_data: &[u8],
+) -> ProgramResult {
+    let instruction = MailerInstruction::try_from_slice(instruction_data)?;
+
+    match instruction {
+        MailerInstruction::Initialize { usdc_mint } => {
+            process_initialize(program_id, accounts, usdc_mint)
+        }
+        MailerInstruction::SendPriority { to, subject, _body } => {
+            process_send_priority(program_id, accounts, to, subject, _body)
+        }
+        MailerInstruction::Send { to, subject, _body } => {
+            process_send(program_id, accounts, to, subject, _body)
+        }
+        MailerInstruction::ClaimRecipientShare => {
+            process_claim_recipient_share(program_id, accounts)
+        }
+        MailerInstruction::ClaimOwnerShare => process_claim_owner_share(program_id, accounts),
+        MailerInstruction::SetFee { new_fee } => process_set_fee(program_id, accounts, new_fee),
+        MailerInstruction::DelegateTo { delegate } => {
+            process_delegate_to(program_id, accounts, delegate)
+        }
+        MailerInstruction::RejectDelegation => process_reject_delegation(program_id, accounts),
+        MailerInstruction::SetDelegationFee { new_fee } => {
+            process_set_delegation_fee(program_id, accounts, new_fee)
+        }
+    }
+}
+
+/// Initialize the program
+fn process_initialize(
+    program_id: &Pubkey,
+    accounts: &[AccountInfo],
+    usdc_mint: Pubkey,
+) -> ProgramResult {
+    let account_iter = &mut accounts.iter();
+    let owner = next_account_info(account_iter)?;
+    let mailer_account = next_account_info(account_iter)?;
+    let system_program = next_account_info(account_iter)?;
+
+    if !owner.is_signer {
+        return Err(ProgramError::MissingRequiredSignature);
+    }
+
+    // Verify mailer account PDA
+    let (mailer_pda, bump) = Pubkey::find_program_address(&[b"mailer"], program_id);
+    if mailer_account.key != &mailer_pda {
+        return Err(MailerError::InvalidPDA.into());
+    }
+
+    // Create mailer account
+    let rent = Rent::get()?;
+    let space = 8 + MailerState::LEN; // 8 bytes for discriminator
+    let lamports = rent.minimum_balance(space);
+
+    invoke_signed(
+        &system_instruction::create_account(
+            owner.key,
+            mailer_account.key,
+            lamports,
+            space as u64,
+            program_id,
+        ),
+        &[owner.clone(), mailer_account.clone(), system_program.clone()],
+        &[&[b"mailer", &[bump]]],
+    )?;
+
+    // Initialize state
+    let mut mailer_data = mailer_account.try_borrow_mut_data()?;
+    mailer_data[0..8].copy_from_slice(&hash_discriminator("account:MailerState").to_le_bytes());
+
+    let mailer_state = MailerState {
+        owner: *owner.key,
+        usdc_mint,
+        send_fee: SEND_FEE,
+        delegation_fee: DELEGATION_FEE,
+        owner_claimable: 0,
+        bump,
+    };
+
+    mailer_state.serialize(&mut &mut mailer_data[8..])?;
+
+    msg!("Mailer initialized with owner: {}", owner.key);
+    Ok(())
+}
+
+/// Send priority message with revenue sharing
+fn process_send_priority(
+    program_id: &Pubkey,
+    accounts: &[AccountInfo],
+    to: Pubkey,
+    subject: String,
+    _body: String,
+) -> ProgramResult {
+    let account_iter = &mut accounts.iter();
+    let sender = next_account_info(account_iter)?;
+    let recipient_claim = next_account_info(account_iter)?;
+    let mailer_account = next_account_info(account_iter)?;
+    let sender_usdc = next_account_info(account_iter)?;
+    let mailer_usdc = next_account_info(account_iter)?;
+    let token_program = next_account_info(account_iter)?;
+    let system_program = next_account_info(account_iter)?;
+
+    if !sender.is_signer {
+        return Err(ProgramError::MissingRequiredSignature);
+    }
+
+    // Load mailer state
+    let mailer_data = mailer_account.try_borrow_data()?;
+    let mailer_state: MailerState = BorshDeserialize::deserialize(&mut &mailer_data[8..])?;
+    drop(mailer_data);
+
+    // Create or load recipient claim account
+    let (claim_pda, claim_bump) = Pubkey::find_program_address(
+        &[b"claim", to.as_ref()], 
+        program_id
+    );
+
+    if recipient_claim.key != &claim_pda {
+        return Err(MailerError::InvalidPDA.into());
+    }
+
+    // Create claim account if needed
+    if recipient_claim.lamports() == 0 {
+        let rent = Rent::get()?;
+        let space = 8 + RecipientClaim::LEN;
+        let lamports = rent.minimum_balance(space);
+
+        invoke_signed(
+            &system_instruction::create_account(
+                sender.key,
+                recipient_claim.key,
+                lamports,
+                space as u64,
+                program_id,
+            ),
+            &[sender.clone(), recipient_claim.clone(), system_program.clone()],
+            &[&[b"claim", sender.key.as_ref(), &[claim_bump]]],
+        )?;
+
+        // Initialize claim account
+        let mut claim_data = recipient_claim.try_borrow_mut_data()?;
+        claim_data[0..8].copy_from_slice(&hash_discriminator("account:RecipientClaim").to_le_bytes());
+
+        let claim_state = RecipientClaim {
+            recipient: to,
+            amount: 0,
+            timestamp: 0,
+            bump: claim_bump,
+        };
+
+        claim_state.serialize(&mut &mut claim_data[8..])?;
+        drop(claim_data);
+    }
+
+    // Transfer full send fee
+    invoke(
+        &spl_token::instruction::transfer(
+            token_program.key,
+            sender_usdc.key,
+            mailer_usdc.key,
+            sender.key,
+            &[],
+            mailer_state.send_fee,
+        )?,
+        &[
+            sender_usdc.clone(),
+            mailer_usdc.clone(),
+            sender.clone(),
+            token_program.clone(),
+        ],
+    )?;
+
+    // Record revenue shares
+    record_shares(recipient_claim, mailer_account, to, mailer_state.send_fee)?;
+
+    msg!("Priority mail sent from {} to {}: {}", sender.key, to, subject);
+    Ok(())
+}
+
+/// Send standard message with 10% fee
+fn process_send(
+    program_id: &Pubkey,
+    accounts: &[AccountInfo],
+    to: Pubkey,
+    subject: String,
+    _body: String,
+) -> ProgramResult {
+    let account_iter = &mut accounts.iter();
+    let sender = next_account_info(account_iter)?;
+    let _recipient_claim = next_account_info(account_iter)?;
+    let mailer_account = next_account_info(account_iter)?;
+    let sender_usdc = next_account_info(account_iter)?;
+    let mailer_usdc = next_account_info(account_iter)?;
+    let token_program = next_account_info(account_iter)?;
+
+    if !sender.is_signer {
+        return Err(ProgramError::MissingRequiredSignature);
+    }
+
+    // Load mailer state
+    let mailer_data = mailer_account.try_borrow_data()?;
+    let mailer_state: MailerState = BorshDeserialize::deserialize(&mut &mailer_data[8..])?;
+    drop(mailer_data);
+
+    let owner_fee = mailer_state.send_fee / 10; // 10% of send_fee
+
+    // Transfer only owner fee (10%)
+    invoke(
+        &spl_token::instruction::transfer(
+            token_program.key,
+            sender_usdc.key,
+            mailer_usdc.key,
+            sender.key,
+            &[],
+            owner_fee,
+        )?,
+        &[
+            sender_usdc.clone(),
+            mailer_usdc.clone(),
+            sender.clone(),
+            token_program.clone(),
+        ],
+    )?;
+
+    // Update owner claimable
+    let mut mailer_data = mailer_account.try_borrow_mut_data()?;
+    let mut mailer_state: MailerState = BorshDeserialize::deserialize(&mut &mailer_data[8..])?;
+    mailer_state.owner_claimable += owner_fee;
+    mailer_state.serialize(&mut &mut mailer_data[8..])?;
+
+    msg!("Standard mail sent from {} to {}: {}", sender.key, to, subject);
+    Ok(())
+}
+
+/// Process claim recipient share
+fn process_claim_recipient_share(_program_id: &Pubkey, accounts: &[AccountInfo]) -> ProgramResult {
+    let account_iter = &mut accounts.iter();
+    let recipient = next_account_info(account_iter)?;
+    let recipient_claim = next_account_info(account_iter)?;
+    let mailer_account = next_account_info(account_iter)?;
+    let recipient_usdc = next_account_info(account_iter)?;
+    let mailer_usdc = next_account_info(account_iter)?;
+    let token_program = next_account_info(account_iter)?;
+
+    if !recipient.is_signer {
+        return Err(ProgramError::MissingRequiredSignature);
+    }
+
+    // Load claim state
+    let mut claim_data = recipient_claim.try_borrow_mut_data()?;
+    let mut claim_state: RecipientClaim = BorshDeserialize::deserialize(&mut &claim_data[8..])?;
+
+    if claim_state.recipient != *recipient.key {
+        return Err(MailerError::InvalidRecipient.into());
+    }
+
+    if claim_state.amount == 0 {
+        return Err(MailerError::NoClaimableAmount.into());
+    }
+
+    // Check if claim period has expired
+    let current_time = Clock::get()?.unix_timestamp;
+    if current_time > claim_state.timestamp + CLAIM_PERIOD {
+        return Err(MailerError::ClaimPeriodExpired.into());
+    }
+
+    let amount = claim_state.amount;
+    claim_state.amount = 0;
+    claim_state.timestamp = 0;
+    claim_state.serialize(&mut &mut claim_data[8..])?;
+
+    // Load mailer state for PDA signing
+    let mailer_data = mailer_account.try_borrow_data()?;
+    let mailer_state: MailerState = BorshDeserialize::deserialize(&mut &mailer_data[8..])?;
+
+    // Transfer USDC from mailer to recipient
+    invoke_signed(
+        &spl_token::instruction::transfer(
+            token_program.key,
+            mailer_usdc.key,
+            recipient_usdc.key,
+            mailer_account.key,
+            &[],
+            amount,
+        )?,
+        &[
+            mailer_usdc.clone(),
+            recipient_usdc.clone(),
+            mailer_account.clone(),
+            token_program.clone(),
+        ],
+        &[&[b"mailer", &[mailer_state.bump]]],
+    )?;
+
+    msg!("Recipient {} claimed {}", recipient.key, amount);
+    Ok(())
+}
+
+/// Process claim owner share
+fn process_claim_owner_share(_program_id: &Pubkey, accounts: &[AccountInfo]) -> ProgramResult {
+    let account_iter = &mut accounts.iter();
+    let owner = next_account_info(account_iter)?;
+    let mailer_account = next_account_info(account_iter)?;
+    let owner_usdc = next_account_info(account_iter)?;
+    let mailer_usdc = next_account_info(account_iter)?;
+    let token_program = next_account_info(account_iter)?;
+
+    if !owner.is_signer {
+        return Err(ProgramError::MissingRequiredSignature);
+    }
+
+    // Load and update mailer state
+    let mut mailer_data = mailer_account.try_borrow_mut_data()?;
+    let mut mailer_state: MailerState = BorshDeserialize::deserialize(&mut &mailer_data[8..])?;
+
+    if mailer_state.owner != *owner.key {
+        return Err(MailerError::OnlyOwner.into());
+    }
+
+    if mailer_state.owner_claimable == 0 {
+        return Err(MailerError::NoClaimableAmount.into());
+    }
+
+    let amount = mailer_state.owner_claimable;
+    mailer_state.owner_claimable = 0;
+    mailer_state.serialize(&mut &mut mailer_data[8..])?;
+    drop(mailer_data);
+
+    // Transfer USDC from mailer to owner
+    invoke_signed(
+        &spl_token::instruction::transfer(
+            token_program.key,
+            mailer_usdc.key,
+            owner_usdc.key,
+            mailer_account.key,
+            &[],
+            amount,
+        )?,
+        &[
+            mailer_usdc.clone(),
+            owner_usdc.clone(),
+            mailer_account.clone(),
+            token_program.clone(),
+        ],
+        &[&[b"mailer", &[mailer_state.bump]]],
+    )?;
+
+    msg!("Owner {} claimed {}", owner.key, amount);
+    Ok(())
+}
+
+/// Set send fee (owner only)
+fn process_set_fee(_program_id: &Pubkey, accounts: &[AccountInfo], new_fee: u64) -> ProgramResult {
+    let account_iter = &mut accounts.iter();
+    let owner = next_account_info(account_iter)?;
+    let mailer_account = next_account_info(account_iter)?;
+
+    if !owner.is_signer {
+        return Err(ProgramError::MissingRequiredSignature);
+    }
+
+    // Load and update mailer state
+    let mut mailer_data = mailer_account.try_borrow_mut_data()?;
+    let mut mailer_state: MailerState = BorshDeserialize::deserialize(&mut &mailer_data[8..])?;
+
+    if mailer_state.owner != *owner.key {
+        return Err(MailerError::OnlyOwner.into());
+    }
+
+    let old_fee = mailer_state.send_fee;
+    mailer_state.send_fee = new_fee;
+    mailer_state.serialize(&mut &mut mailer_data[8..])?;
+
+    msg!("Fee updated from {} to {}", old_fee, new_fee);
+    Ok(())
+}
+
+/// Delegate to another address
+fn process_delegate_to(
+    program_id: &Pubkey,
+    accounts: &[AccountInfo],
+    delegate: Option<Pubkey>,
+) -> ProgramResult {
+    let account_iter = &mut accounts.iter();
+    let delegator = next_account_info(account_iter)?;
+    let delegation_account = next_account_info(account_iter)?;
+    let mailer_account = next_account_info(account_iter)?;
+    let delegator_usdc = next_account_info(account_iter)?;
+    let mailer_usdc = next_account_info(account_iter)?;
+    let token_program = next_account_info(account_iter)?;
+    let system_program = next_account_info(account_iter)?;
+
+    if !delegator.is_signer {
+        return Err(ProgramError::MissingRequiredSignature);
+    }
+
+    // Load mailer state
+    let mailer_data = mailer_account.try_borrow_data()?;
+    let mailer_state: MailerState = BorshDeserialize::deserialize(&mut &mailer_data[8..])?;
+    drop(mailer_data);
+
+    // Verify delegation account PDA
+    let (delegation_pda, delegation_bump) = Pubkey::find_program_address(
+        &[b"delegation", delegator.key.as_ref()], 
+        program_id
+    );
+
+    if delegation_account.key != &delegation_pda {
+        return Err(MailerError::InvalidPDA.into());
+    }
+
+    // Create delegation account if needed
+    if delegation_account.lamports() == 0 {
+        let rent = Rent::get()?;
+        let space = 8 + Delegation::LEN;
+        let lamports = rent.minimum_balance(space);
+
+        invoke_signed(
+            &system_instruction::create_account(
+                delegator.key,
+                delegation_account.key,
+                lamports,
+                space as u64,
+                program_id,
+            ),
+            &[
+                delegator.clone(),
+                delegation_account.clone(),
+                system_program.clone(),
+            ],
+            &[&[b"delegation", delegator.key.as_ref(), &[delegation_bump]]],
+        )?;
+
+        // Initialize delegation account
+        let mut delegation_data = delegation_account.try_borrow_mut_data()?;
+        delegation_data[0..8].copy_from_slice(&hash_discriminator("account:Delegation").to_le_bytes());
+
+        let delegation_state = Delegation {
+            delegator: *delegator.key,
+            delegate: None,
+            bump: delegation_bump,
+        };
+
+        delegation_state.serialize(&mut &mut delegation_data[8..])?;
+        drop(delegation_data);
+    }
+
+    // If setting delegation (not clearing), charge fee
+    if let Some(delegate_key) = delegate {
+        if delegate_key != Pubkey::default() {
+            invoke(
+                &spl_token::instruction::transfer(
+                    token_program.key,
+                    delegator_usdc.key,
+                    mailer_usdc.key,
+                    delegator.key,
+                    &[],
+                    mailer_state.delegation_fee,
+                )?,
+                &[
+                    delegator_usdc.clone(),
+                    mailer_usdc.clone(),
+                    delegator.clone(),
+                    token_program.clone(),
+                ],
+            )?;
+        }
+    }
+
+    // Update delegation
+    let mut delegation_data = delegation_account.try_borrow_mut_data()?;
+    let mut delegation_state: Delegation = BorshDeserialize::deserialize(&mut &delegation_data[8..])?;
+    delegation_state.delegate = delegate;
+    delegation_state.serialize(&mut &mut delegation_data[8..])?;
+
+    msg!("Delegation set from {} to {:?}", delegator.key, delegate);
+    Ok(())
+}
+
+/// Reject delegation
+fn process_reject_delegation(_program_id: &Pubkey, accounts: &[AccountInfo]) -> ProgramResult {
+    let account_iter = &mut accounts.iter();
+    let rejector = next_account_info(account_iter)?;
+    let delegation_account = next_account_info(account_iter)?;
+
+    if !rejector.is_signer {
+        return Err(ProgramError::MissingRequiredSignature);
+    }
+
+    // Load and update delegation state
+    let mut delegation_data = delegation_account.try_borrow_mut_data()?;
+    let mut delegation_state: Delegation = BorshDeserialize::deserialize(&mut &delegation_data[8..])?;
+
+    // Verify the rejector is the current delegate
+    if delegation_state.delegate != Some(*rejector.key) {
+        return Err(MailerError::NoDelegationToReject.into());
+    }
+
+    delegation_state.delegate = None;
+    delegation_state.serialize(&mut &mut delegation_data[8..])?;
+
+    msg!("Delegation rejected by {}", rejector.key);
+    Ok(())
+}
+
+/// Set delegation fee (owner only)
+fn process_set_delegation_fee(
+    _program_id: &Pubkey,
+    accounts: &[AccountInfo],
+    new_fee: u64,
+) -> ProgramResult {
+    let account_iter = &mut accounts.iter();
+    let owner = next_account_info(account_iter)?;
+    let mailer_account = next_account_info(account_iter)?;
+
+    if !owner.is_signer {
+        return Err(ProgramError::MissingRequiredSignature);
+    }
+
+    // Load and update mailer state
+    let mut mailer_data = mailer_account.try_borrow_mut_data()?;
+    let mut mailer_state: MailerState = BorshDeserialize::deserialize(&mut &mailer_data[8..])?;
+
+    if mailer_state.owner != *owner.key {
+        return Err(MailerError::OnlyOwner.into());
+    }
+
+    let old_fee = mailer_state.delegation_fee;
+    mailer_state.delegation_fee = new_fee;
+    mailer_state.serialize(&mut &mut mailer_data[8..])?;
+
+    msg!("Delegation fee updated from {} to {}", old_fee, new_fee);
+    Ok(())
+}
+
+/// Record revenue shares for priority messages
+fn record_shares(
+    recipient_claim: &AccountInfo,
+    mailer_account: &AccountInfo,
+    recipient: Pubkey,
+    total_amount: u64,
+) -> ProgramResult {
+    let owner_amount = total_amount / 10; // 10% of total_amount
+    let recipient_amount = total_amount - owner_amount;
+
+    // Update recipient's claimable amount
+    let mut claim_data = recipient_claim.try_borrow_mut_data()?;
+    let mut claim_state: RecipientClaim = BorshDeserialize::deserialize(&mut &claim_data[8..])?;
+
+    claim_state.recipient = recipient;
+    claim_state.amount += recipient_amount;
+    if claim_state.timestamp == 0 {
+        claim_state.timestamp = Clock::get()?.unix_timestamp;
+    }
+    claim_state.serialize(&mut &mut claim_data[8..])?;
+    drop(claim_data);
+
+    // Update owner's claimable amount
+    let mut mailer_data = mailer_account.try_borrow_mut_data()?;
+    let mut mailer_state: MailerState = BorshDeserialize::deserialize(&mut &mailer_data[8..])?;
+    mailer_state.owner_claimable += owner_amount;
+    mailer_state.serialize(&mut &mut mailer_data[8..])?;
+
+    msg!("Shares recorded: recipient {}, owner {}", recipient_amount, owner_amount);
+    Ok(())
+}
+
+/// Simple hash function for account discriminators
+fn hash_discriminator(name: &str) -> u64 {
+    use std::collections::hash_map::DefaultHasher;
+    use std::hash::{Hash, Hasher};
+
+    let mut hasher = DefaultHasher::new();
+    name.hash(&mut hasher);
+    hasher.finish()
 }

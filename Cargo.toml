@@ -9,4 +9,7 @@ anchor-lang = { version = "0.28.0", features = ["derive"] }
 anchor-spl = "0.28.0"
 
 [profile.release]
+opt-level = 'z'  # Optimize for size
+lto = true       # Enable link-time optimization
+codegen-units = 1
 overflow-checks = true

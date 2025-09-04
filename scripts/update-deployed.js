@@ -53,7 +53,7 @@ function updateDeployedFile(network, contractName, address, additionalInfo = {})
       authority: additionalInfo.authority,
       dataLength: additionalInfo.dataLength,
       deploymentSlot: additionalInfo.deploymentSlot,
-      status: "deployed",
+      status: 'deployed',
       ...additionalInfo
     };
 

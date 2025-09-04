@@ -83,7 +83,7 @@ export function validateAmount(amount: string | number | bigint): bigint {
     } else {
       throw new Error('Invalid amount format');
     }
-  } catch (error) {
+  } catch {
     throw new Error('Invalid amount format');
   }
 
