@@ -10,31 +10,16 @@
           "rpcUrl": "https://api.devnet.solana.com",
           "deploymentDate": "2025-09-03",
           "programs": {
-            "mail_service": {
-              "programId": "99U2sAJ1ESKFk5Jz5WYjBWUzdnNyGUc2KLfpaXs5dqi3",
-              "programDataAddress": "3BXNG7Qhhccyn9jvgA6Yc7uRMVqcZEjPZb1AcBRFq3dz",
-              "authority": "8GHjprn5r4K4s4JWy2BhKwYMBsMNedR8RaufhfY92Pqs",
-              "dataLength": 345008,
-              "deploymentSlot": 405475148,
-              "status": "deployed"
-            },
             "mailer": {
               "programId": "LXnAjV225sxynbhbjMtQy8gnEatzVH97467D9UqNRBc",
               "status": "pending_deployment",
               "estimatedCost": "2.7 SOL",
               "buildStatus": "completed",
-              "features": "Integrated messaging and delegation functionality"
-            },
-            "mail_box_factory": {
-              "programId": "DDciTwx3Xf4NxWDKZVVHymaWYWzFn37AWRn5uuLtGGHN",
-              "status": "pending_deployment",
-              "estimatedCost": "2.3 SOL",
-              "buildStatus": "completed"
+              "features": "Integrated messaging and delegation functionality (consolidated from mail_service)"
             }
           },
           "deploymentCosts": {
-            "mail_service": "2.40245976 SOL",
-            "totalEstimated": "7.4 SOL"
+            "mailer": "2.7 SOL (estimated)"
           },
           "wallet": {
             "publicKey": "8GHjprn5r4K4s4JWy2BhKwYMBsMNedR8RaufhfY92Pqs",

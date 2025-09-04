@@ -16,16 +16,12 @@ export interface DeploymentConfig {
     network: string;
     cluster: string;
     usdcMint: PublicKey;
-    mailService: PublicKey;
     mailer: PublicKey;
-}
-
-export interface MailServiceFees {
-    delegationFee: number;
 }
 
 export interface MailerFees {
     sendFee: number;
+    delegationFee: number;
 }
 
 export const USDC_DECIMALS = 6;

@@ -1,8 +1,6 @@
 [workspace]
 members = [
-    "programs/mail_service",
-    "programs/mailer", 
-    "programs/mail_box_factory"
+    "programs/mailer"
 ]
 resolver = "2"
 
