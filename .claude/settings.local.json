@@ -94,7 +94,8 @@
       "Bash(npm uninstall:*)",
       "Bash(RUSTFLAGS=\"-Z next-lockfile-bump\" cargo build-sbf --manifest-path programs/mailer/Cargo.toml)",
       "Bash(ANCHOR_PROVIDER_URL=http://localhost:8899 ANCHOR_WALLET=/dev/null ~/.cargo/bin/anchor build --skip-lint)",
-      "Bash(npx hardhat clean:*)"
+      "Bash(npx hardhat clean:*)",
+      "mcp__ide__getDiagnostics"
     ],
     "deny": [],
     "defaultMode": "acceptEdits"
