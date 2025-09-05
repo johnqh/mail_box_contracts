@@ -4,6 +4,9 @@ version = "0.1.0"
 description = "MailBox Solana - Native messaging system with USDC fees and revenue sharing"
 edition = "2021"
 
+[lints.rust]
+unexpected_cfgs = { level = "allow", check-cfg = ['cfg(feature, values("custom-heap", "custom-panic"))', 'cfg(target_os, values("solana"))'] }
+
 [lib]
 crate-type = ["cdylib", "lib"]
 name = "mailer"
