@@ -1,3 +1,13 @@
-export * from './mailbox-client';
-export * from './wallet-detector';
-export * from './types';
+// Named exports for unified mailbox clients
+export { UnifiedMailBoxClient } from './mailbox-client';
+export { WalletDetector } from './wallet-detector';
+export type {
+  UnifiedTransaction,
+  UnifiedWallet,
+  ChainConfig,
+  EVMConfig,
+  SolanaConfig,
+  MessageResult,
+  DomainResult,
+  DelegationResult
+} from './types';

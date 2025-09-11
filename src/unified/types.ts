@@ -9,7 +9,7 @@ export interface UnifiedTransaction {
 export interface UnifiedWallet {
   address: string;
   chainType: 'evm' | 'solana';
-  signTransaction: (tx: any) => Promise<any>;
+  signTransaction: (tx: unknown) => Promise<unknown>;
   publicKey?: string; // For Solana wallets
 }
 

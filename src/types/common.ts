@@ -237,7 +237,7 @@ export interface OperationError {
   /** Optional transaction hash if available */
   txHash?: string;
   /** Optional underlying error details */
-  details?: any;
+  details?: unknown;
 }
 
 // ============================================================================
@@ -309,8 +309,8 @@ export interface MessageFilter {
  * @param value - Value to check
  * @returns True if value is PublicKey
  */
-export function isPublicKey(value: any): value is PublicKey {
-  return value && typeof value === 'object' && value.constructor.name === 'PublicKey';
+export function isPublicKey(value: unknown): value is PublicKey {
+  return value != null && typeof value === 'object' && value.constructor.name === 'PublicKey';
 }
 
 /**
@@ -318,7 +318,7 @@ export function isPublicKey(value: any): value is PublicKey {
  * @param value - Value to check  
  * @returns True if value is EVM address string
  */
-export function isEvmAddress(value: any): value is string {
+export function isEvmAddress(value: unknown): value is string {
   return typeof value === 'string' && /^0x[a-fA-F0-9]{40}$/.test(value);
 }
 

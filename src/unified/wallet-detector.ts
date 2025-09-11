@@ -4,6 +4,7 @@ export class WalletDetector {
    * @param wallet - The wallet object to analyze
    * @returns The detected chain type
    */
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   static detectWalletType(wallet: any): 'evm' | 'solana' {
     // Check for Solana wallet interface
     if (wallet.publicKey && wallet.signTransaction && !wallet.address) {
@@ -21,7 +22,7 @@ export class WalletDetector {
     }
     
     // Check for specific Solana wallet adapters
-    if (wallet.adapter && wallet.adapter.name) {
+    if (wallet.adapter && typeof wallet.adapter === 'object' && 'name' in wallet.adapter) {
       return 'solana';
     }
     

@@ -115,29 +115,29 @@ export const NETWORK_CONFIGS = {
 export function createChainConfig(evmNetwork?: string, solanaNetwork?: string): ChainConfig {
   const config: ChainConfig = {};
 
-  if (evmNetwork && (NETWORK_CONFIGS as any)[evmNetwork]) {
-    const evmConfig = (NETWORK_CONFIGS as any)[evmNetwork];
+  if (evmNetwork && (NETWORK_CONFIGS as Record<string, unknown>)[evmNetwork]) {
+    const evmConfig = (NETWORK_CONFIGS as Record<string, Record<string, unknown>>)[evmNetwork];
     config.evm = {
-      rpc: evmConfig.rpc,
-      chainId: evmConfig.chainId!,
+      rpc: evmConfig.rpc as string,
+      chainId: evmConfig.chainId as number,
       contracts: {
         mailService: '', // To be filled by deployment
         mailer: '',
-        usdc: evmConfig.usdc!
+        usdc: evmConfig.usdc as string
       }
     };
   }
 
-  if (solanaNetwork && (NETWORK_CONFIGS as any)[solanaNetwork]) {
-    const solanaConfig = (NETWORK_CONFIGS as any)[solanaNetwork];
+  if (solanaNetwork && (NETWORK_CONFIGS as Record<string, unknown>)[solanaNetwork]) {
+    const solanaConfig = (NETWORK_CONFIGS as Record<string, Record<string, unknown>>)[solanaNetwork];
     config.solana = {
-      rpc: solanaConfig.rpc,
+      rpc: solanaConfig.rpc as string,
       programs: {
         mailService: '8EKjCLZjz6LKRxZcQ6LwwF5V8P3TCEgM2CdQg4pZxXHE',
         mailer: '9FLkBDGpZBcR8LMsQ7MwwV6X9P4TDFgN3DeRh5qYyHJF',
         mailBoxFactory: 'FactoryABC123def456GHI789jkl012MNO345pqr678STU'
       },
-      usdcMint: solanaConfig.usdcMint!
+      usdcMint: solanaConfig.usdcMint as string
     };
   }
 

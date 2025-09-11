@@ -121,8 +121,31 @@ function encodeDelegateTo(delegate: PublicKey | null): Buffer {
     }
 }
 
+// Account data parsing interfaces
+interface MailerState {
+  owner: PublicKey;
+  usdc_mint: PublicKey;
+  send_fee: bigint;
+  delegation_fee: bigint;
+  owner_claimable: bigint;
+  bump: number;
+}
+
+interface RecipientClaim {
+  recipient: PublicKey;
+  amount: bigint;
+  timestamp: bigint;
+  bump: number;
+}
+
+interface Delegation {
+  delegator: PublicKey;
+  delegate: PublicKey | null;
+  bump: number;
+}
+
 // Account data parsing functions
-function parseMailerState(data: Buffer): any {
+function parseMailerState(data: Buffer): MailerState {
     let offset = 0;
     const owner = new PublicKey(data.slice(offset, offset + 32));
     offset += 32;
@@ -146,7 +169,7 @@ function parseMailerState(data: Buffer): any {
     };
 }
 
-function parseRecipientClaim(data: Buffer): any {
+function parseRecipientClaim(data: Buffer): RecipientClaim {
     let offset = 0;
     const recipient = new PublicKey(data.slice(offset, offset + 32));
     offset += 32;
@@ -164,7 +187,7 @@ function parseRecipientClaim(data: Buffer): any {
     };
 }
 
-function parseDelegation(data: Buffer): any {
+function parseDelegation(data: Buffer): Delegation {
     let offset = 0;
     const delegator = new PublicKey(data.slice(offset, offset + 32));
     offset += 32;
