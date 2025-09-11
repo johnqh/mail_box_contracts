@@ -1,6 +1,6 @@
 {
   "name": "@johnqh/mail_box_contracts",
-  "version": "1.5.1",
+  "version": "1.5.2",
   "main": "dist/unified/src/unified/index.js",
   "types": "dist/unified/src/unified/index.d.ts",
   "scripts": {
