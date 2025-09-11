@@ -240,7 +240,7 @@ jobs:
         run: |
           # Get the version that was just published to NPM
           sleep 30  # Wait for NPM registry to sync
-          PUBLISHED_VERSION=$(npm view mail_box_contracts version)
+          PUBLISHED_VERSION=$(npm view @johnqh/mail_box_contracts version)
           echo "published_version=$PUBLISHED_VERSION" >> $GITHUB_OUTPUT
           echo "version_tag=v$PUBLISHED_VERSION" >> $GITHUB_OUTPUT
           echo "📦 Published version: $PUBLISHED_VERSION"
@@ -279,7 +279,7 @@ jobs:
         id: get_version
         run: |
           # Get the published version from NPM
-          PUBLISHED_VERSION=$(npm view mail_box_contracts version)
+          PUBLISHED_VERSION=$(npm view @johnqh/mail_box_contracts version)
           VERSION="v$PUBLISHED_VERSION"
           echo "version=${VERSION}" >> $GITHUB_OUTPUT
           echo "📦 Creating GitHub release for: $VERSION"
@@ -303,7 +303,7 @@ jobs:
           echo "" >> CHANGELOG.md
           echo "### 🔧 Installation:" >> CHANGELOG.md
           echo '```bash' >> CHANGELOG.md
-          echo "npm install mail_box_contracts@${{ steps.get_version.outputs.version }}" >> CHANGELOG.md
+          echo "npm install @johnqh/mail_box_contracts@${{ steps.get_version.outputs.version }}" >> CHANGELOG.md
           echo '```' >> CHANGELOG.md
           
           echo "" >> CHANGELOG.md
@@ -340,14 +340,14 @@ jobs:
         id: get_version
         run: |
           # Get the published version from NPM
-          PUBLISHED_VERSION=$(npm view mail_box_contracts version)
+          PUBLISHED_VERSION=$(npm view @johnqh/mail_box_contracts version)
           VERSION="v$PUBLISHED_VERSION"
           echo "version=${VERSION}" >> $GITHUB_OUTPUT
           echo "📦 Post-release tasks for: $VERSION"
       
       - name: Verify NPM package
         run: |
-          PACKAGE_NAME="mail_box_contracts"
+          PACKAGE_NAME="@johnqh/mail_box_contracts"
           sleep 60  # Wait for npm registry to fully sync
           
           echo "🔍 Verifying NPM package publication..."
@@ -362,8 +362,8 @@ jobs:
           echo "## 🎉 Release ${{ steps.get_version.outputs.version }} Complete!" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "### 📦 Published Package:" >> $GITHUB_STEP_SUMMARY
-          echo "- **NPM**: \`npm install mail_box_contracts@${{ steps.get_version.outputs.version }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "- **NPM**: \`npm install @johnqh/mail_box_contracts@${{ steps.get_version.outputs.version }}\`" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "### 🔗 Links:" >> $GITHUB_STEP_SUMMARY
-          echo "- [NPM Package](https://www.npmjs.com/package/mail_box_contracts)" >> $GITHUB_STEP_SUMMARY
+          echo "- [NPM Package](https://www.npmjs.com/package/@johnqh/mail_box_contracts)" >> $GITHUB_STEP_SUMMARY
           echo "- [GitHub Release](https://github.com/${{ github.repository }}/releases/tag/${{ steps.get_version.outputs.version }})" >> $GITHUB_STEP_SUMMARY

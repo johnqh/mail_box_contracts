@@ -11,7 +11,7 @@ A clear and concise description of what the bug is.
 
 ## 📋 To Reproduce
 Steps to reproduce the behavior:
-1. Install package with `npm install mail_box_contracts@x.x.x`
+1. Install package with `npm install @johnqh/mail_box_contracts@x.x.x`
 2. Import contracts with `...`
 3. Call function `...`
 4. See error
@@ -31,7 +31,7 @@ A clear and concise description of what actually happened.
 ## 📝 Code Sample
 ```typescript
 // Minimal reproducible code sample
-import { MailBox__factory } from 'mail_box_contracts';
+import { MailBox__factory } from '@johnqh/mail_box_contracts';
 // ... your code that demonstrates the bug
 ```
 
