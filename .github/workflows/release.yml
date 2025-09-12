@@ -256,12 +256,17 @@ jobs:
           git remote set-url origin https://x-access-token:${GITHUB_TOKEN}@github.com/${{ github.repository }}.git
           
           TAG="${{ steps.get_published_version.outputs.version_tag }}"
-          echo "🏷️ Creating tag: $TAG"
+          echo "🏷️ Checking if tag exists: $TAG"
           
-          git tag "$TAG" -m "Release $TAG - Published to NPM"
-          git push origin "$TAG"
-          
-          echo "✅ Tag $TAG created and pushed"
+          # Check if tag already exists
+          if git ls-remote --tags origin | grep -q "refs/tags/$TAG$"; then
+            echo "✅ Tag $TAG already exists - skipping creation"
+          else
+            echo "🏷️ Creating new tag: $TAG"
+            git tag "$TAG" -m "Release $TAG - Published to NPM"
+            git push origin "$TAG"
+            echo "✅ Tag $TAG created and pushed"
+          fi
 
   create-github-release:
     name: Create GitHub Release
