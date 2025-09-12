@@ -45,7 +45,7 @@ npm run build     # Check TypeScript compilation
 | **Chains Supported** | Ethereum, Polygon, Arbitrum, Optimism, Solana |
 | **Main Contracts** | MailService.sol, Mailer.sol, MockUSDC.sol |
 | **Main Programs** | mail_service, mailer, mail_box_factory |
-| **Unified Client** | `src/unified/mailbox-client.ts` |
+| **Unified Client** | `src/unified/onchain-mailer-client.ts` |
 
 ## 🏗️ Project Architecture
 
@@ -86,7 +86,7 @@ npm run compile
 npm test
 
 # 6. Update unified client if needed
-# Edit src/unified/mailbox-client.ts
+# Edit src/unified/onchain-mailer-client.ts
 ```
 
 ### 2. Bug Fix Workflow
@@ -210,7 +210,7 @@ describe("Contract Function", () => {
 4. **`.ai-config.json`** - AI tool configuration
 
 ### Key Code Files  
-1. **`src/unified/mailbox-client.ts`** - Main unified client
+1. **`src/unified/onchain-mailer-client.ts`** - Main unified client
 2. **`src/unified/types.ts`** - TypeScript interfaces
 3. **`contracts/Mailer.sol`** - Core EVM contract
 4. **`test/evm/Mailer.test.ts`** - Comprehensive test patterns

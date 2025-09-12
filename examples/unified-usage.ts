@@ -4,7 +4,7 @@
  * @notice Demonstrates automatic chain detection and seamless cross-chain functionality
  */
 
-import { UnifiedMailBoxClient, WalletDetector } from '../src/unified';
+import { OnchainMailerClient, WalletDetector } from '../src/unified';
 import { DEFAULT_CHAIN_CONFIG, TESTNET_CHAIN_CONFIG } from '../src/utils';
 import { ethers } from 'ethers';
 import { Connection, Keypair } from '@solana/web3.js';
@@ -34,7 +34,7 @@ async function unifiedUsageExamples() {
   console.log('\n🌐 Example 2: Unified Client with Solana Wallet');
   
   try {
-    const unifiedClient = new UnifiedMailBoxClient(solanaWallet, TESTNET_CHAIN_CONFIG);
+    const unifiedClient = new OnchainMailerClient(solanaWallet, TESTNET_CHAIN_CONFIG);
     console.log('✅ Unified client initialized for:', unifiedClient.getChainType());
     console.log('📍 Wallet address:', unifiedClient.getWalletAddress());
     
@@ -64,7 +64,7 @@ async function unifiedUsageExamples() {
   console.log('\n🌐 Example 3: Unified Client with EVM Wallet');
   
   try {
-    const unifiedClient = new UnifiedMailBoxClient(evmWallet, TESTNET_CHAIN_CONFIG);
+    const unifiedClient = new OnchainMailerClient(evmWallet, TESTNET_CHAIN_CONFIG);
     console.log('✅ Unified client initialized for:', unifiedClient.getChainType());
     console.log('📍 Wallet address:', unifiedClient.getWalletAddress());
     

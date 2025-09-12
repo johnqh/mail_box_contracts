@@ -1,5 +1,5 @@
 // Named exports for unified mailbox clients
-export { UnifiedMailBoxClient } from './mailbox-client';
+export { OnchainMailerClient } from './onchain-mailer-client';
 export { WalletDetector } from './wallet-detector';
 export type {
   UnifiedTransaction,

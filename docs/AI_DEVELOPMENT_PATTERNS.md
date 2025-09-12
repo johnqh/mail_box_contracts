@@ -204,7 +204,7 @@ npm run compile
 anchor build --skip-lint
 
 # 4. Fix unified client if needed
-# Edit src/unified/mailbox-client.ts
+# Edit src/unified/onchain-mailer-client.ts
 
 # 5. Verify fix
 npm test
@@ -403,15 +403,15 @@ event MessageSent(
 
 ```typescript
 // Cache expensive operations
-class UnifiedMailBoxClient {
+class OnchainMailerClient {
     private static moduleCache = new Map();
     
     private async loadModule(name: string) {
-        if (!UnifiedMailBoxClient.moduleCache.has(name)) {
+        if (!OnchainMailerClient.moduleCache.has(name)) {
             const module = await import(name);
-            UnifiedMailBoxClient.moduleCache.set(name, module);
+            OnchainMailerClient.moduleCache.set(name, module);
         }
-        return UnifiedMailBoxClient.moduleCache.get(name);
+        return OnchainMailerClient.moduleCache.get(name);
     }
 }
 ```

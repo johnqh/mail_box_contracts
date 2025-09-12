@@ -9,7 +9,7 @@ import {
 } from './types';
 
 /**
- * UnifiedMailBoxClient - Multi-chain messaging client for MailBox protocol
+ * OnchainMailerClient - Multi-chain messaging client for MailBox protocol
  * 
  * This class provides a unified interface for interacting with MailBox contracts
  * across different blockchain networks (EVM and Solana). It automatically detects
@@ -30,7 +30,7 @@ import {
  *     }
  *   }
  * };
- * const evmClient = new UnifiedMailBoxClient(evmWallet, evmConfig);
+ * const evmClient = new OnchainMailerClient(evmWallet, evmConfig);
  * 
  * // Solana wallet (Phantom, etc.)
  * const solanaWallet = window.solana;
@@ -45,7 +45,7 @@ import {
  *     usdcMint: 'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v'
  *   }
  * };
- * const solanaClient = new UnifiedMailBoxClient(solanaWallet, solanaConfig);
+ * const solanaClient = new OnchainMailerClient(solanaWallet, solanaConfig);
  * 
  * // Send messages
  * const result = await client.sendMessage("Hello", "World!", false);
@@ -72,7 +72,7 @@ import {
  * @version 1.5.2
  * @since 1.0.0
  */
-export class UnifiedMailBoxClient {
+export class OnchainMailerClient {
   private chainType: 'evm' | 'solana';
   private wallet: UnifiedWallet;
   private config: ChainConfig;
@@ -84,7 +84,7 @@ export class UnifiedMailBoxClient {
   private static solanaModules: any = null;
 
   /**
-   * Initialize UnifiedMailBoxClient with wallet and chain configuration
+   * Initialize OnchainMailerClient with wallet and chain configuration
    * 
    * @param wallet - Wallet instance (EVM or Solana compatible)
    * @param config - Chain configuration for EVM and/or Solana networks
@@ -100,7 +100,7 @@ export class UnifiedMailBoxClient {
    * const config = { 
    *   evm: { rpc: '...', chainId: 1, contracts: {...} } 
    * };
-   * const client = new UnifiedMailBoxClient(wallet, config);
+   * const client = new OnchainMailerClient(wallet, config);
    * ```
    */
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -125,7 +125,7 @@ export class UnifiedMailBoxClient {
       this.validateWallet(wallet);
       
     } catch (error) {
-      throw new Error(`UnifiedMailBoxClient initialization failed: ${error instanceof Error ? error.message : String(error)}`);
+      throw new Error(`OnchainMailerClient initialization failed: ${error instanceof Error ? error.message : String(error)}`);
     }
   }
 
@@ -268,13 +268,13 @@ export class UnifiedMailBoxClient {
 
   // Performance optimization: cache module imports
   private async getEVMModules() {
-    if (!UnifiedMailBoxClient.evmModules) {
+    if (!OnchainMailerClient.evmModules) {
       try {
         const [viemModule, evmModule] = await Promise.all([
           import('viem'),
           import('../evm')
         ]);
-        UnifiedMailBoxClient.evmModules = {
+        OnchainMailerClient.evmModules = {
           viem: viemModule,
           MailerClient: evmModule.MailerClient
         };
@@ -282,17 +282,17 @@ export class UnifiedMailBoxClient {
         throw new Error(`Failed to load EVM modules: ${error instanceof Error ? error.message : String(error)}`);
       }
     }
-    return UnifiedMailBoxClient.evmModules;
+    return OnchainMailerClient.evmModules;
   }
 
   private async getSolanaModules() {
-    if (!UnifiedMailBoxClient.solanaModules) {
+    if (!OnchainMailerClient.solanaModules) {
       try {
         const [solanaModule, web3Module] = await Promise.all([
           import('../solana'),
           import('@solana/web3.js')
         ]);
-        UnifiedMailBoxClient.solanaModules = {
+        OnchainMailerClient.solanaModules = {
           MailerClient: solanaModule.MailerClient,
           PublicKey: web3Module.PublicKey,
           Connection: web3Module.Connection
@@ -301,7 +301,7 @@ export class UnifiedMailBoxClient {
         throw new Error(`Failed to load Solana modules: ${error instanceof Error ? error.message : String(error)}`);
       }
     }
-    return UnifiedMailBoxClient.solanaModules;
+    return OnchainMailerClient.solanaModules;
   }
 
   // Private methods for EVM implementation

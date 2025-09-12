@@ -143,7 +143,7 @@
     "key_interfaces": [
       "src/unified/types.ts",
       "src/types/common.ts",
-      "src/unified/mailbox-client.ts",
+      "src/unified/onchain-mailer-client.ts",
       "src/unified/wallet-detector.ts"
     ],
     "test_patterns": [

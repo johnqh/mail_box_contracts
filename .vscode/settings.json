@@ -27,6 +27,7 @@
   
   // Editor settings for AI assistance
   "editor.formatOnSave": true,
+  "editor.defaultFormatter": "esbenp.prettier-vscode",
   "editor.codeActionsOnSave": {
     "source.fixAll": "explicit"
   },

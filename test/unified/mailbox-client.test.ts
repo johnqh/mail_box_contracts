@@ -3,12 +3,12 @@ import chaiAsPromised from "chai-as-promised";
 import chai from "chai";
 import { Keypair } from "@solana/web3.js";
 import { Wallet } from "@coral-xyz/anchor";
-import { UnifiedMailBoxClient } from "../../src/unified/mailbox-client";
+import { OnchainMailerClient } from "../../src/unified/onchain-mailer-client";
 import { ChainConfig } from "../../src/unified/types";
 
 chai.use(chaiAsPromised);
 
-describe("UnifiedMailBoxClient", function () {
+describe("OnchainMailerClient", function () {
   let testConfig: ChainConfig;
 
   beforeEach(function () {
@@ -39,7 +39,7 @@ describe("UnifiedMailBoxClient", function () {
       const keypair = Keypair.generate();
       const solanaWallet = new Wallet(keypair);
 
-      const client = new UnifiedMailBoxClient(solanaWallet, testConfig);
+      const client = new OnchainMailerClient(solanaWallet, testConfig);
 
       expect(client.getChainType()).to.equal("solana");
       expect(client.getWalletAddress()).to.equal(keypair.publicKey.toString());
@@ -52,7 +52,7 @@ describe("UnifiedMailBoxClient", function () {
         signTransaction: async (tx: any) => tx
       };
 
-      const client = new UnifiedMailBoxClient(evmWallet, testConfig);
+      const client = new OnchainMailerClient(evmWallet, testConfig);
 
       expect(client.getChainType()).to.equal("evm");
       expect(client.getWalletAddress()).to.equal("0x1234567890123456789012345678901234567890");
@@ -69,7 +69,7 @@ describe("UnifiedMailBoxClient", function () {
         solana: testConfig.solana
       };
 
-      expect(() => new UnifiedMailBoxClient(evmWallet, configWithoutEVM))
+      expect(() => new OnchainMailerClient(evmWallet, configWithoutEVM))
         .to.throw("EVM configuration required for EVM wallet");
     });
 
@@ -81,7 +81,7 @@ describe("UnifiedMailBoxClient", function () {
         evm: testConfig.evm
       };
 
-      expect(() => new UnifiedMailBoxClient(solanaWallet, configWithoutSolana))
+      expect(() => new OnchainMailerClient(solanaWallet, configWithoutSolana))
         .to.throw("Solana configuration required for Solana wallet");
     });
   });
@@ -94,7 +94,7 @@ describe("UnifiedMailBoxClient", function () {
         signTransaction: async (tx: any) => tx
       };
 
-      const client = new UnifiedMailBoxClient(evmWallet, testConfig);
+      const client = new OnchainMailerClient(evmWallet, testConfig);
 
       // Solana address format should fail for EVM wallet
       const solanaAddress = Keypair.generate().publicKey.toString();
@@ -107,7 +107,7 @@ describe("UnifiedMailBoxClient", function () {
       const keypair = Keypair.generate();
       const solanaWallet = new Wallet(keypair);
 
-      const client = new UnifiedMailBoxClient(solanaWallet, testConfig);
+      const client = new OnchainMailerClient(solanaWallet, testConfig);
 
       // EVM address format should fail for Solana wallet  
       const evmAddress = "0x1234567890123456789012345678901234567890";
@@ -121,7 +121,7 @@ describe("UnifiedMailBoxClient", function () {
     it("should throw error for domain registration (not implemented)", async function () {
       const keypair = Keypair.generate();
       const solanaWallet = new Wallet(keypair);
-      const client = new UnifiedMailBoxClient(solanaWallet, testConfig);
+      const client = new OnchainMailerClient(solanaWallet, testConfig);
 
       await expect(client.registerDomain("test.domain"))
         .to.be.rejected;
@@ -135,7 +135,7 @@ describe("UnifiedMailBoxClient", function () {
 
       const keypair = Keypair.generate();
       const solanaWallet = new Wallet(keypair);
-      const client = new UnifiedMailBoxClient(solanaWallet, testConfig);
+      const client = new OnchainMailerClient(solanaWallet, testConfig);
 
       // Should attempt to use Solana implementation
       await expect(client.sendMessage("Test", "Body"))
@@ -147,7 +147,7 @@ describe("UnifiedMailBoxClient", function () {
     it("should return correct chain type", function () {
       const keypair = Keypair.generate();
       const solanaWallet = new Wallet(keypair);
-      const client = new UnifiedMailBoxClient(solanaWallet, testConfig);
+      const client = new OnchainMailerClient(solanaWallet, testConfig);
 
       expect(client.getChainType()).to.equal("solana");
     });
@@ -159,7 +159,7 @@ describe("UnifiedMailBoxClient", function () {
         signTransaction: async (tx: any) => tx
       };
 
-      const client = new UnifiedMailBoxClient(evmWallet, testConfig);
+      const client = new OnchainMailerClient(evmWallet, testConfig);
       expect(client.getWalletAddress()).to.equal("0x1234567890123456789012345678901234567890");
     });
   });

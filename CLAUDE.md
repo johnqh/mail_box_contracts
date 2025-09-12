@@ -19,7 +19,7 @@ This file provides comprehensive guidance for AI assistants working with this mu
 3. **mail_box_factory** - Factory program for coordinated deployment
 
 #### Unified Client
-1. **UnifiedMailBoxClient** - Single interface for all chains
+1. **OnchainMailerClient** - Single interface for all chains
 2. **WalletDetector** - Automatic chain detection
 3. **Dynamic imports** - Chain-specific module loading
 

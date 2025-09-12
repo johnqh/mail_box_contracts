@@ -36,10 +36,10 @@ yarn add @johnqh/mail_box_contracts
 ## 🚀 Quick Start - Unified Multi-Chain Client
 
 ```typescript
-import { UnifiedMailBoxClient, TESTNET_CHAIN_CONFIG } from '@johnqh/mail_box_contracts';
+import { OnchainMailerClient, TESTNET_CHAIN_CONFIG } from '@johnqh/mail_box_contracts';
 
 // Works with ANY wallet - automatically detects chain!
-const client = new UnifiedMailBoxClient(wallet, TESTNET_CHAIN_CONFIG);
+const client = new OnchainMailerClient(wallet, TESTNET_CHAIN_CONFIG);
 
 // Same API works for both EVM and Solana
 await client.sendMessage("Hello Multi-Chain!", "This works on any blockchain!", true);
