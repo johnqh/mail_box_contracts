@@ -1,11 +1,12 @@
 {
   "name": "MailBox Contracts",
-  "description": "Multi-chain decentralized messaging system with USDC fees and revenue sharing",
-  "version": "1.5.0",
+  "description": "Production-ready multi-chain decentralized messaging system with USDC fees, revenue sharing, and unified client interface",
+  "version": "1.5.2",
   "type": "multi-chain-dapp",
-  "chains": ["ethereum", "solana"],
+  "chains": ["ethereum", "polygon", "arbitrum", "optimism", "solana"],
   "languages": ["solidity", "rust", "typescript"],
-  "frameworks": ["hardhat", "anchor", "ethers", "viem"],
+  "frameworks": ["hardhat", "anchor", "ethers", "viem", "mocha"],
+  "package_name": "@johnqh/mail_box_contracts",
   
   "ai_development": {
     "primary_tasks": [
@@ -68,15 +69,22 @@
     },
     
     "testing_strategy": {
-      "total_tests": "88+",
-      "categories": ["unit", "integration", "multi_chain"],
-      "test_files": ["test/evm/", "test/solana/", "test/unified/"],
+      "total_tests": "116+",
+      "test_breakdown": {
+        "evm_tests": 75,
+        "solana_tests": 8,
+        "unified_tests": 41
+      },
+      "categories": ["unit", "integration", "multi_chain", "error_handling"],
+      "test_files": ["test/evm/Mailer.test.ts", "test/solana/", "test/unified/"],
       "mock_contracts": ["MockUSDC.sol"],
       "patterns": [
-        "Always fund test accounts with MockUSDC",
-        "Test both success and error conditions",
-        "Verify event emissions",
-        "Test fee calculations precisely"
+        "Always fund test accounts with MockUSDC before testing",
+        "Test both success and error conditions comprehensively",
+        "Verify event emissions with exact parameters",
+        "Test fee calculations with precise amounts",
+        "Test edge cases like zero amounts and boundary conditions",
+        "Verify gas usage and transaction receipts"
       ]
     }
   },
@@ -115,5 +123,92 @@
     "update_documentation_with_changes": true,
     "maintain_cross_chain_compatibility": true,
     "follow_existing_patterns": true
+  },
+
+  "ai_optimization": {
+    "documentation_files": [
+      "CLAUDE.md",
+      "docs/AI_DEVELOPMENT_PATTERNS.md", 
+      "docs/AI_QUICK_START.md",
+      "docs/ai-development-patterns.md",
+      "AI_DEVELOPMENT_GUIDE.md",
+      "README.md"
+    ],
+    "example_files": [
+      "examples/basic-usage.ts",
+      "examples/evm-usage.ts", 
+      "examples/solana-usage.ts",
+      "examples/unified-usage.ts"
+    ],
+    "key_interfaces": [
+      "src/unified/types.ts",
+      "src/types/common.ts",
+      "src/unified/mailbox-client.ts",
+      "src/unified/wallet-detector.ts"
+    ],
+    "test_patterns": [
+      "test/evm/Mailer.test.ts",
+      "test/unified/*.test.ts"
+    ],
+    "deployment_scripts": [
+      "scripts/deploy-local.ts",
+      "scripts/evm/deploy.ts"
+    ],
+    "configuration_files": [
+      "hardhat.config.ts",
+      "package.json",
+      "tsconfig.json",
+      ".eslintrc.js"
+    ]
+  },
+
+  "ai_workflow_hints": {
+    "before_coding": [
+      "Read CLAUDE.md and AI_DEVELOPMENT_PATTERNS.md for context",
+      "Check current git status and test status",
+      "Understand the specific task requirements"
+    ],
+    "during_coding": [
+      "Follow existing code patterns and naming conventions", 
+      "Add comprehensive JSDoc comments",
+      "Consider multi-chain compatibility",
+      "Handle errors gracefully with specific messages"
+    ],
+    "after_coding": [
+      "Run npm run compile after contract changes",
+      "Run npm test to ensure no regressions", 
+      "Check npm run build for TypeScript errors",
+      "Update documentation if needed",
+      "Verify all edge cases are tested"
+    ],
+    "common_pitfalls": [
+      "Forgetting to compile after contract changes",
+      "Not funding test accounts with MockUSDC",
+      "Missing error handling in async operations",
+      "Not testing both EVM and Solana paths",
+      "Forgetting to update TypeScript types after contract changes"
+    ]
+  },
+
+  "success_criteria": {
+    "code_quality": [
+      "116+ tests passing",
+      "Zero TypeScript errors",
+      "Zero ESLint warnings",
+      "Clean git status",
+      "Proper error handling"
+    ],
+    "documentation": [
+      "JSDoc comments for all public methods",
+      "Updated README if API changed",
+      "Example code for new features",
+      "Clear error messages"
+    ],
+    "testing": [
+      "New tests for new functionality",
+      "Both success and error cases covered",
+      "Multi-chain compatibility tested",
+      "Edge cases handled"
+    ]
   }
 }

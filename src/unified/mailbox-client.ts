@@ -8,6 +8,70 @@ import {
   UnifiedTransaction 
 } from './types';
 
+/**
+ * UnifiedMailBoxClient - Multi-chain messaging client for MailBox protocol
+ * 
+ * This class provides a unified interface for interacting with MailBox contracts
+ * across different blockchain networks (EVM and Solana). It automatically detects
+ * wallet types and routes operations to the appropriate chain implementation.
+ * 
+ * @example Basic Usage
+ * ```typescript
+ * // EVM wallet (MetaMask, etc.)
+ * const evmWallet = window.ethereum;
+ * const evmConfig = {
+ *   evm: {
+ *     rpc: 'https://eth-mainnet.alchemyapi.io/v2/your-key',
+ *     chainId: 1,
+ *     contracts: {
+ *       mailService: '0x123...',
+ *       mailer: '0x456...',
+ *       usdc: '0x789...'
+ *     }
+ *   }
+ * };
+ * const evmClient = new UnifiedMailBoxClient(evmWallet, evmConfig);
+ * 
+ * // Solana wallet (Phantom, etc.)
+ * const solanaWallet = window.solana;
+ * const solanaConfig = {
+ *   solana: {
+ *     rpc: 'https://api.mainnet-beta.solana.com',
+ *     programs: {
+ *       mailService: '8EKjCLZjz6LKRxZcQ6LwwF5V8P3TCEgM2CdQg4pZxXHE',
+ *       mailer: '9FLkBDGpZBcR8LMsQ7MwwV6X9P4TDFgN3DeRh5qYyHJF',
+ *       mailBoxFactory: 'FactoryABC...'
+ *     },
+ *     usdcMint: 'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v'
+ *   }
+ * };
+ * const solanaClient = new UnifiedMailBoxClient(solanaWallet, solanaConfig);
+ * 
+ * // Send messages
+ * const result = await client.sendMessage("Hello", "World!", false);
+ * console.log('Transaction:', result.transactionHash);
+ * ```
+ * 
+ * @example Error Handling
+ * ```typescript
+ * try {
+ *   const result = await client.sendMessage("Subject", "Body", true);
+ *   console.log('Success:', result);
+ * } catch (error) {
+ *   if (error.message.includes('insufficient funds')) {
+ *     console.log('User needs more USDC');
+ *   } else if (error.message.includes('user rejected')) {
+ *     console.log('User cancelled transaction');
+ *   } else {
+ *     console.log('Unknown error:', error);
+ *   }
+ * }
+ * ```
+ * 
+ * @author MailBox Protocol Team
+ * @version 1.5.2
+ * @since 1.0.0
+ */
 export class UnifiedMailBoxClient {
   private chainType: 'evm' | 'solana';
   private wallet: UnifiedWallet;
@@ -19,10 +83,33 @@ export class UnifiedMailBoxClient {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   private static solanaModules: any = null;
 
+  /**
+   * Initialize UnifiedMailBoxClient with wallet and chain configuration
+   * 
+   * @param wallet - Wallet instance (EVM or Solana compatible)
+   * @param config - Chain configuration for EVM and/or Solana networks
+   * 
+   * @throws {Error} When wallet type cannot be detected
+   * @throws {Error} When required configuration is missing
+   * @throws {Error} When wallet doesn't implement required methods
+   * 
+   * @example
+   * ```typescript
+   * // EVM wallet initialization
+   * const wallet = window.ethereum;
+   * const config = { 
+   *   evm: { rpc: '...', chainId: 1, contracts: {...} } 
+   * };
+   * const client = new UnifiedMailBoxClient(wallet, config);
+   * ```
+   */
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   constructor(wallet: any, config: ChainConfig) {
     try {
+      // Automatically detect whether this is an EVM or Solana wallet
       this.chainType = WalletDetector.detectWalletType(wallet);
+      
+      // Normalize wallet interface for internal use
       this.wallet = {
         address: wallet.address || wallet.publicKey?.toString() || '',
         chainType: this.chainType,
@@ -31,10 +118,10 @@ export class UnifiedMailBoxClient {
       };
       this.config = config;
 
-      // Validate configuration
+      // Ensure we have valid configuration for the detected chain type
       this.validateConfiguration();
       
-      // Validate wallet interface
+      // Ensure wallet implements required methods for its chain type
       this.validateWallet(wallet);
       
     } catch (error) {
@@ -88,12 +175,45 @@ export class UnifiedMailBoxClient {
 
   /**
    * Send a message using the appropriate chain implementation
-   * @param subject - Message subject
-   * @param body - Message body
-   * @param priority - Whether to use priority sending (revenue share)
-   * @returns Message result with transaction details
+   * 
+   * This method automatically routes to EVM or Solana based on the detected wallet type.
+   * Priority messages cost more but include revenue sharing for recipients.
+   * 
+   * @param subject - Message subject (1-200 characters)
+   * @param body - Message body (1-10000 characters)
+   * @param priority - Whether to use priority sending with revenue share
+   *                   - Priority: Full fee paid, 90% claimable by recipient
+   *                   - Standard: 10% fee only, no revenue share
+   * 
+   * @returns Promise resolving to MessageResult with transaction details
+   * 
+   * @throws {Error} When subject/body validation fails
+   * @throws {Error} When insufficient USDC balance
+   * @throws {Error} When user rejects transaction
+   * @throws {Error} When network connection fails
+   * 
+   * @example Standard Message
+   * ```typescript
+   * const result = await client.sendMessage(
+   *   "Meeting Reminder", 
+   *   "Don't forget our 3pm call today!",
+   *   false // Standard fee (10% of sendFee)
+   * );
+   * console.log('Sent in tx:', result.transactionHash);
+   * ```
+   * 
+   * @example Priority Message with Revenue Share
+   * ```typescript
+   * const result = await client.sendMessage(
+   *   "Important Update",
+   *   "Urgent: Please review the attached proposal",
+   *   true // Priority fee (100% paid, 90% claimable by recipient)
+   * );
+   * console.log('Priority message fee:', result.fee);
+   * ```
    */
   async sendMessage(subject: string, body: string, priority: boolean = false): Promise<MessageResult> {
+    // Route to appropriate chain implementation based on wallet type
     if (this.chainType === 'evm') {
       return this.sendEVMMessage(subject, body, priority);
     } else {

@@ -1,6 +1,13 @@
 # MailBox Contracts - Multi-Chain Decentralized Messaging System
 
+[![Version](https://img.shields.io/npm/v/@johnqh/mail_box_contracts)](https://www.npmjs.com/package/@johnqh/mail_box_contracts)
+[![Tests](https://img.shields.io/badge/tests-116%2B%20passing-green)](#testing)
+[![TypeScript](https://img.shields.io/badge/TypeScript-Ready-blue)](#typescript-support)
+[![Multi-Chain](https://img.shields.io/badge/chains-EVM%20%7C%20Solana-purple)](#supported-chains)
+
 A comprehensive multi-chain decentralized email/messaging system supporting both **EVM chains** and **Solana** with USDC fee integration, delegation management, and revenue sharing capabilities.
+
+> **🤖 AI-Optimized**: This project includes comprehensive documentation, patterns, and tooling specifically designed for AI-assisted development. See [`AI_ASSISTANT_QUICKSTART.md`](./AI_ASSISTANT_QUICKSTART.md) and [`CLAUDE.md`](./CLAUDE.md) for AI development guides.
 
 ## 🏗️ Project Overview
 
@@ -202,10 +209,17 @@ npm test
 ## 🔧 Development Commands
 
 ```bash
-# Essential commands
+# Essential commands (run these frequently!)
 npm run compile    # Compile contracts + generate TypeScript types
-npm test          # Run all 81 tests
+npm test          # Run all 116+ tests (75 EVM + 8 Solana + 41 Unified)
 npm run build     # Build TypeScript files
+
+# AI-Optimized commands
+npm run ai:dev     # Show AI helper commands + status
+npm run ai:status  # Quick project health check
+npm run ai:build   # Clean build everything
+npm run ai:test    # Run comprehensive test suite  
+npm run ai:check   # TypeScript + ESLint validation
 
 # Development
 npx hardhat node      # Start local blockchain
@@ -249,18 +263,36 @@ await mailer.sendPriority("Subject", "Body");
 - **Address validation** for delegation rejection
 - **Comprehensive error handling** with custom errors
 
-## 📖 Documentation
+## 🤖 AI-Assisted Development
 
-For AI assistants and detailed technical documentation, see:
-- [`CLAUDE.md`](./CLAUDE.md) - Comprehensive AI assistant guide
-- [`DEPLOYMENT.md`](./DEPLOYMENT.md) - Deployment instructions
+This project is optimized for AI-assisted development with comprehensive documentation, patterns, and tooling:
+
+### Quick Start for AI Assistants
+1. **Read**: [`AI_ASSISTANT_QUICKSTART.md`](./AI_ASSISTANT_QUICKSTART.md) - Essential guide for AI development
+2. **Reference**: [`CLAUDE.md`](./CLAUDE.md) - Comprehensive AI assistant documentation
+3. **Patterns**: [`docs/AI_DEVELOPMENT_PATTERNS.md`](./docs/AI_DEVELOPMENT_PATTERNS.md) - Development patterns and examples
+4. **Config**: [`.ai-config.json`](./.ai-config.json) - AI tool configuration
+
+### AI Development Features
+- **🔧 AI Commands**: `npm run ai:dev` for AI-optimized development workflows
+- **📊 Test Coverage**: 116+ tests with detailed patterns for AI reference
+- **📝 Rich Documentation**: Comprehensive JSDoc comments and inline examples
+- **🎯 Success Metrics**: Clear validation criteria and checklists
+- **⚡ Quick Validation**: `npm run ai:check` for TypeScript + ESLint
+- **🔍 Project Status**: `npm run ai:status` for health check
+
+### Documentation Structure
+- **Primary Guide**: [`CLAUDE.md`](./CLAUDE.md) - Main AI assistant documentation
+- **Quick Reference**: [`AI_ASSISTANT_QUICKSTART.md`](./AI_ASSISTANT_QUICKSTART.md) - Fast setup
+- **Development Patterns**: [`docs/AI_DEVELOPMENT_PATTERNS.md`](./docs/AI_DEVELOPMENT_PATTERNS.md) - Code examples
+- **Examples**: [`examples/`](./examples/) - Working code samples
 
 ## 🤝 Contributing
 
 1. Fork the repository
 2. Create feature branch: `git checkout -b feature/new-feature`
 3. Add comprehensive tests for new functionality
-4. Ensure all 81 tests pass: `npm test`
+4. Ensure all 116+ tests pass: `npm test`
 5. Submit pull request
 
 ## 📄 License
