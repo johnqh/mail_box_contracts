@@ -313,16 +313,16 @@ jobs:
           echo "📦 Testing TypeScript package exports..."
           node -e "
             try {
-              const exports = require('./dist/unified/src/unified/mailbox-client.js');
+              const exports = require('./dist/unified/src/unified/index.js');
               console.log('✅ Unified client exports:', Object.keys(exports));
               
               // Test importing unified client
-              const { UnifiedMailBoxClient } = exports;
+              const { OnchainMailerClient } = exports;
               
-              if (UnifiedMailBoxClient) {
-                console.log('✅ UnifiedMailBoxClient available');
+              if (OnchainMailerClient) {
+                console.log('✅ OnchainMailerClient available');
               } else {
-                console.error('❌ UnifiedMailBoxClient not found');
+                console.error('❌ OnchainMailerClient not found');
                 process.exit(1);
               }
               
