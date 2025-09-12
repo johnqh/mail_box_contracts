@@ -5,8 +5,7 @@ export * from './unified';
 
 // Export specific clients with explicit names to avoid conflicts
 export { 
-  MailerClient as EVMMailerClient, 
-  MailBoxClient as EVMMailBoxClient 
+  MailerClient as EVMMailerClient
 } from './evm/mailer-client';
 
 export { 

@@ -1,5 +1,7 @@
 # AI Assistant Quick Start Guide
 
+🤖 **Welcome AI Assistant!** This guide gets you productive with the MailBox Contracts project in under 5 minutes.
+
 This is the definitive quick start guide for AI assistants working on the MailBox multi-chain messaging protocol.
 
 ## 🚀 Immediate Setup Commands
@@ -46,6 +48,25 @@ npm run build     # Check TypeScript compilation
 | **Main Contracts** | MailService.sol, Mailer.sol, MockUSDC.sol |
 | **Main Programs** | mail_service, mailer, mail_box_factory |
 | **Unified Client** | `src/unified/onchain-mailer-client.ts` |
+
+## 🚨 RECENT ARCHITECTURE CHANGES (Critical for AI Assistants!)
+
+**IMPORTANT**: The project recently underwent simplification - **MailBoxClient and MailServiceClient have been REMOVED**.
+
+### **Current Client Architecture (Updated 2024)**
+```
+✅ EVM: MailerClient only (handles messaging + delegation)
+✅ Solana: MailerClient only (handles messaging + delegation)  
+✅ Unified: OnchainMailerClient (auto-detects wallet type)
+❌ MailBoxClient: REMOVED (was a wrapper)
+❌ MailServiceClient: REMOVED (functionality moved to MailerClient)
+```
+
+### **What This Means for AI Development**
+- ✅ **Use MailerClient** for all EVM and Solana operations
+- ✅ **Use OnchainMailerClient** for multi-chain applications
+- ❌ **Don't reference MailBoxClient or MailServiceClient** - they no longer exist
+- ✅ **MailerClient includes delegation methods** like `delegateTo()` and `getDelegationFee()`
 
 ## 🏗️ Project Architecture
 

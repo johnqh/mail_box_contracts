@@ -7,4 +7,4 @@ export {
 } from "../../typechain-types";
 
 // Export client classes
-export { MailerClient, MailBoxClient } from "./mailer-client";
+export { MailerClient } from "./mailer-client";

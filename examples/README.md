@@ -39,8 +39,8 @@ Comprehensive examples covering all major functionality:
 
 **1. Contract Deployment**
 - Deploy MockUSDC for testing
-- Deploy Mailer and MailService contracts
-- Setup unified MailBoxClient
+- Deploy Mailer contract (includes delegation functionality)
+- Initialize MailerClient instance
 
 **2. Account Setup**
 - Fund accounts with test USDC
@@ -93,35 +93,35 @@ await mailer.connect(signer).sendPriority("Subject", "Message body");
 await mailer.claimRecipientShare();
 ```
 
-### Domain Registration
+### Domain Registration and Delegation
 
 ```typescript
-import { MailServiceClient } from "../src/mailer-client";
+import { MailerClient } from "../src/evm/mailer-client";
 
-const mailService = new MailServiceClient("CONTRACT_ADDRESS", provider);
+const mailer = new MailerClient("CONTRACT_ADDRESS", provider);
 
-// Register a domain (costs 100 USDC by default)
-await mailService.connect(signer).registerDomain("example.mailbox", false);
-
-// Delegate to another address (costs 10 USDC)
-await mailService.delegateTo("0x123...");
+// Delegate to another address (costs 10 USDC by default)
+// MailerClient includes delegation functionality
+await mailer.delegateTo("0x123...", walletClient, account);
 ```
 
-### Unified Interface
+### Individual Client Usage
 
 ```typescript
-import { MailBoxClient } from "../src/mailer-client";
+import { MailerClient } from "../src/evm/mailer-client";
 
-// Deploy both contracts together
-const mailBox = await MailBoxClient.deployBoth(
-  signer,
+// Deploy MailerClient (includes both messaging and delegation functionality)
+const mailerClient = await MailerClient.deploy(
+  walletClient,
+  publicClient,
+  account,
   "USDC_ADDRESS", 
   "OWNER_ADDRESS"
 );
 
-// Use both services through unified interface
-await mailBox.mailer.sendPriority("Subject", "Body");
-await mailBox.mailService.registerDomain("example.mailbox", false);
+// Use MailerClient for both messaging and delegation
+await mailerClient.sendPriority("0xRecipient", "Subject", "Body", walletClient, account);
+await mailerClient.delegateTo("0xDelegate", walletClient, account);
 ```
 
 ## 💡 Key Concepts for Examples
@@ -200,8 +200,8 @@ mailer.getContract().on("MailSent", (from, to, subject, body) => {
   console.log(`New message from ${from}: ${subject}`);
 });
 
-// Listen for delegations
-mailService.getContract().on("DelegationSet", (delegator, delegate) => {
+// Listen for delegations (MailerClient handles delegation now)
+mailerClient.getContract().on("DelegationSet", (delegator, delegate) => {
   console.log(`${delegator} delegated to ${delegate}`);
 });
 ```
@@ -217,7 +217,7 @@ Signer address: 0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266
 📦 Example 1: Deploying Contracts
 MockUSDC deployed at: 0x5FbDB2315678afecb367f032d93F642f64180aa3
 Mailer deployed at: 0xe7f1725E7734CE288F8367e1Bb143E90bb3F0512
-MailService deployed at: 0x9fE46736679d2D9a65F0992F2272dE9f3c7fa6e0
+MailerClient deployed at: 0x9fE46736679d2D9a65F0992F2272dE9f3c7fa6e0
 
 💰 Example 2: Account Setup and Funding
 USDC balance: 1000.0 USDC

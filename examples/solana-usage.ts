@@ -6,17 +6,15 @@
 
 import { Connection, Keypair, PublicKey } from '@solana/web3.js';
 import { Wallet } from '@coral-xyz/anchor';
-import { MailerClient, MailServiceClient } from '../src/solana';
-import { TESTNET_CHAIN_CONFIG } from '../src/utils';
+import { MailerClient } from '../src/solana';
 
 // Configuration for Solana devnet
 const connection = new Connection('https://api.devnet.solana.com', 'confirmed');
 const wallet = new Wallet(Keypair.generate()); // In practice, use your actual keypair
 const usdcMint = new PublicKey('4zMMC9srt5Ri5X14GAgXhaHii3GnPAEERYPJgZJDncDU'); // Devnet USDC
 
-// Example program IDs (replace with actual deployed program IDs)
+// Example program ID (replace with actual deployed program ID)
 const MAILER_PROGRAM_ID = new PublicKey('9FLkBDGpZBcR8LMsQ7MwwV6X9P4TDFgN3DeRh5qYyHJF');
-const MAIL_SERVICE_PROGRAM_ID = new PublicKey('8EKjCLZjz6LKRxZcQ6LwwF5V8P3TCEgM2CdQg4pZxXHE');
 
 async function solanaUsageExamples() {
   console.log('🚀 MailBox Solana Contracts - Usage Examples');
@@ -26,7 +24,6 @@ async function solanaUsageExamples() {
   console.log('\n📦 Example 1: Initializing Solana Clients');
   
   const mailerClient = new MailerClient(connection, wallet, MAILER_PROGRAM_ID, usdcMint);
-  const mailServiceClient = new MailServiceClient(connection, wallet, MAIL_SERVICE_PROGRAM_ID, usdcMint);
   
   console.log('✅ Clients initialized successfully');
 
@@ -37,6 +34,7 @@ async function solanaUsageExamples() {
     // Send priority message (with revenue sharing)
     console.log('Sending priority message...');
     const priorityTx = await mailerClient.sendPriority(
+      wallet.publicKey, // to
       'Solana Priority Message',
       'This is a priority message with 90% revenue share!'
     );
@@ -45,12 +43,14 @@ async function solanaUsageExamples() {
     // Send standard message (fee only)
     console.log('Sending standard message...');
     const standardTx = await mailerClient.send(
+      wallet.publicKey, // to
       'Solana Standard Message',
       'This is a standard message with 10% fee only.'
     );
     console.log('✅ Standard message sent:', standardTx);
   } catch (error) {
-    console.log('⚠️ Message sending failed (likely due to insufficient USDC):', error.message);
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    console.log('⚠️ Message sending failed (likely due to insufficient USDC):', errorMessage);
   }
 
   // ===== EXAMPLE 3: Delegation Management =====
@@ -60,11 +60,11 @@ async function solanaUsageExamples() {
     const delegateKey = Keypair.generate().publicKey;
     console.log('Delegating to:', delegateKey.toString());
     
-    const delegationTx = await mailServiceClient.delegateTo(delegateKey);
+    const delegationTx = await mailerClient.delegateTo(delegateKey);
     console.log('✅ Delegation set:', delegationTx);
     
     // Check delegation status
-    const delegation = await mailServiceClient.getDelegation(wallet.publicKey);
+    const delegation = await mailerClient.getDelegation(wallet.publicKey);
     if (delegation) {
       console.log('📋 Current delegation:', {
         delegator: delegation.delegator.toString(),
@@ -72,7 +72,8 @@ async function solanaUsageExamples() {
       });
     }
   } catch (error) {
-    console.log('⚠️ Delegation failed (likely due to insufficient USDC):', error.message);
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    console.log('⚠️ Delegation failed (likely due to insufficient USDC):', errorMessage);
   }
 
   // ===== EXAMPLE 4: Revenue Claims =====
@@ -84,7 +85,7 @@ async function solanaUsageExamples() {
     if (claimableInfo) {
       console.log('📊 Claimable revenue:', {
         amount: `${claimableInfo.amount / 1_000_000} USDC`,
-        expiresAt: new Date(claimableInfo.expiresAt * 1000).toISOString(),
+        timestamp: new Date(claimableInfo.timestamp * 1000).toISOString(),
         isExpired: claimableInfo.isExpired
       });
 
@@ -96,7 +97,8 @@ async function solanaUsageExamples() {
       console.log('📊 No claimable revenue found');
     }
   } catch (error) {
-    console.log('⚠️ Revenue claiming failed:', error.message);
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    console.log('⚠️ Revenue claiming failed:', errorMessage);
   }
 
   // ===== EXAMPLE 5: Fee Information =====
@@ -108,13 +110,14 @@ async function solanaUsageExamples() {
       sendFee: `${mailerFees.sendFee / 1_000_000} USDC`
     });
 
-    const serviceFees = await mailServiceClient.getFees();
+    const serviceFees = await mailerClient.getFees();
     console.log('📊 Service fees:', {
-      registrationFee: `${serviceFees.registrationFee / 1_000_000} USDC`,
+      sendFee: `${serviceFees.sendFee / 1_000_000} USDC`,
       delegationFee: `${serviceFees.delegationFee / 1_000_000} USDC`
     });
   } catch (error) {
-    console.log('⚠️ Fee retrieval failed:', error.message);
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    console.log('⚠️ Fee retrieval failed:', errorMessage);
   }
 
   console.log('\n🎉 Solana examples completed!');

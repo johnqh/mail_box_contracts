@@ -217,7 +217,7 @@ export class MailerClient {
       address: this.contractAddress,
       abi: MAILER_ABI,
       functionName: 'sendFee',
-    }) as bigint;
+    });
   }
 
   async getUsdcToken(): Promise<Address> {
@@ -225,7 +225,7 @@ export class MailerClient {
       address: this.contractAddress,
       abi: MAILER_ABI,
       functionName: 'usdcToken',
-    }) as Address;
+    });
   }
 
   getAddress(): Address {
@@ -292,8 +292,8 @@ export class MailerClient {
     return await this.publicClient.readContract({
       address: this.contractAddress,
       abi: MAILER_ABI,
-      functionName: 'getOwnerClaimable',
-    }) as bigint;
+      functionName: 'getOwnerClaimable'
+    });
   }
 
   // Delegation functionality
@@ -351,7 +351,7 @@ export class MailerClient {
       address: this.contractAddress,
       abi: MAILER_ABI,
       functionName: 'getDelegationFee',
-    }) as bigint;
+    });
   }
 
   /**
@@ -377,28 +377,3 @@ export class MailerClient {
   }
 }
 
-export class MailBoxClient {
-  public mailer: MailerClient;
-
-  constructor(
-    mailerAddress: string,
-    publicClient: PublicClient
-  ) {
-    this.mailer = new MailerClient(mailerAddress, publicClient);
-  }
-
-  static async deploy(
-    walletClient: WalletClient,
-    publicClient: PublicClient,
-    account: Account | Address,
-    usdcTokenAddress: string,
-    ownerAddress: string
-  ): Promise<MailBoxClient> {
-    const mailerClient = await MailerClient.deploy(walletClient, publicClient, account, usdcTokenAddress, ownerAddress);
-    
-    return new MailBoxClient(
-      mailerClient.getAddress(),
-      publicClient
-    );
-  }
-}

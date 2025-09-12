@@ -4,17 +4,17 @@
  * @notice This script tests basic functionality on both EVM and Solana
  */
 
-import { ethers } from "hardhat";
+import { ethers } from "ethers";
 import { Connection, PublicKey } from "@solana/web3.js";
+import { createPublicClient, http } from "viem";
+import { hardhat } from "viem/chains";
 import fs from 'fs';
-import { MailerClient as EVMMailerClient, MailServiceClient as EVMMailServiceClient } from "../../src/evm";
-import { createChainConfig } from "../../src/utils/chain-config";
+import { MailerClient as EVMMailerClient } from "../../src/evm";
 
 interface DeploymentAddresses {
   evm?: {
     network: string;
     chainId: number;
-    mailService: string;
     mailer: string;
     usdc: string;
     deployer: string;
@@ -34,22 +34,26 @@ interface DeploymentAddresses {
 async function verifyEVM(deployment: NonNullable<DeploymentAddresses['evm']>) {
   console.log(`\n🔍 Verifying EVM deployment on ${deployment.network}...`);
 
-  const provider = new ethers.JsonRpcProvider();
+  // Use viem public client
+  const publicClient = createPublicClient({
+    chain: hardhat,
+    transport: http("http://127.0.0.1:8545")
+  });
   
   // Verify contracts exist
   console.log("📋 Checking contract deployments...");
   
-  const mailServiceCode = await provider.getCode(deployment.mailService);
-  const mailerCode = await provider.getCode(deployment.mailer);
-  const usdcCode = await provider.getCode(deployment.usdc);
+  const mailerCode = await publicClient.getBytecode({ 
+    address: deployment.mailer as `0x${string}` 
+  });
+  const usdcCode = await publicClient.getBytecode({ 
+    address: deployment.usdc as `0x${string}` 
+  });
 
-  if (mailServiceCode === "0x") {
-    throw new Error(`MailService contract not found at ${deployment.mailService}`);
-  }
-  if (mailerCode === "0x") {
+  if (!mailerCode || mailerCode === "0x") {
     throw new Error(`Mailer contract not found at ${deployment.mailer}`);
   }
-  if (usdcCode === "0x") {
+  if (!usdcCode || usdcCode === "0x") {
     throw new Error(`USDC contract not found at ${deployment.usdc}`);
   }
 
@@ -58,33 +62,24 @@ async function verifyEVM(deployment: NonNullable<DeploymentAddresses['evm']>) {
   // Test basic functionality
   console.log("🧪 Testing basic EVM functionality...");
 
-  const mailService = new EVMMailServiceClient(deployment.mailService, provider);
-  const mailer = new EVMMailerClient(deployment.mailer, provider);
+  const mailer = new EVMMailerClient(deployment.mailer, publicClient);
 
   // Check contract addresses
-  const mailServiceAddress = await mailService.getAddress();
   const mailerAddress = await mailer.getAddress();
 
-  if (mailServiceAddress.toLowerCase() !== deployment.mailService.toLowerCase()) {
-    throw new Error("MailService address mismatch");
-  }
   if (mailerAddress.toLowerCase() !== deployment.mailer.toLowerCase()) {
     throw new Error("Mailer address mismatch");
   }
 
   // Check USDC integration
-  const mailServiceUsdc = await mailService.getUsdcToken();
   const mailerUsdc = await mailer.getUsdcToken();
 
-  if (mailServiceUsdc.toLowerCase() !== deployment.usdc.toLowerCase()) {
-    throw new Error("MailService USDC integration failed");
-  }
   if (mailerUsdc.toLowerCase() !== deployment.usdc.toLowerCase()) {
     throw new Error("Mailer USDC integration failed");
   }
 
-  // Check fees
-  const delegationFee = await mailService.getDelegationFee();
+  // Check fees (MailerClient now includes delegation functionality)
+  const delegationFee = await mailer.getDelegationFee();
   const sendFee = await mailer.getSendFee();
 
   console.log(`   Delegation fee: ${ethers.formatUnits(delegationFee, 6)} USDC`);
@@ -202,8 +197,9 @@ async function main() {
       try {
         results.verification.evm = await verifyEVM(deployment.evm);
       } catch (error) {
-        console.error(`❌ EVM verification failed: ${error.message}`);
-        results.verification.evm = { error: error.message };
+        const errorMessage = error instanceof Error ? error.message : String(error);
+        console.error(`❌ EVM verification failed: ${errorMessage}`);
+        results.verification.evm = { error: errorMessage };
       }
     }
 
@@ -212,8 +208,9 @@ async function main() {
       try {
         results.verification.solana = await verifySolana(deployment.solana);
       } catch (error) {
-        console.error(`❌ Solana verification failed: ${error.message}`);
-        results.verification.solana = { error: error.message };
+        const errorMessage = error instanceof Error ? error.message : String(error);
+        console.error(`❌ Solana verification failed: ${errorMessage}`);
+        results.verification.solana = { error: errorMessage };
       }
     }
 
@@ -248,7 +245,8 @@ async function main() {
     }
 
   } catch (error) {
-    console.error("❌ Verification failed:", error.message);
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    console.error("❌ Verification failed:", errorMessage);
     process.exit(1);
   }
 }

@@ -191,10 +191,10 @@ Delegate → [Reject] → Clear Mapping
 ```typescript
 // Type-safe contract interactions
 const mailService = MailService__factory.connect(address, signer);
-const result = await mailService.delegateTo(delegateAddress);
+const result = await mailerClient.delegateTo(delegateAddress, walletClient, account);
 
 // Event listening
-mailService.on("DelegationSet", (delegator, delegate, event) => {
+mailerClient.getContract().on("DelegationSet", (delegator, delegate, event) => {
     // Handle delegation change
 });
 ```

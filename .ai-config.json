@@ -27,9 +27,9 @@
       "new_feature": [
         "1. Modify contracts (EVM + Solana)",
         "2. Run npm run compile",
-        "3. Update TypeScript clients",
+        "3. Update TypeScript clients (MailerClient only)",
         "4. Add comprehensive tests",
-        "5. Run npm test",
+        "5. Run npm test (124+ tests)",
         "6. Update documentation"
       ],
       "bug_fix": [
@@ -38,6 +38,13 @@
         "3. Run npm run compile",
         "4. Verify fix with tests",
         "5. Add regression test"
+      ],
+      "ai_development": [
+        "1. Run npm run ai:status for project health check",
+        "2. Use npm run ai:dev for development helper menu",
+        "3. Run npm run ai:check for validation",
+        "4. Use npm run ai:examples to test examples",
+        "5. Run npm run ai:test for comprehensive testing"
       ]
     },
     
@@ -183,10 +190,12 @@
     ],
     "common_pitfalls": [
       "Forgetting to compile after contract changes",
-      "Not funding test accounts with MockUSDC",
+      "Not funding test accounts with MockUSDC", 
       "Missing error handling in async operations",
       "Not testing both EVM and Solana paths",
-      "Forgetting to update TypeScript types after contract changes"
+      "Forgetting to update TypeScript types after contract changes",
+      "Using removed MailBoxClient or MailServiceClient classes",
+      "Missing 'to' parameter in send() and sendPriority() calls"
     ]
   },
 

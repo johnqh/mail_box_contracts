@@ -54,29 +54,28 @@ console.log('Running on:', client.getChainType()); // 'evm' or 'solana'
 ### EVM Chains (Ethereum, Polygon, Arbitrum, etc.)
 
 ```typescript
-import { MailerClient, MailServiceClient } from '@johnqh/mail_box_contracts/evm';
+import { MailerClient } from '@johnqh/mail_box_contracts/evm';
 import { ethers } from 'ethers';
 
 const provider = new ethers.JsonRpcProvider('YOUR_RPC_URL');
 const signer = new ethers.Wallet('YOUR_PRIVATE_KEY', provider);
 
 const mailer = new MailerClient('CONTRACT_ADDRESS', provider);
-const mailService = new MailServiceClient('CONTRACT_ADDRESS', provider);
 
 // Send priority message with revenue sharing
-await mailer.connect(signer).sendPriority("Hello EVM!", "Decentralized message");
+await mailer.sendPriority("recipient_address", "Hello EVM!", "Decentralized message", walletClient, account);
 
-// Delegate to another address
-await mailService.connect(signer).delegateTo("0x...");
+// Delegate to another address (MailerClient includes delegation functionality)
+await mailer.delegateTo("0x...", walletClient, account);
 
 // Claim revenue share
-await mailer.connect(signer).claimRecipientShare();
+await mailer.claimRecipientShare(walletClient, account);
 ```
 
 ### Solana
 
 ```typescript
-import { MailerClient, MailServiceClient } from '@johnqh/mail_box_contracts/solana';
+import { MailerClient } from '@johnqh/mail_box_contracts/solana';
 import { Connection, PublicKey } from '@solana/web3.js';
 import { Wallet } from '@coral-xyz/anchor';
 
@@ -84,13 +83,12 @@ const connection = new Connection('https://api.devnet.solana.com');
 const wallet = new Wallet(keypair);
 
 const mailer = new MailerClient(connection, wallet, PROGRAM_ID, USDC_MINT);
-const mailService = new MailServiceClient(connection, wallet, PROGRAM_ID, USDC_MINT);
 
 // Send priority message with revenue sharing
 await mailer.sendPriority("Hello Solana!", "Decentralized message");
 
-// Delegate to another address  
-await mailService.delegateTo(new PublicKey("..."));
+// Delegate to another address (MailerClient includes delegation functionality)
+await mailer.delegateTo(new PublicKey("..."));
 
 // Claim revenue share
 await mailer.claimRecipientShare();
@@ -102,13 +100,12 @@ Full TypeScript support with auto-generated contract types:
 
 ```typescript
 import type { 
-  MailBox, 
-  MailService, 
+  Mailer, 
   MockUSDC 
 } from 'mail_box_contracts/typechain-types';
 
 // Fully typed contract interactions
-const tx: ContractTransaction = await mailer.sendPriority(subject, body);
+const tx: ContractTransaction = await mailer.sendPriority(to, subject, body);
 const receipt: ContractReceipt = await tx.wait();
 ```
 
@@ -245,14 +242,12 @@ npm run clean        # Clean artifacts
 Full TypeScript support with auto-generated types:
 
 ```typescript
-import { MailService, Mailer } from "./typechain-types";
+import { MailerClient } from "@johnqh/mail_box_contracts";
 
-// Type-safe contract interactions
-const mailService = MailService__factory.connect(address, signer);
-await mailService.delegateTo(delegateAddress);
-
-const mailer = Mailer__factory.connect(address, signer);
-await mailer.sendPriority("Subject", "Body");
+// Type-safe contract interactions using unified client
+const mailerClient = new MailerClient(address, publicClient);
+await mailerClient.delegateTo(delegateAddress, walletClient, account);
+await mailerClient.sendPriority(to, "Subject", "Body", walletClient, account);
 ```
 
 ## 🔐 Security Features

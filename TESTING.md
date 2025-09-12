@@ -70,15 +70,15 @@ await expect(contract.connect(addr1).someFunction(...args))
 
 ```typescript
 it("Should set owner as deployer", async function () {
-  expect(await mailService.owner()).to.equal(owner.address);
+  expect(await mailerClient.owner()).to.equal(owner.address);
 });
 
 it("Should set USDC token address correctly", async function () {
-  expect(await mailService.usdcToken()).to.equal(await mockUSDC.getAddress());
+  expect(await mailerClient.usdcToken()).to.equal(await mockUSDC.getAddress());
 });
 
 it("Should set correct default registration fee", async function () {
-  expect(await mailService.registrationFee()).to.equal(100000000); // 100 USDC
+  expect(await mailerClient.registrationFee()).to.equal(100000000); // 100 USDC
 });
 ```
 
@@ -88,15 +88,15 @@ it("Should set correct default registration fee", async function () {
 
 ```typescript
 it("Should allow EOA to delegate and charge fee", async function () {
-  const initialBalance = await mockUSDC.balanceOf(await mailService.getAddress());
+  const initialBalance = await mockUSDC.balanceOf(await mailerClient.getAddress());
   
   await expect(
-    mailService.connect(addr1).delegateTo(addr2.address)
-  ).to.emit(mailService, "DelegationSet")
+    mailerClient.connect(addr1).delegateTo(addr2.address)
+  ).to.emit(mailerClient, "DelegationSet")
    .withArgs(addr1.address, addr2.address);
   
   // Verify fee was charged
-  const finalBalance = await mockUSDC.balanceOf(await mailService.getAddress());
+  const finalBalance = await mockUSDC.balanceOf(await mailerClient.getAddress());
   expect(finalBalance - initialBalance).to.equal(10000000); // 10 USDC
 });
 ```
@@ -108,19 +108,19 @@ it("Should allow EOA to delegate and charge fee", async function () {
 ```typescript
 it("Should allow delegate to reject delegation", async function () {
   // First, addr1 delegates to addr2
-  await mailService.connect(addr1).delegateTo(addr2.address);
+  await mailerClient.connect(addr1).delegateTo(addr2.address);
   
   // Verify delegation is set
-  expect(await mailService.delegations(addr1.address)).to.equal(addr2.address);
+  expect(await mailerClient.delegations(addr1.address)).to.equal(addr2.address);
   
   // Now addr2 rejects the delegation
   await expect(
-    mailService.connect(addr2).rejectDelegation(addr1.address)
-  ).to.emit(mailService, "DelegationSet")
+    mailerClient.connect(addr2).rejectDelegation(addr1.address)
+  ).to.emit(mailerClient, "DelegationSet")
    .withArgs(addr1.address, ethers.ZeroAddress);
   
   // Verify delegation is cleared
-  expect(await mailService.delegations(addr1.address)).to.equal(ethers.ZeroAddress);
+  expect(await mailerClient.delegations(addr1.address)).to.equal(ethers.ZeroAddress);
 });
 ```
 
@@ -131,14 +131,14 @@ it("Should allow delegate to reject delegation", async function () {
 ```typescript
 it("Should allow EOA to register a domain when funded", async function () {
   await mockUSDC.mint(addr1.address, ethers.parseUnits("100", 6));
-  await mockUSDC.connect(addr1).approve(await mailService.getAddress(), ethers.parseUnits("100", 6));
+  await mockUSDC.connect(addr1).approve(await mailerClient.getAddress(), ethers.parseUnits("100", 6));
   
-  const tx = mailService.connect(addr1).registerDomain("example.com", false);
+  const tx = mailerClient.connect(addr1).registerDomain("example.com", false);
   const block = await ethers.provider.getBlock('latest');
   const expectedExpiration = BigInt(block!.timestamp + 1) + BigInt(365 * 24 * 60 * 60);
   
   await expect(tx)
-    .to.emit(mailService, "DomainRegistered")
+    .to.emit(mailerClient, "DomainRegistered")
     .withArgs("example.com", addr1.address, expectedExpiration);
 });
 ```
@@ -152,11 +152,11 @@ it("Should allow owner to update registration fee", async function () {
   const newFee = 200000000; // 200 USDC
   
   await expect(
-    mailService.connect(owner).setRegistrationFee(newFee)
-  ).to.emit(mailService, "RegistrationFeeUpdated")
+    mailerClient.connect(owner).setRegistrationFee(newFee)
+  ).to.emit(mailerClient, "RegistrationFeeUpdated")
    .withArgs(100000000, newFee);
   
-  expect(await mailService.registrationFee()).to.equal(newFee);
+  expect(await mailerClient.registrationFee()).to.equal(newFee);
 });
 ```
 
