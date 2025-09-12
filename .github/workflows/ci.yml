@@ -186,7 +186,7 @@ jobs:
           echo "✅ Verifying unified exports..."
           node -e "
             try {
-              const exports = require('./dist/unified/src/unified/mailbox-client.js');
+              const exports = require('./dist/unified/src/unified/index.js');
               console.log('✅ Unified client exports successfully:', Object.keys(exports));
             } catch (e) {
               console.error('❌ Unified client export failed:', e.message);
