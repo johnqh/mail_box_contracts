@@ -96,7 +96,8 @@
       "Bash(ANCHOR_PROVIDER_URL=http://localhost:8899 ANCHOR_WALLET=/dev/null ~/.cargo/bin/anchor build --skip-lint)",
       "Bash(npx hardhat clean:*)",
       "mcp__ide__getDiagnostics",
-      "Bash(tsc --project tsconfig.json)"
+      "Bash(tsc --project tsconfig.json)",
+      "Bash(git tag:*)"
     ],
     "deny": [],
     "defaultMode": "acceptEdits"
