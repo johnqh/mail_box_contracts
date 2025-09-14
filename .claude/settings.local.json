@@ -97,7 +97,10 @@
       "Bash(npx hardhat clean:*)",
       "mcp__ide__getDiagnostics",
       "Bash(tsc --project tsconfig.json)",
-      "Bash(git tag:*)"
+      "Bash(git tag:*)",
+      "Bash(npm:*)",
+      "Bash(tsc:*)",
+      "Read(//Users/qianghuang/types/**)"
     ],
     "deny": [],
     "defaultMode": "acceptEdits"

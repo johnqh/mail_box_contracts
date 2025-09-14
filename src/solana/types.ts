@@ -25,8 +25,13 @@ export interface MailerFees {
     delegationFee: number;
 }
 
-export const USDC_DECIMALS = 6;
-export const CLAIM_PERIOD_DAYS = 60;
+// Import from types package instead of duplicating
+export { 
+    USDC_DECIMALS, 
+    CLAIM_PERIOD_DAYS, 
+    formatUSDC, 
+    parseUSDC 
+} from '@johnqh/types';
 
 // Network configurations
 export const NETWORK_CONFIGS: Record<string, { usdcMint: PublicKey }> = {
@@ -40,12 +45,3 @@ export const NETWORK_CONFIGS: Record<string, { usdcMint: PublicKey }> = {
         usdcMint: new PublicKey('4zMMC9srt5Ri5X14GAgXhaHii3GnPAEERYPJgZJDncDU')
     }
 };
-
-// Utility functions
-export function formatUSDC(amount: number): string {
-    return (amount / Math.pow(10, USDC_DECIMALS)).toFixed(2);
-}
-
-export function parseUSDC(amount: string): number {
-    return Math.floor(parseFloat(amount) * Math.pow(10, USDC_DECIMALS));
-}

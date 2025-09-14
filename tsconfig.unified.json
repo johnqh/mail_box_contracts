@@ -1,7 +1,10 @@
 {
   "extends": "./tsconfig.json",
   "compilerOptions": {
-    "outDir": "dist/unified"
+    "outDir": "dist/unified",
+    "module": "es2020",
+    "target": "es2020",
+    "moduleResolution": "node"
   },
   "include": [
     "src/unified/**/*",

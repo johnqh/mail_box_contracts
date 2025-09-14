@@ -1,2 +1,3 @@
 export * from './chain-config';
-export * from './validation';
+// Validation functions are now exported from @johnqh/types
+export { validateDomain, validateMessage, validateAddress, validateAmount } from '@johnqh/types';

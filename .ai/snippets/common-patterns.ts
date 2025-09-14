@@ -160,7 +160,7 @@ npx ts-node scripts/unified/verify-deployments.ts
 // =====================================
 // Input validation across chains
 
-import { validateAddress, validateMessage } from '../src/utils/validation';
+import { validateAddress, validateMessage } from '@johnqh/types';
 
 // Validate inputs before operations
 validateAddress(address, chainType); // Throws on invalid

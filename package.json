@@ -4,10 +4,10 @@
   "main": "dist/unified/src/unified/index.js",
   "types": "dist/unified/src/unified/index.d.ts",
   "scripts": {
-    "build": "npm run build:evm && npm run build:unified",
+    "build": "npm run build:evm && npm run build:solana && npm run build:unified",
     "build:ci": "npm run build:unified",
     "build:evm": "npx hardhat compile && tsc --project tsconfig.evm.json",
-    "build:solana": "anchor build && tsc --project tsconfig.solana.json",
+    "build:solana": "cargo build --manifest-path programs/mailer/Cargo.toml && tsc --project tsconfig.solana.json",
     "build:unified": "tsc --project tsconfig.unified.json",
     "test": "npm run test:evm && npm run test:solana && npm run test:unified:direct",
     "test:ci": "npm run build:unified && npm run test:unified:direct",
@@ -161,6 +161,7 @@
   },
   "devDependencies": {
     "@coral-xyz/anchor": "^0.31.1",
+    "@johnqh/types": "file:../types",
     "@nomicfoundation/hardhat-toolbox": "^6.1.0",
     "@types/chai": "^4.3.20",
     "@types/mocha": "^10.0.10",

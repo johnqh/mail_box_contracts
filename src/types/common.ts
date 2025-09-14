@@ -6,6 +6,7 @@
  */
 
 import { PublicKey } from '@solana/web3.js';
+import { USDC_DECIMALS, CLAIM_PERIOD_DAYS } from '@johnqh/types';
 
 // ============================================================================
 // CORE MESSAGING TYPES
@@ -352,7 +353,7 @@ export const PROTOCOL_CONSTANTS = {
   SEND_FEE: 100_000n,
   
   /** Claim period: 60 days in seconds */
-  CLAIM_PERIOD: 60 * 24 * 60 * 60,
+  CLAIM_PERIOD: CLAIM_PERIOD_DAYS * 24 * 60 * 60,
   
   /** Revenue share percentages */
   REVENUE_SHARES: {
@@ -361,7 +362,7 @@ export const PROTOCOL_CONSTANTS = {
   },
   
   /** USDC token decimals */
-  USDC_DECIMALS: 6,
+  USDC_DECIMALS,
   
   /** Maximum message lengths */
   MAX_LENGTHS: {
