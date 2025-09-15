@@ -182,6 +182,7 @@
   "dependencies": {
     "@coral-xyz/anchor-cli": "^0.31.1",
     "@coral-xyz/borsh": "^0.31.1",
+    "@johnqh/types": "file:../types",
     "@solana/spl-token": "^0.4.13",
     "@solana/web3.js": "^1.98.4",
     "@types/axios": "^0.9.36",

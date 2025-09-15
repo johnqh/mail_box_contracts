@@ -1,5 +1,5 @@
 import { expect } from "chai";
-import { validateDomain, validateMessage, validateAddress, validateAmount } from "@johnqh/types";
+import { validateDomain, validateMessage, validateAddress, validateAmount, ChainType } from "../../src/utils/validation";
 
 describe("Validation Utilities", function () {
   describe("validateDomain", function () {
@@ -87,8 +87,8 @@ describe("Validation Utilities", function () {
       ];
 
       validEVMAddresses.forEach(address => {
-        expect(() => validateAddress(address, "evm")).to.not.throw();
-        expect(validateAddress(address, "evm")).to.be.true;
+        expect(() => validateAddress(address, ChainType.EVM)).to.not.throw();
+        expect(validateAddress(address, ChainType.EVM)).to.be.true;
       });
     });
 
@@ -100,14 +100,14 @@ describe("Validation Utilities", function () {
       ];
 
       validSolanaAddresses.forEach(address => {
-        expect(() => validateAddress(address, "solana")).to.not.throw();
-        expect(validateAddress(address, "solana")).to.be.true;
+        expect(() => validateAddress(address, ChainType.SOLANA)).to.not.throw();
+        expect(validateAddress(address, ChainType.SOLANA)).to.be.true;
       });
     });
 
     it("should reject empty addresses", function () {
-      expect(() => validateAddress("", "evm")).to.throw("Address cannot be empty");
-      expect(() => validateAddress("", "solana")).to.throw("Address cannot be empty");
+      expect(() => validateAddress("", ChainType.EVM)).to.throw("Address cannot be empty");
+      expect(() => validateAddress("", ChainType.SOLANA)).to.throw("Address cannot be empty");
     });
 
     it("should reject invalid EVM addresses", function () {
@@ -118,7 +118,7 @@ describe("Validation Utilities", function () {
       ];
 
       invalidEVMAddresses.forEach(address => {
-        expect(() => validateAddress(address, "evm")).to.throw("Invalid EVM address format");
+        expect(() => validateAddress(address, ChainType.EVM)).to.throw("Invalid EVM address format");
       });
     });
 
@@ -130,7 +130,7 @@ describe("Validation Utilities", function () {
       ];
 
       invalidSolanaAddresses.forEach(address => {
-        expect(() => validateAddress(address, "solana")).to.throw("Invalid Solana address format");
+        expect(() => validateAddress(address, ChainType.SOLANA)).to.throw("Invalid Solana address format");
       });
     });
 
