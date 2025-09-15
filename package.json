@@ -2,13 +2,23 @@
   "name": "@johnqh/mail_box_contracts",
   "version": "1.5.9",
   "main": "dist/unified/src/unified/index.js",
+  "module": "dist/unified-esm/src/unified/index.js",
   "types": "dist/unified/src/unified/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/unified-esm/src/unified/index.js",
+      "require": "./dist/unified/src/unified/index.js",
+      "types": "./dist/unified/src/unified/index.d.ts"
+    }
+  },
   "scripts": {
     "build": "npm run build:evm && npm run build:solana && npm run build:unified",
-    "build:ci": "npm run build:unified",
+    "build:ci": "npm run build:unified:cjs",
     "build:evm": "npx hardhat compile && tsc --project tsconfig.evm.json",
     "build:solana": "cargo build --manifest-path programs/mailer/Cargo.toml && tsc --project tsconfig.solana.json",
-    "build:unified": "tsc --project tsconfig.unified.json",
+    "build:unified": "npm run build:unified:cjs && npm run build:unified:esm",
+    "build:unified:cjs": "tsc --project tsconfig.unified.json",
+    "build:unified:esm": "tsc --project tsconfig.unified.esm.json && node scripts/fix-esm-imports.js",
     "test": "npm run test:evm && npm run test:solana && npm run test:unified:direct",
     "test:ci": "npm run build:unified && npm run test:unified:direct",
     "test:evm": "npx hardhat test test/evm/Mailer.test.ts",
