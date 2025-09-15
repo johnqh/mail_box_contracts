@@ -6,7 +6,7 @@
  */
 
 import { PublicKey } from '@solana/web3.js';
-import { USDC_DECIMALS, CLAIM_PERIOD_DAYS } from '@johnqh/types';
+import { USDC_DECIMALS, CLAIM_PERIOD_DAYS } from '../utils/currency';
 
 // ============================================================================
 // CORE MESSAGING TYPES
