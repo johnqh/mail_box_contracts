@@ -25,13 +25,13 @@ export interface MailerFees {
     delegationFee: number;
 }
 
-// Import from types package instead of duplicating
+// Import from local utils instead of external dependency
 export { 
     USDC_DECIMALS, 
     CLAIM_PERIOD_DAYS, 
     formatUSDC, 
     parseUSDC 
-} from '@johnqh/types';
+} from '../utils/currency';
 
 // Network configurations
 export const NETWORK_CONFIGS: Record<string, { usdcMint: PublicKey }> = {
