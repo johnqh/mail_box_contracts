@@ -217,7 +217,7 @@ export class MailerClient {
       address: this.contractAddress,
       abi: MAILER_ABI,
       functionName: 'sendFee',
-    });
+    } as any) as bigint;
   }
 
   async getUsdcToken(): Promise<Address> {
@@ -225,7 +225,7 @@ export class MailerClient {
       address: this.contractAddress,
       abi: MAILER_ABI,
       functionName: 'usdcToken',
-    });
+    } as any) as Address;
   }
 
   getAddress(): Address {
@@ -279,7 +279,7 @@ export class MailerClient {
       abi: MAILER_ABI,
       functionName: 'getRecipientClaimable',
       args: [getAddress(recipient)],
-    }) as [bigint, bigint, boolean];
+    } as any) as [bigint, bigint, boolean];
     
     return {
       amount: result[0],
@@ -293,7 +293,7 @@ export class MailerClient {
       address: this.contractAddress,
       abi: MAILER_ABI,
       functionName: 'getOwnerClaimable'
-    });
+    } as any) as bigint;
   }
 
   // Delegation functionality
@@ -351,7 +351,7 @@ export class MailerClient {
       address: this.contractAddress,
       abi: MAILER_ABI,
       functionName: 'getDelegationFee',
-    });
+    } as any) as bigint;
   }
 
   /**

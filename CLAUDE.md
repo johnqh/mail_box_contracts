@@ -40,10 +40,10 @@ mail_box_contracts/
 │   ├── solana/           # Solana-specific clients  
 │   ├── unified/          # Cross-chain unified client
 │   └── utils/            # Shared utilities & validation
-├── test/                  # Comprehensive test suites (105+ tests)
-│   ├── evm/              # EVM contract tests (105 tests)
-│   ├── solana/           # Solana program tests  
-│   └── unified/          # Cross-chain client tests
+├── test/                  # Comprehensive test suites (116 tests)
+│   ├── evm/              # EVM contract tests (75 tests)
+│   ├── solana/           # Solana program tests
+│   └── unified/          # Cross-chain client tests (41 tests)
 ├── scripts/               # Multi-chain deployment scripts
 │   ├── evm/              # EVM deployment scripts
 │   ├── solana/           # Solana deployment scripts
@@ -72,7 +72,7 @@ mail_box_contracts/
 # AI Workflow Automation (ENHANCED!)
 npm run ai:status                   # Check project health & environment
 npm run ai:build                    # AI-optimized complete build workflow  
-npm run ai:test                     # Comprehensive multi-chain testing
+npm run ai:test                     # Comprehensive multi-chain testing (116 tests)
 npm run ai:check                    # Fast validation and quick checks
 npm run ai:workflow <command>       # Advanced workflow automation
 
@@ -88,7 +88,7 @@ npm run ai:workflow run quick-check # Fast development validation
 ```bash
 # Essential Commands (run these frequently)
 npm run compile    # Compile contracts + generate TypeScript types
-npm test          # Run all tests (88 tests total - updated count)
+npm test          # Run all tests (116 tests total)
 npm run build     # Build TypeScript files
 
 # Deployment Commands  
@@ -98,7 +98,7 @@ npx hardhat node              # Start local blockchain
 # Development Commands
 npm run clean          # Clean compiled artifacts
 npm install           # Install dependencies
-npx ts-node examples/basic-usage.ts  # Run comprehensive examples
+npx ts-node examples/unified-usage.ts  # Run comprehensive examples
 
 # Testing Commands
 npm test -- --grep "MailService"  # Run only MailService tests
@@ -161,22 +161,26 @@ npm test -- --verbose            # Run tests with detailed output
 
 ## Testing Architecture
 
-**Test Files**: `test/MailService.test.ts`, `test/Mailer.test.ts`, `test/MailBoxClient.test.ts`
-**Total Tests**: 88 passing tests (MailBoxFactory removed as per user requirements)
+**Test Files**: `test/evm/Mailer.test.ts`, `test/unified/*.test.ts`
+**Total Tests**: 116 passing tests
 **Test Categories**:
 
-### MailService Tests (27 tests)
+### EVM Tests (75 tests)
 - Contract setup and configuration
-- Delegation lifecycle (creation, rejection, edge cases)
-- Domain registration and fees
-- Owner permissions and fee management
-
-### Mailer Tests (54 tests)
-- Message sending (all 4 variants)
+- Message sending (all 4 variants: send, sendPrepared, sendPriority, sendPriorityPrepared)
 - Fee management and updates
 - Revenue sharing system
 - Claims management (recipient, owner, expired)
+- Delegation lifecycle (creation, rejection, edge cases)
+- Pause functionality and emergency controls
 - Edge cases and security
+
+### Unified Client Tests (41 tests)
+- Multi-chain client initialization
+- Wallet detection and validation
+- Cross-chain message routing
+- Validation utilities (domain, message, address, amount)
+- Error handling and edge cases
 
 **Key Test Patterns**:
 - MockUSDC for testing USDC interactions
@@ -241,7 +245,7 @@ expect(finalBalance - initialBalance).to.equal(expectedFee);
 ## TypeScript Integration
 
 **Generated Types**: All contracts have full TypeScript support via TypeChain
-**Client Wrapper**: `src/mailer-client.ts` provides high-level interface
+**Unified Client**: `src/unified/onchain-mailer-client.ts` provides cross-chain interface
 **Type Safety**: All contract interactions are fully typed
 
 ### Network Configuration
@@ -269,7 +273,7 @@ expect(finalBalance - initialBalance).to.equal(expectedFee);
    - Security best practices
    - Performance optimization tips
 
-3. **examples/basic-usage.ts** - Comprehensive working examples with:
+3. **examples/unified-usage.ts** - Comprehensive working examples with:
    - Complete deployment workflow
    - All major functionality demonstrated
    - Error handling patterns
@@ -300,7 +304,7 @@ expect(finalBalance - initialBalance).to.equal(expectedFee);
 
 ### Critical Development Workflow:
 1. **Always run `npm run compile` after contract changes** - Regenerates TypeScript types
-2. **Run `npm test` to verify changes don't break existing functionality** - 88 comprehensive tests
+2. **Run `npm test` to verify changes don't break existing functionality** - 116 comprehensive tests
 3. **Follow existing test patterns** documented in AI_DEVELOPMENT_GUIDE.md
 4. **Use MockUSDC for all USDC-related testing** - Never use real tokens
 5. **Check both positive and negative test cases** - Error conditions are critical
@@ -311,7 +315,7 @@ expect(finalBalance - initialBalance).to.equal(expectedFee);
 ### AI-Specific Guidance:
 
 **Code Generation Patterns**:
-- Reference `examples/basic-usage.ts` for working patterns
+- Reference `examples/unified-usage.ts` for working patterns
 - Use existing client methods as templates for new functionality
 - Follow the established error handling patterns
 - Maintain consistency with existing naming conventions
@@ -343,7 +347,7 @@ expect(finalBalance - initialBalance).to.equal(expectedFee);
 - `.vscode/` - VS Code configuration optimized for AI development (NEW)
 - `src/types/common.ts` - Comprehensive type definitions and utilities
 - `AI_DEVELOPMENT_GUIDE.md` - Extended development patterns
-- `examples/basic-usage.ts` - Working code examples
+- `examples/unified-usage.ts` - Working code examples
 - `examples/README.md` - Usage patterns documentation
 - `src/mailer-client.ts` - Full API reference with examples
 - `test/` directory - Comprehensive test patterns
@@ -356,4 +360,4 @@ This project emphasizes **security, comprehensive testing, AI-friendly documenta
 2. **Extending client library** - Use existing client methods as templates
 3. **Writing tests** - Reference existing comprehensive test suites
 4. **Debugging issues** - Check AI_DEVELOPMENT_GUIDE.md for common solutions
-5. **Understanding architecture** - Start with examples/basic-usage.ts walkthrough
+5. **Understanding architecture** - Start with examples/unified-usage.ts walkthrough

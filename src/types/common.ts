@@ -350,7 +350,7 @@ export function isEvmRecipient(recipient: MessageRecipient): recipient is string
  */
 export const PROTOCOL_CONSTANTS = {
   /** Base send fee: 0.1 USDC (100,000 with 6 decimals) */
-  SEND_FEE: 100_000n,
+  SEND_FEE: BigInt(100_000),
   
   /** Claim period: 60 days in seconds */
   CLAIM_PERIOD: CLAIM_PERIOD_DAYS * 24 * 60 * 60,

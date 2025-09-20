@@ -34,7 +34,7 @@ npm run build      # All TypeScript clients
 
 # Test everything
 npm test           # All tests
-npm run test:evm   # EVM tests only (105 tests)
+npm run test:evm   # EVM tests only (75 tests)
 npm run test:unified # Unified client tests
 
 # Deploy
@@ -43,10 +43,10 @@ npm run deploy:unified      # Multi-chain deployment
 ```
 
 ### Key Files to Understand First
-1. `src/unified/mailbox-client.ts` - Main unified client
+1. `src/unified/onchain-mailer-client.ts` - Main unified client
 2. `src/unified/wallet-detector.ts` - Automatic chain detection
 3. `examples/unified-usage.ts` - Complete usage patterns
-4. `PHASE_3_SUMMARY.md` - Architecture overview
+4. `CLAUDE.md` - Architecture overview and AI guide
 
 ## 🧠 AI Development Patterns
 

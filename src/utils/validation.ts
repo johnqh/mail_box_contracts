@@ -103,7 +103,7 @@ export function validateAmount(amount: string | number | bigint): bigint {
     throw new Error('Invalid amount format');
   }
 
-  if (amountBigInt < 0n) {
+  if (amountBigInt < BigInt(0)) {
     throw new Error('Amount cannot be negative');
   }
 

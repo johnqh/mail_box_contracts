@@ -1,7 +1,7 @@
 {
   "name": "MailBox Contracts",
   "description": "Production-ready multi-chain decentralized messaging system with USDC fees, revenue sharing, and unified client interface",
-  "version": "1.5.2",
+  "version": "1.6.0",
   "type": "multi-chain-dapp",
   "chains": ["ethereum", "polygon", "arbitrum", "optimism", "solana"],
   "languages": ["solidity", "rust", "typescript"],
@@ -18,7 +18,7 @@
     
     "key_patterns": {
       "contract_modification": "Always compile after changes: npm run compile",
-      "testing": "Run full test suite: npm test (88+ tests)",
+      "testing": "Run full test suite: npm test (116 tests)",
       "deployment": "Local development: npm run deploy:local",
       "debugging": "Use comprehensive logging and error handling"
     },
@@ -29,7 +29,7 @@
         "2. Run npm run compile",
         "3. Update TypeScript clients (MailerClient only)",
         "4. Add comprehensive tests",
-        "5. Run npm test (124+ tests)",
+        "5. Run npm test (116 tests)",
         "6. Update documentation"
       ],
       "bug_fix": [
@@ -76,11 +76,11 @@
     },
     
     "testing_strategy": {
-      "total_tests": "116+",
+      "total_tests": "116",
       "test_breakdown": {
         "evm_tests": 75,
-        "solana_tests": 8,
-        "unified_tests": 41
+        "unified_tests": 41,
+        "total_tests": 116
       },
       "categories": ["unit", "integration", "multi_chain", "error_handling"],
       "test_files": ["test/evm/Mailer.test.ts", "test/solana/", "test/unified/"],
@@ -201,7 +201,7 @@
 
   "success_criteria": {
     "code_quality": [
-      "116+ tests passing",
+      "116 tests passing",
       "Zero TypeScript errors",
       "Zero ESLint warnings",
       "Clean git status",

@@ -1,7 +1,7 @@
 # MailBox Contracts - Multi-Chain Decentralized Messaging System
 
 [![Version](https://img.shields.io/npm/v/@johnqh/mail_box_contracts)](https://www.npmjs.com/package/@johnqh/mail_box_contracts)
-[![Tests](https://img.shields.io/badge/tests-116%2B%20passing-green)](#testing)
+[![Tests](https://img.shields.io/badge/tests-116%20passing-green)](#testing)
 [![TypeScript](https://img.shields.io/badge/TypeScript-Ready-blue)](#typescript-support)
 [![Multi-Chain](https://img.shields.io/badge/chains-EVM%20%7C%20Solana-purple)](#supported-chains)
 
@@ -54,44 +54,49 @@ console.log('Running on:', client.getChainType()); // 'evm' or 'solana'
 ### EVM Chains (Ethereum, Polygon, Arbitrum, etc.)
 
 ```typescript
-import { MailerClient } from '@johnqh/mail_box_contracts/evm';
+import { OnchainMailerClient } from '@johnqh/mail_box_contracts';
 import { ethers } from 'ethers';
 
-const provider = new ethers.JsonRpcProvider('YOUR_RPC_URL');
-const signer = new ethers.Wallet('YOUR_PRIVATE_KEY', provider);
+// The unified client automatically detects EVM wallets
+const wallet = {
+  address: "0x...",
+  request: async () => {},
+  signTransaction: async (tx: any) => tx
+};
 
-const mailer = new MailerClient('CONTRACT_ADDRESS', provider);
+const client = new OnchainMailerClient(wallet, EVM_CHAIN_CONFIG);
 
 // Send priority message with revenue sharing
-await mailer.sendPriority("recipient_address", "Hello EVM!", "Decentralized message", walletClient, account);
+await client.sendMessage("Hello EVM!", "Decentralized message", true);
 
-// Delegate to another address (MailerClient includes delegation functionality)
-await mailer.delegateTo("0x...", walletClient, account);
+// Delegate to another address
+await client.delegateTo("0x...");
 
 // Claim revenue share
-await mailer.claimRecipientShare(walletClient, account);
+await client.claimRevenue();
 ```
 
 ### Solana
 
 ```typescript
-import { MailerClient } from '@johnqh/mail_box_contracts/solana';
-import { Connection, PublicKey } from '@solana/web3.js';
+import { OnchainMailerClient } from '@johnqh/mail_box_contracts';
+import { Keypair } from '@solana/web3.js';
 import { Wallet } from '@coral-xyz/anchor';
 
-const connection = new Connection('https://api.devnet.solana.com');
+// The unified client automatically detects Solana wallets
+const keypair = Keypair.generate();
 const wallet = new Wallet(keypair);
 
-const mailer = new MailerClient(connection, wallet, PROGRAM_ID, USDC_MINT);
+const client = new OnchainMailerClient(wallet, SOLANA_CHAIN_CONFIG);
 
 // Send priority message with revenue sharing
-await mailer.sendPriority("Hello Solana!", "Decentralized message");
+await client.sendMessage("Hello Solana!", "Decentralized message", true);
 
-// Delegate to another address (MailerClient includes delegation functionality)
-await mailer.delegateTo(new PublicKey("..."));
+// Delegate to another address
+await client.delegateTo("...");
 
 // Claim revenue share
-await mailer.claimRecipientShare();
+await client.claimRevenue();
 ```
 
 ### TypeScript Support
@@ -113,16 +118,25 @@ const receipt: ContractReceipt = await tx.wait();
 
 ```
 mail_box_contracts/
-├── contracts/              # Smart contracts
-│   ├── MailService.sol    # Domain registration & delegation
-│   ├── Mailer.sol         # Messaging with revenue sharing
+├── contracts/              # EVM smart contracts (Solidity)
+│   ├── MailService.sol    # EVM delegation management
+│   ├── Mailer.sol         # EVM messaging with revenue sharing
 │   └── MockUSDC.sol       # Test USDC token
-├── test/                  # Comprehensive test suites
-│   ├── MailService.test.ts # 27 tests for MailService
-│   └── Mailer.test.ts     # 54 tests for Mailer
-├── src/                   # TypeScript client wrappers
-├── scripts/               # Deployment scripts
+├── programs/               # Solana programs (Rust)
+│   ├── mail_service/      # Solana delegation management
+│   ├── mailer/           # Solana messaging program
+│   └── mail_box_factory/ # Solana factory program
+├── src/                   # Multi-chain TypeScript clients
+│   ├── evm/              # EVM-specific clients
+│   ├── solana/           # Solana-specific clients
+│   ├── unified/          # Cross-chain unified client
+│   └── utils/            # Shared utilities & validation
+├── test/                  # Comprehensive test suites (116 tests)
+│   ├── evm/              # EVM contract tests (75 tests)
+│   ├── solana/           # Solana program tests
+│   └── unified/          # Cross-chain client tests (41 tests)
 ├── typechain-types/       # Auto-generated TypeScript types
+├── examples/              # Complete usage examples
 └── CLAUDE.md              # AI assistant documentation
 ```
 
@@ -141,7 +155,7 @@ npm install
 # Compile contracts and generate types
 npm run compile
 
-# Run comprehensive test suite (81 tests)
+# Run comprehensive test suite (116 tests)
 npm test
 
 # Deploy to local network
@@ -184,15 +198,15 @@ npm run deploy:local
 
 ## 🧪 Testing
 
-Comprehensive test coverage with 81 passing tests:
+Comprehensive test coverage with 116 passing tests:
 
 ```bash
 # Run all tests
 npm test
 
 # Test categories:
-# ✅ MailService (27 tests) - Delegation, domain registration, fees
-# ✅ Mailer (54 tests) - Messaging, revenue sharing, claims
+# ✅ EVM Tests (75 tests) - Contract functionality, fees, revenue sharing
+# ✅ Unified Tests (41 tests) - Cross-chain client, validation, wallet detection
 ```
 
 ### Test Highlights
@@ -208,14 +222,14 @@ npm test
 ```bash
 # Essential commands (run these frequently!)
 npm run compile    # Compile contracts + generate TypeScript types
-npm test          # Run all 116+ tests (75 EVM + 8 Solana + 41 Unified)
+npm test          # Run all 116 tests (75 EVM + 41 Unified)
 npm run build     # Build TypeScript files
 
 # AI-Optimized commands
 npm run ai:dev     # Show AI helper commands + status
 npm run ai:status  # Quick project health check
 npm run ai:build   # Clean build everything
-npm run ai:test    # Run comprehensive test suite  
+npm run ai:test    # Run comprehensive test suite (116 tests)  
 npm run ai:check   # TypeScript + ESLint validation
 
 # Development
@@ -242,12 +256,13 @@ npm run clean        # Clean artifacts
 Full TypeScript support with auto-generated types:
 
 ```typescript
-import { MailerClient } from "@johnqh/mail_box_contracts";
+import { OnchainMailerClient } from "@johnqh/mail_box_contracts";
 
 // Type-safe contract interactions using unified client
-const mailerClient = new MailerClient(address, publicClient);
-await mailerClient.delegateTo(delegateAddress, walletClient, account);
-await mailerClient.sendPriority(to, "Subject", "Body", walletClient, account);
+const client = new OnchainMailerClient(wallet, chainConfig);
+await client.delegateTo(delegateAddress);
+await client.sendMessage("Subject", "Body", true); // priority message
+await client.claimRevenue();
 ```
 
 ## 🔐 Security Features
@@ -270,7 +285,7 @@ This project is optimized for AI-assisted development with comprehensive documen
 
 ### AI Development Features
 - **🔧 AI Commands**: `npm run ai:dev` for AI-optimized development workflows
-- **📊 Test Coverage**: 116+ tests with detailed patterns for AI reference
+- **📊 Test Coverage**: 116 tests with detailed patterns for AI reference
 - **📝 Rich Documentation**: Comprehensive JSDoc comments and inline examples
 - **🎯 Success Metrics**: Clear validation criteria and checklists
 - **⚡ Quick Validation**: `npm run ai:check` for TypeScript + ESLint
@@ -287,7 +302,7 @@ This project is optimized for AI-assisted development with comprehensive documen
 1. Fork the repository
 2. Create feature branch: `git checkout -b feature/new-feature`
 3. Add comprehensive tests for new functionality
-4. Ensure all 116+ tests pass: `npm test`
+4. Ensure all 116 tests pass: `npm test`
 5. Submit pull request
 
 ## 📄 License
