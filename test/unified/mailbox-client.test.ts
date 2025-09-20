@@ -130,6 +130,8 @@ describe("OnchainMailerClient", function () {
 
   describe("sendMessage", function () {
     it("should route to appropriate chain implementation", async function () {
+      this.timeout(5000); // Increase timeout for network operations
+
       // This test would require mocking the actual chain implementations
       // For now, we test the routing logic by checking error messages
 
@@ -137,9 +139,21 @@ describe("OnchainMailerClient", function () {
       const solanaWallet = new Wallet(keypair);
       const client = new OnchainMailerClient(solanaWallet, testConfig);
 
-      // Should attempt to use Solana implementation
-      await expect(client.sendMessage("Test", "Body"))
-        .to.be.rejected; // Will fail due to missing Solana connection, but shows routing works
+      // Should attempt to use Solana implementation and fail due to missing connection
+      try {
+        await client.sendMessage("Test", "Body");
+        expect.fail("Should have thrown an error");
+      } catch (error) {
+        // Expect either a connection error or configuration error
+        expect(error).to.be.instanceOf(Error);
+        const errorMessage = (error as Error).message;
+        expect(errorMessage).to.satisfy((msg: string) =>
+          msg.includes('Connection timeout') ||
+          msg.includes('Solana') ||
+          msg.includes('RPC') ||
+          msg.includes('connection')
+        );
+      }
     });
   });
 
