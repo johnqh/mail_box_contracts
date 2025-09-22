@@ -1,3 +1,5 @@
+import { ChainType, AddressValidator } from '@johnqh/types';
+
 export class WalletDetector {
   /**
    * Detects the wallet type based on its interface
@@ -5,25 +7,25 @@ export class WalletDetector {
    * @returns The detected chain type
    */
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  static detectWalletType(wallet: any): 'evm' | 'solana' {
+  static detectWalletType(wallet: any): ChainType {
     // Check for Solana wallet interface
     if (wallet.publicKey && wallet.signTransaction && !wallet.address) {
-      return 'solana';
+      return ChainType.SOLANA;
     }
-    
+
     // Check for EVM wallet interface (MetaMask, etc.)
     if (wallet.address && wallet.request && !wallet.publicKey) {
-      return 'evm';
+      return ChainType.EVM;
     }
-    
+
     // Additional checks for Web3 provider
     if (wallet.currentProvider || wallet._provider || wallet.provider) {
-      return 'evm';
+      return ChainType.EVM;
     }
-    
+
     // Check for specific Solana wallet adapters
     if (wallet.adapter && typeof wallet.adapter === 'object' && 'name' in wallet.adapter) {
-      return 'solana';
+      return ChainType.SOLANA;
     }
     
     throw new Error('Unsupported wallet type - unable to detect EVM or Solana interface');
@@ -35,7 +37,7 @@ export class WalletDetector {
    * @returns True if it looks like an EVM address
    */
   static isEVMAddress(address: string): boolean {
-    return /^0x[a-fA-F0-9]{40}$/.test(address);
+    return AddressValidator.isValidEVMAddress(address);
   }
 
   /**
@@ -44,8 +46,7 @@ export class WalletDetector {
    * @returns True if it looks like a Solana address
    */
   static isSolanaAddress(address: string): boolean {
-    // Solana addresses are base58 encoded and typically 32-44 characters
-    return /^[1-9A-HJ-NP-Za-km-z]{32,44}$/.test(address);
+    return AddressValidator.isValidSolanaAddress(address);
   }
 
   /**
@@ -53,12 +54,12 @@ export class WalletDetector {
    * @param address - The address to analyze
    * @returns The detected chain type or null if unknown
    */
-  static detectChainFromAddress(address: string): 'evm' | 'solana' | null {
+  static detectChainFromAddress(address: string): ChainType | null {
     if (this.isEVMAddress(address)) {
-      return 'evm';
+      return ChainType.EVM;
     }
     if (this.isSolanaAddress(address)) {
-      return 'solana';
+      return ChainType.SOLANA;
     }
     return null;
   }

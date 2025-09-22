@@ -3,13 +3,13 @@ import chaiAsPromised from "chai-as-promised";
 import chai from "chai";
 import { Keypair } from "@solana/web3.js";
 import { Wallet } from "@coral-xyz/anchor";
-import { OnchainMailerClient } from "../../src/unified/onchain-mailer-client";
-import { ChainConfig } from "../../src/unified/types";
+import { OnchainMailerClient } from "../../src/unified/onchain-mailer-client.js";
+import { ChainConfig } from "../../src/unified/types.js";
 
 chai.use(chaiAsPromised);
 
 describe("OnchainMailerClient", function () {
-  let testConfig: ChainConfig;
+  let testConfig!: ChainConfig; // Non-null assertion - will be initialized in beforeEach
 
   beforeEach(function () {
     testConfig = {
@@ -46,7 +46,7 @@ describe("OnchainMailerClient", function () {
       const evmWallet = {
         address: "0x1234567890123456789012345678901234567890",
         request: async () => {},
-        signTransaction: async (tx: any) => tx
+        signTransaction: async (tx: unknown) => tx
       };
 
       const client = new OnchainMailerClient(evmWallet, testConfig);
@@ -59,7 +59,7 @@ describe("OnchainMailerClient", function () {
       const evmWallet = {
         address: "0x1234567890123456789012345678901234567890",
         request: async () => {},
-        signTransaction: async (tx: any) => tx
+        signTransaction: async (tx: unknown) => tx
       };
 
       const configWithoutEVM: ChainConfig = {
@@ -88,7 +88,7 @@ describe("OnchainMailerClient", function () {
       const evmWallet = {
         address: "0x1234567890123456789012345678901234567890",
         request: async () => {},
-        signTransaction: async (tx: any) => tx
+        signTransaction: async (tx: unknown) => tx
       };
 
       const client = new OnchainMailerClient(evmWallet, testConfig);
@@ -140,10 +140,10 @@ describe("OnchainMailerClient", function () {
       try {
         await client.sendMessage("Test", "Body");
         expect.fail("Should have thrown an error");
-      } catch (error) {
+      } catch (error: unknown) {
         // Expect either a connection error or configuration error
         expect(error).to.be.instanceOf(Error);
-        const errorMessage = (error as Error).message;
+        const errorMessage = error instanceof Error ? error.message : 'Unknown error';
         expect(errorMessage).to.satisfy((msg: string) =>
           msg.includes('Connection timeout') ||
           msg.includes('Solana') ||
@@ -167,7 +167,7 @@ describe("OnchainMailerClient", function () {
       const evmWallet = {
         address: "0x1234567890123456789012345678901234567890",
         request: async () => {},
-        signTransaction: async (tx: any) => tx
+        signTransaction: async (tx: unknown) => tx
       };
 
       const client = new OnchainMailerClient(evmWallet, testConfig);

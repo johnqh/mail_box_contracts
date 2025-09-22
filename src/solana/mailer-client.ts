@@ -13,7 +13,7 @@ import {
     createAssociatedTokenAccountInstruction
 } from '@solana/spl-token';
 // Removed borsh import - using manual encoding for native program
-import { ClaimableInfo, MailerFees } from './types';
+import { ClaimableInfo, MailerFees } from './types.js';
 
 /**
  * Interface for wallet adapter pattern

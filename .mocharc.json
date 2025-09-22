@@ -1,6 +1,6 @@
 {
   "extension": ["ts"],
-  "require": "ts-node/register",
+  "loader": "ts-node/esm",
   "timeout": 10000,
   "recursive": true
 }

@@ -2,12 +2,11 @@
  * Validation utilities for multi-chain operations
  */
 
-export enum ChainType {
-  EVM = 'evm',
-  ETHEREUM = 'ethereum',
-  SOLANA = 'solana',
-  UNKNOWN = 'unknown',
-}
+// Import ChainType and AddressValidator from @johnqh/types (now ESM compatible)
+import { ChainType, AddressValidator } from '@johnqh/types';
+
+// Re-export ChainType for convenience
+export { ChainType };
 
 export function validateDomain(domain: string): boolean {
   if (!domain || domain.length === 0) {
@@ -49,16 +48,13 @@ export function validateAddress(
     throw new Error('Address cannot be empty');
   }
 
+  // Use AddressValidator from @johnqh/types for consistent validation
   if (chainType === ChainType.EVM) {
-    const evmRegex = /^0x[a-fA-F0-9]{40}$/;
-    if (!evmRegex.test(address)) {
+    if (!AddressValidator.isValidEVMAddress(address)) {
       throw new Error('Invalid EVM address format');
     }
   } else if (chainType === ChainType.SOLANA) {
-    // Solana addresses are base58 encoded, typically 32-44 characters
-    // Base58 alphabet excludes 0, O, I, l to avoid confusion
-    const solanaRegex = /^[1-9A-HJ-NP-Za-km-z]{32,44}$/;
-    if (!solanaRegex.test(address)) {
+    if (!AddressValidator.isValidSolanaAddress(address)) {
       throw new Error('Invalid Solana address format');
     }
   } else {

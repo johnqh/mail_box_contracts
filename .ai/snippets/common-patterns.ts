@@ -160,23 +160,22 @@ npx ts-node scripts/unified/verify-deployments.ts
 // =====================================
 // Input validation across chains
 
-import { validateAddress, validateMessage } from '@johnqh/types';
+import { AddressValidator } from '@johnqh/types';
 
-// Validate inputs before operations
-validateAddress(address, chainType); // Throws on invalid
-validateMessage(subject, body); // Validates length limits
+// Validate inputs before operations using @johnqh/types
+if (!AddressValidator.isValidEVMAddress(address) && !AddressValidator.isValidSolanaAddress(address)) {
+  throw new Error('Invalid address format');
+}
 
 // Chain-specific validations
 if (chainType === 'evm') {
-  if (!ethers.isAddress(delegate)) {
+  if (!AddressValidator.isValidEVMAddress(delegate)) {
     throw new Error('Invalid EVM address format');
   }
 }
 
 if (chainType === 'solana') {
-  try {
-    new PublicKey(delegate);
-  } catch {
+  if (!AddressValidator.isValidSolanaAddress(delegate)) {
     throw new Error('Invalid Solana address format');
   }
 }

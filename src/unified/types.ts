@@ -1,6 +1,14 @@
+// Import types from @johnqh/types package (now ESM compatible)
+import {
+  ChainType,
+  MessageSendResponse,
+  DomainRegistrationResponse,
+  MailboxDelegationResponse
+} from '@johnqh/types';
+
 export interface UnifiedTransaction {
   hash: string;
-  chainType: 'evm' | 'solana';
+  chainType: ChainType;
   blockNumber?: number;
   slot?: number;
   timestamp?: number;
@@ -8,7 +16,7 @@ export interface UnifiedTransaction {
 
 export interface UnifiedWallet {
   address: string;
-  chainType: 'evm' | 'solana';
+  chainType: ChainType;
   signTransaction: (tx: unknown) => Promise<unknown>;
   publicKey?: string; // For Solana wallets
 }
@@ -35,31 +43,7 @@ export interface SolanaConfig {
   usdcMint: string;
 }
 
-export interface MessageResult {
-  transactionHash: string;
-  chainType: 'evm' | 'solana';
-  messageId?: string;
-  gasUsed?: bigint;
-  fee: bigint | number;
-  recipient?: string;
-  subject?: string;
-  body?: string;
-  slot?: number;
-  timestamp?: number;
-}
-
-export interface DomainResult {
-  transactionHash: string;
-  chainType: 'evm' | 'solana';
-  domain: string;
-  expiryTimestamp: number;
-  fee: bigint;
-}
-
-export interface DelegationResult {
-  transactionHash: string;
-  chainType: 'evm' | 'solana';
-  delegator: string;
-  delegate: string;
-  fee: bigint;
-}
+// Use types from @johnqh/types package for consistency
+export type MessageResult = MessageSendResponse;
+export type DomainResult = DomainRegistrationResponse;
+export type DelegationResult = MailboxDelegationResponse;

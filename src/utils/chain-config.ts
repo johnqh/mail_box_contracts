@@ -1,4 +1,4 @@
-import { ChainConfig } from '../unified/types';
+import { ChainConfig } from '../unified/types.js';
 
 export const DEFAULT_CHAIN_CONFIG: ChainConfig = {
   evm: {

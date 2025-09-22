@@ -1,7 +1,7 @@
 import { expect } from "chai";
 import { Keypair } from "@solana/web3.js";
 import { Wallet } from "@coral-xyz/anchor";
-import { WalletDetector } from "../../src/unified/wallet-detector";
+import { WalletDetector } from "../../src/unified/wallet-detector.js";
 
 describe("WalletDetector", function () {
   describe("detectWalletType", function () {

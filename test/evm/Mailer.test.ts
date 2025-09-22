@@ -1,6 +1,7 @@
 import { expect } from "chai";
-import { ethers } from "hardhat";
-import { Mailer } from "../typechain-types";
+import hre from "hardhat";
+const { ethers } = hre;
+import type { Mailer } from "../../typechain-types/Mailer.js";
 
 describe("Mailer", function () {
   let mailer: Mailer;

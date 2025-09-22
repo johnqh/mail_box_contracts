@@ -1,5 +1,5 @@
 import { expect } from "chai";
-import { validateDomain, validateMessage, validateAddress, validateAmount, ChainType } from "../../src/utils/validation";
+import { validateDomain, validateMessage, validateAddress, validateAmount, ChainType } from "../../src/utils/validation.js";
 
 describe("Validation Utilities", function () {
   describe("validateDomain", function () {

@@ -1,7 +1,8 @@
 {
   "extends": "./tsconfig.json",
   "compilerOptions": {
-    "outDir": "dist/evm"
+    "outDir": "dist/evm",
+    "module": "commonjs"
   },
   "include": [
     "src/evm/**/*",

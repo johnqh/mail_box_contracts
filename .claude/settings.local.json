@@ -101,7 +101,9 @@
       "Read(//Users/johnhuang/0xmail/types/**)",
       "Bash(NODE_OPTIONS=\"--loader ts-node/esm\" npx mocha test/unified/*.test.ts)",
       "Bash(TS_NODE_PROJECT=tsconfig.test.json npx mocha test/unified/*.test.ts)",
-      "Bash(TS_NODE_PROJECT=tsconfig.test.json npm run test:unified:direct)"
+      "Bash(TS_NODE_PROJECT=tsconfig.test.json npm run test:unified:direct)",
+      "Bash(NODE_OPTIONS=\"--loader ts-node/esm\" npx mocha test/unified/*.test.ts --timeout 10000)",
+      "Bash(TS_NODE_PROJECT=tsconfig.test.json npx mocha test/unified/validation.test.ts)"
     ],
     "deny": [],
     "defaultMode": "acceptEdits"

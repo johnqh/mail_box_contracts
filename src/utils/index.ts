@@ -1,3 +1,3 @@
-export * from './chain-config';
-export * from './validation';
-export * from './currency';
+export * from './chain-config.js';
+export * from './validation.js';
+export * from './currency.js';

@@ -1,2 +1,2 @@
-export * from './mailer-client';
-export * from './types';
+export * from './mailer-client.js';
+export * from './types.js';

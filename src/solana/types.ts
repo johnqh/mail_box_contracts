@@ -31,7 +31,7 @@ export {
     CLAIM_PERIOD_DAYS, 
     formatUSDC, 
     parseUSDC 
-} from '../utils/currency';
+} from '../utils/currency.js';
 
 // Network configurations
 export const NETWORK_CONFIGS: Record<string, { usdcMint: PublicKey }> = {

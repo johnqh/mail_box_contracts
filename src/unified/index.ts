@@ -1,6 +1,6 @@
 // Named exports for unified mailer clients
-export { OnchainMailerClient } from './onchain-mailer-client';
-export { WalletDetector } from './wallet-detector';
+export { OnchainMailerClient } from './onchain-mailer-client.js';
+export { WalletDetector } from './wallet-detector.js';
 export type {
   UnifiedTransaction,
   UnifiedWallet,
@@ -10,4 +10,4 @@ export type {
   MessageResult,
   DomainResult,
   DelegationResult
-} from './types';
+} from './types.js';
