@@ -1,17 +1,17 @@
-# MailBox Contracts - Multi-Chain Decentralized Messaging System
+# Multi-Chain Decentralized Messaging Contracts
 
 [![Version](https://img.shields.io/npm/v/@johnqh/mail_box_contracts)](https://www.npmjs.com/package/@johnqh/mail_box_contracts)
 [![Tests](https://img.shields.io/badge/tests-116%20passing-green)](#testing)
 [![TypeScript](https://img.shields.io/badge/TypeScript-Ready-blue)](#typescript-support)
 [![Multi-Chain](https://img.shields.io/badge/chains-EVM%20%7C%20Solana-purple)](#supported-chains)
 
-A comprehensive multi-chain decentralized email/messaging system supporting both **EVM chains** and **Solana** with USDC fee integration, delegation management, and revenue sharing capabilities.
+A comprehensive multi-chain decentralized messaging system supporting both **EVM chains** and **Solana** with USDC fee integration, delegation management, and revenue sharing capabilities.
 
 > **🤖 AI-Optimized**: This project includes comprehensive documentation, patterns, and tooling specifically designed for AI-assisted development. See [`AI_ASSISTANT_QUICKSTART.md`](./AI_ASSISTANT_QUICKSTART.md) and [`CLAUDE.md`](./CLAUDE.md) for AI development guides.
 
 ## 🏗️ Project Overview
 
-**MailBox Contracts** enables decentralized messaging with built-in economic incentives through a two-tier fee system and revenue sharing mechanism. The system automatically detects your wallet type and routes to the appropriate blockchain implementation.
+This messaging system enables decentralized communication with built-in economic incentives through a two-tier fee system and revenue sharing mechanism. The system automatically detects your wallet type and routes to the appropriate blockchain implementation.
 
 ### 🌟 Core Features
 
@@ -123,9 +123,7 @@ mail_box_contracts/
 │   ├── Mailer.sol         # EVM messaging with revenue sharing
 │   └── MockUSDC.sol       # Test USDC token
 ├── programs/               # Solana programs (Rust)
-│   ├── mail_service/      # Solana delegation management
-│   ├── mailer/           # Solana messaging program
-│   └── mail_box_factory/ # Solana factory program
+│   └── mailer/           # Solana messaging and delegation program
 ├── src/                   # Multi-chain TypeScript clients
 │   ├── evm/              # EVM-specific clients
 │   ├── solana/           # Solana-specific clients

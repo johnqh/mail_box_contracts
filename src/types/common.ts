@@ -1,7 +1,7 @@
 /**
- * @fileoverview Common type definitions for multi-chain MailBox system
+ * @fileoverview Common type definitions for multi-chain Mailer system
  * @description Shared types and interfaces for EVM and Solana implementations
- * @author MailBox Team
+ * @author Mailer Team
  * @version 1.4.2
  */
 

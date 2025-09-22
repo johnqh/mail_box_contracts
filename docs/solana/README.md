@@ -1,6 +1,6 @@
 # Solana Implementation Documentation
 
-This directory will contain documentation specific to the Solana implementation of MailBox programs.
+This directory will contain documentation specific to the Solana implementation of Mailer programs.
 
 ## Content (Coming in Phase 2)
 

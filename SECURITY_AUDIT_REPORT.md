@@ -1,4 +1,4 @@
-# Security Audit Report - MailBox Contracts
+# Security Audit Report - Mailer Contracts
 
 **Audit Date:** September 1, 2025  
 **Auditor:** Claude (Anthropic)  
@@ -7,7 +7,7 @@
 
 ## Executive Summary
 
-This comprehensive security audit covers both EVM (Ethereum Virtual Machine) and Solana implementations of the MailBox decentralized messaging system. The audit examined smart contracts, Rust programs, access controls, token handling, and potential vulnerabilities across both blockchain ecosystems.
+This comprehensive security audit covers both EVM (Ethereum Virtual Machine) and Solana implementations of the Mailer decentralized messaging system. The audit examined smart contracts, Rust programs, access controls, token handling, and potential vulnerabilities across both blockchain ecosystems.
 
 ### Overall Security Assessment: **GOOD** ✅
 
@@ -32,9 +32,7 @@ This comprehensive security audit covers both EVM (Ethereum Virtual Machine) and
 3. **MockUSDC.sol** - Test token implementation
 
 ### Solana Programs (Rust/Anchor)
-1. **mail_service** - Delegation management program
-2. **mailer** - Messaging with revenue sharing program
-3. **mail_box_factory** - Factory pattern for deployment coordination
+1. **mailer** - Messaging and delegation with revenue sharing program
 
 ---
 
@@ -81,11 +79,6 @@ modifier nonReentrant() {
 - ✅ `claimExpiredShares()` - Owner only
 
 #### Solana Programs
-
-**mail_service:**
-- ✅ `has_one = owner` constraints properly enforced
-- ✅ Account validation through PDAs and seeds
-- ✅ No privilege escalation vectors found
 
 **mailer:**
 - ✅ Owner-only functions properly protected
@@ -285,7 +278,7 @@ The codebase demonstrates excellent test coverage:
 
 ## Conclusion
 
-The MailBox contracts demonstrate **excellent security practices** across both EVM and Solana implementations. The codebase shows:
+The Mailer contracts demonstrate **excellent security practices** across both EVM and Solana implementations. The codebase shows:
 
 **Strengths:**
 - Comprehensive reentrancy protection

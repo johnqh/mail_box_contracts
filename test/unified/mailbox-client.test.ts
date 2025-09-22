@@ -17,17 +17,14 @@ describe("OnchainMailerClient", function () {
         rpc: "http://localhost:8545",
         chainId: 31337,
         contracts: {
-          mailService: "0x1234567890123456789012345678901234567890",
           mailer: "0xabcdefabcdefabcdefabcdefabcdefabcdefabcd",
           usdc: "0x9876543210987654321098765432109876543210"
         }
       },
       solana: {
-        rpc: "http://localhost:8899", 
+        rpc: "http://localhost:8899",
         programs: {
-          mailService: "8EKjCLZjz6LKRxZcQ6LwwF5V8P3TCEgM2CdQg4pZxXHE",
-          mailer: "9FLkBDGpZBcR8LMsQ7MwwV6X9P4TDFgN3DeRh5qYyHJF",
-          mailBoxFactory: "FactoryABC123def456GHI789jkl012MNO345pqr678STU"
+          mailer: "9FLkBDGpZBcR8LMsQ7MwwV6X9P4TDFgN3DeRh5qYyHJF"
         },
         usdcMint: "4zMMC9srt5Ri5X14GAgXhaHii3GnPAEERYPJgZJDncDU"
       }

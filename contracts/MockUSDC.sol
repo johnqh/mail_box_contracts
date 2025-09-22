@@ -3,9 +3,9 @@ pragma solidity ^0.8.24;
 
 /**
  * @title MockUSDC
- * @notice Mock USDC token for testing MailBox contracts
+ * @notice Mock USDC token for testing Mailer contracts
  * @dev ERC20-compatible token with 6 decimals to match real USDC
- * @author MailBox Team
+ * @author Mailer Team
  */
 contract MockUSDC {
     /// @notice Balance tracking for each address

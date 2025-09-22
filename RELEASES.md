@@ -1,6 +1,6 @@
 # 🚀 Release Management Guide
 
-This document explains how to create releases for the MailBox Contracts TypeScript client library.
+This document explains how to create releases for the Mailer Contracts TypeScript client library.
 
 ## 📦 What Gets Published
 

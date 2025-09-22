@@ -1,6 +1,6 @@
-# AI Development Patterns for MailBox Contracts
+# AI Development Patterns for Mailer Contracts
 
-This guide provides comprehensive patterns and examples for AI assistants working with the MailBox multi-chain messaging system.
+This guide provides comprehensive patterns and examples for AI assistants working with the Mailer multi-chain messaging system.
 
 ## 🤖 Quick Start for AI Assistants
 
@@ -103,7 +103,7 @@ describe("Contract Function", () => {
 /**
  * @title Contract Name
  * @dev Detailed description of what the contract does
- * @author MailBox Protocol Team
+ * @author Mailer Protocol Team
  */
 contract MyContract {
     /**

@@ -1,135 +1,23 @@
 {
-  "lastUpdated": "2025-09-04T16:03:36.396Z",
-  "versions": {
-    "v1.5.0": {
-      "releaseDate": "2025-09-03",
-      "deployer": "8GHjprn5r4K4s4JWy2BhKwYMBsMNedR8RaufhfY92Pqs",
-      "networks": {
-        "solana-devnet": {
-          "cluster": "devnet",
-          "rpcUrl": "https://api.devnet.solana.com",
-          "deploymentDate": "2025-09-03",
-          "programs": {
-            "mailer": {
-              "programId": "LXnAjV225sxynbhbjMtQy8gnEatzVH97467D9UqNRBc",
-              "status": "pending_deployment",
-              "estimatedCost": "2.7 SOL",
-              "buildStatus": "completed",
-              "features": "Integrated messaging and delegation functionality (consolidated from mail_service)"
-            }
-          },
-          "deploymentCosts": {
-            "mailer": "2.7 SOL (estimated)"
-          },
-          "wallet": {
-            "publicKey": "8GHjprn5r4K4s4JWy2BhKwYMBsMNedR8RaufhfY92Pqs",
-            "currentBalance": "1.69 SOL"
-          },
-          "programSettings": {
-            "sendFee": "TBD",
-            "registrationFee": "TBD",
-            "delegationFee": "TBD"
-          }
-        }
-      }
+  "description": "Deployment tracking for multi-chain Mailer contracts",
+  "lastUpdated": "2025-01-20T00:00:00.000Z",
+  "architecture": {
+    "evm": {
+      "contracts": {
+        "mailer": "Single contract with messaging and delegation functionality"
+      },
+      "deployment": "Standard deployment (non-deterministic addresses)"
     },
-    "v1.3.4": {
-      "releaseDate": "2025-01-01",
-      "deployer": "0x1996d64D8f6E47A5bF6fB92246EF4eFD6Ae881e0",
-      "owner": "0x9Ea94eDDF851bb1170828335f22F112Dd76D9C3d",
-      "networks": {
-        "sepolia": {
-          "chainId": 11155111,
-          "deploymentDate": "2025-01-01",
-          "contracts": {
-            "MailBoxFactory": "0x455418e4900E9AFd70bfEc62c3B089629e617Cb1",
-            "USDC": "0x1c7D4B196Cb0C7B01d743Fbc6116a902379C7238",
-            "Mailer": "0x248BD957EE6BB0a332a893d03509A299F6371770",
-            "MailService": "0xC94260A7f38A505E3954D63E9CC94BC7797c0Bba"
-          },
-          "salts": {
-            "mailer": "0xad4cf3a7e754d78aaa6822bde14b4d7407963ac21bf7020d38d58b7239b4578c",
-            "mailService": "0x0b83ca435ea66f693c984e9a7f4be9077e6ba2fb537135e4bd9fc7ba8ae00ca5"
-          },
-          "contractSettings": {
-            "sendFee": "0.1 USDC",
-            "registrationFee": "100.0 USDC",
-            "delegationFee": "10.0 USDC"
-          },
-          "usdc": {
-            "address": "0x1c7D4B196Cb0C7B01d743Fbc6116a902379C7238",
-            "type": "USDC",
-            "isTestnet": true
-          },
-          "deploymentMethod": "CREATE2"
-        }
-      }
-    },
-    "v1.3.0": {
-      "releaseDate": "2024-12-27",
-      "deployer": "0x1996d64D8f6E47A5bF6fB92246EF4eFD6Ae881e0",
-      "owner": "0x9Ea94eDDF851bb1170828335f22F112Dd76D9C3d",
-      "networks": {
-        "sepolia": {
-          "chainId": 11155111,
-          "deploymentDate": "2024-12-27",
-          "contracts": {
-            "MailBoxFactory": "0x6dacfD545046B0665d7E7FDdb54B4c2AcAD69857",
-            "USDC": "0x6fA71307939057e98d153E8E5C9D0FF765Ffd161",
-            "Mailer": "0xA2c76aFe188632907f6b61B7D3b7D11DA76329f6",
-            "MailService": "0xa45FfAD3a0cB7986174b16B72526a224c44549a5"
-          },
-          "transactions": {
-            "deployment": "0x9af2c70a2333b21c68af3f5698f4aa5c51ad9de7a6fe8c50f6619f769a8cbe43"
-          },
-          "contractSettings": {
-            "sendFee": "0.1 USDC",
-            "registrationFee": "100.0 USDC",
-            "delegationFee": "10.0 USDC"
-          },
-          "usdc": {
-            "address": "0x6fA71307939057e98d153E8E5C9D0FF765Ffd161",
-            "type": "MockUSDC",
-            "isTestnet": true
-          }
-        },
-        "mainnet": {
-          "chainId": 1,
-          "usdc": {
-            "address": "0xA0b86a33E6417a8c8df6D0e9D13A4DcF8C7d6E4b",
-            "type": "USDC",
-            "isTestnet": false
-          },
-          "status": "not_deployed"
-        },
-        "polygon": {
-          "chainId": 137,
-          "usdc": {
-            "address": "0x2791Bca1f2de4661ED88A30C99A7a9449Aa84174",
-            "type": "USDC",
-            "isTestnet": false
-          },
-          "status": "not_deployed"
-        },
-        "optimism": {
-          "chainId": 10,
-          "usdc": {
-            "address": "0x0b2C639c533813f4Aa9D7837CAf62653d097Ff85",
-            "type": "USDC",
-            "isTestnet": false
-          },
-          "status": "not_deployed"
-        },
-        "base": {
-          "chainId": 8453,
-          "usdc": {
-            "address": "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913",
-            "type": "USDC",
-            "isTestnet": false
-          },
-          "status": "not_deployed"
-        }
-      }
+    "solana": {
+      "programs": {
+        "mailer": "Native Solana program with messaging and delegation"
+      },
+      "deployment": "Standard Solana program deployment"
     }
+  },
+  "deployments": {
+    "note": "Actual deployment addresses will be recorded here when contracts are deployed",
+    "evm": {},
+    "solana": {}
   }
 }

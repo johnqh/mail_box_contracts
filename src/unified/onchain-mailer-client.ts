@@ -1,17 +1,17 @@
 import { WalletDetector } from './wallet-detector';
-import { 
-  UnifiedWallet, 
-  ChainConfig, 
-  MessageResult, 
-  DomainResult, 
+import {
+  UnifiedWallet,
+  ChainConfig,
+  MessageResult,
+  DomainResult,
   DelegationResult,
-  UnifiedTransaction 
+  UnifiedTransaction
 } from './types';
 
 /**
- * OnchainMailerClient - Multi-chain messaging client for MailBox protocol
- * 
- * This class provides a unified interface for interacting with MailBox contracts
+ * OnchainMailerClient - Multi-chain messaging client for Mailer protocol
+ *
+ * This class provides a unified interface for interacting with Mailer contracts
  * across different blockchain networks (EVM and Solana). It automatically detects
  * wallet types and routes operations to the appropriate chain implementation.
  * 
@@ -24,7 +24,6 @@ import {
  *     rpc: 'https://eth-mainnet.alchemyapi.io/v2/your-key',
  *     chainId: 1,
  *     contracts: {
- *       mailService: '0x123...',
  *       mailer: '0x456...',
  *       usdc: '0x789...'
  *     }
@@ -38,9 +37,7 @@ import {
  *   solana: {
  *     rpc: 'https://api.mainnet-beta.solana.com',
  *     programs: {
- *       mailService: '8EKjCLZjz6LKRxZcQ6LwwF5V8P3TCEgM2CdQg4pZxXHE',
- *       mailer: '9FLkBDGpZBcR8LMsQ7MwwV6X9P4TDFgN3DeRh5qYyHJF',
- *       mailBoxFactory: 'FactoryABC...'
+ *       mailer: '9FLkBDGpZBcR8LMsQ7MwwV6X9P4TDFgN3DeRh5qYyHJF'
  *     },
  *     usdcMint: 'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v'
  *   }
@@ -68,7 +65,7 @@ import {
  * }
  * ```
  * 
- * @author MailBox Protocol Team
+ * @author Mailer Protocol Team
  * @version 1.5.2
  * @since 1.0.0
  */
@@ -142,7 +139,7 @@ export class OnchainMailerClient {
       if (!this.config.evm.rpc || !this.config.evm.chainId) {
         throw new Error('EVM configuration missing required fields (rpc, chainId)');
       }
-      if (!this.config.evm.contracts || !this.config.evm.contracts.mailer || !this.config.evm.contracts.mailService) {
+      if (!this.config.evm.contracts || !this.config.evm.contracts.mailer) {
         console.warn('EVM contract addresses not configured - some functionality may fail');
       }
     }
@@ -152,7 +149,7 @@ export class OnchainMailerClient {
       if (!this.config.solana.rpc || !this.config.solana.usdcMint) {
         throw new Error('Solana configuration missing required fields (rpc, usdcMint)');
       }
-      if (!this.config.solana.programs || !this.config.solana.programs.mailer || !this.config.solana.programs.mailService) {
+      if (!this.config.solana.programs || !this.config.solana.programs.mailer) {
         console.warn('Solana program addresses not configured - some functionality may fail');
       }
     }

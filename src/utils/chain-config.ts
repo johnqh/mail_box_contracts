@@ -5,17 +5,14 @@ export const DEFAULT_CHAIN_CONFIG: ChainConfig = {
     rpc: 'http://127.0.0.1:8545', // Local Hardhat network
     chainId: 31337,
     contracts: {
-      mailService: '', // Will be filled after deployment
-      mailer: '',
+      mailer: '', // Will be filled after deployment
       usdc: '' // Local MockUSDC
     }
   },
   solana: {
     rpc: 'http://127.0.0.1:8899', // Local Solana validator
     programs: {
-      mailService: '8EKjCLZjz6LKRxZcQ6LwwF5V8P3TCEgM2CdQg4pZxXHE', // Default program IDs
-      mailer: '9FLkBDGpZBcR8LMsQ7MwwV6X9P4TDFgN3DeRh5qYyHJF',
-      mailBoxFactory: 'FactoryABC123def456GHI789jkl012MNO345pqr678STU'
+      mailer: '9FLkBDGpZBcR8LMsQ7MwwV6X9P4TDFgN3DeRh5qYyHJF' // Mailer program (includes delegation)
     },
     usdcMint: 'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v' // Test USDC mint
   }
@@ -26,7 +23,6 @@ export const MAINNET_CHAIN_CONFIG: ChainConfig = {
     rpc: 'https://eth-mainnet.g.alchemy.com/v2/your-api-key',
     chainId: 1,
     contracts: {
-      mailService: '', // Production addresses TBD
       mailer: '',
       usdc: '0xA0b86a33E6441146a8A8e27c01f0D9B1F5E42E92' // Real USDC on mainnet
     }
@@ -34,9 +30,7 @@ export const MAINNET_CHAIN_CONFIG: ChainConfig = {
   solana: {
     rpc: 'https://api.mainnet-beta.solana.com',
     programs: {
-      mailService: '8EKjCLZjz6LKRxZcQ6LwwF5V8P3TCEgM2CdQg4pZxXHE', // Production program IDs
-      mailer: '9FLkBDGpZBcR8LMsQ7MwwV6X9P4TDFgN3DeRh5qYyHJF',
-      mailBoxFactory: 'FactoryABC123def456GHI789jkl012MNO345pqr678STU'
+      mailer: '9FLkBDGpZBcR8LMsQ7MwwV6X9P4TDFgN3DeRh5qYyHJF' // Mailer program (includes delegation)
     },
     usdcMint: 'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v' // Real USDC on Solana mainnet
   }
@@ -47,7 +41,6 @@ export const TESTNET_CHAIN_CONFIG: ChainConfig = {
     rpc: 'https://eth-sepolia.g.alchemy.com/v2/your-api-key',
     chainId: 11155111,
     contracts: {
-      mailService: '', // Testnet addresses TBD
       mailer: '',
       usdc: '0x6f14C02fC1F78322cFd7d707aB90f18baD3B54f5' // Sepolia USDC
     }
@@ -55,9 +48,7 @@ export const TESTNET_CHAIN_CONFIG: ChainConfig = {
   solana: {
     rpc: 'https://api.devnet.solana.com',
     programs: {
-      mailService: '8EKjCLZjz6LKRxZcQ6LwwF5V8P3TCEgM2CdQg4pZxXHE', // Devnet program IDs
-      mailer: '9FLkBDGpZBcR8LMsQ7MwwV6X9P4TDFgN3DeRh5qYyHJF',
-      mailBoxFactory: 'FactoryABC123def456GHI789jkl012MNO345pqr678STU'
+      mailer: '9FLkBDGpZBcR8LMsQ7MwwV6X9P4TDFgN3DeRh5qYyHJF' // Mailer program (includes delegation)
     },
     usdcMint: '4zMMC9srt5Ri5X14GAgXhaHii3GnPAEERYPJgZJDncDU' // Devnet USDC
   }
@@ -121,8 +112,7 @@ export function createChainConfig(evmNetwork?: string, solanaNetwork?: string): 
       rpc: evmConfig.rpc as string,
       chainId: evmConfig.chainId as number,
       contracts: {
-        mailService: '', // To be filled by deployment
-        mailer: '',
+        mailer: '', // To be filled by deployment
         usdc: evmConfig.usdc as string
       }
     };
@@ -133,9 +123,7 @@ export function createChainConfig(evmNetwork?: string, solanaNetwork?: string): 
     config.solana = {
       rpc: solanaConfig.rpc as string,
       programs: {
-        mailService: '8EKjCLZjz6LKRxZcQ6LwwF5V8P3TCEgM2CdQg4pZxXHE',
-        mailer: '9FLkBDGpZBcR8LMsQ7MwwV6X9P4TDFgN3DeRh5qYyHJF',
-        mailBoxFactory: 'FactoryABC123def456GHI789jkl012MNO345pqr678STU'
+        mailer: '9FLkBDGpZBcR8LMsQ7MwwV6X9P4TDFgN3DeRh5qYyHJF' // Mailer program (includes delegation)
       },
       usdcMint: solanaConfig.usdcMint as string
     };

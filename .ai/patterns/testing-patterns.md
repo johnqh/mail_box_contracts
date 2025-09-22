@@ -1,4 +1,4 @@
-# Testing Patterns for MailBox Multi-Chain System
+# Testing Patterns for Mailer Multi-Chain System
 
 ## 🎯 Overview
 Comprehensive testing patterns for the multi-chain messaging system covering EVM contracts, Solana programs, and unified client functionality.
@@ -102,16 +102,16 @@ describe('Solana Program', () => {
 
 ### Account Initialization Test
 ```typescript
-it('Should initialize service account', async () => {
-  const [mailServicePda] = PublicKey.findProgramAddressSync(
-    [Buffer.from("mail_service")],
+it('Should initialize mailer account', async () => {
+  const [mailerPda] = PublicKey.findProgramAddressSync(
+    [Buffer.from("mailer")],
     program.programId
   );
-  
+
   await program.methods
     .initialize(usdcMint)
     .accounts({
-      mailService: mailServicePda,
+      mailer: mailerPda,
       owner: provider.wallet.publicKey,
     })
     .rpc();
@@ -147,9 +147,9 @@ describe('WalletDetector', () => {
 
 ### Unified Client Routing Tests
 ```typescript
-describe('UnifiedMailBoxClient', () => {
+describe('OnchainMailerClient', () => {
   it('should route to EVM implementation', async () => {
-    const evmClient = new UnifiedMailBoxClient(evmWallet, testConfig);
+    const evmClient = new OnchainMailerClient(evmWallet, testConfig);
     
     expect(evmClient.getChainType()).to.equal('evm');
     
@@ -162,7 +162,7 @@ describe('UnifiedMailBoxClient', () => {
   });
   
   it('should route to Solana implementation', async () => {
-    const solanaClient = new UnifiedMailBoxClient(solanaWallet, testConfig);
+    const solanaClient = new OnchainMailerClient(solanaWallet, testConfig);
     
     expect(solanaClient.getChainType()).to.equal('solana');
     
@@ -202,14 +202,14 @@ describe('Address Validation', () => {
 describe('Error Handling', () => {
   it('should handle insufficient balance gracefully', async () => {
     // Don't fund the account or approve
-    const unfundedClient = new UnifiedMailBoxClient(unfundedWallet, testConfig);
+    const unfundedClient = new OnchainMailerClient(unfundedWallet, testConfig);
     
     await expect(unfundedClient.sendMessage('Test', 'Body', true))
       .to.be.rejectedWith('Insufficient USDC balance');
   });
   
   it('should handle invalid address formats', async () => {
-    const client = new UnifiedMailBoxClient(evmWallet, testConfig);
+    const client = new OnchainMailerClient(evmWallet, testConfig);
     
     await expect(client.delegateTo('invalid-address'))
       .to.be.rejectedWith('Invalid EVM address format');
@@ -219,7 +219,7 @@ describe('Error Handling', () => {
     // Mock network delay
     jest.setTimeout(15000);
     
-    const client = new UnifiedMailBoxClient(wallet, {
+    const client = new OnchainMailerClient(wallet, {
       ...testConfig,
       evm: { ...testConfig.evm, rpc: 'http://localhost:9999' } // non-existent RPC
     });
@@ -309,7 +309,7 @@ test/
 ├── evm/                    # EVM-specific tests
 │   ├── Mailer.test.ts     # 54 tests - messaging functionality
 │   ├── MailService.test.ts # 27 tests - delegation management
-│   └── MailBoxClient.test.ts # Client wrapper tests
+│   └── MailerClient.test.ts # Client wrapper tests
 ├── solana/                 # Solana-specific tests  
 │   ├── mailer.test.ts     # Program functionality tests
 │   └── types-utils.test.ts # Type and utility tests

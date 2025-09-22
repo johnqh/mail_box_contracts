@@ -4,19 +4,16 @@ This file provides comprehensive guidance for AI assistants working with this mu
 
 ## 🚀 Project Overview
 
-**MailBox Contracts** is a production-ready multi-chain decentralized messaging system with USDC fee integration, automatic wallet detection, and comprehensive AI-friendly documentation supporting both EVM chains and Solana.
+This is a production-ready multi-chain decentralized messaging system with USDC fee integration, automatic wallet detection, and comprehensive AI-friendly documentation supporting both EVM chains and Solana.
 
 ### Core Components
 
 #### EVM Implementation
-1. **MailService.sol** - Delegation management (domain registration removed)  
-2. **Mailer.sol** - Message sending with revenue sharing
-3. **MockUSDC.sol** - Test token for development
+1. **Mailer.sol** - Complete messaging system with delegation management and revenue sharing
+2. **MockUSDC.sol** - Test token for development
 
-#### Solana Implementation  
-1. **mail_service** - Delegation management program
-2. **mailer** - Message sending with revenue sharing program
-3. **mail_box_factory** - Factory program for coordinated deployment
+#### Solana Implementation
+1. **mailer** - Complete messaging program with delegation management and revenue sharing
 
 #### Unified Client
 1. **OnchainMailerClient** - Single interface for all chains
@@ -28,13 +25,10 @@ This file provides comprehensive guidance for AI assistants working with this mu
 ```
 mail_box_contracts/
 ├── contracts/              # EVM smart contracts (Solidity)
-│   ├── MailService.sol    # EVM delegation management
-│   ├── Mailer.sol         # EVM messaging with revenue sharing
+│   ├── Mailer.sol         # Complete messaging system with delegation
 │   └── MockUSDC.sol       # Test USDC token
 ├── programs/               # Solana programs (Rust)
-│   ├── mail_service/      # Solana delegation management
-│   ├── mailer/           # Solana messaging program
-│   └── mail_box_factory/ # Solana factory program
+│   └── mailer/           # Complete messaging program with delegation
 ├── src/                   # Multi-chain TypeScript clients
 │   ├── evm/              # EVM-specific clients
 │   ├── solana/           # Solana-specific clients  
@@ -108,35 +102,13 @@ npm test -- --verbose            # Run tests with detailed output
 
 ## Smart Contract Architecture
 
-### MailService Contract (`contracts/MailService.sol`)
-
-**Purpose**: Domain registration and delegation management
-**Key Features**:
-- Domain registration with USDC fees (100 USDC default)
-- Delegation system with rejection capability
-- Fee management (owner-controlled)
-
-**Core Functions**:
-- `delegateTo(address delegate)` - Set delegation, costs 10 USDC
-- `rejectDelegation(address delegatingAddress)` - Reject delegation made to you
-- `registerDomain(string domain, bool isExtension)` - Register/extend domains
-- `setRegistrationFee(uint256)` / `setDelegationFee(uint256)` - Owner fee management
-
-**Events**:
-- `DelegationSet(address indexed delegator, address indexed delegate)` - Unified delegation event
-- `DomainRegistered/Extended/Released` - Domain lifecycle events
-
-**Storage**:
-- `mapping(address => address) public delegations` - Tracks current delegations
-- `uint256 public registrationFee` - 100 USDC (6 decimals)
-- `uint256 public delegationFee` - 10 USDC (6 decimals)
-
 ### Mailer Contract (`contracts/Mailer.sol`)
 
-**Purpose**: Message sending with revenue sharing system
+**Purpose**: Complete messaging system with delegation management and revenue sharing
 **Key Features**:
 - Two fee tiers: Priority (100% fee) and Standard (10% fee)
 - Revenue sharing: 90% to sender, 10% to owner
+- Delegation system with rejection capability
 - 60-day claim period for recipients
 - Messages can be sent to any address via "to" parameter
 
@@ -145,6 +117,8 @@ npm test -- --verbose            # Run tests with detailed output
 - `sendPriorityPrepared(address to, string mailId)` - Full fee, pre-prepared message
 - `send(address to, string subject, string body)` - 10% fee only
 - `sendPrepared(address to, string mailId)` - 10% fee, pre-prepared message
+- `delegateTo(address delegate)` - Set delegation, costs 10 USDC
+- `rejectDelegation(address delegatingAddress)` - Reject delegation made to you
 - `claimRecipientShare()` - Claim your 90% share within 60 days
 - `claimOwnerShare()` - Owner claims accumulated fees
 - `claimExpiredShares(address)` - Owner reclaims expired shares

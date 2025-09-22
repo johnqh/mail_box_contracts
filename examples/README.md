@@ -1,6 +1,6 @@
-# MailBox Contracts - Usage Examples
+# Mailer Contracts - Usage Examples
 
-This directory contains comprehensive examples demonstrating how to use the MailBox decentralized messaging system.
+This directory contains comprehensive examples demonstrating how to use the Mailer decentralized messaging system.
 
 ## 🚀 Quick Start
 
@@ -211,7 +211,7 @@ mailerClient.getContract().on("DelegationSet", (delegator, delegate) => {
 When you run `basic-usage.ts`, you'll see output like:
 
 ```
-🚀 MailBox Contracts - Basic Usage Examples
+🚀 Mailer Contracts - Basic Usage Examples
 Signer address: 0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266
 
 📦 Example 1: Deploying Contracts

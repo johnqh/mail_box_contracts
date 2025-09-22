@@ -2,7 +2,7 @@
 
 ## ✅ Completed AI Optimizations
 
-The MailBox multi-chain project has been comprehensively optimized for AI-assisted development with the following enhancements:
+The Mailer multi-chain project has been comprehensively optimized for AI-assisted development with the following enhancements:
 
 ### 1. 📚 Comprehensive Documentation
 - **AI_DEVELOPMENT_GUIDE.md**: 350+ lines of AI-specific development patterns and workflows
@@ -84,7 +84,7 @@ The MailBox multi-chain project has been comprehensively optimized for AI-assist
 ### 1. Unified Client Pattern
 ```typescript
 // Single client works with ANY wallet type
-const client = new UnifiedMailBoxClient(wallet, config);
+const client = new OnchainMailerClient(wallet, config);
 console.log('Chain:', client.getChainType()); // Auto-detected
 await client.sendMessage("Hello!", "Multi-chain message", true);
 ```
@@ -111,12 +111,12 @@ try {
 ```typescript
 describe('Multi-chain feature', () => {
   it('should work on EVM', async () => {
-    const evmClient = new UnifiedMailBoxClient(evmWallet, config);
+    const evmClient = new OnchainMailerClient(evmWallet, config);
     expect(evmClient.getChainType()).to.equal('evm');
   });
   
   it('should work on Solana', async () => {
-    const solanaClient = new UnifiedMailBoxClient(solanaWallet, config);
+    const solanaClient = new OnchainMailerClient(solanaWallet, config);
     expect(solanaClient.getChainType()).to.equal('solana');
   });
 });
@@ -161,7 +161,7 @@ npm run deploy:unified   # Multi-chain deployment
 
 ## 🎉 Conclusion
 
-The MailBox project is now fully optimized for AI-assisted development with:
+The Mailer project is now fully optimized for AI-assisted development with:
 - **Comprehensive documentation** tailored for AI understanding
 - **Ready-to-use patterns** for immediate productivity
 - **Clear architecture guidance** for consistent implementation

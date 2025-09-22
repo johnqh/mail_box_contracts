@@ -1,10 +1,10 @@
-# MailBox Contracts Architecture
+# Mailer Contracts Architecture
 
-This document provides a comprehensive overview of the MailBox smart contract system architecture, including design patterns, data flows, and economic models.
+This document provides a comprehensive overview of the Mailer smart contract system architecture, including design patterns, data flows, and economic models.
 
 ## System Overview
 
-The MailBox system consists of two main contracts that work together to provide a decentralized messaging platform with economic incentives:
+The Mailer system consists of two main contracts that work together to provide a decentralized messaging platform with economic incentives:
 
 1. **MailService** - Domain registration and delegation management
 2. **Mailer** - Message sending with revenue sharing

@@ -34,10 +34,7 @@
       "Bash(git add:*)",
       "Bash(git commit:*)",
       "Bash(git push:*)",
-      "Bash(npm run predict-addresses:*)",
-      "Bash(npm run deploy:create2:local:*)",
       "Bash(git check-ignore:*)",
-      "Bash(OWNER_ADDRESS=0x9Ea94eDDF851bb1170828335f22F112Dd76D9C3d npx hardhat run scripts/deploy-create2.ts --network sepolia)",
       "Bash(npm i)",
       "Read(/Users/qianghuang/mail_box_solana_contracts/**)",
       "Read(/Users/qianghuang/mail_box_solana_contracts/**)",
@@ -100,7 +97,11 @@
       "Bash(git tag:*)",
       "Bash(npm:*)",
       "Bash(tsc:*)",
-      "Read(//Users/qianghuang/types/**)"
+      "Read(//Users/qianghuang/types/**)",
+      "Read(//Users/johnhuang/0xmail/types/**)",
+      "Bash(NODE_OPTIONS=\"--loader ts-node/esm\" npx mocha test/unified/*.test.ts)",
+      "Bash(TS_NODE_PROJECT=tsconfig.test.json npx mocha test/unified/*.test.ts)",
+      "Bash(TS_NODE_PROJECT=tsconfig.test.json npm run test:unified:direct)"
     ],
     "deny": [],
     "defaultMode": "acceptEdits"

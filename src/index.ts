@@ -1,4 +1,4 @@
-// Main export file for unified multi-chain MailBox client
+// Main export file for unified multi-chain Mailer client
 
 // Export unified client and utilities
 export * from './unified';

@@ -250,7 +250,7 @@ enum InstructionType {
  * if (info) console.log(`Claimable: ${formatUSDC(info.amount)} USDC`);
  * ```
  * 
- * @author MailBox Team
+ * @author Mailer Team
  * @version 2.0.0 - Native Solana Program (no Anchor)
  */
 export class MailerClient {

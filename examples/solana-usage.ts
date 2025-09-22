@@ -1,6 +1,6 @@
 /**
- * @title Solana Usage Examples for MailBox Contracts
- * @description Comprehensive examples showing how to use the MailBox Solana programs
+ * @title Solana Usage Examples for Mailer Contracts
+ * @description Comprehensive examples showing how to use the Mailer Solana programs
  * @notice These examples demonstrate real-world usage patterns for Solana integration
  */
 
@@ -17,7 +17,7 @@ const usdcMint = new PublicKey('4zMMC9srt5Ri5X14GAgXhaHii3GnPAEERYPJgZJDncDU'); 
 const MAILER_PROGRAM_ID = new PublicKey('9FLkBDGpZBcR8LMsQ7MwwV6X9P4TDFgN3DeRh5qYyHJF');
 
 async function solanaUsageExamples() {
-  console.log('🚀 MailBox Solana Contracts - Usage Examples');
+  console.log('🚀 Mailer Solana Contracts - Usage Examples');
   console.log('Wallet address:', wallet.publicKey.toString());
   
   // ===== EXAMPLE 1: Initialize Clients =====

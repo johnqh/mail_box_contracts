@@ -1,7 +1,7 @@
 [package]
 name = "mailer"
 version = "0.1.0"
-description = "MailBox Solana - Native messaging system with USDC fees and revenue sharing"
+description = "Mailer Solana - Native messaging system with USDC fees and revenue sharing"
 edition = "2021"
 
 [lints.rust]

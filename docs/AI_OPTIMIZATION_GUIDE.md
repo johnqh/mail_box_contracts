@@ -1,10 +1,10 @@
-# AI Optimization Guide for MailBox Contracts
+# AI Optimization Guide for Mailer Contracts
 
-This guide provides advanced patterns and optimization strategies specifically designed for AI-assisted development of the MailBox multi-chain messaging protocol.
+This guide provides advanced patterns and optimization strategies specifically designed for AI-assisted development of the Mailer multi-chain messaging protocol.
 
 ## 🎯 AI Development Philosophy
 
-The MailBox project is optimized for AI assistance through:
+The Mailer project is optimized for AI assistance through:
 
 1. **Comprehensive Documentation** - Every function, pattern, and workflow is documented
 2. **Consistent Patterns** - Similar functionality follows identical patterns across chains
@@ -270,7 +270,7 @@ examples/unified-usage.ts  # Multi-chain example
 ✅ MailerClient (EVM)        - Handles messaging + delegation
 ✅ MailerClient (Solana)     - Handles messaging + delegation  
 ✅ OnchainMailerClient       - Unified multi-chain interface
-❌ MailBoxClient             - REMOVED (was wrapper)
+❌ MailerClient             - REMOVED (was wrapper)
 ❌ MailServiceClient         - REMOVED (merged into MailerClient)
 
 // Key methods available on MailerClient:
@@ -286,7 +286,7 @@ await mailerClient.claimRecipientShare(walletClient, account);
 ### Common Mistakes to Avoid
 ```bash
 ❌ Modifying contracts without running npm run compile
-❌ Using removed classes (MailBoxClient, MailServiceClient)  
+❌ Using removed classes (MailerClient, MailServiceClient)  
 ❌ Forgetting to fund test accounts with MockUSDC
 ❌ Not approving USDC spending before contract operations
 ❌ Mixing ethers and viem APIs incorrectly

@@ -21,7 +21,6 @@ export interface ChainConfig {
 export interface EVMConfig {
   rpc: string;
   contracts: {
-    mailService: string;
     mailer: string;
     usdc: string;
   };
@@ -31,9 +30,7 @@ export interface EVMConfig {
 export interface SolanaConfig {
   rpc: string;
   programs: {
-    mailService: string;
     mailer: string;
-    mailBoxFactory: string;
   };
   usdcMint: string;
 }

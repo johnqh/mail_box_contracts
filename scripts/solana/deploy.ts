@@ -29,7 +29,7 @@ interface DeploymentInfo {
     timestamp: string;
 }
 
-export class MailBoxDeployer {
+export class MailerDeployer {
     private connection: Connection;
     private wallet: Wallet;
     private provider: anchor.AnchorProvider;
@@ -41,7 +41,7 @@ export class MailBoxDeployer {
         anchor.setProvider(this.provider);
     }
     
-    static async create(rpcUrl?: string, keypairPath?: string): Promise<MailBoxDeployer> {
+    static async create(rpcUrl?: string, keypairPath?: string): Promise<MailerDeployer> {
         // Setup connection
         const connection = new Connection(rpcUrl || 'http://localhost:8899', 'confirmed');
         
@@ -63,7 +63,7 @@ export class MailBoxDeployer {
             }
         }
         
-        return new MailBoxDeployer(connection, wallet);
+        return new MailerDeployer(connection, wallet);
     }
     
     async deploy(cluster: string = 'localnet', ownerPubkey?: PublicKey): Promise<DeploymentInfo> {
@@ -199,7 +199,7 @@ async function main() {
     const ownerAddress = args[3];
     
     try {
-        const deployer = await MailBoxDeployer.create(rpcUrl, keypairPath);
+        const deployer = await MailerDeployer.create(rpcUrl, keypairPath);
         
         let owner: PublicKey | undefined;
         if (ownerAddress) {

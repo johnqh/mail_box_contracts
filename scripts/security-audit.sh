@@ -6,7 +6,7 @@
 
 set -e
 
-echo "🔒 MailBox Contracts Security Audit"
+echo "🔒 Mailer Contracts Security Audit"
 echo "=================================="
 echo
 

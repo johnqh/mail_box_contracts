@@ -1,6 +1,6 @@
 ---
 name: Bug Report
-about: Create a report to help us improve the MailBox Contracts
+about: Create a report to help us improve the Mailer Contracts
 title: '[BUG] '
 labels: bug
 assignees: ''
@@ -31,7 +31,7 @@ A clear and concise description of what actually happened.
 ## 📝 Code Sample
 ```typescript
 // Minimal reproducible code sample
-import { MailBox__factory } from '@johnqh/mail_box_contracts';
+import { Mailer__factory } from '@johnqh/mail_box_contracts';
 // ... your code that demonstrates the bug
 ```
 

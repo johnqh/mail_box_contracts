@@ -1,10 +1,10 @@
-# AI Development Guide - MailBox Multi-Chain System
+# AI Development Guide - Mailer Multi-Chain System
 
-This comprehensive guide provides AI assistants with everything needed to effectively develop, maintain, and extend the MailBox multi-chain messaging system.
+This comprehensive guide provides AI assistants with everything needed to effectively develop, maintain, and extend the Mailer multi-chain messaging system.
 
 ## 🎯 Project Overview for AI
 
-**MailBox Contracts** is a production-ready multi-chain decentralized messaging system supporting:
+**Mailer Contracts** is a production-ready multi-chain decentralized messaging system supporting:
 - **EVM Chains**: Ethereum, Polygon, Arbitrum, Optimism, Base, etc.
 - **Solana**: Mainnet, Devnet, Testnet, Localnet
 - **Unified API**: Single client interface with automatic chain detection
@@ -65,7 +65,7 @@ npm run deploy:unified      # Multi-chain deployment
 
 **Unified Client Extension**:
 ```typescript
-class UnifiedMailBoxClient {
+class OnchainMailerClient {
   async newMethod(param: string): Promise<Result> {
     if (this.chainType === 'evm') {
       return this.newEVMMethod(param);
@@ -124,8 +124,8 @@ describe('NewFeature', () => {
 ```typescript
 describe('UnifiedClient - NewFeature', () => {
   it('should route to appropriate chain implementation', async () => {
-    const evmClient = new UnifiedMailBoxClient(evmWallet, testConfig);
-    const solanaClient = new UnifiedMailBoxClient(solanaWallet, testConfig);
+    const evmClient = new OnchainMailerClient(evmWallet, testConfig);
+    const solanaClient = new OnchainMailerClient(solanaWallet, testConfig);
     
     expect(evmClient.getChainType()).to.equal('evm');
     expect(solanaClient.getChainType()).to.equal('solana');

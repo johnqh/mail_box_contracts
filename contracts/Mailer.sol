@@ -5,7 +5,7 @@ pragma solidity ^0.8.24;
  * @title Mailer
  * @notice Decentralized messaging system with delegation management, USDC fees and revenue sharing
  * @dev Two-tier messaging fee system + delegation management with rejection capability
- * @author MailBox Team
+ * @author Mailer Team
  */
 
 import "./interfaces/IERC20.sol";

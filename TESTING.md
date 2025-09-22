@@ -1,6 +1,6 @@
-# Testing Guide - MailBox Contracts
+# Testing Guide - Mailer Contracts
 
-This document provides comprehensive guidance for testing the MailBox smart contract system, including patterns, best practices, and examples.
+This document provides comprehensive guidance for testing the Mailer smart contract system, including patterns, best practices, and examples.
 
 ## Test Overview
 
@@ -428,4 +428,4 @@ npx hardhat test --watch    # Run tests on file changes
 - **Gas Usage**: Tests include gas consumption verification
 - **Memory Efficiency**: Proper cleanup in `afterEach` hooks
 
-This comprehensive testing approach ensures reliability, security, and maintainability of the MailBox contract system.
+This comprehensive testing approach ensures reliability, security, and maintainability of the Mailer contract system.

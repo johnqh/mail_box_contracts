@@ -1,6 +1,6 @@
 # Development Workflow Guide
 
-This document outlines the complete development workflow for the MailBox smart contract project, including setup, development practices, and deployment procedures.
+This document outlines the complete development workflow for the Mailer smart contract project, including setup, development practices, and deployment procedures.
 
 ## Quick Start for Developers
 
@@ -101,7 +101,7 @@ pragma solidity ^0.8.24;
  * @title ContractName
  * @notice Brief description
  * @dev Detailed technical notes
- * @author MailBox Team
+ * @author Mailer Team
  */
 
 contract ContractName {

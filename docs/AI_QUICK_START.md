@@ -1,6 +1,6 @@
 # AI-Assisted Development Quick Start
 
-This guide provides AI assistants with everything needed to effectively work on the MailBox Contracts project.
+This guide provides AI assistants with everything needed to effectively work on the Mailer Contracts project.
 
 ## 🚀 Instant Setup Commands
 
@@ -47,9 +47,7 @@ contracts/          # EVM (Ethereum-compatible)
 └── MockUSDC.sol    # Test token
 
 programs/           # Solana blockchain
-├── mail_service/   # Delegation management
-├── mailer/         # Messaging with revenue sharing  
-└── mail_box_factory/ # Factory deployment
+└── mailer/         # Messaging and delegation with revenue sharing
 
 src/                # TypeScript clients
 ├── evm/            # EVM-specific clients

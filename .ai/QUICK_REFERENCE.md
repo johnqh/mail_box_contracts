@@ -1,4 +1,4 @@
-# MailBox Multi-Chain - Quick Reference for AI Development
+# Mailer Multi-Chain - Quick Reference for AI Development
 
 ## 🚀 Essential Commands
 
@@ -33,7 +33,7 @@ npm run deploy:unified   # Deploy to both EVM and Solana (specify networks)
 ### Automatic Chain Detection
 ```typescript
 // Wallet goes in → Chain type detected automatically
-const client = new UnifiedMailBoxClient(anyWallet, config);
+const client = new OnchainMailerClient(anyWallet, config);
 console.log(client.getChainType()); // 'evm' | 'solana'
 ```
 

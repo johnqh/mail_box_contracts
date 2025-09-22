@@ -1,0 +1,6 @@
+{
+  "extension": ["ts"],
+  "require": "ts-node/register",
+  "timeout": 10000,
+  "recursive": true
+}

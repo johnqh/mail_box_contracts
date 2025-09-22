@@ -1,13 +1,13 @@
-// MailBox Multi-Chain - Common Code Patterns for AI Development
+// Mailer Multi-Chain - Common Code Patterns for AI Development
 
 // 1. UNIFIED CLIENT USAGE PATTERN
 // =====================================
 // Single client that automatically detects and routes to correct chain
 
-import { UnifiedMailBoxClient, TESTNET_CHAIN_CONFIG } from '../src/unified';
+import { OnchainMailerClient, TESTNET_CHAIN_CONFIG } from '../src/unified';
 
 // Works with ANY wallet - automatic detection
-const client = new UnifiedMailBoxClient(wallet, TESTNET_CHAIN_CONFIG);
+const client = new OnchainMailerClient(wallet, TESTNET_CHAIN_CONFIG);
 console.log('Detected chain:', client.getChainType()); // 'evm' | 'solana'
 
 // Same methods work on all chains
@@ -122,7 +122,7 @@ const customConfig = createChainConfig('ethereum', 'mainnet-beta');
 
 describe('UnifiedClient Feature', () => {
   it('should work with EVM wallet', async () => {
-    const evmClient = new UnifiedMailBoxClient(evmWallet, testConfig);
+    const evmClient = new OnchainMailerClient(evmWallet, testConfig);
     expect(evmClient.getChainType()).to.equal('evm');
     
     // Test EVM-specific functionality
@@ -132,7 +132,7 @@ describe('UnifiedClient Feature', () => {
   });
 
   it('should work with Solana wallet', async () => {
-    const solanaClient = new UnifiedMailBoxClient(solanaWallet, testConfig);
+    const solanaClient = new OnchainMailerClient(solanaWallet, testConfig);
     expect(solanaClient.getChainType()).to.equal('solana');
     
     // Test Solana-specific functionality  
@@ -147,7 +147,7 @@ describe('UnifiedClient Feature', () => {
 // Multi-chain deployment approach
 
 // Deploy to single chain
-npx ts-node scripts/evm/deploy-create2.ts --network sepolia
+npx ts-node scripts/evm/deploy.ts --network sepolia
 npx ts-node scripts/solana/deploy.ts --network devnet
 
 // Deploy to both chains simultaneously

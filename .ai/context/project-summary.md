@@ -1,4 +1,4 @@
-# MailBox Multi-Chain Project Summary
+# Mailer Multi-Chain Project Summary
 
 ## 🎯 What This Project Is
 A production-ready multi-chain decentralized messaging system that automatically detects wallet type and routes to the appropriate blockchain (EVM or Solana).
@@ -21,7 +21,7 @@ A production-ready multi-chain decentralized messaging system that automatically
 ### Unified Client (`src/unified/mailbox-client.ts`)
 ```typescript
 // Single client works with ANY wallet type
-const client = new UnifiedMailBoxClient(wallet, config);
+const client = new OnchainMailerClient(wallet, config);
 console.log('Chain:', client.getChainType()); // 'evm' | 'solana'
 await client.sendMessage("Hello Multi-Chain!", "Universal messaging", true);
 ```

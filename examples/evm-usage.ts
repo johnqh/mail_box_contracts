@@ -1,5 +1,5 @@
 /**
- * @title EVM Usage Example for MailBox Contracts
+ * @title EVM Usage Example for Mailer Contracts
  * @description Simple, working example using MailerClient with correct API
  * @notice Demonstrates messaging and delegation functionality on EVM chains
  */
@@ -26,7 +26,7 @@ const hardhatLocal = defineChain({
 });
 
 async function evmUsageExample() {
-  console.log("🚀 MailBox EVM Usage Example");
+  console.log("🚀 Mailer EVM Usage Example");
   console.log("============================================");
   
   // ===== SETUP =====

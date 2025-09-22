@@ -1,6 +1,6 @@
 /**
  * @title Unified Multi-Chain Deployment Script
- * @description Deploys MailBox contracts to both EVM and Solana networks
+ * @description Deploys Mailer contracts to both EVM and Solana networks
  * @notice This script coordinates deployment across multiple chains
  */
 
@@ -17,7 +17,7 @@ interface DeploymentAddresses {
   evm?: {
     network: string;
     chainId: number;
-    mailService: string;
+    
     mailer: string;
     usdc: string;
     deployer: string;
@@ -25,9 +25,8 @@ interface DeploymentAddresses {
   };
   solana?: {
     network: string;
-    mailService: string;
+    
     mailer: string;
-    mailBoxFactory: string;
     usdcMint: string;
     deployer: string;
     slot: number;
@@ -58,16 +57,8 @@ async function deployEVM(network: string): Promise<DeploymentAddresses['evm']> {
     console.log("✅ MockUSDC deployed to:", usdcAddress);
   }
 
-  // Deploy MailService
-  console.log("Deploying MailService...");
-  const MailServiceFactory = await ethers.getContractFactory("MailService");
-  const mailService = await MailServiceFactory.deploy(usdcAddress, deployer.address);
-  await mailService.waitForDeployment();
-  const mailServiceAddress = await mailService.getAddress();
-  console.log("✅ MailService deployed to:", mailServiceAddress);
-
-  // Deploy Mailer
-  console.log("Deploying Mailer...");
+  // Deploy Mailer (with integrated delegation functionality)
+  console.log("Deploying Mailer with integrated delegation management...");
   const MailerFactory = await ethers.getContractFactory("Mailer");
   const mailer = await MailerFactory.deploy(usdcAddress, deployer.address);
   await mailer.waitForDeployment();
@@ -79,7 +70,6 @@ async function deployEVM(network: string): Promise<DeploymentAddresses['evm']> {
   return {
     network,
     chainId: networkConfig.chainId,
-    mailService: mailServiceAddress,
     mailer: mailerAddress,
     usdc: usdcAddress,
     deployer: deployer.address,
@@ -137,22 +127,16 @@ async function deploySolana(network: string, keypairPath?: string): Promise<Depl
   console.log("📋 Using pre-configured Solana program IDs:");
   
   const programs = {
-    mailService: '8EKjCLZjz6LKRxZcQ6LwwF5V8P3TCEgM2CdQg4pZxXHE',
     mailer: '9FLkBDGpZBcR8LMsQ7MwwV6X9P4TDFgN3DeRh5qYyHJF',
-    mailBoxFactory: 'FactoryABC123def456GHI789jkl012MNO345pqr678STU'
   };
 
-  console.log("✅ MailService program:", programs.mailService);
   console.log("✅ Mailer program:", programs.mailer);
-  console.log("✅ MailBoxFactory program:", programs.mailBoxFactory);
 
   const currentSlot = await connection.getSlot();
 
   return {
     network,
-    mailService: programs.mailService,
     mailer: programs.mailer,
-    mailBoxFactory: programs.mailBoxFactory,
     usdcMint: networkConfig.usdcMint,
     deployer: keypair.publicKey.toString(),
     slot: currentSlot
@@ -160,7 +144,7 @@ async function deploySolana(network: string, keypairPath?: string): Promise<Depl
 }
 
 async function main() {
-  console.log("🚀 MailBox Multi-Chain Deployment");
+  console.log("🚀 Mailer Multi-Chain Deployment");
   
   // Parse command line arguments
   const args = process.argv.slice(2);
@@ -202,7 +186,6 @@ async function main() {
     const chainConfig = createChainConfig(evmNetwork, solanaNetwork);
     if (deployment.evm) {
       chainConfig.evm!.contracts = {
-        mailService: deployment.evm.mailService,
         mailer: deployment.evm.mailer,
         usdc: deployment.evm.usdc
       };
@@ -226,7 +209,6 @@ async function main() {
       console.log(`\n🟣 Solana (${deployment.solana.network}):`);
       console.log(`   MailService: ${deployment.solana.mailService}`);
       console.log(`   Mailer: ${deployment.solana.mailer}`);
-      console.log(`   Factory: ${deployment.solana.mailBoxFactory}`);
       console.log(`   USDC: ${deployment.solana.usdcMint}`);
       console.log(`   Slot: ${deployment.solana.slot}`);
     }

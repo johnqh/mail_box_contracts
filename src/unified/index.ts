@@ -1,4 +1,4 @@
-// Named exports for unified mailbox clients
+// Named exports for unified mailer clients
 export { OnchainMailerClient } from './onchain-mailer-client';
 export { WalletDetector } from './wallet-detector';
 export type {

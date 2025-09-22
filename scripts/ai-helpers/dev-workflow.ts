@@ -3,7 +3,7 @@
 /**
  * @fileoverview AI-friendly development workflow automation
  * @description Provides automated workflows for common development tasks
- * @author MailBox Team
+ * @author Mailer Team
  */
 
 import { exec } from 'child_process';

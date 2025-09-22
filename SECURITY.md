@@ -2,7 +2,7 @@
 
 ## Current Security Status
 
-This document outlines known security vulnerabilities and their risk assessment for the MailBox Contracts project.
+This document outlines known security vulnerabilities and their risk assessment for the Mailer Contracts project.
 
 ### High Severity Vulnerabilities (as of 2025-09-02)
 

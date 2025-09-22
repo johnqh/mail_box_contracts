@@ -1,6 +1,6 @@
 # AI Development Patterns
 
-> **For AI Assistants**: This guide provides specific patterns, examples, and workflows optimized for AI-assisted development of the MailBox multi-chain messaging system.
+> **For AI Assistants**: This guide provides specific patterns, examples, and workflows optimized for AI-assisted development of the Mailer multi-chain messaging system.
 
 ## 🎯 Quick Reference
 
@@ -418,4 +418,4 @@ console.log(`Send took ${Date.now() - start}ms`);
 - `npm run ai:workflow status` - Check project health
 - `npm run deploy:local` - Deploy to local development
 
-This guide should be your primary reference for AI-assisted development of the MailBox system.
+This guide should be your primary reference for AI-assisted development of the Mailer system.

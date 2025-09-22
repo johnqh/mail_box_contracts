@@ -1,6 +1,6 @@
 # EVM Implementation Documentation
 
-This directory will contain documentation specific to the EVM implementation of MailBox contracts.
+This directory will contain documentation specific to the EVM implementation of Mailer contracts.
 
 ## Content (Coming Soon)
 

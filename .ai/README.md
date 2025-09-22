@@ -1,6 +1,6 @@
-# MailBox Multi-Chain - AI Development Resources
+# Mailer Multi-Chain - AI Development Resources
 
-This directory contains specialized resources designed to optimize AI-assisted development of the MailBox multi-chain messaging system.
+This directory contains specialized resources designed to optimize AI-assisted development of the Mailer multi-chain messaging system.
 
 ## 📁 Directory Structure
 
@@ -61,7 +61,7 @@ Start with `context/project-summary.md` to understand:
 ### Automatic Chain Detection
 ```typescript
 // The system automatically detects wallet type and routes accordingly
-const client = new UnifiedMailBoxClient(anyWallet, config);
+const client = new OnchainMailerClient(anyWallet, config);
 // No need to specify chain - it's detected from wallet properties
 ```
 

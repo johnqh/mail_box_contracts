@@ -1,6 +1,6 @@
 /**
- * @title Unified Multi-Chain Usage Examples for MailBox Contracts
- * @description Comprehensive examples showing how to use the unified MailBox client
+ * @title Unified Multi-Chain Usage Examples for Mailer Contracts
+ * @description Comprehensive examples showing how to use the unified Mailer client
  * @notice Demonstrates automatic chain detection and seamless cross-chain functionality
  */
 
@@ -11,7 +11,7 @@ import { Connection, Keypair } from '@solana/web3.js';
 import { Wallet } from '@coral-xyz/anchor';
 
 async function unifiedUsageExamples() {
-  console.log('🚀 MailBox Unified Multi-Chain Client - Usage Examples');
+  console.log('🚀 Mailer Unified Multi-Chain Client - Usage Examples');
   
   // ===== EXAMPLE 1: Automatic Wallet Detection =====
   console.log('\n🔍 Example 1: Automatic Wallet Detection');

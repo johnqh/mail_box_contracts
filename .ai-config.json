@@ -1,5 +1,5 @@
 {
-  "name": "MailBox Contracts",
+  "name": "Mailer Contracts",
   "description": "Production-ready multi-chain decentralized messaging system with USDC fees, revenue sharing, and unified client interface",
   "version": "1.6.0",
   "type": "multi-chain-dapp",
@@ -57,7 +57,7 @@
       },
       "solana_programs": {
         "location": "programs/",
-        "main_programs": ["mail_service", "mailer", "mail_box_factory"],
+        "main_programs": ["mailer"],
         "compilation": "cargo build-sbf --manifest-path programs/{program}/Cargo.toml",
         "anchor_compilation": "anchor build (requires proper Anchor CLI setup)",
         "testing": "npm run test:solana",
@@ -194,7 +194,7 @@
       "Missing error handling in async operations",
       "Not testing both EVM and Solana paths",
       "Forgetting to update TypeScript types after contract changes",
-      "Using removed MailBoxClient or MailServiceClient classes",
+      "Using removed MailerClient or MailServiceClient classes",
       "Missing 'to' parameter in send() and sendPriority() calls"
     ]
   },

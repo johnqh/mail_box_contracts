@@ -1,6 +1,6 @@
 ---
 name: Feature Request
-about: Suggest an idea for the MailBox Contracts
+about: Suggest an idea for the Mailer Contracts
 title: '[FEATURE] '
 labels: enhancement
 assignees: ''
@@ -28,7 +28,7 @@ Provide specific examples of how this feature would be used:
 
 ```typescript
 // Example usage of the proposed feature
-import { MailBox__factory } from '@johnqh/mail_box_contracts';
+import { Mailer__factory } from '@johnqh/mail_box_contracts';
 
 // Your proposed API usage here
 ```

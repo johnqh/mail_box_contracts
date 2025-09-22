@@ -1,6 +1,6 @@
 # Unified Multi-Chain Client Documentation
 
-This directory will contain documentation for the unified multi-chain MailBox client.
+This directory will contain documentation for the unified multi-chain Mailer client.
 
 ## Content (Coming in Phase 3)
 
