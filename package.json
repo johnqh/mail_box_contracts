@@ -175,8 +175,8 @@
     "@types/chai": "^4.3.20",
     "@types/mocha": "^10.0.10",
     "@types/node": "^24.5.2",
-    "@typescript-eslint/eslint-plugin": "^8.44.0",
-    "@typescript-eslint/parser": "^8.44.0",
+    "@typescript-eslint/eslint-plugin": "^8.44.1",
+    "@typescript-eslint/parser": "^8.44.1",
     "chai": "^4.5.0",
     "chai-as-promised": "^7.1.2",
     "eslint": "^9.36.0",
@@ -191,11 +191,11 @@
   "dependencies": {
     "@coral-xyz/anchor-cli": "^0.31.1",
     "@coral-xyz/borsh": "^0.31.1",
-    "@solana/spl-token": "^0.4.13",
+    "@solana/spl-token": "^0.4.14",
     "@solana/web3.js": "^1.98.4",
     "@types/axios": "^0.9.36",
-    "axios": "^1.11.0",
-    "dotenv": "^17.2.1",
+    "axios": "^1.12.2",
+    "dotenv": "^17.2.2",
     "viem": "^2.37.7"
   },
   "overrides": {
