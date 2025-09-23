@@ -184,14 +184,25 @@ jobs:
           ls -la dist/
           
           echo "✅ Verifying unified exports..."
+          echo "Testing CommonJS build..."
           node -e "
             try {
               const exports = require('./dist/unified/src/unified/index.js');
-              console.log('✅ Unified client exports successfully:', Object.keys(exports));
+              console.log('✅ CommonJS exports successfully:', Object.keys(exports));
             } catch (e) {
-              console.error('❌ Unified client export failed:', e.message);
+              console.error('❌ CommonJS export failed:', e.message);
               process.exit(1);
             }
+          "
+
+          echo "Testing ESM build..."
+          node -e "
+            import('./dist/unified-esm/src/unified/index.js').then(exports => {
+              console.log('✅ ESM exports successfully:', Object.keys(exports));
+            }).catch(e => {
+              console.error('❌ ESM export failed:', e.message);
+              process.exit(1);
+            });
           "
 
   coverage:

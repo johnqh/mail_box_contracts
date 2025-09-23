@@ -14,11 +14,11 @@
   },
   "scripts": {
     "build": "npm run build:evm && npm run build:solana && npm run build:unified",
-    "build:ci": "npm run build:unified:esm",
+    "build:ci": "npm run build:unified",
     "build:evm": "npx hardhat compile && tsc --project tsconfig.evm.json",
     "build:solana": "cargo build --manifest-path programs/mailer/Cargo.toml && tsc --project tsconfig.solana.json",
     "build:unified": "npm run build:unified:esm && npm run build:unified:cjs",
-    "build:unified:cjs": "tsc --project tsconfig.unified.cjs.json",
+    "build:unified:cjs": "tsc --project tsconfig.unified.cjs.json && node scripts/fix-cjs-imports.js",
     "build:unified:esm": "tsc --project tsconfig.unified.json && node scripts/fix-esm-imports.js",
     "test": "npm run test:evm && npm run test:solana && npm run test:unified:direct",
     "test:ci": "npm run build:unified && npm run test:unified:direct",

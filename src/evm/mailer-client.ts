@@ -217,6 +217,7 @@ export class MailerClient {
       address: this.contractAddress,
       abi: MAILER_ABI,
       functionName: 'sendFee',
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } as any) as bigint;
   }
 
@@ -225,6 +226,7 @@ export class MailerClient {
       address: this.contractAddress,
       abi: MAILER_ABI,
       functionName: 'usdcToken',
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } as any) as Address;
   }
 
@@ -279,6 +281,7 @@ export class MailerClient {
       abi: MAILER_ABI,
       functionName: 'getRecipientClaimable',
       args: [getAddress(recipient)],
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } as any) as [bigint, bigint, boolean];
     
     return {
@@ -293,6 +296,7 @@ export class MailerClient {
       address: this.contractAddress,
       abi: MAILER_ABI,
       functionName: 'getOwnerClaimable'
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } as any) as bigint;
   }
 
@@ -351,6 +355,7 @@ export class MailerClient {
       address: this.contractAddress,
       abi: MAILER_ABI,
       functionName: 'getDelegationFee',
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } as any) as bigint;
   }
 
