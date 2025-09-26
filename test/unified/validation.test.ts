@@ -135,8 +135,8 @@ describe("Validation Utilities", function () {
     });
 
     it("should reject unsupported chain types", function () {
-      const invalidChainType = "bitcoin" as unknown as ChainType;
-      expect(() => validateAddress("valid-address", invalidChainType))
+      // @ts-expect-error verifying runtime guard for non-enum input
+      expect(() => validateAddress("valid-address", "bitcoin"))
         .to.throw("Unsupported chain type: bitcoin");
     });
   });
