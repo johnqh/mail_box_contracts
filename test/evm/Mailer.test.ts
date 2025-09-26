@@ -1,6 +1,7 @@
 import { expect } from "chai";
 import hre from "hardhat";
 const { ethers } = hre;
+import { parseUnits, zeroAddress } from "viem";
 import type { Mailer } from "../../typechain-types/Mailer.js";
 
 describe("Mailer", function () {
@@ -24,8 +25,8 @@ describe("Mailer", function () {
     await mailer.waitForDeployment();
     
     // Give addr1 some USDC and approve Mailer to spend
-    await mockUSDC.mint(addr1.address, ethers.parseUnits("10", 6)); // 10 USDC
-    await mockUSDC.connect(addr1).approve(await mailer.getAddress(), ethers.parseUnits("10", 6));
+    await mockUSDC.mint(addr1.address, parseUnits("10", 6)); // 10 USDC
+    await mockUSDC.connect(addr1).approve(await mailer.getAddress(), parseUnits("10", 6));
   });
 
 
@@ -64,7 +65,7 @@ describe("Mailer", function () {
 
     it("Should not emit event when USDC transfer fails (insufficient allowance)", async function () {
       // Give addr2 USDC but no allowance
-      await mockUSDC.mint(addr2.address, ethers.parseUnits("1", 6));
+      await mockUSDC.mint(addr2.address, parseUnits("1", 6));
       
       await expect(
         mailer.connect(addr2).sendPriority(addr1.address, "Test Subject", "Test Body")
@@ -98,7 +99,7 @@ describe("Mailer", function () {
 
     it("Should not emit event when USDC transfer fails (insufficient allowance)", async function () {
       // Give addr2 USDC but no allowance
-      await mockUSDC.mint(addr2.address, ethers.parseUnits("1", 6));
+      await mockUSDC.mint(addr2.address, parseUnits("1", 6));
       
       await expect(
         mailer.connect(addr2).sendPriorityPrepared(addr1.address, "mail-789")
@@ -163,7 +164,7 @@ describe("Mailer", function () {
       });
 
       it("Should allow setting very high fee", async function () {
-        const highFee = ethers.parseUnits("1000", 6); // 1000 USDC
+        const highFee = parseUnits("1000", 6); // 1000 USDC
         
         await expect(
           mailer.connect(owner).setFee(highFee)
@@ -211,7 +212,7 @@ describe("Mailer", function () {
 
       it("Should fail when user has insufficient balance for new fee", async function () {
         // Set a very high fee
-        await mailer.connect(owner).setFee(ethers.parseUnits("20", 6)); // 20 USDC
+        await mailer.connect(owner).setFee(parseUnits("20", 6)); // 20 USDC
         
         // addr1 only has 10 USDC, should fail
         await expect(
@@ -253,8 +254,8 @@ describe("Mailer", function () {
   describe("send function", function () {
     beforeEach(async function () {
       // Give addr2 some USDC and approve contract
-      await mockUSDC.mint(addr2.address, ethers.parseUnits("10", 6));
-      await mockUSDC.connect(addr2).approve(await mailer.getAddress(), ethers.parseUnits("10", 6));
+      await mockUSDC.mint(addr2.address, parseUnits("10", 6));
+      await mockUSDC.connect(addr2).approve(await mailer.getAddress(), parseUnits("10", 6));
     });
 
     it("Should emit MailSent event when USDC transfer succeeds", async function () {
@@ -273,7 +274,7 @@ describe("Mailer", function () {
 
     it("Should not emit event when sender has no USDC allowance", async function () {
       // Give addr3 USDC but no allowance
-      await mockUSDC.mint(owner.address, ethers.parseUnits("1", 6));
+      await mockUSDC.mint(owner.address, parseUnits("1", 6));
       
       await expect(
         mailer.connect(owner).send(addr1.address, "No Allowance", "Should Fail")
@@ -317,8 +318,8 @@ describe("Mailer", function () {
   describe("sendPrepared function", function () {
     beforeEach(async function () {
       // Give addr2 some USDC and approve contract
-      await mockUSDC.mint(addr2.address, ethers.parseUnits("10", 6));
-      await mockUSDC.connect(addr2).approve(await mailer.getAddress(), ethers.parseUnits("10", 6));
+      await mockUSDC.mint(addr2.address, parseUnits("10", 6));
+      await mockUSDC.connect(addr2).approve(await mailer.getAddress(), parseUnits("10", 6));
     });
 
     it("Should emit PreparedMailSent event when USDC transfer succeeds", async function () {
@@ -337,7 +338,7 @@ describe("Mailer", function () {
 
     it("Should not emit event when sender has no USDC allowance", async function () {
       // Give addr3 USDC but no allowance
-      await mockUSDC.mint(owner.address, ethers.parseUnits("1", 6));
+      await mockUSDC.mint(owner.address, parseUnits("1", 6));
       
       await expect(
         mailer.connect(owner).sendPrepared(addr1.address, "no-allowance-mail")
@@ -389,8 +390,8 @@ describe("Mailer", function () {
   describe("Revenue Sharing System", function () {
     beforeEach(async function () {
       // Give addr1 more USDC for multiple transactions
-      await mockUSDC.mint(addr1.address, ethers.parseUnits("100", 6));
-      await mockUSDC.connect(addr1).approve(await mailer.getAddress(), ethers.parseUnits("100", 6));
+      await mockUSDC.mint(addr1.address, parseUnits("100", 6));
+      await mockUSDC.connect(addr1).approve(await mailer.getAddress(), parseUnits("100", 6));
     });
 
     describe("Share Recording", function () {
@@ -455,7 +456,7 @@ describe("Mailer", function () {
         // Final should be: 110 - 0.1 + 0.09 = 109.99 USDC
         const balance = await mockUSDC.balanceOf(addr1.address);
         const fee = await mailer.sendFee();
-        const expectedBalance = ethers.parseUnits("110", 6) - fee + amount;
+        const expectedBalance = parseUnits("110", 6) - fee + amount;
         expect(balance).to.equal(expectedBalance);
 
         // Check claimable amount is now zero
@@ -616,11 +617,11 @@ describe("Mailer", function () {
     describe("Delegation functionality", function () {
       beforeEach(async function () {
         // Fund addresses with additional USDC for delegation fees  
-        await mockUSDC.mint(addr1.address, ethers.parseUnits("100", 6));
-        await mockUSDC.connect(addr1).approve(await mailer.getAddress(), ethers.parseUnits("100", 6));
+        await mockUSDC.mint(addr1.address, parseUnits("100", 6));
+        await mockUSDC.connect(addr1).approve(await mailer.getAddress(), parseUnits("100", 6));
         
-        await mockUSDC.mint(addr2.address, ethers.parseUnits("100", 6));
-        await mockUSDC.connect(addr2).approve(await mailer.getAddress(), ethers.parseUnits("100", 6));
+        await mockUSDC.mint(addr2.address, parseUnits("100", 6));
+        await mockUSDC.connect(addr2).approve(await mailer.getAddress(), parseUnits("100", 6));
       });
 
       describe("delegateTo function", function () {
@@ -644,9 +645,9 @@ describe("Mailer", function () {
           const initialBalance = await mockUSDC.balanceOf(await mailer.getAddress());
           
           await expect(
-            mailer.connect(addr1).delegateTo(ethers.ZeroAddress)
+            mailer.connect(addr1).delegateTo(zeroAddress)
           ).to.emit(mailer, "DelegationSet")
-           .withArgs(addr1.address, ethers.ZeroAddress);
+           .withArgs(addr1.address, zeroAddress);
           
           const finalBalance = await mockUSDC.balanceOf(await mailer.getAddress());
           expect(finalBalance).to.equal(initialBalance);
@@ -667,7 +668,7 @@ describe("Mailer", function () {
           await expect(
             mailer.connect(addr2).rejectDelegation(addr1.address)
           ).to.emit(mailer, "DelegationSet")
-           .withArgs(addr1.address, ethers.ZeroAddress);
+           .withArgs(addr1.address, zeroAddress);
         });
 
         it("Should work without checking actual delegation state", async function () {
@@ -675,13 +676,13 @@ describe("Mailer", function () {
           await expect(
             mailer.connect(addr2).rejectDelegation(addr1.address)
           ).to.emit(mailer, "DelegationSet")
-           .withArgs(addr1.address, ethers.ZeroAddress);
+           .withArgs(addr1.address, zeroAddress);
         });
       });
 
       describe("Delegation fee management", function () {
         it("Should allow owner to update delegation fee", async function () {
-          const newFee = ethers.parseUnits("5", 6); // 5 USDC
+          const newFee = parseUnits("5", 6); // 5 USDC
           
           await expect(
             mailer.connect(owner).setDelegationFee(newFee)
@@ -693,7 +694,7 @@ describe("Mailer", function () {
 
         it("Should revert when non-owner tries to update delegation fee", async function () {
           await expect(
-            mailer.connect(addr1).setDelegationFee(ethers.parseUnits("5", 6))
+            mailer.connect(addr1).setDelegationFee(parseUnits("5", 6))
           ).to.be.revertedWithCustomError(mailer, "OnlyOwner");
         });
 
@@ -728,7 +729,7 @@ describe("Mailer", function () {
 
       it("Should distribute owner claimable funds when pausing", async function () {
         // First send a standard message to accumulate owner fees
-        await mockUSDC.connect(addr1).approve(await mailer.getAddress(), ethers.parseUnits("1", 6));
+        await mockUSDC.connect(addr1).approve(await mailer.getAddress(), parseUnits("1", 6));
         await mailer.connect(addr1).send(addr2.address, "Test", "Test");
 
         const ownerBalanceBefore = await mockUSDC.balanceOf(owner.address);
@@ -750,7 +751,7 @@ describe("Mailer", function () {
       it("Should prevent all functions when paused", async function () {
         await mailer.connect(owner).pause();
 
-        await mockUSDC.connect(addr1).approve(await mailer.getAddress(), ethers.parseUnits("1", 6));
+        await mockUSDC.connect(addr1).approve(await mailer.getAddress(), parseUnits("1", 6));
 
         await expect(
           mailer.connect(addr1).sendPriority(addr2.address, "Test", "Test")
@@ -803,8 +804,8 @@ describe("Mailer", function () {
         await testMailer.waitForDeployment();
         
         // Setup USDC for test - need enough for send fee (0.1 USDC)
-        await testMockUSDC.mint(testAddr1.address, ethers.parseUnits("1", 6));
-        await testMockUSDC.connect(testAddr1).approve(await testMailer.getAddress(), ethers.parseUnits("1", 6));
+        await testMockUSDC.mint(testAddr1.address, parseUnits("1", 6));
+        await testMockUSDC.connect(testAddr1).approve(await testMailer.getAddress(), parseUnits("1", 6));
         
         // Send priority message to create claimable amount (90% goes back to sender)
         await testMailer.connect(testAddr1).sendPriority(testAddr2.address, "Test", "Test");
@@ -847,7 +848,7 @@ describe("Mailer", function () {
         await mailer.connect(owner).unpause();
 
         // Should be able to send messages again
-        await mockUSDC.connect(addr1).approve(await mailer.getAddress(), ethers.parseUnits("1", 6));
+        await mockUSDC.connect(addr1).approve(await mailer.getAddress(), parseUnits("1", 6));
         await expect(
           mailer.connect(addr1).send(addr2.address, "Test", "Test")
         ).to.emit(mailer, "MailSent");
@@ -880,11 +881,11 @@ describe("Mailer", function () {
         await mailer.connect(owner).pause();
         
         await expect(
-          mailer.connect(owner).setFee(ethers.parseUnits("0.2", 6))
+          mailer.connect(owner).setFee(parseUnits("0.2", 6))
         ).to.be.revertedWithCustomError(mailer, "ContractIsPaused");
 
         await expect(
-          mailer.connect(owner).setDelegationFee(ethers.parseUnits("20", 6))
+          mailer.connect(owner).setDelegationFee(parseUnits("20", 6))
         ).to.be.revertedWithCustomError(mailer, "ContractIsPaused");
       });
     });
