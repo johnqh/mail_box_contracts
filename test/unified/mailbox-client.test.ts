@@ -4,7 +4,7 @@ import chai from "chai";
 import { Keypair } from "@solana/web3.js";
 import { Wallet } from "@coral-xyz/anchor";
 import { OnchainMailerClient } from "../../src/unified/onchain-mailer-client.js";
-import { ChainConfig } from "../../src/unified/types.js";
+import type { ChainConfig } from "../../src/unified/types.js";
 
 chai.use(chaiAsPromised);
 

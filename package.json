@@ -25,7 +25,7 @@
     "test:evm": "npx hardhat test test/evm/Mailer.test.ts",
     "test:solana": "cd programs/mailer && cargo test",
     "test:unified": "mocha dist/test/unified/**/*.test.js",
-    "test:unified:direct": "NODE_OPTIONS=\"--loader ts-node/esm\" TS_NODE_PROJECT=tsconfig.test.json npx mocha test/unified/*.test.ts",
+    "test:unified:direct": "node scripts/run-unified-tests.mjs",
     "compile": "npm run compile:evm",
     "compile:evm": "npx hardhat compile",
     "compile:solana": "anchor build",
