@@ -56,7 +56,7 @@ function fixEsmImports(dir) {
         return match.replace(importPath + quote, importPath + '.js' + quote);
       }
     );
-    
+
     if (modified) {
       fs.writeFileSync(filePath, content);
       files.push(filePath);
