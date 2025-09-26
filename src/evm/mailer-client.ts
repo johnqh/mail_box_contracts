@@ -6,9 +6,7 @@ import {
   WalletClient,
   getAddress
 } from "viem";
-import { 
-  Mailer__factory
-} from "../../typechain-types";
+import { Mailer__factory } from "../../typechain-types/factories/Mailer__factory.js";
 
 // Get ABI from typechain-generated factories
 const MAILER_ABI = Mailer__factory.abi;
