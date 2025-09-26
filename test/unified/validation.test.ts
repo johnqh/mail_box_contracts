@@ -135,7 +135,8 @@ describe("Validation Utilities", function () {
     });
 
     it("should reject unsupported chain types", function () {
-      expect(() => validateAddress("valid-address", "bitcoin" as any as ChainType))
+      const invalidChainType = "bitcoin" as unknown as ChainType;
+      expect(() => validateAddress("valid-address", invalidChainType))
         .to.throw("Unsupported chain type: bitcoin");
     });
   });
