@@ -1,9 +1,7 @@
-// Export TypeChain types
+// Export TypeChain types for production contracts
 export {
   Mailer__factory,
-  MockUSDC__factory,
-  type Mailer,
-  type MockUSDC
+  type Mailer
 } from "../../typechain-types/index.js";
 
 // Export client classes
