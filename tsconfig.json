@@ -1,8 +1,7 @@
 {
   "compilerOptions": {
     "target": "es2020",
-    "module": "ESNext",
-    "moduleResolution": "node",
+    "module": "commonjs",
     "esModuleInterop": true,
     "allowSyntheticDefaultImports": true,
     "forceConsistentCasingInFileNames": true,
@@ -14,14 +13,6 @@
     "declarationMap": true,
     "sourceMap": true
   },
-  "include": [
-    "./src/**/*",
-    "./typechain-types/**/*"
-  ],
-  "exclude": [
-    "./test/**/*",
-    "./scripts/**/*",
-    "node_modules",
-    "dist"
-  ]
+  "include": ["./src/**/*", "./typechain-types/**/*"],
+  "exclude": ["./test/**/*", "./scripts/**/*", "node_modules", "dist"]
 }

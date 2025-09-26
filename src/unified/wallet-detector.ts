@@ -1,4 +1,4 @@
-import { ChainType, AddressValidator } from '@johnqh/types';
+import { ChainType, Optional, isEvmAddress, isSolanaAddress } from '@johnqh/types';
 
 export class WalletDetector {
   /**
@@ -37,7 +37,7 @@ export class WalletDetector {
    * @returns True if it looks like an EVM address
    */
   static isEVMAddress(address: string): boolean {
-    return AddressValidator.isValidEVMAddress(address);
+    return isEvmAddress(address);
   }
 
   /**
@@ -46,7 +46,7 @@ export class WalletDetector {
    * @returns True if it looks like a Solana address
    */
   static isSolanaAddress(address: string): boolean {
-    return AddressValidator.isValidSolanaAddress(address);
+    return isSolanaAddress(address);
   }
 
   /**
@@ -54,7 +54,7 @@ export class WalletDetector {
    * @param address - The address to analyze
    * @returns The detected chain type or null if unknown
    */
-  static detectChainFromAddress(address: string): ChainType | null {
+  static detectChainFromAddress(address: string): Optional<ChainType> {
     if (this.isEVMAddress(address)) {
       return ChainType.EVM;
     }

@@ -1,10 +1,10 @@
 // Export TypeChain types
-export { 
-  Mailer__factory, 
+export {
+  Mailer__factory,
   MockUSDC__factory,
-  type Mailer, 
+  type Mailer,
   type MockUSDC
-} from "../../typechain-types";
+} from "../../typechain-types/index.js";
 
 // Export client classes
 export { MailerClient } from "./mailer-client.js";

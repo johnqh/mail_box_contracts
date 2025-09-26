@@ -2,8 +2,8 @@
  * Validation utilities for multi-chain operations
  */
 
-// Import ChainType and AddressValidator from @johnqh/types (now ESM compatible)
-import { ChainType, AddressValidator } from '@johnqh/types';
+// Import ChainType and validation functions from @johnqh/types (now ESM compatible)
+import { ChainType, isEvmAddress, isSolanaAddress } from '@johnqh/types';
 
 // Re-export ChainType for convenience
 export { ChainType };
@@ -48,13 +48,13 @@ export function validateAddress(
     throw new Error('Address cannot be empty');
   }
 
-  // Use AddressValidator from @johnqh/types for consistent validation
+  // Use validation functions from @johnqh/types for consistent validation
   if (chainType === ChainType.EVM) {
-    if (!AddressValidator.isValidEVMAddress(address)) {
+    if (!isEvmAddress(address)) {
       throw new Error('Invalid EVM address format');
     }
   } else if (chainType === ChainType.SOLANA) {
-    if (!AddressValidator.isValidSolanaAddress(address)) {
+    if (!isSolanaAddress(address)) {
       throw new Error('Invalid Solana address format');
     }
   } else {

@@ -3,27 +3,28 @@ import {
   ChainType,
   MessageSendResponse,
   DomainRegistrationResponse,
-  MailboxDelegationResponse
+  MailboxDelegationResponse,
+  Optional,
 } from '@johnqh/types';
 
 export interface UnifiedTransaction {
   hash: string;
   chainType: ChainType;
-  blockNumber?: number;
-  slot?: number;
-  timestamp?: number;
+  blockNumber?: Optional<number>;
+  slot?: Optional<number>;
+  timestamp?: Optional<number>;
 }
 
 export interface UnifiedWallet {
   address: string;
   chainType: ChainType;
   signTransaction: (tx: unknown) => Promise<unknown>;
-  publicKey?: string; // For Solana wallets
+  publicKey?: Optional<string>; // For Solana wallets
 }
 
 export interface ChainConfig {
-  evm?: EVMConfig;
-  solana?: SolanaConfig;
+  evm?: Optional<EVMConfig>;
+  solana?: Optional<SolanaConfig>;
 }
 
 export interface EVMConfig {

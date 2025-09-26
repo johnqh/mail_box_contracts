@@ -6,6 +6,7 @@
  */
 
 import { PublicKey } from '@solana/web3.js';
+import { Optional } from '@johnqh/types';
 import { USDC_DECIMALS, CLAIM_PERIOD_DAYS } from '../utils/currency.js';
 
 // ============================================================================
@@ -17,8 +18,8 @@ import { USDC_DECIMALS, CLAIM_PERIOD_DAYS } from '../utils/currency.js';
  * @example
  * // EVM
  * const evmRecipient: MessageRecipient = "0x742d35Cc6634C0532925a3b8D2C36B7f1234567";
- * 
- * // Solana  
+ *
+ * // Solana
  * const solanaRecipient: MessageRecipient = new PublicKey("9WzDXwBbmkg8ZTbNMqUxvQRAyrZzDsGYdLVL9zYtAWWM");
  */
 export type MessageRecipient = string | PublicKey;
@@ -75,7 +76,7 @@ export enum MessageType {
   /** Pre-prepared standard message */
   PREPARED_STANDARD = 'prepared_standard',
   /** Pre-prepared priority message */
-  PREPARED_PRIORITY = 'prepared_priority'
+  PREPARED_PRIORITY = 'prepared_priority',
 }
 
 // ============================================================================
@@ -126,7 +127,7 @@ export enum ChainType {
   /** Ethereum and EVM-compatible chains */
   EVM = 'evm',
   /** Solana blockchain */
-  SOLANA = 'solana'
+  SOLANA = 'solana',
 }
 
 /**
@@ -141,7 +142,7 @@ export interface NetworkConfig {
   /** RPC endpoint URL */
   rpcUrl: string;
   /** Chain ID (for EVM) or Cluster (for Solana) */
-  chainId?: number | string;
+  chainId?: Optional<number | string>;
 }
 
 /**
@@ -152,7 +153,7 @@ export interface DeploymentAddresses {
   /** Mailer contract/program address */
   mailer: string;
   /** MailService contract/program address (if applicable) */
-  mailService?: string;
+  mailService?: Optional<string>;
   /** USDC token mint/contract address */
   usdcToken: string;
 }
@@ -171,9 +172,9 @@ export interface ClientConfig {
   /** Contract/program addresses */
   addresses: DeploymentAddresses;
   /** Optional wallet private key for signing */
-  privateKey?: string;
+  privateKey?: Optional<string>;
   /** Optional custom RPC configuration */
-  rpcConfig?: RpcConfig;
+  rpcConfig?: Optional<RpcConfig>;
 }
 
 /**
@@ -182,14 +183,14 @@ export interface ClientConfig {
  */
 export interface RpcConfig {
   /** Request timeout in milliseconds */
-  timeout?: number;
+  timeout?: Optional<number>;
   /** Maximum retry attempts */
-  maxRetries?: number;
+  maxRetries?: Optional<number>;
   /** Rate limiting options */
-  rateLimit?: {
+  rateLimit?: Optional<{
     requestsPerSecond: number;
     maxConcurrent: number;
-  };
+  }>;
 }
 
 // ============================================================================
@@ -206,11 +207,11 @@ export interface TransactionResult {
   /** Block number/slot */
   block: number;
   /** Gas/compute units used */
-  gasUsed?: bigint;
+  gasUsed?: Optional<bigint>;
   /** Transaction status */
   status: TransactionStatus;
   /** Optional logs/events emitted */
-  logs?: string[];
+  logs?: Optional<string[]>;
 }
 
 /**
@@ -223,7 +224,7 @@ export enum TransactionStatus {
   /** Transaction failed */
   FAILED = 'failed',
   /** Transaction pending confirmation */
-  PENDING = 'pending'
+  PENDING = 'pending',
 }
 
 /**
@@ -236,9 +237,9 @@ export interface OperationError {
   /** Human-readable error message */
   message: string;
   /** Optional transaction hash if available */
-  txHash?: string;
+  txHash?: Optional<string>;
   /** Optional underlying error details */
-  details?: unknown;
+  details?: Optional<unknown>;
 }
 
 // ============================================================================
@@ -250,7 +251,7 @@ export interface OperationError {
  * @template T Success result type
  * @template E Error type (defaults to OperationError)
  */
-export type Result<T, E = OperationError> = 
+export type Result<T, E = OperationError> =
   | { success: true; data: T }
   | { success: false; error: E };
 
@@ -260,14 +261,14 @@ export type Result<T, E = OperationError> =
  */
 export interface SendMessageOptions {
   /** Message priority level */
-  priority?: 'standard' | 'priority';
+  priority?: Optional<'standard' | 'priority'>;
   /** Optional gas price/compute budget override */
-  gasConfig?: {
-    gasPrice?: bigint;
-    gasLimit?: bigint;
-  };
+  gasConfig?: Optional<{
+    gasPrice?: Optional<bigint>;
+    gasLimit?: Optional<bigint>;
+  }>;
   /** Optional confirmation requirements */
-  confirmations?: number;
+  confirmations?: Optional<number>;
 }
 
 /**
@@ -280,7 +281,7 @@ export interface PaginationOptions {
   /** Offset from start */
   offset: number;
   /** Sort order */
-  sortOrder?: 'asc' | 'desc';
+  sortOrder?: Optional<'asc' | 'desc'>;
 }
 
 /**
@@ -289,16 +290,16 @@ export interface PaginationOptions {
  */
 export interface MessageFilter {
   /** Filter by sender */
-  from?: MessageRecipient;
+  from?: Optional<MessageRecipient>;
   /** Filter by recipient */
-  to?: MessageRecipient;
+  to?: Optional<MessageRecipient>;
   /** Filter by message type */
-  messageType?: MessageType;
+  messageType?: Optional<MessageType>;
   /** Filter by date range */
-  dateRange?: {
+  dateRange?: Optional<{
     from: Date;
     to: Date;
-  };
+  }>;
 }
 
 // ============================================================================
@@ -311,12 +312,16 @@ export interface MessageFilter {
  * @returns True if value is PublicKey
  */
 export function isPublicKey(value: unknown): value is PublicKey {
-  return value != null && typeof value === 'object' && value.constructor.name === 'PublicKey';
+  return (
+    value != null &&
+    typeof value === 'object' &&
+    value.constructor.name === 'PublicKey'
+  );
 }
 
 /**
  * Type guard to check if a value is an EVM address
- * @param value - Value to check  
+ * @param value - Value to check
  * @returns True if value is EVM address string
  */
 export function isEvmAddress(value: unknown): value is string {
@@ -328,7 +333,9 @@ export function isEvmAddress(value: unknown): value is string {
  * @param recipient - Message recipient
  * @returns True if recipient is Solana PublicKey
  */
-export function isSolanaRecipient(recipient: MessageRecipient): recipient is PublicKey {
+export function isSolanaRecipient(
+  recipient: MessageRecipient
+): recipient is PublicKey {
   return isPublicKey(recipient);
 }
 
@@ -337,7 +344,9 @@ export function isSolanaRecipient(recipient: MessageRecipient): recipient is Pub
  * @param recipient - Message recipient
  * @returns True if recipient is EVM address
  */
-export function isEvmRecipient(recipient: MessageRecipient): recipient is string {
+export function isEvmRecipient(
+  recipient: MessageRecipient
+): recipient is string {
   return isEvmAddress(recipient);
 }
 
@@ -351,25 +360,25 @@ export function isEvmRecipient(recipient: MessageRecipient): recipient is string
 export const PROTOCOL_CONSTANTS = {
   /** Base send fee: 0.1 USDC (100,000 with 6 decimals) */
   SEND_FEE: BigInt(100_000),
-  
+
   /** Claim period: 60 days in seconds */
   CLAIM_PERIOD: CLAIM_PERIOD_DAYS * 24 * 60 * 60,
-  
+
   /** Revenue share percentages */
   REVENUE_SHARES: {
     SENDER: 90,
-    OWNER: 10
+    OWNER: 10,
   },
-  
+
   /** USDC token decimals */
   USDC_DECIMALS,
-  
+
   /** Maximum message lengths */
   MAX_LENGTHS: {
     SUBJECT: 200,
     BODY: 2000,
-    MAIL_ID: 100
-  }
+    MAIL_ID: 100,
+  },
 } as const;
 
 /**
@@ -380,30 +389,30 @@ export const DEFAULT_NETWORKS: Record<string, NetworkConfig> = {
     chainType: ChainType.EVM,
     network: 'mainnet',
     rpcUrl: 'https://mainnet.infura.io/v3/YOUR_INFURA_KEY',
-    chainId: 1
+    chainId: 1,
   },
   ethereumSepolia: {
     chainType: ChainType.EVM,
     network: 'sepolia',
     rpcUrl: 'https://sepolia.infura.io/v3/YOUR_INFURA_KEY',
-    chainId: 11155111
+    chainId: 11155111,
   },
   solanaMainnet: {
     chainType: ChainType.SOLANA,
     network: 'mainnet-beta',
     rpcUrl: 'https://api.mainnet-beta.solana.com',
-    chainId: 'mainnet-beta'
+    chainId: 'mainnet-beta',
   },
   solanaDevnet: {
     chainType: ChainType.SOLANA,
     network: 'devnet',
     rpcUrl: 'https://api.devnet.solana.com',
-    chainId: 'devnet'
+    chainId: 'devnet',
   },
   hardhatLocal: {
     chainType: ChainType.EVM,
     network: 'hardhat',
     rpcUrl: 'http://127.0.0.1:8545',
-    chainId: 1337
-  }
+    chainId: 1337,
+  },
 } as const;

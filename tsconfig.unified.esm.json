@@ -3,8 +3,9 @@
   "compilerOptions": {
     "outDir": "dist/unified-esm",
     "module": "ESNext",
-    "target": "es2020",
-    "moduleResolution": "node",
+    "target": "ES2020",
+    "moduleResolution": "node10",
+    "ignoreDeprecations": "5.0",
     "allowSyntheticDefaultImports": true,
     "esModuleInterop": true
   },
