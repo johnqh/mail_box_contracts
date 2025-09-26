@@ -1,6 +1,6 @@
 {
   "name": "@johnqh/mail_box_contracts",
-  "version": "1.7.0",
+  "version": "1.7.1",
   "type": "module",
   "main": "dist/unified-esm/src/unified/index.js",
   "module": "dist/unified-esm/src/unified/index.js",
