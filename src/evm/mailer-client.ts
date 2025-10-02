@@ -21,7 +21,7 @@ const MAILER_BYTECODE = Mailer__factory.bytecode as `0x${string}`;
  * 
  * ## Key Features:
  * - **Delegation Management**: Delegate mail handling with rejection capability
- * - **Priority Messages**: Full fee (0.1 USDC) with 90% revenue share back to sender
+ * - **Priority Messages**: Full fee (0.1 USDC) with 90% revenue share to recipient
  * - **Standard Messages**: 10% fee only (0.01 USDC) with no revenue share
  * - **Revenue Claims**: 60-day claim period for priority message revenue shares
  * 
@@ -38,15 +38,15 @@ const MAILER_BYTECODE = Mailer__factory.bytecode as `0x${string}`;
  * 
  * const mailer = new MailerClient('CONTRACT_ADDRESS', publicClient);
  * 
- * // Send priority message (with revenue sharing)
+ * // Send message with revenue sharing to recipient
  * const walletClient = createWalletClient({
  *   chain: mainnet,
  *   transport: http()
  * });
- * 
- * await mailer.sendPriority('Subject', 'Body', walletClient, account);
- * 
- * // Claim your revenue share
+ *
+ * await mailer.send('0x...', 'Subject', 'Body', true, walletClient, account);
+ *
+ * // Claim your revenue share (as recipient)
  * await mailer.claimRecipientShare(walletClient, account);
  * ```
  */
@@ -97,74 +97,23 @@ export class MailerClient {
   }
 
   /**
-   * @description Send a priority message with full fee and 90% revenue share
-   * @notice Sender pays 0.1 USDC, gets 90% back as claimable revenue within 60 days
-   * @param to Recipient address
+   * @description Send a message with optional revenue sharing
+   * @notice Two modes:
+   *   - revenueShareToReceiver=true: Sender pays 0.1 USDC, recipient gets 90% claimable
+   *   - revenueShareToReceiver=false: Sender pays 0.01 USDC only
+   * @param to Recipient address who receives the message and potential revenue share
    * @param subject Message subject line
    * @param body Message content
+   * @param revenueShareToReceiver If true, recipient gets 90% revenue share; if false, no revenue share
    * @param walletClient Viem wallet client for transaction
    * @param account Account to send from
    * @returns Promise resolving to transaction hash
    * @example
    * ```typescript
-   * const hash = await mailer.sendPriority('0x...', 'Hello', 'This is a priority message', walletClient, account);
-   * await publicClient.waitForTransactionReceipt({ hash });
-   * ```
-   */
-  async sendPriority(
-    to: Address,
-    subject: string,
-    body: string,
-    walletClient: WalletClient,
-    account: Account | Address
-  ): Promise<Hash> {
-    return await walletClient.writeContract({
-      address: this.contractAddress,
-      abi: MAILER_ABI,
-      functionName: 'sendPriority',
-      args: [to, subject, body],
-      account,
-      chain: walletClient.chain,
-    });
-  }
-
-  /**
-   * @description Send a priority message using a pre-prepared mail ID
-   * @notice Sender pays 0.1 USDC, gets 90% back as claimable revenue within 60 days
-   * @param to Recipient address
-   * @param mailId Pre-prepared message identifier
-   * @param walletClient Viem wallet client for transaction
-   * @param account Account to send from
-   * @returns Promise resolving to transaction hash
-   */
-  async sendPriorityPrepared(
-    to: Address,
-    mailId: string,
-    walletClient: WalletClient,
-    account: Account | Address
-  ): Promise<Hash> {
-    return await walletClient.writeContract({
-      address: this.contractAddress,
-      abi: MAILER_ABI,
-      functionName: 'sendPriorityPrepared',
-      args: [to, mailId],
-      account,
-      chain: walletClient.chain,
-    });
-  }
-
-  /**
-   * @description Send a standard message with 10% fee only (no revenue share)
-   * @notice Sender pays 0.01 USDC with no revenue share back
-   * @param to Recipient address
-   * @param subject Message subject line
-   * @param body Message content
-   * @param walletClient Viem wallet client for transaction
-   * @param account Account to send from
-   * @returns Promise resolving to transaction hash
-   * @example
-   * ```typescript
-   * const hash = await mailer.send('0x...', 'Subject', 'Standard message', walletClient, account);
+   * // Send with revenue share to recipient
+   * const hash = await mailer.send('0x...', 'Subject', 'Priority message', true, walletClient, account);
+   * // Send standard message (no revenue share)
+   * const hash2 = await mailer.send('0x...', 'Subject', 'Standard message', false, walletClient, account);
    * await publicClient.waitForTransactionReceipt({ hash });
    * ```
    */
@@ -172,6 +121,7 @@ export class MailerClient {
     to: Address,
     subject: string,
     body: string,
+    revenueShareToReceiver: boolean,
     walletClient: WalletClient,
     account: Account | Address
   ): Promise<Hash> {
@@ -179,17 +129,20 @@ export class MailerClient {
       address: this.contractAddress,
       abi: MAILER_ABI,
       functionName: 'send',
-      args: [to, subject, body],
+      args: [to, subject, body, revenueShareToReceiver],
       account,
       chain: walletClient.chain,
     });
   }
 
   /**
-   * @description Send a standard message using a pre-prepared mail ID
-   * @notice Sender pays 0.01 USDC with no revenue share back
-   * @param to Recipient address
+   * @description Send a message using a pre-prepared mail ID with optional revenue sharing
+   * @notice Two modes:
+   *   - revenueShareToReceiver=true: Sender pays 0.1 USDC, recipient gets 90% claimable
+   *   - revenueShareToReceiver=false: Sender pays 0.01 USDC only
+   * @param to Recipient address who receives the message and potential revenue share
    * @param mailId Pre-prepared message identifier
+   * @param revenueShareToReceiver If true, recipient gets 90% revenue share; if false, no revenue share
    * @param walletClient Viem wallet client for transaction
    * @param account Account to send from
    * @returns Promise resolving to transaction hash
@@ -197,6 +150,7 @@ export class MailerClient {
   async sendPrepared(
     to: Address,
     mailId: string,
+    revenueShareToReceiver: boolean,
     walletClient: WalletClient,
     account: Account | Address
   ): Promise<Hash> {
@@ -204,7 +158,7 @@ export class MailerClient {
       address: this.contractAddress,
       abi: MAILER_ABI,
       functionName: 'sendPrepared',
-      args: [to, mailId],
+      args: [to, mailId, revenueShareToReceiver],
       account,
       chain: walletClient.chain,
     });

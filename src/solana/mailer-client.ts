@@ -37,41 +37,16 @@ function encodeInitialize(usdcMint: PublicKey): Buffer {
   return data;
 }
 
-function encodeSendPriority(
+function encodeSend(
   to: PublicKey,
   subject: string,
-  body: string
+  body: string,
+  revenueShareToReceiver: boolean
 ): Buffer {
   const subjectBytes = Buffer.from(subject, 'utf8');
   const bodyBytes = Buffer.from(body, 'utf8');
   const data = Buffer.alloc(
-    1 + 32 + 4 + subjectBytes.length + 4 + bodyBytes.length
-  );
-  let offset = 0;
-
-  data.writeUInt8(InstructionType.SendPriority, offset);
-  offset += 1;
-
-  to.toBuffer().copy(data, offset);
-  offset += 32;
-
-  data.writeUInt32LE(subjectBytes.length, offset);
-  offset += 4;
-  subjectBytes.copy(data, offset);
-  offset += subjectBytes.length;
-
-  data.writeUInt32LE(bodyBytes.length, offset);
-  offset += 4;
-  bodyBytes.copy(data, offset);
-
-  return data;
-}
-
-function encodeSend(to: PublicKey, subject: string, body: string): Buffer {
-  const subjectBytes = Buffer.from(subject, 'utf8');
-  const bodyBytes = Buffer.from(body, 'utf8');
-  const data = Buffer.alloc(
-    1 + 32 + 4 + subjectBytes.length + 4 + bodyBytes.length
+    1 + 32 + 4 + subjectBytes.length + 4 + bodyBytes.length + 1
   );
   let offset = 0;
 
@@ -89,6 +64,9 @@ function encodeSend(to: PublicKey, subject: string, body: string): Buffer {
   data.writeUInt32LE(bodyBytes.length, offset);
   offset += 4;
   bodyBytes.copy(data, offset);
+  offset += bodyBytes.length;
+
+  data.writeUInt8(revenueShareToReceiver ? 1 : 0, offset);
 
   return data;
 }
@@ -220,14 +198,17 @@ function parseDelegation(data: Buffer): Delegation {
  */
 enum InstructionType {
   Initialize = 0,
-  SendPriority = 1,
-  Send = 2,
-  ClaimRecipientShare = 3,
-  ClaimOwnerShare = 4,
-  SetFee = 5,
-  DelegateTo = 6,
-  RejectDelegation = 7,
-  SetDelegationFee = 8,
+  Send = 1,
+  ClaimRecipientShare = 2,
+  ClaimOwnerShare = 3,
+  SetFee = 4,
+  DelegateTo = 5,
+  RejectDelegation = 6,
+  SetDelegationFee = 7,
+  Pause = 8,
+  Unpause = 9,
+  DistributeClaimableFunds = 10,
+  EmergencyUnpause = 11,
 }
 
 /**
@@ -236,7 +217,7 @@ enum InstructionType {
  * @notice Provides easy-to-use methods for sending messages with USDC fees and revenue sharing
  *
  * ## Key Features:
- * - **Priority Messages**: Full fee (0.1 USDC) with 90% revenue share back to sender
+ * - **Priority Messages**: Full fee (0.1 USDC) with 90% revenue share to recipient
  * - **Standard Messages**: 10% fee only (0.01 USDC) with no revenue share
  * - **Revenue Claims**: 60-day claim period for priority message revenue shares
  * - **Delegation Management**: Delegate message handling with rejection capability
@@ -250,10 +231,10 @@ enum InstructionType {
  * const usdcMint = new PublicKey('EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v');
  * const client = new MailerClient(connection, wallet, programId, usdcMint);
  *
- * // Send priority message (with revenue sharing)
- * await client.sendPriority('recipient-address', 'Subject', 'Message body');
+ * // Send message with revenue sharing to recipient
+ * await client.send('recipient-address', 'Subject', 'Message body', true);
  *
- * // Claim your revenue share within 60 days
+ * // Claim your revenue share within 60 days (as recipient)
  * await client.claimRecipientShare();
  *
  * // Check claimable amount
@@ -311,49 +292,23 @@ export class MailerClient {
   }
 
   /**
-   * Send a priority message with revenue sharing
-   * @param to Recipient's public key or address string
+   * Send a message with optional revenue sharing
+   * @param to Recipient's public key or address string who receives message and potential revenue share
    * @param subject Message subject
    * @param body Message body
-   * @returns Transaction signature
-   */
-  async sendPriority(
-    to: string | PublicKey,
-    subject: string,
-    body: string
-  ): Promise<string> {
-    const recipientKey = typeof to === 'string' ? new PublicKey(to) : to;
-    return await this.sendMessage(recipientKey, subject, body, true);
-  }
-
-  /**
-   * Send a standard message with 10% fee
-   * @param to Recipient's public key or address string
-   * @param subject Message subject
-   * @param body Message body
+   * @param revenueShareToReceiver If true, recipient gets 90% revenue share; if false, no revenue share
    * @returns Transaction signature
    */
   async send(
     to: string | PublicKey,
     subject: string,
-    body: string
+    body: string,
+    revenueShareToReceiver: boolean = false
   ): Promise<string> {
     const recipientKey = typeof to === 'string' ? new PublicKey(to) : to;
-    return await this.sendMessage(recipientKey, subject, body, false);
-  }
-
-  /**
-   * Private method to handle both priority and standard message sending
-   */
-  private async sendMessage(
-    to: PublicKey,
-    subject: string,
-    body: string,
-    isPriority: boolean
-  ): Promise<string> {
     // Derive recipient claim PDA
     const [recipientClaimPda] = PublicKey.findProgramAddressSync(
-      [Buffer.from('claim'), to.toBuffer()],
+      [Buffer.from('claim'), recipientKey.toBuffer()],
       this.programId
     );
 
@@ -397,9 +352,7 @@ export class MailerClient {
         { pubkey: SystemProgram.programId, isSigner: false, isWritable: false },
       ],
       programId: this.programId,
-      data: isPriority
-        ? encodeSendPriority(to, subject, body)
-        : encodeSend(to, subject, body),
+      data: encodeSend(recipientKey, subject, body, revenueShareToReceiver),
     });
 
     instructions.push(sendInstruction);

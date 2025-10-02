@@ -50,8 +50,6 @@ export interface MailerInterface extends Interface {
       | "send"
       | "sendFee"
       | "sendPrepared"
-      | "sendPriority"
-      | "sendPriorityPrepared"
       | "setDelegationFee"
       | "setFee"
       | "unpause"
@@ -146,20 +144,12 @@ export interface MailerInterface extends Interface {
   ): string;
   encodeFunctionData(
     functionFragment: "send",
-    values: [AddressLike, string, string]
+    values: [AddressLike, string, string, boolean]
   ): string;
   encodeFunctionData(functionFragment: "sendFee", values?: undefined): string;
   encodeFunctionData(
     functionFragment: "sendPrepared",
-    values: [AddressLike, string]
-  ): string;
-  encodeFunctionData(
-    functionFragment: "sendPriority",
-    values: [AddressLike, string, string]
-  ): string;
-  encodeFunctionData(
-    functionFragment: "sendPriorityPrepared",
-    values: [AddressLike, string]
+    values: [AddressLike, string, boolean]
   ): string;
   encodeFunctionData(
     functionFragment: "setDelegationFee",
@@ -242,14 +232,6 @@ export interface MailerInterface extends Interface {
   decodeFunctionResult(functionFragment: "sendFee", data: BytesLike): Result;
   decodeFunctionResult(
     functionFragment: "sendPrepared",
-    data: BytesLike
-  ): Result;
-  decodeFunctionResult(
-    functionFragment: "sendPriority",
-    data: BytesLike
-  ): Result;
-  decodeFunctionResult(
-    functionFragment: "sendPriorityPrepared",
     data: BytesLike
   ): Result;
   decodeFunctionResult(
@@ -361,19 +343,22 @@ export namespace MailSentEvent {
     from: AddressLike,
     to: AddressLike,
     subject: string,
-    body: string
+    body: string,
+    revenueShareToReceiver: boolean
   ];
   export type OutputTuple = [
     from: string,
     to: string,
     subject: string,
-    body: string
+    body: string,
+    revenueShareToReceiver: boolean
   ];
   export interface OutputObject {
     from: string;
     to: string;
     subject: string;
     body: string;
+    revenueShareToReceiver: boolean;
   }
   export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
   export type Filter = TypedDeferredTopicFilter<Event>;
@@ -558,7 +543,12 @@ export interface Mailer extends BaseContract {
   >;
 
   send: TypedContractMethod<
-    [to: AddressLike, subject: string, body: string],
+    [
+      to: AddressLike,
+      subject: string,
+      body: string,
+      revenueShareToReceiver: boolean
+    ],
     [void],
     "nonpayable"
   >;
@@ -566,19 +556,7 @@ export interface Mailer extends BaseContract {
   sendFee: TypedContractMethod<[], [bigint], "view">;
 
   sendPrepared: TypedContractMethod<
-    [to: AddressLike, mailId: string],
-    [void],
-    "nonpayable"
-  >;
-
-  sendPriority: TypedContractMethod<
-    [to: AddressLike, subject: string, body: string],
-    [void],
-    "nonpayable"
-  >;
-
-  sendPriorityPrepared: TypedContractMethod<
-    [to: AddressLike, mailId: string],
+    [to: AddressLike, mailId: string, revenueShareToReceiver: boolean],
     [void],
     "nonpayable"
   >;
@@ -683,7 +661,12 @@ export interface Mailer extends BaseContract {
   getFunction(
     nameOrSignature: "send"
   ): TypedContractMethod<
-    [to: AddressLike, subject: string, body: string],
+    [
+      to: AddressLike,
+      subject: string,
+      body: string,
+      revenueShareToReceiver: boolean
+    ],
     [void],
     "nonpayable"
   >;
@@ -693,21 +676,7 @@ export interface Mailer extends BaseContract {
   getFunction(
     nameOrSignature: "sendPrepared"
   ): TypedContractMethod<
-    [to: AddressLike, mailId: string],
-    [void],
-    "nonpayable"
-  >;
-  getFunction(
-    nameOrSignature: "sendPriority"
-  ): TypedContractMethod<
-    [to: AddressLike, subject: string, body: string],
-    [void],
-    "nonpayable"
-  >;
-  getFunction(
-    nameOrSignature: "sendPriorityPrepared"
-  ): TypedContractMethod<
-    [to: AddressLike, mailId: string],
+    [to: AddressLike, mailId: string, revenueShareToReceiver: boolean],
     [void],
     "nonpayable"
   >;
@@ -905,7 +874,7 @@ export interface Mailer extends BaseContract {
       FundsDistributedEvent.OutputObject
     >;
 
-    "MailSent(address,address,string,string)": TypedContractEvent<
+    "MailSent(address,address,string,string,bool)": TypedContractEvent<
       MailSentEvent.InputTuple,
       MailSentEvent.OutputTuple,
       MailSentEvent.OutputObject

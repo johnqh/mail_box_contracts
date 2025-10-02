@@ -56,7 +56,8 @@ contract Mailer {
         address indexed from,
         address indexed to,
         string subject,
-        string body
+        string body,
+        bool revenueShareToReceiver
     );
     
     event PreparedMailSent(
@@ -138,51 +139,86 @@ contract Mailer {
     }
     
     
-    function sendPriority(
-        address to,
-        string calldata subject,
-        string calldata body
-    ) external nonReentrant whenNotPaused {
-        if (!usdcToken.transferFrom(msg.sender, address(this), sendFee)) {
-            revert FeePaymentRequired();
-        }
-        _recordShares(msg.sender, sendFee);
-        emit MailSent(msg.sender, to, subject, body);
-    }
-    
-    function sendPriorityPrepared(
-        address to,
-        string calldata mailId
-    ) external nonReentrant whenNotPaused {
-        if (!usdcToken.transferFrom(msg.sender, address(this), sendFee)) {
-            revert FeePaymentRequired();
-        }
-        _recordShares(msg.sender, sendFee);
-        emit PreparedMailSent(msg.sender, to, mailId);
-    }
-    
+    /**
+     * @notice Send a message with optional revenue sharing
+     * @dev Two modes based on revenueShareToReceiver flag:
+     *      - true (Priority): Charges full sendFee (0.1 USDC), receiver gets 90% back as claimable within 60 days
+     *      - false (Standard): Charges only 10% of sendFee (0.01 USDC), no claimable amount
+     * @param to Recipient address who receives the message and potential revenue share
+     * @param subject Message subject line
+     * @param body Message body content
+     * @param revenueShareToReceiver If true, receiver gets 90% revenue share; if false, no revenue share
+     *
+     * Cost for sender:
+     * - Priority (revenueShareToReceiver=true): Sender pays 0.1 USDC, receiver gets 0.09 USDC claimable
+     * - Standard (revenueShareToReceiver=false): Sender pays 0.01 USDC only
+     *
+     * Why use Standard? Lower upfront cost, no revenue tracking needed.
+     * Why use Priority? Reward the recipient with claimable revenue share.
+     *
+     * Requirements:
+     * - Contract must not be paused
+     * - Sender must have approved this contract to spend required USDC amount
+     * - Sender must have sufficient USDC balance
+     */
     function send(
         address to,
         string calldata subject,
-        string calldata body
+        string calldata body,
+        bool revenueShareToReceiver
     ) external nonReentrant whenNotPaused {
-        uint256 ownerFee = (sendFee * OWNER_SHARE) / 100;
-        if (!usdcToken.transferFrom(msg.sender, address(this), ownerFee)) {
-            revert FeePaymentRequired();
+        if (revenueShareToReceiver) {
+            // Priority mode: Transfer full fee from sender to contract
+            if (!usdcToken.transferFrom(msg.sender, address(this), sendFee)) {
+                revert FeePaymentRequired();
+            }
+            // Record 90% for receiver, 10% for owner
+            _recordShares(to, sendFee);
+        } else {
+            // Standard mode: Calculate 10% owner fee
+            uint256 ownerFee = (sendFee * OWNER_SHARE) / 100;
+            // Transfer only 10% fee from sender to contract
+            if (!usdcToken.transferFrom(msg.sender, address(this), ownerFee)) {
+                revert FeePaymentRequired();
+            }
+            // All goes to owner, no revenue share
+            ownerClaimable += ownerFee;
         }
-        ownerClaimable += ownerFee;
-        emit MailSent(msg.sender, to, subject, body);
+        emit MailSent(msg.sender, to, subject, body, revenueShareToReceiver);
     }
     
+    /**
+     * @notice Send a message using pre-prepared content (referenced by mailId)
+     * @dev Same as send but references off-chain stored content via mailId
+     * @param to Recipient address who receives the message and potential revenue share
+     * @param mailId Reference ID to pre-prepared message content
+     * @param revenueShareToReceiver If true, receiver gets 90% revenue share; if false, no revenue share
+     *
+     * Use case: For large messages or repeated templates, store content off-chain
+     * and reference it here to save gas costs on transaction data.
+     */
     function sendPrepared(
         address to,
-        string calldata mailId
+        string calldata mailId,
+        bool revenueShareToReceiver
     ) external nonReentrant whenNotPaused {
-        uint256 ownerFee = (sendFee * OWNER_SHARE) / 100;
-        if (!usdcToken.transferFrom(msg.sender, address(this), ownerFee)) {
-            revert FeePaymentRequired();
+        if (revenueShareToReceiver) {
+            // Priority mode: Transfer full fee from sender to contract
+            if (!usdcToken.transferFrom(msg.sender, address(this), sendFee)) {
+                revert FeePaymentRequired();
+            }
+            // Record 90% for receiver, 10% for owner
+            _recordShares(to, sendFee);
+        } else {
+            // Standard mode: Calculate 10% owner fee
+            uint256 ownerFee = (sendFee * OWNER_SHARE) / 100;
+            // Transfer only 10% fee from sender to contract
+            if (!usdcToken.transferFrom(msg.sender, address(this), ownerFee)) {
+                revert FeePaymentRequired();
+            }
+            // All goes to owner, no revenue share
+            ownerClaimable += ownerFee;
         }
-        ownerClaimable += ownerFee;
         emit PreparedMailSent(msg.sender, to, mailId);
     }
     
@@ -196,48 +232,79 @@ contract Mailer {
         return sendFee;
     }
     
+    /**
+     * @notice Internal function to record revenue shares for priority messages
+     * @dev Splits totalAmount into 90% for recipient (message receiver) and 10% for owner
+     * @param recipient Address that will be able to claim the 90% share (the message recipient)
+     * @param totalAmount Total fee amount to split (typically sendFee = 0.1 USDC)
+     *
+     * Split logic:
+     * - Owner gets exactly 10% (calculated first for precision)
+     * - Recipient gets remainder (totalAmount - ownerAmount) to handle any rounding
+     *
+     * Timestamp behavior:
+     * - First call: Sets timestamp to block.timestamp (starts 60-day claim period)
+     * - Subsequent calls: Keeps original timestamp (doesn't restart claim period)
+     */
     function _recordShares(address recipient, uint256 totalAmount) internal {
-        // Ensure safe math operations
+        // Ensure safe math operations (protect against overflow in multiplication)
         if (totalAmount > type(uint256).max / RECIPIENT_SHARE) {
             revert MathOverflow();
         }
-        
+
         // Calculate owner amount first to ensure precision
         uint256 ownerAmount = (totalAmount * OWNER_SHARE) / 100;
         uint256 recipientAmount = totalAmount - ownerAmount;
-        
+
         // Update recipient's claimable amount and set timestamp only if not already set
         recipientClaims[recipient].amount += recipientAmount;
         if (recipientClaims[recipient].timestamp == 0) {
             recipientClaims[recipient].timestamp = block.timestamp;
         }
-        
+
         // Update owner's claimable amount
         ownerClaimable += ownerAmount;
-        
+
         emit SharesRecorded(recipient, recipientAmount, ownerAmount);
     }
     
+    /**
+     * @notice Claim your accumulated revenue share from priority messages received
+     * @dev Must be called within 60 days of first revenue share recording
+     *
+     * Claim period logic:
+     * - Clock starts on FIRST priority message received (when timestamp is set)
+     * - Multiple priority messages add to claimable amount but don't reset timer
+     * - After 60 days, funds become permanently unclaimable (owner can recover via claimExpiredShares)
+     *
+     * Example timeline:
+     * Day 0: Receive priority message, get 0.09 USDC claimable, timer starts
+     * Day 30: Receive another priority message, now 0.18 USDC claimable, same timer
+     * Day 59: Can still claim all 0.18 USDC
+     * Day 61: Too late, funds expired
+     */
     function claimRecipientShare() external nonReentrant {
         ClaimableAmount storage claim = recipientClaims[msg.sender];
         if (claim.amount == 0) {
             revert NoClaimableAmount();
         }
-        
-        // Check if claim period has expired
+
+        // Check if claim period has expired (60 days from first revenue share)
         if (block.timestamp > claim.timestamp + CLAIM_PERIOD) {
             revert NoClaimableAmount();
         }
-        
+
+        // Store amount and reset claim data
         uint256 amount = claim.amount;
         claim.amount = 0;
         claim.timestamp = 0;
-        
+
+        // Transfer USDC to claimer
         bool success = usdcToken.transfer(msg.sender, amount);
         if (!success) {
             revert TransferFailed();
         }
-        
+
         emit RecipientClaimed(msg.sender, amount);
     }
     

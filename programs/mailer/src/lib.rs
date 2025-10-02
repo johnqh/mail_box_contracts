@@ -107,7 +107,7 @@ pub enum MailerInstruction {
     /// 2. `[]` System program
     Initialize { usdc_mint: Pubkey },
 
-    /// Send priority message with revenue sharing
+    /// Send message with optional revenue sharing
     /// Accounts:
     /// 0. `[signer]` Sender
     /// 1. `[writable]` Recipient claim account (PDA)
@@ -116,18 +116,11 @@ pub enum MailerInstruction {
     /// 4. `[writable]` Mailer USDC account
     /// 5. `[]` Token program
     /// 6. `[]` System program
-    SendPriority {
-        to: Pubkey,
-        subject: String,
-        _body: String,
-    },
-
-    /// Send standard message with 10% fee
-    /// Same accounts as SendPriority
     Send {
         to: Pubkey,
         subject: String,
         _body: String,
+        revenue_share_to_receiver: bool,
     },
 
     /// Claim recipient share
@@ -259,11 +252,8 @@ pub fn process_instruction(
         MailerInstruction::Initialize { usdc_mint } => {
             process_initialize(program_id, accounts, usdc_mint)
         }
-        MailerInstruction::SendPriority { to, subject, _body } => {
-            process_send_priority(program_id, accounts, to, subject, _body)
-        }
-        MailerInstruction::Send { to, subject, _body } => {
-            process_send(program_id, accounts, to, subject, _body)
+        MailerInstruction::Send { to, subject, _body, revenue_share_to_receiver } => {
+            process_send(program_id, accounts, to, subject, _body, revenue_share_to_receiver)
         }
         MailerInstruction::ClaimRecipientShare => {
             process_claim_recipient_share(program_id, accounts)
@@ -350,13 +340,14 @@ fn process_initialize(
     Ok(())
 }
 
-/// Send priority message with revenue sharing
-fn process_send_priority(
+/// Send message with optional revenue sharing
+fn process_send(
     program_id: &Pubkey,
     accounts: &[AccountInfo],
     to: Pubkey,
     subject: String,
     _body: String,
+    revenue_share_to_receiver: bool,
 ) -> ProgramResult {
     let account_iter = &mut accounts.iter();
     let sender = next_account_info(account_iter)?;
@@ -381,131 +372,106 @@ fn process_send_priority(
         return Err(MailerError::ContractPaused.into());
     }
 
-    // Create or load recipient claim account
-    let (claim_pda, claim_bump) = Pubkey::find_program_address(
-        &[b"claim", to.as_ref()], 
-        program_id
-    );
+    if revenue_share_to_receiver {
+        // Priority mode: full fee with revenue sharing
 
-    if recipient_claim.key != &claim_pda {
-        return Err(MailerError::InvalidPDA.into());
-    }
+        // Create or load recipient claim account
+        let (claim_pda, claim_bump) = Pubkey::find_program_address(
+            &[b"claim", to.as_ref()],
+            program_id
+        );
 
-    // Create claim account if needed
-    if recipient_claim.lamports() == 0 {
-        let rent = Rent::get()?;
-        let space = 8 + RecipientClaim::LEN;
-        let lamports = rent.minimum_balance(space);
+        if recipient_claim.key != &claim_pda {
+            return Err(MailerError::InvalidPDA.into());
+        }
 
-        invoke_signed(
-            &system_instruction::create_account(
+        // Create claim account if needed
+        if recipient_claim.lamports() == 0 {
+            let rent = Rent::get()?;
+            let space = 8 + RecipientClaim::LEN;
+            let lamports = rent.minimum_balance(space);
+
+            invoke_signed(
+                &system_instruction::create_account(
+                    sender.key,
+                    recipient_claim.key,
+                    lamports,
+                    space as u64,
+                    program_id,
+                ),
+                &[sender.clone(), recipient_claim.clone(), system_program.clone()],
+                &[&[b"claim", to.as_ref(), &[claim_bump]]],
+            )?;
+
+            // Initialize claim account
+            let mut claim_data = recipient_claim.try_borrow_mut_data()?;
+            claim_data[0..8].copy_from_slice(&hash_discriminator("account:RecipientClaim").to_le_bytes());
+
+            let claim_state = RecipientClaim {
+                recipient: to,
+                amount: 0,
+                timestamp: 0,
+                bump: claim_bump,
+            };
+
+            claim_state.serialize(&mut &mut claim_data[8..])?;
+            drop(claim_data);
+        }
+
+        // Transfer full send fee
+        invoke(
+            &spl_token::instruction::transfer(
+                token_program.key,
+                sender_usdc.key,
+                mailer_usdc.key,
                 sender.key,
-                recipient_claim.key,
-                lamports,
-                space as u64,
-                program_id,
-            ),
-            &[sender.clone(), recipient_claim.clone(), system_program.clone()],
-            &[&[b"claim", sender.key.as_ref(), &[claim_bump]]],
+                &[],
+                mailer_state.send_fee,
+            )?,
+            &[
+                sender_usdc.clone(),
+                mailer_usdc.clone(),
+                sender.clone(),
+                token_program.clone(),
+            ],
         )?;
 
-        // Initialize claim account
-        let mut claim_data = recipient_claim.try_borrow_mut_data()?;
-        claim_data[0..8].copy_from_slice(&hash_discriminator("account:RecipientClaim").to_le_bytes());
+        // Record revenue shares
+        record_shares(recipient_claim, mailer_account, to, mailer_state.send_fee)?;
 
-        let claim_state = RecipientClaim {
-            recipient: to,
-            amount: 0,
-            timestamp: 0,
-            bump: claim_bump,
-        };
+        msg!("Priority mail sent from {} to {}: {} (revenue share enabled)", sender.key, to, subject);
+    } else {
+        // Standard mode: 10% fee only, no revenue sharing
 
-        claim_state.serialize(&mut &mut claim_data[8..])?;
-        drop(claim_data);
+        let owner_fee = mailer_state.send_fee / 10; // 10% of send_fee
+
+        // Transfer only owner fee (10%)
+        invoke(
+            &spl_token::instruction::transfer(
+                token_program.key,
+                sender_usdc.key,
+                mailer_usdc.key,
+                sender.key,
+                &[],
+                owner_fee,
+            )?,
+            &[
+                sender_usdc.clone(),
+                mailer_usdc.clone(),
+                sender.clone(),
+                token_program.clone(),
+            ],
+        )?;
+
+        // Update owner claimable
+        let mut mailer_data = mailer_account.try_borrow_mut_data()?;
+        let mut mailer_state: MailerState = BorshDeserialize::deserialize(&mut &mailer_data[8..])?;
+        mailer_state.owner_claimable += owner_fee;
+        mailer_state.serialize(&mut &mut mailer_data[8..])?;
+
+        msg!("Standard mail sent from {} to {}: {}", sender.key, to, subject);
     }
 
-    // Transfer full send fee
-    invoke(
-        &spl_token::instruction::transfer(
-            token_program.key,
-            sender_usdc.key,
-            mailer_usdc.key,
-            sender.key,
-            &[],
-            mailer_state.send_fee,
-        )?,
-        &[
-            sender_usdc.clone(),
-            mailer_usdc.clone(),
-            sender.clone(),
-            token_program.clone(),
-        ],
-    )?;
-
-    // Record revenue shares
-    record_shares(recipient_claim, mailer_account, to, mailer_state.send_fee)?;
-
-    msg!("Priority mail sent from {} to {}: {}", sender.key, to, subject);
-    Ok(())
-}
-
-/// Send standard message with 10% fee
-fn process_send(
-    _program_id: &Pubkey,
-    accounts: &[AccountInfo],
-    to: Pubkey,
-    subject: String,
-    _body: String,
-) -> ProgramResult {
-    let account_iter = &mut accounts.iter();
-    let sender = next_account_info(account_iter)?;
-    let _recipient_claim = next_account_info(account_iter)?;
-    let mailer_account = next_account_info(account_iter)?;
-    let sender_usdc = next_account_info(account_iter)?;
-    let mailer_usdc = next_account_info(account_iter)?;
-    let token_program = next_account_info(account_iter)?;
-
-    if !sender.is_signer {
-        return Err(ProgramError::MissingRequiredSignature);
-    }
-
-    // Load mailer state
-    let mailer_data = mailer_account.try_borrow_data()?;
-    let mailer_state: MailerState = BorshDeserialize::deserialize(&mut &mailer_data[8..])?;
-    drop(mailer_data);
-
-    // Check if contract is paused
-    if mailer_state.paused {
-        return Err(MailerError::ContractPaused.into());
-    }
-
-    let owner_fee = mailer_state.send_fee / 10; // 10% of send_fee
-
-    // Transfer only owner fee (10%)
-    invoke(
-        &spl_token::instruction::transfer(
-            token_program.key,
-            sender_usdc.key,
-            mailer_usdc.key,
-            sender.key,
-            &[],
-            owner_fee,
-        )?,
-        &[
-            sender_usdc.clone(),
-            mailer_usdc.clone(),
-            sender.clone(),
-            token_program.clone(),
-        ],
-    )?;
-
-    // Update owner claimable
-    let mut mailer_data = mailer_account.try_borrow_mut_data()?;
-    let mut mailer_state: MailerState = BorshDeserialize::deserialize(&mut &mailer_data[8..])?;
-    mailer_state.owner_claimable += owner_fee;
-    mailer_state.serialize(&mut &mut mailer_data[8..])?;
-
-    msg!("Standard mail sent from {} to {}: {}", sender.key, to, subject);
     Ok(())
 }
 

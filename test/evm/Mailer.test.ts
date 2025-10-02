@@ -48,44 +48,44 @@ describe("Mailer", function () {
     });
   });
 
-  describe("send function", function () {
+  describe("send function with revenue sharing (priority mode)", function () {
     it("Should emit MailSent event when USDC transfer succeeds", async function () {
       await expect(
-        mailer.connect(addr1).sendPriority(addr2.address, "Test Subject", "Test Body")
+        mailer.connect(addr1).send(addr2.address, "Test Subject", "Test Body", true)
       ).to.emit(mailer, "MailSent")
-       .withArgs(addr1.address, addr2.address, "Test Subject", "Test Body");
+       .withArgs(addr1.address, addr2.address, "Test Subject", "Test Body", true);
     });
 
     it("Should not emit event when USDC transfer fails (insufficient balance)", async function () {
       // addr2 has no USDC balance
       await expect(
-        mailer.connect(addr2).sendPriority(addr1.address, "Test Subject", "Test Body")
+        mailer.connect(addr2).send(addr1.address, "Test Subject", "Test Body", true)
       ).to.be.revertedWithCustomError(mockUSDC, "InsufficientBalance");
     });
 
     it("Should not emit event when USDC transfer fails (insufficient allowance)", async function () {
       // Give addr2 USDC but no allowance
       await mockUSDC.mint(addr2.address, parseUnits("1", 6));
-      
+
       await expect(
-        mailer.connect(addr2).sendPriority(addr1.address, "Test Subject", "Test Body")
+        mailer.connect(addr2).send(addr1.address, "Test Subject", "Test Body", true)
       ).to.be.revertedWithCustomError(mockUSDC, "InsufficientAllowance");
     });
 
     it("Should transfer correct USDC amount to contract", async function () {
       const initialBalance = await mockUSDC.balanceOf(await mailer.getAddress());
-      
-      await mailer.connect(addr1).sendPriority(addr2.address, "Test Subject", "Test Body");
-      
+
+      await mailer.connect(addr1).send(addr2.address, "Test Subject", "Test Body", true);
+
       const finalBalance = await mockUSDC.balanceOf(await mailer.getAddress());
       expect(finalBalance - initialBalance).to.equal(100000); // 0.1 USDC
     });
   });
 
-  describe("sendPrepared function", function () {
+  describe("sendPrepared function with revenue sharing (priority mode)", function () {
     it("Should emit PreparedMailSent event when USDC transfer succeeds", async function () {
       await expect(
-        mailer.connect(addr1).sendPriorityPrepared(addr2.address, "mail-123")
+        mailer.connect(addr1).sendPrepared(addr2.address, "mail-123", true)
       ).to.emit(mailer, "PreparedMailSent")
        .withArgs(addr1.address, addr2.address, "mail-123");
     });
@@ -93,24 +93,24 @@ describe("Mailer", function () {
     it("Should not emit event when USDC transfer fails (insufficient balance)", async function () {
       // addr2 has no USDC balance
       await expect(
-        mailer.connect(addr2).sendPriorityPrepared(addr1.address, "mail-456")
+        mailer.connect(addr2).sendPrepared(addr1.address, "mail-456", true)
       ).to.be.revertedWithCustomError(mockUSDC, "InsufficientBalance");
     });
 
     it("Should not emit event when USDC transfer fails (insufficient allowance)", async function () {
       // Give addr2 USDC but no allowance
       await mockUSDC.mint(addr2.address, parseUnits("1", 6));
-      
+
       await expect(
-        mailer.connect(addr2).sendPriorityPrepared(addr1.address, "mail-789")
+        mailer.connect(addr2).sendPrepared(addr1.address, "mail-789", true)
       ).to.be.revertedWithCustomError(mockUSDC, "InsufficientAllowance");
     });
 
     it("Should transfer correct USDC amount to contract", async function () {
       const initialBalance = await mockUSDC.balanceOf(await mailer.getAddress());
-      
-      await mailer.connect(addr1).sendPriorityPrepared(addr2.address, "mail-999");
-      
+
+      await mailer.connect(addr1).sendPrepared(addr2.address, "mail-999", true);
+
       const finalBalance = await mockUSDC.balanceOf(await mailer.getAddress());
       expect(finalBalance - initialBalance).to.equal(100000); // 0.1 USDC
     });
@@ -118,7 +118,7 @@ describe("Mailer", function () {
     it("Should handle different mailId strings", async function () {
       // Test with various mailId formats
       await expect(
-        mailer.connect(addr1).sendPriorityPrepared(addr2.address, "abc-123-xyz")
+        mailer.connect(addr1).sendPrepared(addr2.address, "abc-123-xyz", true)
       ).to.emit(mailer, "PreparedMailSent")
        .withArgs(addr1.address, addr2.address, "abc-123-xyz");
     });
@@ -194,18 +194,18 @@ describe("Mailer", function () {
 
       it("Should use updated fee in send function", async function () {
         const initialBalance = await mockUSDC.balanceOf(await mailer.getAddress());
-        
-        await mailer.connect(addr1).sendPriority(addr2.address, "Test", "Body");
-        
+
+        await mailer.connect(addr1).send(addr2.address, "Test", "Body", true);
+
         const finalBalance = await mockUSDC.balanceOf(await mailer.getAddress());
         expect(finalBalance - initialBalance).to.equal(50000); // Updated fee
       });
 
       it("Should use updated fee in sendPrepared function", async function () {
         const initialBalance = await mockUSDC.balanceOf(await mailer.getAddress());
-        
-        await mailer.connect(addr1).sendPriorityPrepared(addr2.address, "test-mail");
-        
+
+        await mailer.connect(addr1).sendPrepared(addr2.address, "test-mail", true);
+
         const finalBalance = await mockUSDC.balanceOf(await mailer.getAddress());
         expect(finalBalance - initialBalance).to.equal(50000); // Updated fee
       });
@@ -213,45 +213,45 @@ describe("Mailer", function () {
       it("Should fail when user has insufficient balance for new fee", async function () {
         // Set a very high fee
         await mailer.connect(owner).setFee(parseUnits("20", 6)); // 20 USDC
-        
+
         // addr1 only has 10 USDC, should fail
         await expect(
-          mailer.connect(addr1).sendPriority(addr2.address, "Test", "Body")
+          mailer.connect(addr1).send(addr2.address, "Test", "Body", true)
         ).to.be.revertedWithCustomError(mockUSDC, "InsufficientBalance");
       });
 
       it("Should work with zero fee", async function () {
         await mailer.connect(owner).setFee(0);
-        
+
         const initialBalance = await mockUSDC.balanceOf(await mailer.getAddress());
-        
+
         await expect(
-          mailer.connect(addr1).sendPriority(addr2.address, "Test", "Body")
+          mailer.connect(addr1).send(addr2.address, "Test", "Body", true)
         ).to.emit(mailer, "MailSent")
-         .withArgs(addr1.address, addr2.address, "Test", "Body");
-        
+         .withArgs(addr1.address, addr2.address, "Test", "Body", true);
+
         const finalBalance = await mockUSDC.balanceOf(await mailer.getAddress());
         expect(finalBalance - initialBalance).to.equal(0);
       });
 
       it("Should handle fee changes mid-transaction flow", async function () {
         // Send with original fee
-        await mailer.connect(addr1).sendPriority(addr2.address, "Test1", "Body1");
-        
+        await mailer.connect(addr1).send(addr2.address, "Test1", "Body1", true);
+
         // Change fee
         await mailer.connect(owner).setFee(75000); // 0.075 USDC
-        
+
         // Send with new fee
         const initialBalance = await mockUSDC.balanceOf(await mailer.getAddress());
-        await mailer.connect(addr1).sendPriority(addr2.address, "Test2", "Body2");
+        await mailer.connect(addr1).send(addr2.address, "Test2", "Body2", true);
         const finalBalance = await mockUSDC.balanceOf(await mailer.getAddress());
-        
+
         expect(finalBalance - initialBalance).to.equal(75000); // New fee
       });
     });
   });
 
-  describe("send function", function () {
+  describe("send function (standard mode - no revenue share)", function () {
     beforeEach(async function () {
       // Give addr2 some USDC and approve contract
       await mockUSDC.mint(addr2.address, parseUnits("10", 6));
@@ -260,62 +260,62 @@ describe("Mailer", function () {
 
     it("Should emit MailSent event when USDC transfer succeeds", async function () {
       await expect(
-        mailer.connect(addr2).send(addr1.address, "Test Subject", "Test Body")
+        mailer.connect(addr2).send(addr1.address, "Test Subject", "Test Body", false)
       ).to.emit(mailer, "MailSent")
-       .withArgs(addr2.address, addr1.address, "Test Subject", "Test Body");
+       .withArgs(addr2.address, addr1.address, "Test Subject", "Test Body", false);
     });
 
     it("Should not emit event when sender has no USDC balance", async function () {
       // owner has USDC but no allowance, so it fails on allowance check
       await expect(
-        mailer.connect(owner).send(addr1.address, "No Balance", "Should Fail")
+        mailer.connect(owner).send(addr1.address, "No Balance", "Should Fail", false)
       ).to.be.revertedWithCustomError(mockUSDC, "InsufficientAllowance");
     });
 
     it("Should not emit event when sender has no USDC allowance", async function () {
       // Give addr3 USDC but no allowance
       await mockUSDC.mint(owner.address, parseUnits("1", 6));
-      
+
       await expect(
-        mailer.connect(owner).send(addr1.address, "No Allowance", "Should Fail")
+        mailer.connect(owner).send(addr1.address, "No Allowance", "Should Fail", false)
       ).to.be.revertedWithCustomError(mockUSDC, "InsufficientAllowance");
     });
 
     it("Should transfer 10% of sendFee to contract for owner", async function () {
       const initialBalance = await mockUSDC.balanceOf(await mailer.getAddress());
       const initialOwnerClaimable = await mailer.getOwnerClaimable();
-      
-      await mailer.connect(addr2).send(addr1.address, "Test", "Body");
-      
+
+      await mailer.connect(addr2).send(addr1.address, "Test", "Body", false);
+
       const finalBalance = await mockUSDC.balanceOf(await mailer.getAddress());
       const finalOwnerClaimable = await mailer.getOwnerClaimable();
-      
+
       const fee = await mailer.sendFee();
       const expectedOwnerFee = (fee * 10n) / 100n; // 10% of sendFee
-      
+
       expect(finalBalance - initialBalance).to.equal(expectedOwnerFee);
       expect(finalOwnerClaimable - initialOwnerClaimable).to.equal(expectedOwnerFee);
     });
 
     it("Should work with empty strings", async function () {
       await expect(
-        mailer.connect(addr2).send(addr1.address, "", "")
+        mailer.connect(addr2).send(addr1.address, "", "", false)
       ).to.emit(mailer, "MailSent")
-       .withArgs(addr2.address, addr1.address, "", "");
+       .withArgs(addr2.address, addr1.address, "", "", false);
     });
 
     it("Should work with long strings", async function () {
       const longSubject = "A".repeat(1000);
       const longBody = "B".repeat(5000);
-      
+
       await expect(
-        mailer.connect(addr2).send(addr1.address, longSubject, longBody)
+        mailer.connect(addr2).send(addr1.address, longSubject, longBody, false)
       ).to.emit(mailer, "MailSent")
-       .withArgs(addr2.address, addr1.address, longSubject, longBody);
+       .withArgs(addr2.address, addr1.address, longSubject, longBody, false);
     });
   });
 
-  describe("sendPrepared function", function () {
+  describe("sendPrepared function (standard mode - no revenue share)", function () {
     beforeEach(async function () {
       // Give addr2 some USDC and approve contract
       await mockUSDC.mint(addr2.address, parseUnits("10", 6));
@@ -324,7 +324,7 @@ describe("Mailer", function () {
 
     it("Should emit PreparedMailSent event when USDC transfer succeeds", async function () {
       await expect(
-        mailer.connect(addr2).sendPrepared(addr1.address, "mail-123")
+        mailer.connect(addr2).sendPrepared(addr1.address, "mail-123", false)
       ).to.emit(mailer, "PreparedMailSent")
        .withArgs(addr2.address, addr1.address, "mail-123");
     });
@@ -332,56 +332,56 @@ describe("Mailer", function () {
     it("Should not emit event when sender has no USDC balance", async function () {
       // owner has USDC but no allowance, so it fails on allowance check
       await expect(
-        mailer.connect(owner).sendPrepared(addr1.address, "no-balance-mail")
+        mailer.connect(owner).sendPrepared(addr1.address, "no-balance-mail", false)
       ).to.be.revertedWithCustomError(mockUSDC, "InsufficientAllowance");
     });
 
     it("Should not emit event when sender has no USDC allowance", async function () {
       // Give addr3 USDC but no allowance
       await mockUSDC.mint(owner.address, parseUnits("1", 6));
-      
+
       await expect(
-        mailer.connect(owner).sendPrepared(addr1.address, "no-allowance-mail")
+        mailer.connect(owner).sendPrepared(addr1.address, "no-allowance-mail", false)
       ).to.be.revertedWithCustomError(mockUSDC, "InsufficientAllowance");
     });
 
     it("Should transfer 10% of sendFee to contract for owner", async function () {
       const initialBalance = await mockUSDC.balanceOf(await mailer.getAddress());
       const initialOwnerClaimable = await mailer.getOwnerClaimable();
-      
-      await mailer.connect(addr2).sendPrepared(addr1.address, "prepared-test");
-      
+
+      await mailer.connect(addr2).sendPrepared(addr1.address, "prepared-test", false);
+
       const finalBalance = await mockUSDC.balanceOf(await mailer.getAddress());
       const finalOwnerClaimable = await mailer.getOwnerClaimable();
-      
+
       const fee = await mailer.sendFee();
       const expectedOwnerFee = (fee * 10n) / 100n; // 10% of sendFee
-      
+
       expect(finalBalance - initialBalance).to.equal(expectedOwnerFee);
       expect(finalOwnerClaimable - initialOwnerClaimable).to.equal(expectedOwnerFee);
     });
 
     it("Should work with empty mailId", async function () {
       await expect(
-        mailer.connect(addr2).sendPrepared(addr1.address, "")
+        mailer.connect(addr2).sendPrepared(addr1.address, "", false)
       ).to.emit(mailer, "PreparedMailSent")
        .withArgs(addr2.address, addr1.address, "");
     });
 
     it("Should work with long mailId", async function () {
       const longMailId = "long-mail-id-" + "x".repeat(1000);
-      
+
       await expect(
-        mailer.connect(addr2).sendPrepared(addr1.address, longMailId)
+        mailer.connect(addr2).sendPrepared(addr1.address, longMailId, false)
       ).to.emit(mailer, "PreparedMailSent")
        .withArgs(addr2.address, addr1.address, longMailId);
     });
 
     it("Should handle special characters in mailId", async function () {
       const specialMailId = "mail-123!@#$%^&*()_+-=[]{}|;:,.<>?";
-      
+
       await expect(
-        mailer.connect(addr2).sendPrepared(addr1.address, specialMailId)
+        mailer.connect(addr2).sendPrepared(addr1.address, specialMailId, false)
       ).to.emit(mailer, "PreparedMailSent")
        .withArgs(addr2.address, addr1.address, specialMailId);
     });
@@ -395,72 +395,75 @@ describe("Mailer", function () {
     });
 
     describe("Share Recording", function () {
-      it("Should record 90% for recipient and 10% for owner on sendPriority", async function () {
+      it("Should record 90% for recipient and 10% for owner with revenue share", async function () {
         const fee = await mailer.sendFee(); // 100000 (0.1 USDC)
         const expectedRecipientShare = (fee * 90n) / 100n; // 90000
         const expectedOwnerShare = fee - expectedRecipientShare; // 10000
 
+        // addr1 sends to addr2 with revenue sharing - addr2 gets the revenue share
         await expect(
-          mailer.connect(addr1).sendPriority(addr2.address, "Test", "Body")
+          mailer.connect(addr1).send(addr2.address, "Test", "Body", true)
         ).to.emit(mailer, "SharesRecorded")
-         .withArgs(addr1.address, expectedRecipientShare, expectedOwnerShare);
+         .withArgs(addr2.address, expectedRecipientShare, expectedOwnerShare);
 
-        const [amount, , ] = await mailer.getRecipientClaimable(addr1.address);
+        // Check addr2 (recipient) has claimable amount
+        const [amount, , ] = await mailer.getRecipientClaimable(addr2.address);
         expect(amount).to.equal(expectedRecipientShare);
 
         const ownerClaimable = await mailer.getOwnerClaimable();
         expect(ownerClaimable).to.equal(expectedOwnerShare);
       });
 
-      it("Should record 90% for recipient and 10% for owner on sendPriorityPrepared", async function () {
+      it("Should record 90% for recipient and 10% for owner on sendPrepared with revenue share", async function () {
         const fee = await mailer.sendFee();
         const expectedRecipientShare = (fee * 90n) / 100n;
         const expectedOwnerShare = fee - expectedRecipientShare;
 
+        // addr1 sends to addr2 with revenue sharing - addr2 gets the revenue share
         await expect(
-          mailer.connect(addr1).sendPriorityPrepared(addr2.address, "mail-123")
+          mailer.connect(addr1).sendPrepared(addr2.address, "mail-123", true)
         ).to.emit(mailer, "SharesRecorded")
-         .withArgs(addr1.address, expectedRecipientShare, expectedOwnerShare);
+         .withArgs(addr2.address, expectedRecipientShare, expectedOwnerShare);
       });
 
       it("Should accumulate multiple shares for same recipient", async function () {
         const fee = await mailer.sendFee();
         const expectedRecipientShare = (fee * 90n) / 100n;
 
-        // Send two messages to same recipient
-        await mailer.connect(addr1).sendPriority(addr2.address, "Test1", "Body1");
-        await mailer.connect(addr1).sendPriority(addr2.address, "Test2", "Body2");
+        // Send two messages to addr2 - addr2 should accumulate revenue shares
+        await mailer.connect(addr1).send(addr2.address, "Test1", "Body1", true);
+        await mailer.connect(addr1).send(addr2.address, "Test2", "Body2", true);
 
-        const [amount, , ] = await mailer.getRecipientClaimable(addr1.address);
+        // Check addr2 (recipient) has accumulated claimable amount
+        const [amount, , ] = await mailer.getRecipientClaimable(addr2.address);
         expect(amount).to.equal(expectedRecipientShare * 2n);
       });
     });
 
     describe("Recipient Claims", function () {
       beforeEach(async function () {
-        // Send a message to create claimable amount
-        await mailer.connect(addr1).sendPriority(addr2.address, "Test", "Body");
+        // addr1 sends to addr2 with revenue sharing - addr2 gets the claimable amount
+        await mailer.connect(addr1).send(addr2.address, "Test", "Body", true);
       });
 
       it("Should allow recipient to claim their share", async function () {
-        const [amount, , ] = await mailer.getRecipientClaimable(addr1.address);
-        
-        await expect(
-          mailer.connect(addr1).claimRecipientShare()
-        ).to.emit(mailer, "RecipientClaimed")
-         .withArgs(addr1.address, amount);
+        // addr2 is the recipient who should have claimable amount
+        const [amount, , ] = await mailer.getRecipientClaimable(addr2.address);
 
-        // Check recipient received USDC
-        // Initial: 110 USDC (10 from main beforeEach + 100 from Revenue Sharing beforeEach)
-        // Paid: 100000 (0.1 USDC), Claimed back: amount (90000 = 0.09 USDC)
-        // Final should be: 110 - 0.1 + 0.09 = 109.99 USDC
-        const balance = await mockUSDC.balanceOf(addr1.address);
-        const fee = await mailer.sendFee();
-        const expectedBalance = parseUnits("110", 6) - fee + amount;
-        expect(balance).to.equal(expectedBalance);
+        await expect(
+          mailer.connect(addr2).claimRecipientShare()
+        ).to.emit(mailer, "RecipientClaimed")
+         .withArgs(addr2.address, amount);
+
+        // Check addr2 (recipient) received USDC
+        // addr2 initial: 0 USDC (not funded in beforeEach)
+        // addr2 receives: amount (90000 = 0.09 USDC) from the claim
+        // Final should be: 0 + 0.09 = 0.09 USDC
+        const balance = await mockUSDC.balanceOf(addr2.address);
+        expect(balance).to.equal(amount);
 
         // Check claimable amount is now zero
-        const [newAmount, , ] = await mailer.getRecipientClaimable(addr1.address);
+        const [newAmount, , ] = await mailer.getRecipientClaimable(addr2.address);
         expect(newAmount).to.equal(0);
       });
 
@@ -475,23 +478,24 @@ describe("Mailer", function () {
         await ethers.provider.send("evm_increaseTime", [60 * 24 * 60 * 60 + 1]);
         await ethers.provider.send("evm_mine", []);
 
-        const [expiredAmount, , ] = await mailer.getRecipientClaimable(addr1.address);
+        // addr2 is the recipient with the claimable amount
+        const [expiredAmount, , ] = await mailer.getRecipientClaimable(addr2.address);
         const initialOwnerClaimable = await mailer.getOwnerClaimable();
 
         // Recipient can no longer claim
         await expect(
-          mailer.connect(addr1).claimRecipientShare()
+          mailer.connect(addr2).claimRecipientShare()
         ).to.be.revertedWithCustomError(mailer, "NoClaimableAmount");
 
         // Owner claimable should remain unchanged until explicitly claimed
         const ownerClaimableAfterExpiry = await mailer.getOwnerClaimable();
         expect(ownerClaimableAfterExpiry).to.equal(initialOwnerClaimable);
 
-        // Owner can now claim the expired shares
+        // Owner can now claim the expired shares from addr2
         await expect(
-          mailer.connect(owner).claimExpiredShares(addr1.address)
+          mailer.connect(owner).claimExpiredShares(addr2.address)
         ).to.emit(mailer, "ExpiredSharesClaimed")
-         .withArgs(addr1.address, expiredAmount);
+         .withArgs(addr2.address, expiredAmount);
 
         // Check that expired amount was moved to owner claimable
         const finalOwnerClaimable = await mailer.getOwnerClaimable();
@@ -501,8 +505,8 @@ describe("Mailer", function () {
 
     describe("Owner Claims", function () {
       beforeEach(async function () {
-        // Send a message to create claimable amount
-        await mailer.connect(addr1).sendPriority(addr2.address, "Test", "Body");
+        // addr1 sends to addr2 with revenue sharing
+        await mailer.connect(addr1).send(addr2.address, "Test", "Body", true);
       });
 
       it("Should allow owner to claim their share", async function () {
@@ -541,7 +545,8 @@ describe("Mailer", function () {
 
     describe("Expired Share Management", function () {
       beforeEach(async function () {
-        await mailer.connect(addr1).sendPriority(addr2.address, "Test", "Body");
+        // addr1 sends to addr2 with revenue sharing - addr2 gets the claimable amount
+        await mailer.connect(addr1).send(addr2.address, "Test", "Body", true);
       });
 
       it("Should allow owner to claim expired shares", async function () {
@@ -549,26 +554,27 @@ describe("Mailer", function () {
         await ethers.provider.send("evm_increaseTime", [60 * 24 * 60 * 60 + 1]);
         await ethers.provider.send("evm_mine", []);
 
-        const [expiredAmount, , ] = await mailer.getRecipientClaimable(addr1.address);
+        // addr2 is the recipient with the claimable amount
+        const [expiredAmount, , ] = await mailer.getRecipientClaimable(addr2.address);
         const initialOwnerClaimable = await mailer.getOwnerClaimable();
 
         await expect(
-          mailer.connect(owner).claimExpiredShares(addr1.address)
+          mailer.connect(owner).claimExpiredShares(addr2.address)
         ).to.emit(mailer, "ExpiredSharesClaimed")
-         .withArgs(addr1.address, expiredAmount);
+         .withArgs(addr2.address, expiredAmount);
 
         // Check expired amount moved to owner claimable
         const finalOwnerClaimable = await mailer.getOwnerClaimable();
         expect(finalOwnerClaimable).to.equal(initialOwnerClaimable + expiredAmount);
 
         // Check recipient claim is reset
-        const [newAmount, , ] = await mailer.getRecipientClaimable(addr1.address);
+        const [newAmount, , ] = await mailer.getRecipientClaimable(addr2.address);
         expect(newAmount).to.equal(0);
       });
 
       it("Should revert if claim period not expired", async function () {
         await expect(
-          mailer.connect(owner).claimExpiredShares(addr1.address)
+          mailer.connect(owner).claimExpiredShares(addr2.address)
         ).to.be.revertedWithCustomError(mailer, "ClaimPeriodNotExpired");
       });
 
@@ -577,27 +583,27 @@ describe("Mailer", function () {
         await ethers.provider.send("evm_mine", []);
 
         await expect(
-          mailer.connect(addr1).claimExpiredShares(addr1.address)
+          mailer.connect(addr1).claimExpiredShares(addr2.address)
         ).to.be.revertedWithCustomError(mailer, "OnlyOwner");
       });
     });
 
     describe("View Functions", function () {
       it("Should return correct recipient claimable info", async function () {
-        // Before any transactions
-        let [amount, expiresAt, isExpired] = await mailer.getRecipientClaimable(addr1.address);
+        // Before any transactions - addr2 has no claimable amount
+        let [amount, expiresAt, isExpired] = await mailer.getRecipientClaimable(addr2.address);
         expect(amount).to.equal(0);
         expect(isExpired).to.be.false;
 
-        // After sending a message
-        await mailer.connect(addr1).sendPriority(addr2.address, "Test", "Body");
-        [amount, expiresAt, isExpired] = await mailer.getRecipientClaimable(addr1.address);
-        
+        // After addr1 sends to addr2 with revenue sharing - addr2 gets claimable amount
+        await mailer.connect(addr1).send(addr2.address, "Test", "Body", true);
+        [amount, expiresAt, isExpired] = await mailer.getRecipientClaimable(addr2.address);
+
         const fee = await mailer.sendFee();
         const expectedAmount = (fee * 90n) / 100n;
         expect(amount).to.equal(expectedAmount);
         expect(isExpired).to.be.false;
-        
+
         const currentTime = (await ethers.provider.getBlock('latest'))!.timestamp;
         const expectedExpiry = currentTime + (60 * 24 * 60 * 60); // 60 days
         expect(expiresAt).to.be.closeTo(expectedExpiry, 10); // Allow 10 second tolerance
@@ -606,8 +612,8 @@ describe("Mailer", function () {
       it("Should return correct owner claimable amount", async function () {
         expect(await mailer.getOwnerClaimable()).to.equal(0);
 
-        await mailer.connect(addr1).sendPriority(addr2.address, "Test", "Body");
-        
+        await mailer.connect(addr1).send(addr2.address, "Test", "Body", true);
+
         const fee = await mailer.sendFee();
         const expectedAmount = fee - (fee * 90n) / 100n; // 10%
         expect(await mailer.getOwnerClaimable()).to.equal(expectedAmount);
@@ -730,7 +736,7 @@ describe("Mailer", function () {
       it("Should distribute owner claimable funds when pausing", async function () {
         // First send a standard message to accumulate owner fees
         await mockUSDC.connect(addr1).approve(await mailer.getAddress(), parseUnits("1", 6));
-        await mailer.connect(addr1).send(addr2.address, "Test", "Test");
+        await mailer.connect(addr1).send(addr2.address, "Test", "Test", false);
 
         const ownerBalanceBefore = await mockUSDC.balanceOf(owner.address);
         const contractBalanceBefore = await mockUSDC.balanceOf(await mailer.getAddress());
@@ -754,11 +760,11 @@ describe("Mailer", function () {
         await mockUSDC.connect(addr1).approve(await mailer.getAddress(), parseUnits("1", 6));
 
         await expect(
-          mailer.connect(addr1).sendPriority(addr2.address, "Test", "Test")
+          mailer.connect(addr1).send(addr2.address, "Test", "Test", true)
         ).to.be.revertedWithCustomError(mailer, "ContractIsPaused");
 
         await expect(
-          mailer.connect(addr1).send(addr2.address, "Test", "Test")
+          mailer.connect(addr1).send(addr2.address, "Test", "Test", false)
         ).to.be.revertedWithCustomError(mailer, "ContractIsPaused");
 
         await expect(
@@ -793,47 +799,47 @@ describe("Mailer", function () {
       it("Should allow anyone to distribute claimable funds when paused", async function () {
         // Create fresh setup for this test
         const [testOwner, testAddr1, testAddr2, testAddr3] = await ethers.getSigners();
-        
+
         // Deploy fresh contracts for isolated test
         const MockUSDC = await ethers.getContractFactory("MockUSDC");
         const testMockUSDC = await MockUSDC.deploy();
         await testMockUSDC.waitForDeployment();
-        
+
         const Mailer = await ethers.getContractFactory("Mailer");
         const testMailer = await Mailer.deploy(await testMockUSDC.getAddress(), testOwner.address);
         await testMailer.waitForDeployment();
-        
+
         // Setup USDC for test - need enough for send fee (0.1 USDC)
         await testMockUSDC.mint(testAddr1.address, parseUnits("1", 6));
         await testMockUSDC.connect(testAddr1).approve(await testMailer.getAddress(), parseUnits("1", 6));
-        
-        // Send priority message to create claimable amount (90% goes back to sender)
-        await testMailer.connect(testAddr1).sendPriority(testAddr2.address, "Test", "Test");
 
-        // Verify sender has claimable amount before pause (sender gets 90% back in priority messages)
-        const [claimableAmount] = await testMailer.getRecipientClaimable(testAddr1.address);
+        // testAddr1 sends to testAddr2 with revenue sharing - testAddr2 gets the 90% claimable amount
+        await testMailer.connect(testAddr1).send(testAddr2.address, "Test", "Test", true);
+
+        // Verify recipient (testAddr2) has claimable amount before pause
+        const [claimableAmount] = await testMailer.getRecipientClaimable(testAddr2.address);
         expect(claimableAmount).to.be.gt(0);
 
         // Pause contract (only owner funds get distributed automatically)
         await testMailer.connect(testOwner).pause();
 
-        // Verify sender still has claimable amount after pause (pause doesn't auto-distribute sender funds)
-        const [claimableAmountAfterPause] = await testMailer.getRecipientClaimable(testAddr1.address);
+        // Verify recipient still has claimable amount after pause (pause doesn't auto-distribute recipient funds)
+        const [claimableAmountAfterPause] = await testMailer.getRecipientClaimable(testAddr2.address);
         expect(claimableAmountAfterPause).to.equal(claimableAmount); // Should be unchanged
 
-        const senderBalanceBefore = await testMockUSDC.balanceOf(testAddr1.address);
+        const recipientBalanceBefore = await testMockUSDC.balanceOf(testAddr2.address);
 
         // Anyone can distribute claimable funds when paused
         await expect(
-          testMailer.connect(testAddr3).distributeClaimableFunds(testAddr1.address)
+          testMailer.connect(testAddr3).distributeClaimableFunds(testAddr2.address)
         ).to.emit(testMailer, "FundsDistributed")
-         .withArgs(testAddr1.address, claimableAmount);
+         .withArgs(testAddr2.address, claimableAmount);
 
-        const senderBalanceAfter = await testMockUSDC.balanceOf(testAddr1.address);
-        expect(senderBalanceAfter).to.equal(senderBalanceBefore + claimableAmount);
-        
+        const recipientBalanceAfter = await testMockUSDC.balanceOf(testAddr2.address);
+        expect(recipientBalanceAfter).to.equal(recipientBalanceBefore + claimableAmount);
+
         // Verify claimable amount is now 0
-        const [finalClaimableAmount] = await testMailer.getRecipientClaimable(testAddr1.address);
+        const [finalClaimableAmount] = await testMailer.getRecipientClaimable(testAddr2.address);
         expect(finalClaimableAmount).to.equal(0);
       });
 
@@ -850,7 +856,7 @@ describe("Mailer", function () {
         // Should be able to send messages again
         await mockUSDC.connect(addr1).approve(await mailer.getAddress(), parseUnits("1", 6));
         await expect(
-          mailer.connect(addr1).send(addr2.address, "Test", "Test")
+          mailer.connect(addr1).send(addr2.address, "Test", "Test", false)
         ).to.emit(mailer, "MailSent");
       });
 

@@ -216,11 +216,12 @@ async fn test_send_priority_message() {
     // Get recipient claim PDA
     let (recipient_claim_pda, _) = get_claim_pda(&payer.pubkey());
 
-    // Send priority message
-    let instruction_data = MailerInstruction::SendPriority {
+    // Send message with revenue sharing (priority mode)
+    let instruction_data = MailerInstruction::Send {
         to: payer.pubkey(),
         subject: "Test Subject".to_string(),
         _body: "Test message body".to_string(),
+        revenue_share_to_receiver: true,
     };
 
     let instruction = Instruction::new_with_borsh(
@@ -305,11 +306,12 @@ async fn test_send_standard_message() {
     // Get recipient claim PDA (needed even if not used for standard send)
     let (recipient_claim_pda, _) = get_claim_pda(&payer.pubkey());
 
-    // Send standard message
+    // Send standard message (no revenue sharing)
     let instruction_data = MailerInstruction::Send {
         to: payer.pubkey(),
         subject: "Test Standard Subject".to_string(),
         _body: "Test standard message body".to_string(),
+        revenue_share_to_receiver: false,
     };
 
     let instruction = Instruction::new_with_borsh(
@@ -317,11 +319,12 @@ async fn test_send_standard_message() {
         &instruction_data,
         vec![
             AccountMeta::new(payer.pubkey(), true),
-            AccountMeta::new_readonly(recipient_claim_pda, false), // Not used but required
+            AccountMeta::new_readonly(recipient_claim_pda, false), // Not used for standard send but required
             AccountMeta::new(mailer_pda, false), // Needs to be writable to update owner_claimable
             AccountMeta::new(sender_usdc, false),
             AccountMeta::new(mailer_usdc, false),
             AccountMeta::new_readonly(spl_token::id(), false),
+            AccountMeta::new_readonly(system_program::id(), false),
         ],
     );
 
@@ -372,13 +375,14 @@ async fn test_claim_recipient_share() {
 
     let (recipient_claim_pda, _) = get_claim_pda(&payer.pubkey());
 
-    // Send priority message to create a claim
+    // Send message with revenue sharing to create a claim
     let send_instruction = Instruction::new_with_borsh(
         program_id(),
-        &MailerInstruction::SendPriority {
+        &MailerInstruction::Send {
             to: payer.pubkey(),
             subject: "Test".to_string(),
             _body: "Test".to_string(),
+            revenue_share_to_receiver: true,
         },
         vec![
             AccountMeta::new(payer.pubkey(), true),
@@ -464,13 +468,14 @@ async fn test_claim_owner_share() {
 
     let (recipient_claim_pda, _) = get_claim_pda(&payer.pubkey());
 
-    // Send standard message to accumulate owner fees
+    // Send standard message to accumulate owner fees (no revenue sharing)
     let send_instruction = Instruction::new_with_borsh(
         program_id(),
         &MailerInstruction::Send {
             to: payer.pubkey(),
             subject: "Test".to_string(),
             _body: "Test".to_string(),
+            revenue_share_to_receiver: false,
         },
         vec![
             AccountMeta::new(payer.pubkey(), true),
@@ -479,6 +484,7 @@ async fn test_claim_owner_share() {
             AccountMeta::new(sender_usdc, false),
             AccountMeta::new(mailer_usdc, false),
             AccountMeta::new_readonly(spl_token::id(), false),
+            AccountMeta::new_readonly(system_program::id(), false),
         ],
     );
 
