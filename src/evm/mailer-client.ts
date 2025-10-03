@@ -332,5 +332,63 @@ export class MailerClient {
       chain: walletClient.chain,
     });
   }
+
+  /**
+   * @description Send a message to an email address (no wallet known)
+   * @notice Charges only 10% owner fee since recipient wallet is unknown
+   * @param toEmail Email address of the recipient
+   * @param subject Message subject line
+   * @param body Message content
+   * @param walletClient Viem wallet client for transaction
+   * @param account Account to send from
+   * @returns Promise resolving to transaction hash
+   * @example
+   * ```typescript
+   * // Send to email address
+   * const hash = await mailer.sendToEmailAddress('user@example.com', 'Subject', 'Body', walletClient, account);
+   * await publicClient.waitForTransactionReceipt({ hash });
+   * ```
+   */
+  async sendToEmailAddress(
+    toEmail: string,
+    subject: string,
+    body: string,
+    walletClient: WalletClient,
+    account: Account | Address
+  ): Promise<Hash> {
+    return await walletClient.writeContract({
+      address: this.contractAddress,
+      abi: MAILER_ABI,
+      functionName: 'sendToEmailAddress',
+      args: [toEmail, subject, body],
+      account,
+      chain: walletClient.chain,
+    });
+  }
+
+  /**
+   * @description Send a pre-prepared message to an email address (no wallet known)
+   * @notice Charges only 10% owner fee since recipient wallet is unknown
+   * @param toEmail Email address of the recipient
+   * @param mailId Pre-prepared message identifier
+   * @param walletClient Viem wallet client for transaction
+   * @param account Account to send from
+   * @returns Promise resolving to transaction hash
+   */
+  async sendPreparedToEmailAddress(
+    toEmail: string,
+    mailId: string,
+    walletClient: WalletClient,
+    account: Account | Address
+  ): Promise<Hash> {
+    return await walletClient.writeContract({
+      address: this.contractAddress,
+      abi: MAILER_ABI,
+      functionName: 'sendPreparedToEmailAddress',
+      args: [toEmail, mailId],
+      account,
+      chain: walletClient.chain,
+    });
+  }
 }
 

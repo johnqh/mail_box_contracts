@@ -65,7 +65,20 @@ contract Mailer {
         address indexed to,
         string indexed mailId
     );
-    
+
+    event MailSentToEmail(
+        address indexed from,
+        string toEmail,
+        string subject,
+        string body
+    );
+
+    event PreparedMailSentToEmail(
+        address indexed from,
+        string toEmail,
+        string indexed mailId
+    );
+
     event FeeUpdated(uint256 oldFee, uint256 newFee);
     event SharesRecorded(address indexed recipient, uint256 recipientAmount, uint256 ownerAmount);
     event RecipientClaimed(address indexed recipient, uint256 amount);
@@ -221,7 +234,68 @@ contract Mailer {
         }
         emit PreparedMailSent(msg.sender, to, mailId);
     }
-    
+
+    /**
+     * @notice Send a message to an email address (no wallet address known)
+     * @dev Charges only 10% owner fee since recipient wallet is unknown (no revenue share possible)
+     * @param toEmail Email address of the recipient
+     * @param subject Message subject line
+     * @param body Message body content
+     *
+     * Use case: Send to users who haven't set up a wallet yet
+     * Cost: Sender pays 0.01 USDC (10% of sendFee), all goes to owner
+     *
+     * Requirements:
+     * - Contract must not be paused
+     * - Sender must have approved this contract to spend required USDC amount
+     * - Sender must have sufficient USDC balance
+     */
+    function sendToEmailAddress(
+        string calldata toEmail,
+        string calldata subject,
+        string calldata body
+    ) external nonReentrant whenNotPaused {
+        // Calculate 10% owner fee (no revenue share since no wallet address)
+        uint256 ownerFee = (sendFee * OWNER_SHARE) / 100;
+
+        // Transfer only 10% fee from sender to contract
+        if (!usdcToken.transferFrom(msg.sender, address(this), ownerFee)) {
+            revert FeePaymentRequired();
+        }
+
+        // All goes to owner
+        ownerClaimable += ownerFee;
+
+        emit MailSentToEmail(msg.sender, toEmail, subject, body);
+    }
+
+    /**
+     * @notice Send a pre-prepared message to an email address (no wallet address known)
+     * @dev Same as sendToEmailAddress but references off-chain stored content via mailId
+     * @param toEmail Email address of the recipient
+     * @param mailId Reference ID to pre-prepared message content
+     *
+     * Use case: For large messages or repeated templates, store content off-chain
+     * and reference it here to save gas costs on transaction data.
+     */
+    function sendPreparedToEmailAddress(
+        string calldata toEmail,
+        string calldata mailId
+    ) external nonReentrant whenNotPaused {
+        // Calculate 10% owner fee (no revenue share since no wallet address)
+        uint256 ownerFee = (sendFee * OWNER_SHARE) / 100;
+
+        // Transfer only 10% fee from sender to contract
+        if (!usdcToken.transferFrom(msg.sender, address(this), ownerFee)) {
+            revert FeePaymentRequired();
+        }
+
+        // All goes to owner
+        ownerClaimable += ownerFee;
+
+        emit PreparedMailSentToEmail(msg.sender, toEmail, mailId);
+    }
+
     function setFee(uint256 usdcAmount) external onlyOwner whenNotPaused {
         uint256 oldFee = sendFee;
         sendFee = usdcAmount;

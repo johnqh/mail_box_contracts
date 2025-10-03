@@ -71,6 +71,65 @@ function encodeSend(
   return data;
 }
 
+function encodeSendToEmail(
+  toEmail: string,
+  subject: string,
+  body: string
+): Buffer {
+  const emailBytes = Buffer.from(toEmail, 'utf8');
+  const subjectBytes = Buffer.from(subject, 'utf8');
+  const bodyBytes = Buffer.from(body, 'utf8');
+  const data = Buffer.alloc(
+    1 + 4 + emailBytes.length + 4 + subjectBytes.length + 4 + bodyBytes.length
+  );
+  let offset = 0;
+
+  data.writeUInt8(InstructionType.SendToEmail, offset);
+  offset += 1;
+
+  data.writeUInt32LE(emailBytes.length, offset);
+  offset += 4;
+  emailBytes.copy(data, offset);
+  offset += emailBytes.length;
+
+  data.writeUInt32LE(subjectBytes.length, offset);
+  offset += 4;
+  subjectBytes.copy(data, offset);
+  offset += subjectBytes.length;
+
+  data.writeUInt32LE(bodyBytes.length, offset);
+  offset += 4;
+  bodyBytes.copy(data, offset);
+
+  return data;
+}
+
+function encodeSendPreparedToEmail(
+  toEmail: string,
+  mailId: string
+): Buffer {
+  const emailBytes = Buffer.from(toEmail, 'utf8');
+  const mailIdBytes = Buffer.from(mailId, 'utf8');
+  const data = Buffer.alloc(
+    1 + 4 + emailBytes.length + 4 + mailIdBytes.length
+  );
+  let offset = 0;
+
+  data.writeUInt8(InstructionType.SendPreparedToEmail, offset);
+  offset += 1;
+
+  data.writeUInt32LE(emailBytes.length, offset);
+  offset += 4;
+  emailBytes.copy(data, offset);
+  offset += emailBytes.length;
+
+  data.writeUInt32LE(mailIdBytes.length, offset);
+  offset += 4;
+  mailIdBytes.copy(data, offset);
+
+  return data;
+}
+
 function encodeSimpleInstruction(instructionType: InstructionType): Buffer {
   const data = Buffer.alloc(1);
   data.writeUInt8(instructionType, 0);
@@ -199,16 +258,18 @@ function parseDelegation(data: Buffer): Delegation {
 enum InstructionType {
   Initialize = 0,
   Send = 1,
-  ClaimRecipientShare = 2,
-  ClaimOwnerShare = 3,
-  SetFee = 4,
-  DelegateTo = 5,
-  RejectDelegation = 6,
-  SetDelegationFee = 7,
-  Pause = 8,
-  Unpause = 9,
-  DistributeClaimableFunds = 10,
-  EmergencyUnpause = 11,
+  SendToEmail = 2,
+  SendPreparedToEmail = 3,
+  ClaimRecipientShare = 4,
+  ClaimOwnerShare = 5,
+  SetFee = 6,
+  DelegateTo = 7,
+  RejectDelegation = 8,
+  SetDelegationFee = 9,
+  Pause = 10,
+  Unpause = 11,
+  DistributeClaimableFunds = 12,
+  EmergencyUnpause = 13,
 }
 
 /**
@@ -644,6 +705,134 @@ export class MailerClient {
    */
   getMailerStatePda(): PublicKey {
     return this.mailerStatePda;
+  }
+
+  /**
+   * Send a message to an email address (no wallet known)
+   * Charges only 10% owner fee since recipient wallet is unknown
+   * @param toEmail Email address of the recipient
+   * @param subject Message subject
+   * @param body Message body
+   * @param options Transaction confirm options
+   * @returns Transaction signature
+   */
+  async sendToEmail(
+    toEmail: string,
+    subject: string,
+    body: string,
+    options?: ConfirmOptions
+  ): Promise<string> {
+    // Get associated token accounts
+    const senderTokenAccount = getAssociatedTokenAddressSync(
+      this.usdcMint,
+      this.wallet.publicKey
+    );
+    const mailerTokenAccount = getAssociatedTokenAddressSync(
+      this.usdcMint,
+      this.mailerStatePda,
+      true
+    );
+
+    // Check if accounts need to be created
+    const instructions: TransactionInstruction[] = [];
+
+    // Check if mailer token account exists
+    const mailerTokenInfo =
+      await this.connection.getAccountInfo(mailerTokenAccount);
+    if (!mailerTokenInfo) {
+      instructions.push(
+        createAssociatedTokenAccountInstruction(
+          this.wallet.publicKey,
+          mailerTokenAccount,
+          this.mailerStatePda,
+          this.usdcMint
+        )
+      );
+    }
+
+    // Encode instruction data for SendToEmail
+    const instructionData = encodeSendToEmail(toEmail, subject, body);
+
+    // Create send instruction
+    instructions.push(
+      new TransactionInstruction({
+        keys: [
+          { pubkey: this.wallet.publicKey, isSigner: true, isWritable: false },
+          { pubkey: this.mailerStatePda, isSigner: false, isWritable: true },
+          { pubkey: senderTokenAccount, isSigner: false, isWritable: true },
+          { pubkey: mailerTokenAccount, isSigner: false, isWritable: true },
+          { pubkey: TOKEN_PROGRAM_ID, isSigner: false, isWritable: false },
+        ],
+        programId: this.programId,
+        data: instructionData,
+      })
+    );
+
+    const transaction = new Transaction().add(...instructions);
+    return this.sendTransaction(transaction, options);
+  }
+
+  /**
+   * Send a prepared message to an email address (no wallet known)
+   * Charges only 10% owner fee since recipient wallet is unknown
+   * @param toEmail Email address of the recipient
+   * @param mailId Pre-prepared message ID
+   * @param options Transaction confirm options
+   * @returns Transaction signature
+   */
+  async sendPreparedToEmail(
+    toEmail: string,
+    mailId: string,
+    options?: ConfirmOptions
+  ): Promise<string> {
+    // Get associated token accounts
+    const senderTokenAccount = getAssociatedTokenAddressSync(
+      this.usdcMint,
+      this.wallet.publicKey
+    );
+    const mailerTokenAccount = getAssociatedTokenAddressSync(
+      this.usdcMint,
+      this.mailerStatePda,
+      true
+    );
+
+    // Check if accounts need to be created
+    const instructions: TransactionInstruction[] = [];
+
+    // Check if mailer token account exists
+    const mailerTokenInfo =
+      await this.connection.getAccountInfo(mailerTokenAccount);
+    if (!mailerTokenInfo) {
+      instructions.push(
+        createAssociatedTokenAccountInstruction(
+          this.wallet.publicKey,
+          mailerTokenAccount,
+          this.mailerStatePda,
+          this.usdcMint
+        )
+      );
+    }
+
+    // Encode instruction data for SendPreparedToEmail
+    const instructionData = encodeSendPreparedToEmail(toEmail, mailId);
+
+    // Create send instruction
+    instructions.push(
+      new TransactionInstruction({
+        keys: [
+          { pubkey: this.wallet.publicKey, isSigner: true, isWritable: false },
+          { pubkey: this.mailerStatePda, isSigner: false, isWritable: true },
+          { pubkey: senderTokenAccount, isSigner: false, isWritable: true },
+          { pubkey: mailerTokenAccount, isSigner: false, isWritable: true },
+          { pubkey: TOKEN_PROGRAM_ID, isSigner: false, isWritable: false },
+        ],
+        programId: this.programId,
+        data: instructionData,
+      })
+    );
+
+    const transaction = new Transaction().add(...instructions);
+    return this.sendTransaction(transaction, options);
   }
 
   /**

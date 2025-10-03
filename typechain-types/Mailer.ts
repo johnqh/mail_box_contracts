@@ -50,6 +50,8 @@ export interface MailerInterface extends Interface {
       | "send"
       | "sendFee"
       | "sendPrepared"
+      | "sendPreparedToEmailAddress"
+      | "sendToEmailAddress"
       | "setDelegationFee"
       | "setFee"
       | "unpause"
@@ -67,8 +69,10 @@ export interface MailerInterface extends Interface {
       | "FeeUpdated"
       | "FundsDistributed"
       | "MailSent"
+      | "MailSentToEmail"
       | "OwnerClaimed"
       | "PreparedMailSent"
+      | "PreparedMailSentToEmail"
       | "RecipientClaimed"
       | "SharesRecorded"
   ): EventFragment;
@@ -152,6 +156,14 @@ export interface MailerInterface extends Interface {
     values: [AddressLike, string, boolean]
   ): string;
   encodeFunctionData(
+    functionFragment: "sendPreparedToEmailAddress",
+    values: [string, string]
+  ): string;
+  encodeFunctionData(
+    functionFragment: "sendToEmailAddress",
+    values: [string, string, string]
+  ): string;
+  encodeFunctionData(
     functionFragment: "setDelegationFee",
     values: [BigNumberish]
   ): string;
@@ -232,6 +244,14 @@ export interface MailerInterface extends Interface {
   decodeFunctionResult(functionFragment: "sendFee", data: BytesLike): Result;
   decodeFunctionResult(
     functionFragment: "sendPrepared",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(
+    functionFragment: "sendPreparedToEmailAddress",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(
+    functionFragment: "sendToEmailAddress",
     data: BytesLike
   ): Result;
   decodeFunctionResult(
@@ -366,6 +386,31 @@ export namespace MailSentEvent {
   export type LogDescription = TypedLogDescription<Event>;
 }
 
+export namespace MailSentToEmailEvent {
+  export type InputTuple = [
+    from: AddressLike,
+    toEmail: string,
+    subject: string,
+    body: string
+  ];
+  export type OutputTuple = [
+    from: string,
+    toEmail: string,
+    subject: string,
+    body: string
+  ];
+  export interface OutputObject {
+    from: string;
+    toEmail: string;
+    subject: string;
+    body: string;
+  }
+  export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
+  export type Filter = TypedDeferredTopicFilter<Event>;
+  export type Log = TypedEventLog<Event>;
+  export type LogDescription = TypedLogDescription<Event>;
+}
+
 export namespace OwnerClaimedEvent {
   export type InputTuple = [amount: BigNumberish];
   export type OutputTuple = [amount: bigint];
@@ -384,6 +429,20 @@ export namespace PreparedMailSentEvent {
   export interface OutputObject {
     from: string;
     to: string;
+    mailId: string;
+  }
+  export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
+  export type Filter = TypedDeferredTopicFilter<Event>;
+  export type Log = TypedEventLog<Event>;
+  export type LogDescription = TypedLogDescription<Event>;
+}
+
+export namespace PreparedMailSentToEmailEvent {
+  export type InputTuple = [from: AddressLike, toEmail: string, mailId: string];
+  export type OutputTuple = [from: string, toEmail: string, mailId: string];
+  export interface OutputObject {
+    from: string;
+    toEmail: string;
     mailId: string;
   }
   export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
@@ -561,6 +620,18 @@ export interface Mailer extends BaseContract {
     "nonpayable"
   >;
 
+  sendPreparedToEmailAddress: TypedContractMethod<
+    [toEmail: string, mailId: string],
+    [void],
+    "nonpayable"
+  >;
+
+  sendToEmailAddress: TypedContractMethod<
+    [toEmail: string, subject: string, body: string],
+    [void],
+    "nonpayable"
+  >;
+
   setDelegationFee: TypedContractMethod<
     [usdcAmount: BigNumberish],
     [void],
@@ -681,6 +752,20 @@ export interface Mailer extends BaseContract {
     "nonpayable"
   >;
   getFunction(
+    nameOrSignature: "sendPreparedToEmailAddress"
+  ): TypedContractMethod<
+    [toEmail: string, mailId: string],
+    [void],
+    "nonpayable"
+  >;
+  getFunction(
+    nameOrSignature: "sendToEmailAddress"
+  ): TypedContractMethod<
+    [toEmail: string, subject: string, body: string],
+    [void],
+    "nonpayable"
+  >;
+  getFunction(
     nameOrSignature: "setDelegationFee"
   ): TypedContractMethod<[usdcAmount: BigNumberish], [void], "nonpayable">;
   getFunction(
@@ -757,6 +842,13 @@ export interface Mailer extends BaseContract {
     MailSentEvent.OutputObject
   >;
   getEvent(
+    key: "MailSentToEmail"
+  ): TypedContractEvent<
+    MailSentToEmailEvent.InputTuple,
+    MailSentToEmailEvent.OutputTuple,
+    MailSentToEmailEvent.OutputObject
+  >;
+  getEvent(
     key: "OwnerClaimed"
   ): TypedContractEvent<
     OwnerClaimedEvent.InputTuple,
@@ -769,6 +861,13 @@ export interface Mailer extends BaseContract {
     PreparedMailSentEvent.InputTuple,
     PreparedMailSentEvent.OutputTuple,
     PreparedMailSentEvent.OutputObject
+  >;
+  getEvent(
+    key: "PreparedMailSentToEmail"
+  ): TypedContractEvent<
+    PreparedMailSentToEmailEvent.InputTuple,
+    PreparedMailSentToEmailEvent.OutputTuple,
+    PreparedMailSentToEmailEvent.OutputObject
   >;
   getEvent(
     key: "RecipientClaimed"
@@ -885,6 +984,17 @@ export interface Mailer extends BaseContract {
       MailSentEvent.OutputObject
     >;
 
+    "MailSentToEmail(address,string,string,string)": TypedContractEvent<
+      MailSentToEmailEvent.InputTuple,
+      MailSentToEmailEvent.OutputTuple,
+      MailSentToEmailEvent.OutputObject
+    >;
+    MailSentToEmail: TypedContractEvent<
+      MailSentToEmailEvent.InputTuple,
+      MailSentToEmailEvent.OutputTuple,
+      MailSentToEmailEvent.OutputObject
+    >;
+
     "OwnerClaimed(uint256)": TypedContractEvent<
       OwnerClaimedEvent.InputTuple,
       OwnerClaimedEvent.OutputTuple,
@@ -905,6 +1015,17 @@ export interface Mailer extends BaseContract {
       PreparedMailSentEvent.InputTuple,
       PreparedMailSentEvent.OutputTuple,
       PreparedMailSentEvent.OutputObject
+    >;
+
+    "PreparedMailSentToEmail(address,string,string)": TypedContractEvent<
+      PreparedMailSentToEmailEvent.InputTuple,
+      PreparedMailSentToEmailEvent.OutputTuple,
+      PreparedMailSentToEmailEvent.OutputObject
+    >;
+    PreparedMailSentToEmail: TypedContractEvent<
+      PreparedMailSentToEmailEvent.InputTuple,
+      PreparedMailSentToEmailEvent.OutputTuple,
+      PreparedMailSentToEmailEvent.OutputObject
     >;
 
     "RecipientClaimed(address,uint256)": TypedContractEvent<

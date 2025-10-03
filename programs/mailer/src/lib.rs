@@ -123,6 +123,33 @@ pub enum MailerInstruction {
         revenue_share_to_receiver: bool,
     },
 
+    /// Send message to email address (no wallet address known)
+    /// Charges only 10% owner fee since recipient wallet is unknown
+    /// Accounts:
+    /// 0. `[signer]` Sender
+    /// 1. `[]` Mailer state account (PDA)
+    /// 2. `[writable]` Sender USDC account
+    /// 3. `[writable]` Mailer USDC account
+    /// 4. `[]` Token program
+    SendToEmail {
+        to_email: String,
+        subject: String,
+        _body: String,
+    },
+
+    /// Send prepared message to email address (no wallet address known)
+    /// Charges only 10% owner fee since recipient wallet is unknown
+    /// Accounts:
+    /// 0. `[signer]` Sender
+    /// 1. `[]` Mailer state account (PDA)
+    /// 2. `[writable]` Sender USDC account
+    /// 3. `[writable]` Mailer USDC account
+    /// 4. `[]` Token program
+    SendPreparedToEmail {
+        to_email: String,
+        mail_id: String,
+    },
+
     /// Claim recipient share
     /// Accounts:
     /// 0. `[signer]` Recipient
@@ -254,6 +281,12 @@ pub fn process_instruction(
         }
         MailerInstruction::Send { to, subject, _body, revenue_share_to_receiver } => {
             process_send(program_id, accounts, to, subject, _body, revenue_share_to_receiver)
+        }
+        MailerInstruction::SendToEmail { to_email, subject, _body } => {
+            process_send_to_email(program_id, accounts, to_email, subject, _body)
+        }
+        MailerInstruction::SendPreparedToEmail { to_email, mail_id } => {
+            process_send_prepared_to_email(program_id, accounts, to_email, mail_id)
         }
         MailerInstruction::ClaimRecipientShare => {
             process_claim_recipient_share(program_id, accounts)
@@ -471,6 +504,131 @@ fn process_send(
 
         msg!("Standard mail sent from {} to {}: {}", sender.key, to, subject);
     }
+
+    Ok(())
+}
+
+/// Process send to email address (no wallet known, only owner fee)
+fn process_send_to_email(
+    _program_id: &Pubkey,
+    accounts: &[AccountInfo],
+    to_email: String,
+    subject: String,
+    _body: String,
+) -> ProgramResult {
+    let account_iter = &mut accounts.iter();
+    let sender = next_account_info(account_iter)?;
+    let mailer_account = next_account_info(account_iter)?;
+    let sender_usdc = next_account_info(account_iter)?;
+    let mailer_usdc = next_account_info(account_iter)?;
+    let token_program = next_account_info(account_iter)?;
+
+    if !sender.is_signer {
+        return Err(ProgramError::MissingRequiredSignature);
+    }
+
+    // Load mailer state
+    let mailer_data = mailer_account.try_borrow_data()?;
+    let mailer_state: MailerState = BorshDeserialize::deserialize(&mut &mailer_data[8..])?;
+    drop(mailer_data);
+
+    // Check if contract is paused
+    if mailer_state.paused {
+        return Err(MailerError::ContractPaused.into());
+    }
+
+    // Calculate 10% owner fee (no revenue share since no wallet address)
+    let owner_fee = (mailer_state.send_fee * 10) / 100;
+
+    // Transfer fee from sender to mailer
+    let transfer_ix = spl_token::instruction::transfer(
+        token_program.key,
+        sender_usdc.key,
+        mailer_usdc.key,
+        sender.key,
+        &[],
+        owner_fee,
+    )?;
+
+    invoke(
+        &transfer_ix,
+        &[
+            sender_usdc.clone(),
+            mailer_usdc.clone(),
+            sender.clone(),
+            token_program.clone(),
+        ],
+    )?;
+
+    // Update owner claimable
+    let mut mailer_data = mailer_account.try_borrow_mut_data()?;
+    let mut mailer_state: MailerState = BorshDeserialize::deserialize(&mut &mailer_data[8..])?;
+    mailer_state.owner_claimable += owner_fee;
+    mailer_state.serialize(&mut &mut mailer_data[8..])?;
+
+    msg!("Mail sent from {} to email {}: {}", sender.key, to_email, subject);
+
+    Ok(())
+}
+
+/// Process send prepared to email address (no wallet known, only owner fee)
+fn process_send_prepared_to_email(
+    _program_id: &Pubkey,
+    accounts: &[AccountInfo],
+    to_email: String,
+    mail_id: String,
+) -> ProgramResult {
+    let account_iter = &mut accounts.iter();
+    let sender = next_account_info(account_iter)?;
+    let mailer_account = next_account_info(account_iter)?;
+    let sender_usdc = next_account_info(account_iter)?;
+    let mailer_usdc = next_account_info(account_iter)?;
+    let token_program = next_account_info(account_iter)?;
+
+    if !sender.is_signer {
+        return Err(ProgramError::MissingRequiredSignature);
+    }
+
+    // Load mailer state
+    let mailer_data = mailer_account.try_borrow_data()?;
+    let mailer_state: MailerState = BorshDeserialize::deserialize(&mut &mailer_data[8..])?;
+    drop(mailer_data);
+
+    // Check if contract is paused
+    if mailer_state.paused {
+        return Err(MailerError::ContractPaused.into());
+    }
+
+    // Calculate 10% owner fee (no revenue share since no wallet address)
+    let owner_fee = (mailer_state.send_fee * 10) / 100;
+
+    // Transfer fee from sender to mailer
+    let transfer_ix = spl_token::instruction::transfer(
+        token_program.key,
+        sender_usdc.key,
+        mailer_usdc.key,
+        sender.key,
+        &[],
+        owner_fee,
+    )?;
+
+    invoke(
+        &transfer_ix,
+        &[
+            sender_usdc.clone(),
+            mailer_usdc.clone(),
+            sender.clone(),
+            token_program.clone(),
+        ],
+    )?;
+
+    // Update owner claimable
+    let mut mailer_data = mailer_account.try_borrow_mut_data()?;
+    let mut mailer_state: MailerState = BorshDeserialize::deserialize(&mut &mailer_data[8..])?;
+    mailer_state.owner_claimable += owner_fee;
+    mailer_state.serialize(&mut &mut mailer_data[8..])?;
+
+    msg!("Prepared mail sent from {} to email {} (mailId: {})", sender.key, to_email, mail_id);
 
     Ok(())
 }
