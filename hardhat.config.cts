@@ -9,6 +9,11 @@ if (fs.existsSync('.env.local')) {
   dotenv.config({ path: '.env.local', override: false });
 }
 
+// Build Alchemy URLs using ALCHEMY_API_KEY
+const ALCHEMY_API_KEY = process.env.ALCHEMY_API_KEY || "";
+const getAlchemyUrl = (network: string) =>
+  ALCHEMY_API_KEY ? `https://${network}.g.alchemy.com/v2/${ALCHEMY_API_KEY}` : "";
+
 const config: HardhatUserConfig = {
   solidity: {
     version: "0.8.24",
@@ -32,13 +37,13 @@ const config: HardhatUserConfig = {
     
     // Ethereum Networks
     mainnet: {
-      url: process.env.ETHEREUM_RPC_URL || "https://eth-mainnet.alchemyapi.io/v2/YOUR_ALCHEMY_KEY",
+      url: getAlchemyUrl("eth-mainnet"),
       accounts: process.env.PRIVATE_KEY ? [process.env.PRIVATE_KEY] : [],
       chainId: 1,
       gasPrice: "auto",
     },
     sepolia: {
-      url: process.env.SEPOLIA_RPC_URL || "https://eth-sepolia.alchemyapi.io/v2/YOUR_ALCHEMY_KEY",
+      url: getAlchemyUrl("eth-sepolia"),
       accounts: process.env.PRIVATE_KEY ? [process.env.PRIVATE_KEY] : [],
       chainId: 11155111,
       gasPrice: "auto",
@@ -46,7 +51,7 @@ const config: HardhatUserConfig = {
 
     // Polygon Networks
     polygon: {
-      url: process.env.POLYGON_RPC_URL || "https://polygon-rpc.com",
+      url: getAlchemyUrl("polygon-mainnet"),
       accounts: process.env.PRIVATE_KEY ? [process.env.PRIVATE_KEY] : [],
       chainId: 137,
       gasPrice: "auto",
@@ -54,7 +59,7 @@ const config: HardhatUserConfig = {
 
     // Optimism Networks
     optimism: {
-      url: process.env.OPTIMISM_RPC_URL || "https://mainnet.optimism.io",
+      url: getAlchemyUrl("opt-mainnet"),
       accounts: process.env.PRIVATE_KEY ? [process.env.PRIVATE_KEY] : [],
       chainId: 10,
       gasPrice: "auto",
@@ -62,7 +67,7 @@ const config: HardhatUserConfig = {
 
     // Base Networks
     base: {
-      url: process.env.BASE_RPC_URL || "https://mainnet.base.org",
+      url: getAlchemyUrl("base-mainnet"),
       accounts: process.env.PRIVATE_KEY ? [process.env.PRIVATE_KEY] : [],
       chainId: 8453,
       gasPrice: "auto",

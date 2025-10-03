@@ -1,6 +1,6 @@
 {
   "name": "@johnqh/mail_box_contracts",
-  "version": "1.8.4",
+  "version": "1.8.5",
   "type": "module",
   "main": "dist/unified-esm/src/unified/index.js",
   "module": "dist/unified-esm/src/unified/index.js",
@@ -189,7 +189,7 @@
   "dependencies": {
     "@coral-xyz/anchor-cli": "^0.31.1",
     "@coral-xyz/borsh": "^0.31.1",
-    "@johnqh/types": "^1.6.6",
+    "@johnqh/types": "^1.7.8",
     "@solana/spl-token": "^0.4.14",
     "@solana/web3.js": "^1.98.4",
     "@types/axios": "^0.9.36",
