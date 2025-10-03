@@ -104,7 +104,8 @@
       "Bash(TS_NODE_PROJECT=tsconfig.test.json npm run test:unified:direct)",
       "Bash(NODE_OPTIONS=\"--loader ts-node/esm\" npx mocha test/unified/*.test.ts --timeout 10000)",
       "Bash(TS_NODE_PROJECT=tsconfig.test.json npx mocha test/unified/validation.test.ts)",
-      "Bash(__NEW_LINE__ echo \"Testing ESM build...\")"
+      "Bash(__NEW_LINE__ echo \"Testing ESM build...\")",
+      "Bash(git stash:*)"
     ],
     "deny": [],
     "defaultMode": "acceptEdits"
