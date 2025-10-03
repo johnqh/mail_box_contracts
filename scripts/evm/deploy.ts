@@ -1,28 +1,6 @@
 import hre from "hardhat";
+import { RpcHelpers } from "@johnqh/types";
 const { ethers, network } = hre;
-
-// USDC token addresses for different networks
-const USDC_ADDRESSES: Record<string, string> = {
-  // Mainnets
-  mainnet: "0xA0b86a33E6417a8c8df6D0e9D13A4DcF8C7d6E4b", // USDC on Ethereum
-  polygon: "0x2791Bca1f2de4661ED88A30C99A7a9449Aa84174", // USDC on Polygon
-  optimism: "0x0b2C639c533813f4Aa9D7837CAf62653d097Ff85", // USDC on Optimism
-  arbitrum: "0xaf88d065e77c8cC2239327C5EDb3A432268e5831", // USDC on Arbitrum
-  base: "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913", // USDC on Base
-  avalanche: "0xB97EF9Ef8734C71904D8002F8b6Bc66Dd9c48a6E", // USDC on Avalanche
-  bsc: "0x8AC76a51cc950d9822D68b83fE1Ad97B32Cd580d", // USDC on BSC
-  gnosis: "0xDDAfbb505ad214D7b80b1f830fcCc89B60fb7A83", // USDC on Gnosis
-  celo: "0xcebA9300f2b948710d2653dD7B07f33A8B32118C", // USDC on Celo
-  
-  // Testnets - using zero address as placeholder (deploy mock USDC for testing)
-  sepolia: "0x0000000000000000000000000000000000000000",
-  "base-sepolia": "0x0000000000000000000000000000000000000000",
-  "scroll-sepolia": "0x0000000000000000000000000000000000000000",
-  
-  // Local development
-  hardhat: "0x0000000000000000000000000000000000000000",
-  localhost: "0x0000000000000000000000000000000000000000",
-};
 
 async function deployMockUSDC() {
   console.log("Deploying MockUSDC for testing...");
@@ -57,25 +35,63 @@ async function main() {
   }
 
   // Determine USDC address for the network
-  let usdcAddress = USDC_ADDRESSES[networkName];
-  
-  // For testnets and local networks, deploy mock USDC
-  const testNetworks = ["sepolia", "base-sepolia", "scroll-sepolia", "hardhat", "localhost"];
-  
-  if (testNetworks.includes(networkName)) {
+  let usdcAddress: string;
+
+  // Local networks (hardhat, localhost) need MockUSDC deployment
+  const localNetworks = ["hardhat", "localhost"];
+
+  if (localNetworks.includes(networkName)) {
+    // For local networks, always deploy MockUSDC
     if (process.env.USDC_ADDRESS) {
       usdcAddress = process.env.USDC_ADDRESS;
       console.log("Using USDC address from environment:", usdcAddress);
     } else {
       usdcAddress = await deployMockUSDC();
-      console.log("✅ Deployed MockUSDC for testing");
+      console.log("✅ Deployed MockUSDC for local testing");
     }
-  } else if (!usdcAddress || usdcAddress === "0x0000000000000000000000000000000000000000") {
-    console.error(`❌ No USDC address configured for network: ${networkName}`);
-    console.error("Please add the USDC token address to the USDC_ADDRESSES mapping or set USDC_ADDRESS environment variable");
-    process.exit(1);
+  } else {
+    // For all other networks, find chain by chainId from visible chains (including testnets)
+    const chainId = network.config.chainId;
+    if (!chainId) {
+      console.error(`❌ No chainId configured for network: ${networkName}`);
+      process.exit(1);
+    }
+
+    const visibleChains = RpcHelpers.getVisibleChains(true); // Include testnets
+    const chain = visibleChains.find(c => {
+      const info = RpcHelpers.getChainInfo({
+        chain: c,
+        alchemyApiKey: process.env.ALCHEMY_API_KEY,
+        etherscanApiKey: process.env.ETHERSCAN_MULTICHAIN_API_KEY
+      });
+      return info.chainId === chainId;
+    });
+
+    if (!chain) {
+      console.error(`❌ Unsupported chain ID: ${chainId} for network: ${networkName}`);
+      console.error("This chain is not in the visible chains list. Please set USDC_ADDRESS environment variable.");
+      process.exit(1);
+    }
+
+    const chainConfig = {
+      chain,
+      alchemyApiKey: process.env.ALCHEMY_API_KEY,
+      etherscanApiKey: process.env.ETHERSCAN_MULTICHAIN_API_KEY
+    };
+    const chainInfo = RpcHelpers.getChainInfo(chainConfig);
+
+    if (!chainInfo.usdcAddress) {
+      console.error(`❌ No USDC address available for chain: ${chain} (chainId: ${chainId})`);
+      console.error("This chain may not have USDC deployed. Please set USDC_ADDRESS environment variable.");
+      process.exit(1);
+    }
+
+    usdcAddress = chainInfo.usdcAddress;
+    console.log(`Using USDC address from RpcHelper for ${chain}:`, usdcAddress);
   }
 
+  // Ensure address has proper checksum (convert to lowercase first to avoid checksum validation)
+  usdcAddress = ethers.getAddress(usdcAddress.toLowerCase());
   console.log("Using USDC token address:", usdcAddress);
   console.log("-".repeat(50));
 
