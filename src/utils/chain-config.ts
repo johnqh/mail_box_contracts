@@ -1,4 +1,4 @@
-import { Optional } from '@johnqh/types';
+import { Optional, ChainConfig as TypesChainConfig, RpcHelpers, ChainType } from '@johnqh/types';
 import { ChainConfig } from '../unified/types.js';
 
 export const DEFAULT_CHAIN_CONFIG: ChainConfig = {
@@ -141,6 +141,69 @@ export function createChainConfig(
       },
       usdcMint: solanaConfig.usdcMint as string,
     };
+  }
+
+  return config;
+}
+
+/**
+ * Build unified chain config from @johnqh/types ChainConfig
+ * Uses RpcHelpers to derive all chain information from API keys
+ *
+ * @param chainConfig - ChainConfig from @johnqh/types with chain enum and API keys
+ * @param mailerAddress - Optional mailer contract/program address
+ * @returns ChainConfig compatible with unified client
+ *
+ * @example
+ * ```typescript
+ * import { Chain } from '@johnqh/types';
+ *
+ * const config = buildChainConfig({
+ *   chain: Chain.ETH_MAINNET,
+ *   alchemyApiKey: 'your-key',
+ *   etherscanApiKey: 'your-key'
+ * }, '0x123...');
+ *
+ * // Returns a complete config with RPC URL, chain ID, USDC address all derived
+ * ```
+ */
+export function buildChainConfig(
+  chainConfig: TypesChainConfig,
+  mailerAddress?: Optional<string>
+): ChainConfig {
+  const chainInfo = RpcHelpers.getChainInfo(chainConfig);
+  const chainType = RpcHelpers.getChainType(chainConfig.chain);
+
+  const config: ChainConfig = {
+    evm: undefined,
+    solana: undefined,
+  };
+
+  if (chainType === ChainType.EVM) {
+    if (!chainInfo.rpcUrl) {
+      throw new Error(`Unable to derive RPC URL for chain ${chainConfig.chain}`);
+    }
+    config.evm = {
+      rpc: chainInfo.rpcUrl,
+      chainId: chainInfo.chainId,
+      contracts: {
+        mailer: mailerAddress || '',
+        usdc: chainInfo.usdcAddress,
+      },
+    };
+  } else if (chainType === ChainType.SOLANA) {
+    if (!chainInfo.rpcUrl) {
+      throw new Error(`Unable to derive RPC URL for chain ${chainConfig.chain}`);
+    }
+    config.solana = {
+      rpc: chainInfo.rpcUrl,
+      programs: {
+        mailer: mailerAddress || '',
+      },
+      usdcMint: chainInfo.usdcAddress,
+    };
+  } else {
+    throw new Error(`Unsupported chain type: ${chainType}`);
   }
 
   return config;

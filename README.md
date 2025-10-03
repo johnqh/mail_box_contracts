@@ -35,6 +35,46 @@ yarn add @johnqh/mail_box_contracts
 
 ## 🚀 Quick Start - Unified Multi-Chain Client
 
+### Option 1: Using ChainConfig with RpcHelpers (Recommended)
+
+The simplest way to initialize clients using API keys - all chain information is automatically derived:
+
+```typescript
+import { Chain, RpcHelpers, ChainConfig } from '@johnqh/types';
+import { buildChainConfig } from '@johnqh/mail_box_contracts';
+import { MailerClient } from '@johnqh/mail_box_contracts';
+
+// Step 1: Create config with just chain enum and API keys
+const chainConfig: ChainConfig = {
+  chain: Chain.ETH_MAINNET,
+  alchemyApiKey: process.env.ALCHEMY_API_KEY,
+  etherscanApiKey: process.env.ETHERSCAN_MULTICHAIN_API_KEY
+};
+
+// Step 2: All chain info is automatically derived!
+const chainInfo = RpcHelpers.getChainInfo(chainConfig);
+console.log('Using:', chainInfo.name, 'at', chainInfo.rpcUrl);
+console.log('USDC:', chainInfo.usdcAddress);
+
+// Step 3: Build unified config and initialize client
+const config = buildChainConfig(chainConfig, '0x...'); // Your mailer contract
+const client = new MailerClient(config.evm.contracts.mailer, publicClient);
+
+// Works with any chain - just change the Chain enum!
+// Chain.BASE_MAINNET, Chain.POLYGON_MAINNET, Chain.SOLANA_MAINNET, etc.
+```
+
+**Benefits:**
+- ✅ Single source of truth (Chain enum + API keys)
+- ✅ No hardcoded RPC URLs or addresses
+- ✅ Easy to switch between networks
+- ✅ Type-safe with full IDE autocomplete
+- ✅ Consistent across EVM and Solana
+
+See [`examples/config-usage.ts`](./examples/config-usage.ts) for complete examples.
+
+### Option 2: Using Pre-configured Configs
+
 ```typescript
 import { OnchainMailerClient, TESTNET_CHAIN_CONFIG } from '@johnqh/mail_box_contracts';
 
