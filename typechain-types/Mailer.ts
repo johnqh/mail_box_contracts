@@ -424,12 +424,23 @@ export namespace OwnerClaimedEvent {
 }
 
 export namespace PreparedMailSentEvent {
-  export type InputTuple = [from: AddressLike, to: AddressLike, mailId: string];
-  export type OutputTuple = [from: string, to: string, mailId: string];
+  export type InputTuple = [
+    from: AddressLike,
+    to: AddressLike,
+    mailId: string,
+    revenueShareToReceiver: boolean
+  ];
+  export type OutputTuple = [
+    from: string,
+    to: string,
+    mailId: string,
+    revenueShareToReceiver: boolean
+  ];
   export interface OutputObject {
     from: string;
     to: string;
     mailId: string;
+    revenueShareToReceiver: boolean;
   }
   export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
   export type Filter = TypedDeferredTopicFilter<Event>;
@@ -1006,7 +1017,7 @@ export interface Mailer extends BaseContract {
       OwnerClaimedEvent.OutputObject
     >;
 
-    "PreparedMailSent(address,address,string)": TypedContractEvent<
+    "PreparedMailSent(address,address,string,bool)": TypedContractEvent<
       PreparedMailSentEvent.InputTuple,
       PreparedMailSentEvent.OutputTuple,
       PreparedMailSentEvent.OutputObject

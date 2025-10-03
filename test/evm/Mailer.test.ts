@@ -87,7 +87,7 @@ describe("Mailer", function () {
       await expect(
         mailer.connect(addr1).sendPrepared(addr2.address, "mail-123", true)
       ).to.emit(mailer, "PreparedMailSent")
-       .withArgs(addr1.address, addr2.address, "mail-123");
+       .withArgs(addr1.address, addr2.address, "mail-123", true);
     });
 
     it("Should not emit event when USDC transfer fails (insufficient balance)", async function () {
@@ -120,7 +120,7 @@ describe("Mailer", function () {
       await expect(
         mailer.connect(addr1).sendPrepared(addr2.address, "abc-123-xyz", true)
       ).to.emit(mailer, "PreparedMailSent")
-       .withArgs(addr1.address, addr2.address, "abc-123-xyz");
+       .withArgs(addr1.address, addr2.address, "abc-123-xyz", true);
     });
   });
 
@@ -326,7 +326,7 @@ describe("Mailer", function () {
       await expect(
         mailer.connect(addr2).sendPrepared(addr1.address, "mail-123", false)
       ).to.emit(mailer, "PreparedMailSent")
-       .withArgs(addr2.address, addr1.address, "mail-123");
+       .withArgs(addr2.address, addr1.address, "mail-123", false);
     });
 
     it("Should not emit event when sender has no USDC balance", async function () {
@@ -365,7 +365,7 @@ describe("Mailer", function () {
       await expect(
         mailer.connect(addr2).sendPrepared(addr1.address, "", false)
       ).to.emit(mailer, "PreparedMailSent")
-       .withArgs(addr2.address, addr1.address, "");
+       .withArgs(addr2.address, addr1.address, "", false);
     });
 
     it("Should work with long mailId", async function () {
@@ -374,7 +374,7 @@ describe("Mailer", function () {
       await expect(
         mailer.connect(addr2).sendPrepared(addr1.address, longMailId, false)
       ).to.emit(mailer, "PreparedMailSent")
-       .withArgs(addr2.address, addr1.address, longMailId);
+       .withArgs(addr2.address, addr1.address, longMailId, false);
     });
 
     it("Should handle special characters in mailId", async function () {
@@ -383,7 +383,7 @@ describe("Mailer", function () {
       await expect(
         mailer.connect(addr2).sendPrepared(addr1.address, specialMailId, false)
       ).to.emit(mailer, "PreparedMailSent")
-       .withArgs(addr2.address, addr1.address, specialMailId);
+       .withArgs(addr2.address, addr1.address, specialMailId, false);
     });
   });
 

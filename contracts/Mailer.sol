@@ -63,7 +63,8 @@ contract Mailer {
     event PreparedMailSent(
         address indexed from,
         address indexed to,
-        string indexed mailId
+        string indexed mailId,
+        bool revenueShareToReceiver
     );
 
     event MailSentToEmail(
@@ -232,7 +233,7 @@ contract Mailer {
             // All goes to owner, no revenue share
             ownerClaimable += ownerFee;
         }
-        emit PreparedMailSent(msg.sender, to, mailId);
+        emit PreparedMailSent(msg.sender, to, mailId, revenueShareToReceiver);
     }
 
     /**
