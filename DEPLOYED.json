@@ -1,6 +1,6 @@
 {
   "description": "Deployment tracking for multi-chain Mailer contracts",
-  "lastUpdated": "2025-10-03T18:59:12.000Z",
+  "lastUpdated": "2025-10-03T19:40:24.000Z",
   "architecture": {
     "evm": {
       "contracts": {
@@ -21,13 +21,13 @@
       "sepolia": {
         "chainId": 11155111,
         "network": "sepolia",
-        "mailer": "0x4CF25f4683f0C64deDF9F9368Bebe8159740335A",
-        "mockUSDC": "0xE7Ae5F67a51b65159c967d70395Dcd78D0E4100B",
+        "mailer": "0x9734687BB7b1F842E8b0665641B06ED752703D42",
+        "mockUSDC": "0x54D7A17145332a38B329AFe0FF1F92EC2583F67d",
         "deployer": "0x1996d64D8f6E47A5bF6fB92246EF4eFD6Ae881e0",
         "owner": "0x1996d64D8f6E47A5bF6fB92246EF4eFD6Ae881e0",
-        "blockNumber": 9335921,
-        "txHash": "0x73bb9c220f44b5b3ba2accfaa6407104fd328e922f9a6c7eed8e63b363079fd5",
-        "timestamp": "2025-10-03T18:59:12.000Z",
+        "blockNumber": 9336125,
+        "txHash": "0x37763130b3dc51e5a8db33e841e370a24a80e358067781beebe64f12af3276fa",
+        "timestamp": "2025-10-03T19:40:24.000Z",
         "fees": {
           "sendFee": "0.1 USDC",
           "delegationFee": "10.0 USDC"

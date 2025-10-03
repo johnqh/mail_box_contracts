@@ -318,7 +318,7 @@ contract Mailer {
      * - Recipient gets remainder (totalAmount - ownerAmount) to handle any rounding
      *
      * Timestamp behavior:
-     * - Every call updates timestamp to current block time, extending the 30-day claim window
+     * - Every call updates timestamp to current block time, extending the 60-day claim window
      */
     function _recordShares(address recipient, uint256 totalAmount) internal {
         // Ensure safe math operations (protect against overflow in multiplication)

@@ -8,7 +8,7 @@
 //! - **Delegation Management**: Delegate mail handling with rejection capability  
 //! - **Priority Messages**: Full fee (0.1 USDC) with 90% revenue share back to sender
 //! - **Standard Messages**: 10% fee only (0.01 USDC) with no revenue share
-//! - **Revenue Claims**: 30-day claim period for priority message revenue shares
+//! - **Revenue Claims**: 60-day claim period for priority message revenue shares
 //!
 //! ## Program Architecture
 //!
@@ -959,7 +959,7 @@ fn record_shares(
     let owner_amount = total_amount / 10; // 10% of total_amount
     let recipient_amount = total_amount - owner_amount;
 
-    // Update recipient's claimable amount
+    // Update recipient's claimable amount and refresh the timestamp to extend the 60-day window
     let mut claim_data = recipient_claim.try_borrow_mut_data()?;
     let mut claim_state: RecipientClaim = BorshDeserialize::deserialize(&mut &claim_data[8..])?;
 
