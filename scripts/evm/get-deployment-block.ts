@@ -1,51 +1,39 @@
 import hre from "hardhat";
-const { ethers } = hre;
+const { ethers, network } = hre;
 
 async function main() {
-  const mailerAddress = process.env.CONTRACT_ADDRESS || "0x4CF25f4683f0C64deDF9F9368Bebe8159740335A";
+  // Get contract address from environment variable
+  const address = process.env.CONTRACT_ADDRESS;
 
-  console.log("Looking for deployment block of:", mailerAddress);
+  if (!address) {
+    console.error("Usage: CONTRACT_ADDRESS=<address> npx hardhat run scripts/evm/get-deployment-block.ts --network <network>");
+    console.error("Example: CONTRACT_ADDRESS=0x13fC7Fe676E4FaaE8F4D910d8Ed7fbD3FebDbe88 npx hardhat run scripts/evm/get-deployment-block.ts --network sepolia");
+    process.exit(1);
+  }
 
-  // Get current block
+  console.log(`Finding deployment block for contract: ${address}`);
+
+  // Binary search to find deployment block
   const currentBlock = await ethers.provider.getBlockNumber();
   console.log("Current block:", currentBlock);
 
-  // Search recent blocks for deployment transaction
-  const searchRange = 1000;
-  console.log(`Searching last ${searchRange} blocks...`);
+  let low = Math.max(0, currentBlock - 10000);
+  let high = currentBlock;
 
-  for (let i = 0; i < searchRange; i++) {
-    const blockNum = currentBlock - i;
-    try {
-      const block = await ethers.provider.getBlock(blockNum, true);
+  console.log(`Searching blocks ${low} to ${high}...`);
 
-      if (block && block.transactions) {
-        for (const txHash of block.transactions) {
-          try {
-            const receipt = await ethers.provider.getTransactionReceipt(txHash);
-            if (receipt && receipt.contractAddress?.toLowerCase() === mailerAddress.toLowerCase()) {
-              console.log("\n✅ Found deployment!");
-              console.log("Block number:", receipt.blockNumber);
-              console.log("Transaction hash:", receipt.hash);
-              console.log("Deployer:", receipt.from);
-              console.log("Gas used:", receipt.gasUsed.toString());
-              return;
-            }
-          } catch (err) {
-            // Skip failed transactions
-          }
-        }
-      }
-    } catch (err) {
-      console.log(`Error checking block ${blockNum}`);
-    }
+  while (low < high) {
+    const mid = Math.floor((low + high) / 2);
+    const codeAt = await ethers.provider.getCode(address, mid);
 
-    if (i % 100 === 0 && i > 0) {
-      console.log(`Checked ${i} blocks...`);
+    if (codeAt === "0x") {
+      low = mid + 1;
+    } else {
+      high = mid;
     }
   }
 
-  console.log("Deployment block not found in recent blocks");
+  console.log("\n✅ Deployment block:", low);
 }
 
 main().catch((error) => {
