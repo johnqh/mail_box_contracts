@@ -156,7 +156,7 @@ contract Mailer {
     /**
      * @notice Send a message with optional revenue sharing
      * @dev Two modes based on revenueShareToReceiver flag:
-     *      - true (Priority): Charges full sendFee (0.1 USDC), receiver gets 90% back as claimable within 60 days
+     *      - true (Priority): Charges full sendFee (0.1 USDC), receiver gets 90% back as claimable within 60 days of the last reward
      *      - false (Standard): Charges only 10% of sendFee (0.01 USDC), no claimable amount
      * @param to Recipient address who receives the message and potential revenue share
      * @param subject Message subject line
@@ -318,8 +318,7 @@ contract Mailer {
      * - Recipient gets remainder (totalAmount - ownerAmount) to handle any rounding
      *
      * Timestamp behavior:
-     * - First call: Sets timestamp to block.timestamp (starts 60-day claim period)
-     * - Subsequent calls: Keeps original timestamp (doesn't restart claim period)
+     * - Every call updates timestamp to current block time, extending the 30-day claim window
      */
     function _recordShares(address recipient, uint256 totalAmount) internal {
         // Ensure safe math operations (protect against overflow in multiplication)
@@ -331,11 +330,9 @@ contract Mailer {
         uint256 ownerAmount = (totalAmount * OWNER_SHARE) / 100;
         uint256 recipientAmount = totalAmount - ownerAmount;
 
-        // Update recipient's claimable amount and set timestamp only if not already set
+        // Update recipient's claimable amount and refresh timestamp to extend the claim window
         recipientClaims[recipient].amount += recipientAmount;
-        if (recipientClaims[recipient].timestamp == 0) {
-            recipientClaims[recipient].timestamp = block.timestamp;
-        }
+        recipientClaims[recipient].timestamp = block.timestamp;
 
         // Update owner's claimable amount
         ownerClaimable += ownerAmount;
@@ -345,18 +342,18 @@ contract Mailer {
     
     /**
      * @notice Claim your accumulated revenue share from priority messages received
-     * @dev Must be called within 60 days of first revenue share recording
+     * @dev Must be called within 60 days of the most recent reward being recorded
      *
      * Claim period logic:
-     * - Clock starts on FIRST priority message received (when timestamp is set)
-     * - Multiple priority messages add to claimable amount but don't reset timer
-     * - After 60 days, funds become permanently unclaimable (owner can recover via claimExpiredShares)
+     * - Clock refreshes on every priority message received (when timestamp is updated)
+     * - Multiple priority messages extend the timer, keeping all rewards available as long as one is received every 60 days
+     * - After 60 days with no new rewards, funds become permanently unclaimable (owner can recover via claimExpiredShares)
      *
      * Example timeline:
      * Day 0: Receive priority message, get 0.09 USDC claimable, timer starts
-     * Day 30: Receive another priority message, now 0.18 USDC claimable, same timer
-     * Day 59: Can still claim all 0.18 USDC
-     * Day 61: Too late, funds expired
+     * Day 60: Receive another priority message, now 0.18 USDC claimable, timer refreshes
+     * Day 119: Can still claim all 0.18 USDC because the second reward reset the timer
+     * Day 121: Too late, funds expired if no new rewards arrived after Day 60
      */
     function claimRecipientShare() external nonReentrant {
         ClaimableAmount storage claim = recipientClaims[msg.sender];
@@ -364,7 +361,7 @@ contract Mailer {
             revert NoClaimableAmount();
         }
 
-        // Check if claim period has expired (60 days from first revenue share)
+        // Check if claim period has expired (60 days from the most recent reward)
         if (block.timestamp > claim.timestamp + CLAIM_PERIOD) {
             revert NoClaimableAmount();
         }

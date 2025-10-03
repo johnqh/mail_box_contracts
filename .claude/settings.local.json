@@ -105,7 +105,10 @@
       "Bash(NODE_OPTIONS=\"--loader ts-node/esm\" npx mocha test/unified/*.test.ts --timeout 10000)",
       "Bash(TS_NODE_PROJECT=tsconfig.test.json npx mocha test/unified/validation.test.ts)",
       "Bash(__NEW_LINE__ echo \"Testing ESM build...\")",
-      "Bash(git stash:*)"
+      "Bash(git stash:*)",
+      "Bash(curl -s \"https://api-sepolia.etherscan.io/api?module=contract&action=getcontractcreation&contractaddresses=0x4CF25f4683f0C64deDF9F9368Bebe8159740335A&apikey=$ETHERSCAN_MULTICHAIN_API_KEY\")",
+      "Bash(python3:*)",
+      "Bash(curl -s \"https://api-sepolia.etherscan.io/api?module=contract&action=getcontractcreation&contractaddresses=0x4CF25f4683f0C64deDF9F9368Bebe8159740335A&apikey=QIY73MZ95W5FNITI8ACS9181MXY3VU22PY\")"
     ],
     "deny": [],
     "defaultMode": "acceptEdits"

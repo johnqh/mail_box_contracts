@@ -1,7 +1,13 @@
-import { run, network } from 'hardhat';
-import { Optional } from '@johnqh/types';
+import hre from 'hardhat';
+const { run, network } = hre;
 import * as fs from 'fs';
 import * as path from 'path';
+import { fileURLToPath } from 'url';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+type Optional<T> = T | undefined | null;
 
 interface DeploymentInfo {
   network: string;
@@ -12,11 +18,9 @@ interface DeploymentInfo {
   contracts: {
     usdc: string;
     mailer: string;
-    mailService: string;
   };
   fees: {
     sendFee: string;
-    registrationFee: string;
     delegationFee: string;
   };
 }
@@ -56,7 +60,7 @@ async function main() {
   console.log('Chain ID:', network.config.chainId);
 
   // Load deployment info
-  const deploymentDir = path.join(__dirname, '..', 'deployments');
+  const deploymentDir = path.join(__dirname, '..', '..', 'deployments');
   const deploymentFile = path.join(deploymentDir, `${networkName}.json`);
 
   if (!fs.existsSync(deploymentFile)) {
@@ -117,20 +121,11 @@ async function main() {
       'contracts/Mailer.sol:Mailer'
     );
 
-    // Verify MailService
-    console.log('📬 Verifying MailService...');
-    await verifyContract(
-      deploymentInfo.contracts.mailService,
-      [deploymentInfo.contracts.usdc, deploymentInfo.owner],
-      'contracts/MailService.sol:MailService'
-    );
-
     console.log('='.repeat(50));
     console.log('🎉 ALL CONTRACTS VERIFIED SUCCESSFULLY!');
     console.log('='.repeat(50));
     console.log('Network:', networkName);
     console.log('Mailer:', deploymentInfo.contracts.mailer);
-    console.log('MailService:', deploymentInfo.contracts.mailService);
     if (testNetworks.includes(networkName)) {
       console.log('MockUSDC:', deploymentInfo.contracts.usdc);
     }

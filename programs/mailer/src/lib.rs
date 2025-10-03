@@ -8,7 +8,7 @@
 //! - **Delegation Management**: Delegate mail handling with rejection capability  
 //! - **Priority Messages**: Full fee (0.1 USDC) with 90% revenue share back to sender
 //! - **Standard Messages**: 10% fee only (0.01 USDC) with no revenue share
-//! - **Revenue Claims**: 60-day claim period for priority message revenue shares
+//! - **Revenue Claims**: 30-day claim period for priority message revenue shares
 //!
 //! ## Program Architecture
 //!
@@ -965,9 +965,7 @@ fn record_shares(
 
     claim_state.recipient = recipient;
     claim_state.amount += recipient_amount;
-    if claim_state.timestamp == 0 {
-        claim_state.timestamp = Clock::get()?.unix_timestamp;
-    }
+    claim_state.timestamp = Clock::get()?.unix_timestamp;
     claim_state.serialize(&mut &mut claim_data[8..])?;
     drop(claim_data);
 

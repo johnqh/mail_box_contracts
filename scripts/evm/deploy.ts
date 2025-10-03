@@ -1,4 +1,5 @@
-import { ethers, network } from "hardhat";
+import hre from "hardhat";
+const { ethers, network } = hre;
 
 // USDC token addresses for different networks
 const USDC_ADDRESSES: Record<string, string> = {
@@ -120,9 +121,12 @@ async function main() {
     };
 
     // Write deployment info to deployments directory
-    const fs = require('fs');
-    const path = require('path');
-    const deploymentDir = path.join(__dirname, '..', 'deployments');
+    const fs = await import('fs');
+    const path = await import('path');
+    const { fileURLToPath } = await import('url');
+    const __filename = fileURLToPath(import.meta.url);
+    const __dirname = path.dirname(__filename);
+    const deploymentDir = path.join(__dirname, '..', '..', 'deployments');
     
     if (!fs.existsSync(deploymentDir)) {
       fs.mkdirSync(deploymentDir, { recursive: true });
