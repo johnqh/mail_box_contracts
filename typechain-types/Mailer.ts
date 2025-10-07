@@ -148,12 +148,12 @@ export interface MailerInterface extends Interface {
   ): string;
   encodeFunctionData(
     functionFragment: "send",
-    values: [AddressLike, string, string, boolean]
+    values: [AddressLike, string, string, boolean, boolean]
   ): string;
   encodeFunctionData(functionFragment: "sendFee", values?: undefined): string;
   encodeFunctionData(
     functionFragment: "sendPrepared",
-    values: [AddressLike, string, boolean]
+    values: [AddressLike, string, boolean, boolean]
   ): string;
   encodeFunctionData(
     functionFragment: "sendPreparedToEmailAddress",
@@ -364,14 +364,16 @@ export namespace MailSentEvent {
     to: AddressLike,
     subject: string,
     body: string,
-    revenueShareToReceiver: boolean
+    revenueShareToReceiver: boolean,
+    resolveSenderToName: boolean
   ];
   export type OutputTuple = [
     from: string,
     to: string,
     subject: string,
     body: string,
-    revenueShareToReceiver: boolean
+    revenueShareToReceiver: boolean,
+    resolveSenderToName: boolean
   ];
   export interface OutputObject {
     from: string;
@@ -379,6 +381,7 @@ export namespace MailSentEvent {
     subject: string;
     body: string;
     revenueShareToReceiver: boolean;
+    resolveSenderToName: boolean;
   }
   export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
   export type Filter = TypedDeferredTopicFilter<Event>;
@@ -428,19 +431,22 @@ export namespace PreparedMailSentEvent {
     from: AddressLike,
     to: AddressLike,
     mailId: string,
-    revenueShareToReceiver: boolean
+    revenueShareToReceiver: boolean,
+    resolveSenderToName: boolean
   ];
   export type OutputTuple = [
     from: string,
     to: string,
     mailId: string,
-    revenueShareToReceiver: boolean
+    revenueShareToReceiver: boolean,
+    resolveSenderToName: boolean
   ];
   export interface OutputObject {
     from: string;
     to: string;
     mailId: string;
     revenueShareToReceiver: boolean;
+    resolveSenderToName: boolean;
   }
   export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
   export type Filter = TypedDeferredTopicFilter<Event>;
@@ -617,7 +623,8 @@ export interface Mailer extends BaseContract {
       to: AddressLike,
       subject: string,
       body: string,
-      revenueShareToReceiver: boolean
+      revenueShareToReceiver: boolean,
+      resolveSenderToName: boolean
     ],
     [void],
     "nonpayable"
@@ -626,7 +633,12 @@ export interface Mailer extends BaseContract {
   sendFee: TypedContractMethod<[], [bigint], "view">;
 
   sendPrepared: TypedContractMethod<
-    [to: AddressLike, mailId: string, revenueShareToReceiver: boolean],
+    [
+      to: AddressLike,
+      mailId: string,
+      revenueShareToReceiver: boolean,
+      resolveSenderToName: boolean
+    ],
     [void],
     "nonpayable"
   >;
@@ -747,7 +759,8 @@ export interface Mailer extends BaseContract {
       to: AddressLike,
       subject: string,
       body: string,
-      revenueShareToReceiver: boolean
+      revenueShareToReceiver: boolean,
+      resolveSenderToName: boolean
     ],
     [void],
     "nonpayable"
@@ -758,7 +771,12 @@ export interface Mailer extends BaseContract {
   getFunction(
     nameOrSignature: "sendPrepared"
   ): TypedContractMethod<
-    [to: AddressLike, mailId: string, revenueShareToReceiver: boolean],
+    [
+      to: AddressLike,
+      mailId: string,
+      revenueShareToReceiver: boolean,
+      resolveSenderToName: boolean
+    ],
     [void],
     "nonpayable"
   >;
@@ -984,7 +1002,7 @@ export interface Mailer extends BaseContract {
       FundsDistributedEvent.OutputObject
     >;
 
-    "MailSent(address,address,string,string,bool)": TypedContractEvent<
+    "MailSent(address,address,string,string,bool,bool)": TypedContractEvent<
       MailSentEvent.InputTuple,
       MailSentEvent.OutputTuple,
       MailSentEvent.OutputObject
@@ -1017,7 +1035,7 @@ export interface Mailer extends BaseContract {
       OwnerClaimedEvent.OutputObject
     >;
 
-    "PreparedMailSent(address,address,string,bool)": TypedContractEvent<
+    "PreparedMailSent(address,address,string,bool,bool)": TypedContractEvent<
       PreparedMailSentEvent.InputTuple,
       PreparedMailSentEvent.OutputTuple,
       PreparedMailSentEvent.OutputObject

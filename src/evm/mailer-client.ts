@@ -105,15 +105,16 @@ export class MailerClient {
    * @param subject Message subject line
    * @param body Message content
    * @param revenueShareToReceiver If true, recipient gets 90% revenue share; if false, no revenue share
+   * @param resolveSenderToName If true, resolve sender address to name via off-chain service
    * @param walletClient Viem wallet client for transaction
    * @param account Account to send from
    * @returns Promise resolving to transaction hash
    * @example
    * ```typescript
    * // Send with revenue share to recipient
-   * const hash = await mailer.send('0x...', 'Subject', 'Priority message', true, walletClient, account);
+   * const hash = await mailer.send('0x...', 'Subject', 'Priority message', true, false, walletClient, account);
    * // Send standard message (no revenue share)
-   * const hash2 = await mailer.send('0x...', 'Subject', 'Standard message', false, walletClient, account);
+   * const hash2 = await mailer.send('0x...', 'Subject', 'Standard message', false, false, walletClient, account);
    * await publicClient.waitForTransactionReceipt({ hash });
    * ```
    */
@@ -122,6 +123,7 @@ export class MailerClient {
     subject: string,
     body: string,
     revenueShareToReceiver: boolean,
+    resolveSenderToName: boolean = false,
     walletClient: WalletClient,
     account: Account | Address
   ): Promise<Hash> {
@@ -129,7 +131,7 @@ export class MailerClient {
       address: this.contractAddress,
       abi: MAILER_ABI,
       functionName: 'send',
-      args: [to, subject, body, revenueShareToReceiver],
+      args: [to, subject, body, revenueShareToReceiver, resolveSenderToName],
       account,
       chain: walletClient.chain,
     });
@@ -143,6 +145,7 @@ export class MailerClient {
    * @param to Recipient address who receives the message and potential revenue share
    * @param mailId Pre-prepared message identifier
    * @param revenueShareToReceiver If true, recipient gets 90% revenue share; if false, no revenue share
+   * @param resolveSenderToName If true, resolve sender address to name via off-chain service
    * @param walletClient Viem wallet client for transaction
    * @param account Account to send from
    * @returns Promise resolving to transaction hash
@@ -151,6 +154,7 @@ export class MailerClient {
     to: Address,
     mailId: string,
     revenueShareToReceiver: boolean,
+    resolveSenderToName: boolean = false,
     walletClient: WalletClient,
     account: Account | Address
   ): Promise<Hash> {
@@ -158,7 +162,7 @@ export class MailerClient {
       address: this.contractAddress,
       abi: MAILER_ABI,
       functionName: 'sendPrepared',
-      args: [to, mailId, revenueShareToReceiver],
+      args: [to, mailId, revenueShareToReceiver, resolveSenderToName],
       account,
       chain: walletClient.chain,
     });

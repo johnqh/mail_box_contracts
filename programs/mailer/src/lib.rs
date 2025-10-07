@@ -121,6 +121,7 @@ pub enum MailerInstruction {
         subject: String,
         _body: String,
         revenue_share_to_receiver: bool,
+        resolve_sender_to_name: bool,
     },
 
     /// Send message to email address (no wallet address known)
@@ -279,8 +280,8 @@ pub fn process_instruction(
         MailerInstruction::Initialize { usdc_mint } => {
             process_initialize(program_id, accounts, usdc_mint)
         }
-        MailerInstruction::Send { to, subject, _body, revenue_share_to_receiver } => {
-            process_send(program_id, accounts, to, subject, _body, revenue_share_to_receiver)
+        MailerInstruction::Send { to, subject, _body, revenue_share_to_receiver, resolve_sender_to_name } => {
+            process_send(program_id, accounts, to, subject, _body, revenue_share_to_receiver, resolve_sender_to_name)
         }
         MailerInstruction::SendToEmail { to_email, subject, _body } => {
             process_send_to_email(program_id, accounts, to_email, subject, _body)
@@ -381,6 +382,7 @@ fn process_send(
     subject: String,
     _body: String,
     revenue_share_to_receiver: bool,
+    _resolve_sender_to_name: bool,
 ) -> ProgramResult {
     let account_iter = &mut accounts.iter();
     let sender = next_account_info(account_iter)?;
@@ -472,7 +474,7 @@ fn process_send(
         // Record revenue shares
         record_shares(recipient_claim, mailer_account, to, mailer_state.send_fee)?;
 
-        msg!("Priority mail sent from {} to {}: {} (revenue share enabled)", sender.key, to, subject);
+        msg!("Priority mail sent from {} to {}: {} (revenue share enabled, resolve sender: {})", sender.key, to, subject, _resolve_sender_to_name);
     } else {
         // Standard mode: 10% fee only, no revenue sharing
 
@@ -502,7 +504,7 @@ fn process_send(
         mailer_state.owner_claimable += owner_fee;
         mailer_state.serialize(&mut &mut mailer_data[8..])?;
 
-        msg!("Standard mail sent from {} to {}: {}", sender.key, to, subject);
+        msg!("Standard mail sent from {} to {}: {} (resolve sender: {})", sender.key, to, subject, _resolve_sender_to_name);
     }
 
     Ok(())

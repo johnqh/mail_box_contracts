@@ -112,7 +112,8 @@
       "Bash(curl -s \"https://api-sepolia.etherscan.io/api?module=contract&action=getcontractcreation&contractaddresses=0x9734687BB7b1F842E8b0665641B06ED752703D42&apikey=QIY73MZ95W5FNITI8ACS9181MXY3VU22PY\")",
       "Bash(curl -s \"https://api-sepolia.etherscan.io/api?module=contract&action=getcontractcreation&contractaddresses=0x13fC7Fe676E4FaaE8F4D910d8Ed7fbD3FebDbe88&apikey=$ETHERSCAN_MULTICHAIN_API_KEY\")",
       "Bash(CONTRACT_ADDRESS=0x13fC7Fe676E4FaaE8F4D910d8Ed7fbD3FebDbe88 npx hardhat run scripts/evm/get-deployment-block.ts --network sepolia)",
-      "Bash(./scripts/evm/find-deployment-block.sh:*)"
+      "Bash(./scripts/evm/find-deployment-block.sh:*)",
+      "Bash(git log:*)"
     ],
     "deny": [],
     "defaultMode": "acceptEdits"

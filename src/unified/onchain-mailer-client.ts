@@ -175,49 +175,52 @@ export class OnchainMailerClient {
 
   /**
    * Send a message using the appropriate chain implementation
-   * 
+   *
    * This method automatically routes to EVM or Solana based on the detected wallet type.
    * Priority messages cost more but include revenue sharing for recipients.
-   * 
+   *
    * @param subject - Message subject (1-200 characters)
    * @param body - Message body (1-10000 characters)
    * @param priority - Whether to use priority sending with revenue share
    *                   - Priority: Full fee paid, 90% claimable by recipient
    *                   - Standard: 10% fee only, no revenue share
-   * 
+   * @param resolveSenderToName - If true, resolve sender address to name via off-chain service
+   *
    * @returns Promise resolving to MessageResult with transaction details
-   * 
+   *
    * @throws {Error} When subject/body validation fails
    * @throws {Error} When insufficient USDC balance
    * @throws {Error} When user rejects transaction
    * @throws {Error} When network connection fails
-   * 
+   *
    * @example Standard Message
    * ```typescript
    * const result = await client.sendMessage(
-   *   "Meeting Reminder", 
+   *   "Meeting Reminder",
    *   "Don't forget our 3pm call today!",
-   *   false // Standard fee (10% of sendFee)
+   *   false, // Standard fee (10% of sendFee)
+   *   false  // Don't resolve sender to name
    * );
    * console.log('Sent in tx:', result.transactionHash);
    * ```
-   * 
+   *
    * @example Priority Message with Revenue Share
    * ```typescript
    * const result = await client.sendMessage(
    *   "Important Update",
    *   "Urgent: Please review the attached proposal",
-   *   true // Priority fee (100% paid, 90% claimable by recipient)
+   *   true, // Priority fee (100% paid, 90% claimable by recipient)
+   *   true  // Resolve sender to name
    * );
    * console.log('Priority message fee:', result.fee);
    * ```
    */
-  async sendMessage(subject: string, body: string, priority: boolean = false): Promise<MessageResult> {
+  async sendMessage(subject: string, body: string, priority: boolean = false, resolveSenderToName: boolean = false): Promise<MessageResult> {
     // Route to appropriate chain implementation based on wallet type
     if (this.chainType === 'evm') {
-      return this.sendEVMMessage(subject, body, priority);
+      return this.sendEVMMessage(subject, body, priority, resolveSenderToName);
     } else {
-      return this.sendSolanaMessage(subject, body, priority);
+      return this.sendSolanaMessage(subject, body, priority, resolveSenderToName);
     }
   }
 
@@ -305,7 +308,7 @@ export class OnchainMailerClient {
   }
 
   // Private methods for EVM implementation
-  private async sendEVMMessage(subject: string, body: string, priority: boolean): Promise<MessageResult> {
+  private async sendEVMMessage(subject: string, body: string, priority: boolean, resolveSenderToName: boolean = false): Promise<MessageResult> {
     try {
       const { viem, MailerClient } = await this.getEVMModules();
 
@@ -364,11 +367,7 @@ export class OnchainMailerClient {
       
       let txHash: `0x${string}`;
       try {
-        if (priority) {
-          txHash = await client.sendPriority(subject, body, walletClient, this.wallet.address);
-        } else {
-          txHash = await client.send(subject, body, walletClient, this.wallet.address);
-        }
+        txHash = await client.send(this.wallet.address, subject, body, priority, resolveSenderToName, walletClient, this.wallet.address);
       } catch (error) {
         const errorMessage = error instanceof Error ? error.message : String(error);
         if (errorMessage.includes('insufficient funds')) {
@@ -470,7 +469,7 @@ export class OnchainMailerClient {
   }
 
   // Private methods for Solana implementation
-  private async sendSolanaMessage(subject: string, body: string, priority: boolean): Promise<MessageResult> {
+  private async sendSolanaMessage(subject: string, body: string, priority: boolean, resolveSenderToName: boolean = false): Promise<MessageResult> {
     try {
       const { MailerClient, PublicKey, Connection } = await this.getSolanaModules();
 
@@ -506,13 +505,9 @@ export class OnchainMailerClient {
 
       // Get current fees
       const fees = await client.getFees();
-      
+
       let txHash: string;
-      if (priority) {
-        txHash = await client.sendPriority(recipientKey.toBase58(), subject, body);
-      } else {
-        txHash = await client.send(recipientKey.toBase58(), subject, body);
-      }
+      txHash = await client.send(recipientKey.toBase58(), subject, body, priority, resolveSenderToName);
 
       // Get transaction details
       const tx = await connection.getTransaction(txHash, { commitment: 'confirmed', maxSupportedTransactionVersion: 0 });

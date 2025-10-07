@@ -41,12 +41,13 @@ function encodeSend(
   to: PublicKey,
   subject: string,
   body: string,
-  revenueShareToReceiver: boolean
+  revenueShareToReceiver: boolean,
+  resolveSenderToName: boolean = false
 ): Buffer {
   const subjectBytes = Buffer.from(subject, 'utf8');
   const bodyBytes = Buffer.from(body, 'utf8');
   const data = Buffer.alloc(
-    1 + 32 + 4 + subjectBytes.length + 4 + bodyBytes.length + 1
+    1 + 32 + 4 + subjectBytes.length + 4 + bodyBytes.length + 1 + 1
   );
   let offset = 0;
 
@@ -67,6 +68,9 @@ function encodeSend(
   offset += bodyBytes.length;
 
   data.writeUInt8(revenueShareToReceiver ? 1 : 0, offset);
+  offset += 1;
+
+  data.writeUInt8(resolveSenderToName ? 1 : 0, offset);
 
   return data;
 }
@@ -358,13 +362,15 @@ export class MailerClient {
    * @param subject Message subject
    * @param body Message body
    * @param revenueShareToReceiver If true, recipient gets 90% revenue share; if false, no revenue share
+   * @param resolveSenderToName If true, resolve sender address to name via off-chain service
    * @returns Transaction signature
    */
   async send(
     to: string | PublicKey,
     subject: string,
     body: string,
-    revenueShareToReceiver: boolean = false
+    revenueShareToReceiver: boolean = false,
+    resolveSenderToName: boolean = false
   ): Promise<string> {
     const recipientKey = typeof to === 'string' ? new PublicKey(to) : to;
     // Derive recipient claim PDA
@@ -413,7 +419,7 @@ export class MailerClient {
         { pubkey: SystemProgram.programId, isSigner: false, isWritable: false },
       ],
       programId: this.programId,
-      data: encodeSend(recipientKey, subject, body, revenueShareToReceiver),
+      data: encodeSend(recipientKey, subject, body, revenueShareToReceiver, resolveSenderToName),
     });
 
     instructions.push(sendInstruction);

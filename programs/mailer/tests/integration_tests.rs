@@ -222,6 +222,7 @@ async fn test_send_priority_message() {
         subject: "Test Subject".to_string(),
         _body: "Test message body".to_string(),
         revenue_share_to_receiver: true,
+        resolve_sender_to_name: false,
     };
 
     let instruction = Instruction::new_with_borsh(
@@ -312,6 +313,7 @@ async fn test_send_standard_message() {
         subject: "Test Standard Subject".to_string(),
         _body: "Test standard message body".to_string(),
         revenue_share_to_receiver: false,
+        resolve_sender_to_name: false,
     };
 
     let instruction = Instruction::new_with_borsh(
@@ -383,6 +385,7 @@ async fn test_claim_recipient_share() {
             subject: "Test".to_string(),
             _body: "Test".to_string(),
             revenue_share_to_receiver: true,
+        resolve_sender_to_name: false,
         },
         vec![
             AccountMeta::new(payer.pubkey(), true),
@@ -476,6 +479,7 @@ async fn test_claim_owner_share() {
             subject: "Test".to_string(),
             _body: "Test".to_string(),
             revenue_share_to_receiver: false,
+        resolve_sender_to_name: false,
         },
         vec![
             AccountMeta::new(payer.pubkey(), true),

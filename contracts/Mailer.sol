@@ -57,14 +57,16 @@ contract Mailer {
         address indexed to,
         string subject,
         string body,
-        bool revenueShareToReceiver
+        bool revenueShareToReceiver,
+        bool resolveSenderToName
     );
-    
+
     event PreparedMailSent(
         address indexed from,
         address indexed to,
         string indexed mailId,
-        bool revenueShareToReceiver
+        bool revenueShareToReceiver,
+        bool resolveSenderToName
     );
 
     event MailSentToEmail(
@@ -162,6 +164,7 @@ contract Mailer {
      * @param subject Message subject line
      * @param body Message body content
      * @param revenueShareToReceiver If true, receiver gets 90% revenue share; if false, no revenue share
+     * @param resolveSenderToName If true, resolve sender address to name via off-chain service
      *
      * Cost for sender:
      * - Priority (revenueShareToReceiver=true): Sender pays 0.1 USDC, receiver gets 0.09 USDC claimable
@@ -179,7 +182,8 @@ contract Mailer {
         address to,
         string calldata subject,
         string calldata body,
-        bool revenueShareToReceiver
+        bool revenueShareToReceiver,
+        bool resolveSenderToName
     ) external nonReentrant whenNotPaused {
         if (revenueShareToReceiver) {
             // Priority mode: Transfer full fee from sender to contract
@@ -198,7 +202,7 @@ contract Mailer {
             // All goes to owner, no revenue share
             ownerClaimable += ownerFee;
         }
-        emit MailSent(msg.sender, to, subject, body, revenueShareToReceiver);
+        emit MailSent(msg.sender, to, subject, body, revenueShareToReceiver, resolveSenderToName);
     }
     
     /**
@@ -207,6 +211,7 @@ contract Mailer {
      * @param to Recipient address who receives the message and potential revenue share
      * @param mailId Reference ID to pre-prepared message content
      * @param revenueShareToReceiver If true, receiver gets 90% revenue share; if false, no revenue share
+     * @param resolveSenderToName If true, resolve sender address to name via off-chain service
      *
      * Use case: For large messages or repeated templates, store content off-chain
      * and reference it here to save gas costs on transaction data.
@@ -214,7 +219,8 @@ contract Mailer {
     function sendPrepared(
         address to,
         string calldata mailId,
-        bool revenueShareToReceiver
+        bool revenueShareToReceiver,
+        bool resolveSenderToName
     ) external nonReentrant whenNotPaused {
         if (revenueShareToReceiver) {
             // Priority mode: Transfer full fee from sender to contract
@@ -233,7 +239,7 @@ contract Mailer {
             // All goes to owner, no revenue share
             ownerClaimable += ownerFee;
         }
-        emit PreparedMailSent(msg.sender, to, mailId, revenueShareToReceiver);
+        emit PreparedMailSent(msg.sender, to, mailId, revenueShareToReceiver, resolveSenderToName);
     }
 
     /**
