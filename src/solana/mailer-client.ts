@@ -178,6 +178,7 @@ interface MailerState {
   send_fee: bigint;
   delegation_fee: bigint;
   owner_claimable: bigint;
+  paused: boolean;
   bump: number;
 }
 
@@ -207,6 +208,8 @@ function parseMailerState(data: Buffer): MailerState {
   offset += 8;
   const ownerClaimable = data.readBigUInt64LE(offset);
   offset += 8;
+  const paused = data.readUInt8(offset) === 1;
+  offset += 1;
   const bump = data.readUInt8(offset);
 
   return {
@@ -215,6 +218,7 @@ function parseMailerState(data: Buffer): MailerState {
     send_fee: sendFee,
     delegation_fee: delegationFee,
     owner_claimable: ownerClaimable,
+    paused,
     bump,
   };
 }
@@ -839,6 +843,171 @@ export class MailerClient {
 
     const transaction = new Transaction().add(...instructions);
     return this.sendTransaction(transaction, options);
+  }
+
+  /**
+   * Send a prepared message using a mailId (to match EVM behavior)
+   * @param to Recipient's public key or address string
+   * @param mailId Pre-prepared message identifier
+   * @param revenueShareToReceiver If true, recipient gets 90% revenue share
+   * @param resolveSenderToName If true, resolve sender address to name
+   * @returns Transaction signature
+   */
+  async sendPrepared(
+    to: string | PublicKey,
+    mailId: string,
+    revenueShareToReceiver: boolean = false,
+    resolveSenderToName: boolean = false
+  ): Promise<string> {
+    // For Solana, we send the mailId as both subject and body to indicate it's a prepared message
+    return this.send(to, mailId, '', revenueShareToReceiver, resolveSenderToName);
+  }
+
+  /**
+   * Pause the contract and distribute owner claimable funds (owner only)
+   * @param options Transaction confirm options
+   * @returns Transaction signature
+   */
+  async pause(options?: ConfirmOptions): Promise<string> {
+    const ownerTokenAccount = getAssociatedTokenAddressSync(
+      this.usdcMint,
+      this.wallet.publicKey
+    );
+    const mailerTokenAccount = getAssociatedTokenAddressSync(
+      this.usdcMint,
+      this.mailerStatePda,
+      true
+    );
+
+    const instruction = new TransactionInstruction({
+      keys: [
+        { pubkey: this.wallet.publicKey, isSigner: true, isWritable: false },
+        { pubkey: this.mailerStatePda, isSigner: false, isWritable: true },
+        { pubkey: ownerTokenAccount, isSigner: false, isWritable: true },
+        { pubkey: mailerTokenAccount, isSigner: false, isWritable: true },
+        { pubkey: TOKEN_PROGRAM_ID, isSigner: false, isWritable: false },
+      ],
+      programId: this.programId,
+      data: encodeSimpleInstruction(InstructionType.Pause),
+    });
+
+    const transaction = new Transaction().add(instruction);
+    return await this.sendTransaction(transaction, options);
+  }
+
+  /**
+   * Unpause the contract (owner only)
+   * @param options Transaction confirm options
+   * @returns Transaction signature
+   */
+  async unpause(options?: ConfirmOptions): Promise<string> {
+    const instruction = new TransactionInstruction({
+      keys: [
+        { pubkey: this.wallet.publicKey, isSigner: true, isWritable: false },
+        { pubkey: this.mailerStatePda, isSigner: false, isWritable: true },
+      ],
+      programId: this.programId,
+      data: encodeSimpleInstruction(InstructionType.Unpause),
+    });
+
+    const transaction = new Transaction().add(instruction);
+    return await this.sendTransaction(transaction, options);
+  }
+
+  /**
+   * Emergency unpause without fund distribution (owner only)
+   * @param options Transaction confirm options
+   * @returns Transaction signature
+   */
+  async emergencyUnpause(options?: ConfirmOptions): Promise<string> {
+    const instruction = new TransactionInstruction({
+      keys: [
+        { pubkey: this.wallet.publicKey, isSigner: true, isWritable: false },
+        { pubkey: this.mailerStatePda, isSigner: false, isWritable: true },
+      ],
+      programId: this.programId,
+      data: encodeSimpleInstruction(InstructionType.EmergencyUnpause),
+    });
+
+    const transaction = new Transaction().add(instruction);
+    return await this.sendTransaction(transaction, options);
+  }
+
+  /**
+   * Distribute claimable funds to a recipient when contract is paused
+   * @param recipient Recipient address to distribute funds for
+   * @param options Transaction confirm options
+   * @returns Transaction signature
+   */
+  async distributeClaimableFunds(
+    recipient: string | PublicKey,
+    options?: ConfirmOptions
+  ): Promise<string> {
+    const recipientKey = typeof recipient === 'string' ? new PublicKey(recipient) : recipient;
+
+    const [recipientClaimPda] = PublicKey.findProgramAddressSync(
+      [Buffer.from('claim'), recipientKey.toBuffer()],
+      this.programId
+    );
+
+    const recipientTokenAccount = getAssociatedTokenAddressSync(
+      this.usdcMint,
+      recipientKey
+    );
+    const mailerTokenAccount = getAssociatedTokenAddressSync(
+      this.usdcMint,
+      this.mailerStatePda,
+      true
+    );
+
+    // Encode the recipient parameter
+    const data = Buffer.alloc(1 + 32);
+    data.writeUInt8(InstructionType.DistributeClaimableFunds, 0);
+    recipientKey.toBuffer().copy(data, 1);
+
+    const instruction = new TransactionInstruction({
+      keys: [
+        { pubkey: this.wallet.publicKey, isSigner: true, isWritable: false },
+        { pubkey: this.mailerStatePda, isSigner: false, isWritable: false },
+        { pubkey: recipientClaimPda, isSigner: false, isWritable: true },
+        { pubkey: recipientTokenAccount, isSigner: false, isWritable: true },
+        { pubkey: mailerTokenAccount, isSigner: false, isWritable: true },
+        { pubkey: TOKEN_PROGRAM_ID, isSigner: false, isWritable: false },
+      ],
+      programId: this.programId,
+      data,
+    });
+
+    const transaction = new Transaction().add(instruction);
+    return await this.sendTransaction(transaction, options);
+  }
+
+  /**
+   * Get the current send fee
+   * @returns Send fee in USDC micro-units (6 decimals)
+   */
+  async getSendFee(): Promise<bigint> {
+    const fees = await this.getFees();
+    return BigInt(fees.sendFee);
+  }
+
+  /**
+   * Check if contract is currently paused
+   * @returns True if contract is paused, false otherwise
+   */
+  async isPaused(): Promise<boolean> {
+    const accountInfo = await this.connection.getAccountInfo(
+      this.mailerStatePda
+    );
+    if (!accountInfo) {
+      throw new Error(
+        'Mailer state account not found - program not initialized'
+      );
+    }
+
+    const stateData = parseMailerState(accountInfo.data);
+    // paused field is at offset: 32 + 32 + 8 + 8 + 8 = 88 bytes
+    return stateData.paused;
   }
 
   /**

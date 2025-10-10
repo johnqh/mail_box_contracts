@@ -7,13 +7,15 @@
     "moduleResolution": "node10",
     "ignoreDeprecations": "5.0",
     "allowSyntheticDefaultImports": true,
-    "esModuleInterop": true
+    "esModuleInterop": true,
+    "jsx": "react"
   },
   "include": [
     "src/unified/**/*",
     "src/utils/**/*",
     "src/evm/**/*",
     "src/solana/**/*",
+    "src/react/**/*",
     "typechain-types/**/*"
   ],
   "exclude": [

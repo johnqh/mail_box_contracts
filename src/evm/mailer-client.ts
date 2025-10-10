@@ -394,5 +394,133 @@ export class MailerClient {
       chain: walletClient.chain,
     });
   }
+
+  /**
+   * Set the send fee (owner only)
+   * @param newFee New fee amount in USDC (6 decimals)
+   * @param walletClient Viem wallet client for transaction
+   * @param account Account to send from (must be owner)
+   * @returns Promise resolving to transaction hash
+   */
+  async setFee(
+    newFee: bigint,
+    walletClient: WalletClient,
+    account: Account | Address
+  ): Promise<Hash> {
+    return await walletClient.writeContract({
+      address: this.contractAddress,
+      abi: MAILER_ABI,
+      functionName: 'setFee',
+      args: [newFee],
+      account,
+      chain: walletClient.chain,
+    });
+  }
+
+  /**
+   * Get the current send fee
+   * @returns Current send fee in USDC (6 decimals)
+   */
+  async getFee(): Promise<bigint> {
+    return await this.publicClient.readContract({
+      address: this.contractAddress,
+      abi: MAILER_ABI,
+      functionName: 'getFee',
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    } as any) as bigint;
+  }
+
+  /**
+   * Pause the contract and distribute all claimable funds (owner only)
+   * @param walletClient Viem wallet client for transaction
+   * @param account Account to send from (must be owner)
+   * @returns Promise resolving to transaction hash
+   */
+  async pause(
+    walletClient: WalletClient,
+    account: Account | Address
+  ): Promise<Hash> {
+    return await walletClient.writeContract({
+      address: this.contractAddress,
+      abi: MAILER_ABI,
+      functionName: 'pause',
+      account,
+      chain: walletClient.chain,
+    });
+  }
+
+  /**
+   * Unpause the contract (owner only)
+   * @param walletClient Viem wallet client for transaction
+   * @param account Account to send from (must be owner)
+   * @returns Promise resolving to transaction hash
+   */
+  async unpause(
+    walletClient: WalletClient,
+    account: Account | Address
+  ): Promise<Hash> {
+    return await walletClient.writeContract({
+      address: this.contractAddress,
+      abi: MAILER_ABI,
+      functionName: 'unpause',
+      account,
+      chain: walletClient.chain,
+    });
+  }
+
+  /**
+   * Emergency unpause without fund distribution (owner only)
+   * @param walletClient Viem wallet client for transaction
+   * @param account Account to send from (must be owner)
+   * @returns Promise resolving to transaction hash
+   */
+  async emergencyUnpause(
+    walletClient: WalletClient,
+    account: Account | Address
+  ): Promise<Hash> {
+    return await walletClient.writeContract({
+      address: this.contractAddress,
+      abi: MAILER_ABI,
+      functionName: 'emergencyUnpause',
+      account,
+      chain: walletClient.chain,
+    });
+  }
+
+  /**
+   * Check if contract is currently paused
+   * @returns True if contract is paused, false otherwise
+   */
+  async isPaused(): Promise<boolean> {
+    return await this.publicClient.readContract({
+      address: this.contractAddress,
+      abi: MAILER_ABI,
+      functionName: 'isPaused',
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    } as any) as boolean;
+  }
+
+  /**
+   * Distribute a specific recipient's claimable funds during pause
+   * Anyone can call this function when contract is paused
+   * @param recipient Address to distribute funds for
+   * @param walletClient Viem wallet client for transaction
+   * @param account Account to send from
+   * @returns Promise resolving to transaction hash
+   */
+  async distributeClaimableFunds(
+    recipient: string,
+    walletClient: WalletClient,
+    account: Account | Address
+  ): Promise<Hash> {
+    return await walletClient.writeContract({
+      address: this.contractAddress,
+      abi: MAILER_ABI,
+      functionName: 'distributeClaimableFunds',
+      args: [getAddress(recipient)],
+      account,
+      chain: walletClient.chain,
+    });
+  }
 }
 

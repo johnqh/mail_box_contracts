@@ -573,6 +573,1310 @@ export class OnchainMailerClient {
     };
   }
 
+  /**
+   * Get send fee using the appropriate chain implementation
+   * @returns Send fee in USDC micro-units (6 decimals)
+   */
+  async getSendFee(): Promise<bigint> {
+    if (this.chainType === 'evm') {
+      return this.getEVMSendFee();
+    } else {
+      return this.getSolanaSendFee();
+    }
+  }
+
+  /**
+   * Get claimable amount for an address
+   * @param address - Address to check claimable balance for (defaults to connected wallet)
+   * @returns Claimable amount in USDC micro-units
+   */
+  async getClaimableAmount(address?: string): Promise<bigint> {
+    const targetAddress = address || this.wallet.address;
+    if (this.chainType === 'evm') {
+      return this.getEVMClaimableAmount(targetAddress);
+    } else {
+      return this.getSolanaClaimableAmount(targetAddress);
+    }
+  }
+
+  /**
+   * Get owner's claimable fee balance
+   * @returns Owner claimable amount in USDC micro-units
+   */
+  async getOwnerClaimable(): Promise<bigint> {
+    if (this.chainType === 'evm') {
+      return this.getEVMOwnerClaimable();
+    } else {
+      return this.getSolanaOwnerClaimable();
+    }
+  }
+
+  /**
+   * Get delegation information for an address
+   * @param address - Address to check delegation for (defaults to connected wallet)
+   * @returns Delegation address or null if no delegation
+   */
+  async getDelegation(address?: string): Promise<string | null> {
+    const targetAddress = address || this.wallet.address;
+    if (this.chainType === 'evm') {
+      return this.getEVMDelegation(targetAddress);
+    } else {
+      return this.getSolanaDelegation(targetAddress);
+    }
+  }
+
+  // EVM read methods
+  private async getEVMSendFee(): Promise<bigint> {
+    const { viem, MailerClient } = await this.getEVMModules();
+
+    if (!this.config.evm?.contracts.mailer) {
+      throw new Error('EVM Mailer contract address not configured');
+    }
+
+    const publicClient = viem.createPublicClient({
+      transport: viem.http(this.config.evm.rpc),
+      chain: {
+        id: this.config.evm.chainId,
+        name: 'Custom Chain',
+        nativeCurrency: { name: 'ETH', symbol: 'ETH', decimals: 18 },
+        rpcUrls: {
+          default: { http: [this.config.evm.rpc] }
+        }
+      }
+    });
+
+    const client = new MailerClient(this.config.evm.contracts.mailer, publicClient);
+    return client.getSendFee();
+  }
+
+  private async getEVMClaimableAmount(address: string): Promise<bigint> {
+    const { viem, MailerClient } = await this.getEVMModules();
+
+    if (!this.config.evm?.contracts.mailer) {
+      throw new Error('EVM Mailer contract address not configured');
+    }
+
+    const publicClient = viem.createPublicClient({
+      transport: viem.http(this.config.evm.rpc),
+      chain: {
+        id: this.config.evm.chainId,
+        name: 'Custom Chain',
+        nativeCurrency: { name: 'ETH', symbol: 'ETH', decimals: 18 },
+        rpcUrls: {
+          default: { http: [this.config.evm.rpc] }
+        }
+      }
+    });
+
+    const client = new MailerClient(this.config.evm.contracts.mailer, publicClient);
+    const result = await client.getRecipientClaimable(address);
+    return result.amount;
+  }
+
+  private async getEVMOwnerClaimable(): Promise<bigint> {
+    const { viem, MailerClient } = await this.getEVMModules();
+
+    if (!this.config.evm?.contracts.mailer) {
+      throw new Error('EVM Mailer contract address not configured');
+    }
+
+    const publicClient = viem.createPublicClient({
+      transport: viem.http(this.config.evm.rpc),
+      chain: {
+        id: this.config.evm.chainId,
+        name: 'Custom Chain',
+        nativeCurrency: { name: 'ETH', symbol: 'ETH', decimals: 18 },
+        rpcUrls: {
+          default: { http: [this.config.evm.rpc] }
+        }
+      }
+    });
+
+    const client = new MailerClient(this.config.evm.contracts.mailer, publicClient);
+    return client.getOwnerClaimable();
+  }
+
+  private async getEVMDelegation(_address: string): Promise<string | null> {
+    // Delegation read not implemented in EVM client yet
+    // Would need to add getDelegation method to EVM MailerClient
+    throw new Error('getDelegation not yet implemented for EVM');
+  }
+
+  // Solana read methods
+  private async getSolanaSendFee(): Promise<bigint> {
+    const { MailerClient, PublicKey, Connection } = await this.getSolanaModules();
+
+    if (!this.config.solana?.programs.mailer) {
+      throw new Error('Solana Mailer program address not configured');
+    }
+
+    const connection = new Connection(this.config.solana.rpc, 'confirmed');
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const wallet = MailerClient.createWallet(this.wallet as any);
+    const programId = new PublicKey(this.config.solana.programs.mailer);
+    const usdcMint = new PublicKey(this.config.solana.usdcMint);
+
+    const client = new MailerClient(connection, wallet, programId, usdcMint);
+    const fees = await client.getFees();
+    return BigInt(fees.sendFee);
+  }
+
+  private async getSolanaClaimableAmount(address: string): Promise<bigint> {
+    const { MailerClient, PublicKey, Connection } = await this.getSolanaModules();
+
+    if (!this.config.solana?.programs.mailer) {
+      throw new Error('Solana Mailer program address not configured');
+    }
+
+    const connection = new Connection(this.config.solana.rpc, 'confirmed');
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const wallet = MailerClient.createWallet(this.wallet as any);
+    const programId = new PublicKey(this.config.solana.programs.mailer);
+    const usdcMint = new PublicKey(this.config.solana.usdcMint);
+
+    const client = new MailerClient(connection, wallet, programId, usdcMint);
+    const recipientKey = new PublicKey(address);
+    const claimInfo = await client.getRecipientClaimable(recipientKey);
+
+    return claimInfo ? BigInt(claimInfo.amount) : 0n;
+  }
+
+  private async getSolanaOwnerClaimable(): Promise<bigint> {
+    const { MailerClient, PublicKey, Connection } = await this.getSolanaModules();
+
+    if (!this.config.solana?.programs.mailer) {
+      throw new Error('Solana Mailer program address not configured');
+    }
+
+    const connection = new Connection(this.config.solana.rpc, 'confirmed');
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const wallet = MailerClient.createWallet(this.wallet as any);
+    const programId = new PublicKey(this.config.solana.programs.mailer);
+    const usdcMint = new PublicKey(this.config.solana.usdcMint);
+
+    const client = new MailerClient(connection, wallet, programId, usdcMint);
+    const amount = await client.getOwnerClaimable();
+    return BigInt(amount);
+  }
+
+  private async getSolanaDelegation(address: string): Promise<string | null> {
+    const { MailerClient, PublicKey, Connection } = await this.getSolanaModules();
+
+    if (!this.config.solana?.programs.mailer) {
+      throw new Error('Solana Mailer program address not configured');
+    }
+
+    const connection = new Connection(this.config.solana.rpc, 'confirmed');
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const wallet = MailerClient.createWallet(this.wallet as any);
+    const programId = new PublicKey(this.config.solana.programs.mailer);
+    const usdcMint = new PublicKey(this.config.solana.usdcMint);
+
+    const client = new MailerClient(connection, wallet, programId, usdcMint);
+    const delegatorKey = new PublicKey(address);
+    const delegationInfo = await client.getDelegation(delegatorKey);
+
+    return delegationInfo?.delegate || null;
+  }
+
+  /**
+   * Send a prepared message using mail ID (to match cross-chain behavior)
+   * @param to - Recipient address
+   * @param mailId - Pre-prepared message identifier
+   * @param priority - Whether to use priority sending with revenue share
+   * @param resolveSenderToName - If true, resolve sender address to name
+   * @returns Promise resolving to MessageResult
+   */
+  async sendPrepared(to: string, mailId: string, priority: boolean = false, resolveSenderToName: boolean = false): Promise<MessageResult> {
+    if (this.chainType === 'evm') {
+      return this.sendPreparedEVM(to, mailId, priority, resolveSenderToName);
+    } else {
+      return this.sendPreparedSolana(to, mailId, priority, resolveSenderToName);
+    }
+  }
+
+  /**
+   * Send message to email address (no wallet known)
+   * @param toEmail - Email address of the recipient
+   * @param subject - Message subject
+   * @param body - Message body
+   * @returns Promise resolving to MessageResult
+   */
+  async sendToEmail(toEmail: string, subject: string, body: string): Promise<MessageResult> {
+    if (this.chainType === 'evm') {
+      return this.sendToEmailEVM(toEmail, subject, body);
+    } else {
+      return this.sendToEmailSolana(toEmail, subject, body);
+    }
+  }
+
+  /**
+   * Send prepared message to email address (no wallet known)
+   * @param toEmail - Email address of the recipient
+   * @param mailId - Pre-prepared message identifier
+   * @returns Promise resolving to MessageResult
+   */
+  async sendPreparedToEmail(toEmail: string, mailId: string): Promise<MessageResult> {
+    if (this.chainType === 'evm') {
+      return this.sendPreparedToEmailEVM(toEmail, mailId);
+    } else {
+      return this.sendPreparedToEmailSolana(toEmail, mailId);
+    }
+  }
+
+  /**
+   * Set the send fee (owner only)
+   * @param newFee - New fee amount in USDC micro-units (6 decimals)
+   * @returns Promise resolving to transaction details
+   */
+  async setFee(newFee: bigint): Promise<UnifiedTransaction> {
+    if (this.chainType === 'evm') {
+      return this.setFeeEVM(newFee);
+    } else {
+      return this.setFeeSolana(newFee);
+    }
+  }
+
+  /**
+   * Get the current send fee
+   * @returns Current send fee in USDC micro-units (6 decimals)
+   */
+  async getFee(): Promise<bigint> {
+    return this.getSendFee();
+  }
+
+  /**
+   * Set the delegation fee (owner only)
+   * @param newFee - New delegation fee in USDC micro-units
+   * @returns Promise resolving to transaction details
+   */
+  async setDelegationFee(newFee: bigint): Promise<UnifiedTransaction> {
+    if (this.chainType === 'evm') {
+      return this.setDelegationFeeEVM(newFee);
+    } else {
+      return this.setDelegationFeeSolana(newFee);
+    }
+  }
+
+  /**
+   * Get the current delegation fee
+   * @returns Current delegation fee in USDC micro-units
+   */
+  async getDelegationFee(): Promise<bigint> {
+    if (this.chainType === 'evm') {
+      return this.getDelegationFeeEVM();
+    } else {
+      return this.getDelegationFeeSolana();
+    }
+  }
+
+  /**
+   * Reject a delegation made to you by another address
+   * @param delegatorAddress - Address that delegated to you
+   * @returns Promise resolving to transaction details
+   */
+  async rejectDelegation(delegatorAddress: string): Promise<UnifiedTransaction> {
+    if (this.chainType === 'evm') {
+      return this.rejectDelegationEVM(delegatorAddress);
+    } else {
+      return this.rejectDelegationSolana(delegatorAddress);
+    }
+  }
+
+  /**
+   * Claim owner share of fees (owner only)
+   * @returns Promise resolving to transaction details
+   */
+  async claimOwnerShare(): Promise<UnifiedTransaction> {
+    if (this.chainType === 'evm') {
+      return this.claimOwnerShareEVM();
+    } else {
+      return this.claimOwnerShareSolana();
+    }
+  }
+
+  /**
+   * Claim expired shares (owner only, EVM only)
+   * @param recipient - Address to claim expired shares for
+   * @returns Promise resolving to transaction details
+   */
+  async claimExpiredShares(recipient: string): Promise<UnifiedTransaction> {
+    if (this.chainType === 'evm') {
+      return this.claimExpiredSharesEVM(recipient);
+    } else {
+      throw new Error('claimExpiredShares not available on Solana');
+    }
+  }
+
+  /**
+   * Pause the contract and distribute funds (owner only)
+   * @returns Promise resolving to transaction details
+   */
+  async pause(): Promise<UnifiedTransaction> {
+    if (this.chainType === 'evm') {
+      return this.pauseEVM();
+    } else {
+      return this.pauseSolana();
+    }
+  }
+
+  /**
+   * Unpause the contract (owner only)
+   * @returns Promise resolving to transaction details
+   */
+  async unpause(): Promise<UnifiedTransaction> {
+    if (this.chainType === 'evm') {
+      return this.unpauseEVM();
+    } else {
+      return this.unpauseSolana();
+    }
+  }
+
+  /**
+   * Emergency unpause without fund distribution (owner only)
+   * @returns Promise resolving to transaction details
+   */
+  async emergencyUnpause(): Promise<UnifiedTransaction> {
+    if (this.chainType === 'evm') {
+      return this.emergencyUnpauseEVM();
+    } else {
+      return this.emergencyUnpauseSolana();
+    }
+  }
+
+  /**
+   * Check if contract is currently paused
+   * @returns True if contract is paused, false otherwise
+   */
+  async isPaused(): Promise<boolean> {
+    if (this.chainType === 'evm') {
+      return this.isPausedEVM();
+    } else {
+      return this.isPausedSolana();
+    }
+  }
+
+  /**
+   * Distribute claimable funds to a recipient when contract is paused
+   * @param recipient - Address to distribute funds for
+   * @returns Promise resolving to transaction details
+   */
+  async distributeClaimableFunds(recipient: string): Promise<UnifiedTransaction> {
+    if (this.chainType === 'evm') {
+      return this.distributeClaimableFundsEVM(recipient);
+    } else {
+      return this.distributeClaimableFundsSolana(recipient);
+    }
+  }
+
+  // EVM Implementation Methods
+  private async sendPreparedEVM(to: string, mailId: string, priority: boolean, resolveSenderToName: boolean): Promise<MessageResult> {
+    const { viem, MailerClient } = await this.getEVMModules();
+
+    if (!this.config.evm?.contracts.mailer) {
+      throw new Error('EVM Mailer contract address not configured');
+    }
+
+    const publicClient = viem.createPublicClient({
+      transport: viem.http(this.config.evm.rpc),
+      chain: {
+        id: this.config.evm.chainId,
+        name: 'Custom Chain',
+        nativeCurrency: { name: 'ETH', symbol: 'ETH', decimals: 18 },
+        rpcUrls: {
+          default: { http: [this.config.evm.rpc] }
+        }
+      }
+    });
+
+    const walletClient = viem.createWalletClient({
+      transport: viem.http(this.config.evm.rpc),
+      chain: {
+        id: this.config.evm.chainId,
+        name: 'Custom Chain',
+        nativeCurrency: { name: 'ETH', symbol: 'ETH', decimals: 18 },
+        rpcUrls: {
+          default: { http: [this.config.evm.rpc] }
+        }
+      }
+    });
+
+    const client = new MailerClient(this.config.evm.contracts.mailer, publicClient);
+    const txHash = await client.sendPrepared(to, mailId, priority, resolveSenderToName, walletClient, this.wallet.address);
+    const receipt = await publicClient.waitForTransactionReceipt({ hash: txHash });
+
+    return {
+      transactionHash: txHash,
+      chainType: ChainType.EVM,
+      fee: BigInt(priority ? '100000' : '10000'),
+      gasUsed: receipt.gasUsed,
+      isPriority: priority,
+      success: true
+    };
+  }
+
+  private async sendToEmailEVM(toEmail: string, subject: string, body: string): Promise<MessageResult> {
+    const { viem, MailerClient } = await this.getEVMModules();
+
+    if (!this.config.evm?.contracts.mailer) {
+      throw new Error('EVM Mailer contract address not configured');
+    }
+
+    const publicClient = viem.createPublicClient({
+      transport: viem.http(this.config.evm.rpc),
+      chain: {
+        id: this.config.evm.chainId,
+        name: 'Custom Chain',
+        nativeCurrency: { name: 'ETH', symbol: 'ETH', decimals: 18 },
+        rpcUrls: {
+          default: { http: [this.config.evm.rpc] }
+        }
+      }
+    });
+
+    const walletClient = viem.createWalletClient({
+      transport: viem.http(this.config.evm.rpc),
+      chain: {
+        id: this.config.evm.chainId,
+        name: 'Custom Chain',
+        nativeCurrency: { name: 'ETH', symbol: 'ETH', decimals: 18 },
+        rpcUrls: {
+          default: { http: [this.config.evm.rpc] }
+        }
+      }
+    });
+
+    const client = new MailerClient(this.config.evm.contracts.mailer, publicClient);
+    const txHash = await client.sendToEmailAddress(toEmail, subject, body, walletClient, this.wallet.address);
+    const receipt = await publicClient.waitForTransactionReceipt({ hash: txHash });
+
+    return {
+      transactionHash: txHash,
+      chainType: ChainType.EVM,
+      fee: BigInt('10000'), // 10% fee only
+      gasUsed: receipt.gasUsed,
+      isPriority: false,
+      success: true
+    };
+  }
+
+  private async sendPreparedToEmailEVM(toEmail: string, mailId: string): Promise<MessageResult> {
+    const { viem, MailerClient } = await this.getEVMModules();
+
+    if (!this.config.evm?.contracts.mailer) {
+      throw new Error('EVM Mailer contract address not configured');
+    }
+
+    const publicClient = viem.createPublicClient({
+      transport: viem.http(this.config.evm.rpc),
+      chain: {
+        id: this.config.evm.chainId,
+        name: 'Custom Chain',
+        nativeCurrency: { name: 'ETH', symbol: 'ETH', decimals: 18 },
+        rpcUrls: {
+          default: { http: [this.config.evm.rpc] }
+        }
+      }
+    });
+
+    const walletClient = viem.createWalletClient({
+      transport: viem.http(this.config.evm.rpc),
+      chain: {
+        id: this.config.evm.chainId,
+        name: 'Custom Chain',
+        nativeCurrency: { name: 'ETH', symbol: 'ETH', decimals: 18 },
+        rpcUrls: {
+          default: { http: [this.config.evm.rpc] }
+        }
+      }
+    });
+
+    const client = new MailerClient(this.config.evm.contracts.mailer, publicClient);
+    const txHash = await client.sendPreparedToEmailAddress(toEmail, mailId, walletClient, this.wallet.address);
+    const receipt = await publicClient.waitForTransactionReceipt({ hash: txHash });
+
+    return {
+      transactionHash: txHash,
+      chainType: ChainType.EVM,
+      fee: BigInt('10000'), // 10% fee only
+      gasUsed: receipt.gasUsed,
+      isPriority: false,
+      success: true
+    };
+  }
+
+  private async setFeeEVM(newFee: bigint): Promise<UnifiedTransaction> {
+    const { viem, MailerClient } = await this.getEVMModules();
+
+    if (!this.config.evm?.contracts.mailer) {
+      throw new Error('EVM Mailer contract address not configured');
+    }
+
+    const publicClient = viem.createPublicClient({
+      transport: viem.http(this.config.evm.rpc),
+      chain: {
+        id: this.config.evm.chainId,
+        name: 'Custom Chain',
+        nativeCurrency: { name: 'ETH', symbol: 'ETH', decimals: 18 },
+        rpcUrls: {
+          default: { http: [this.config.evm.rpc] }
+        }
+      }
+    });
+
+    const walletClient = viem.createWalletClient({
+      transport: viem.http(this.config.evm.rpc),
+      chain: {
+        id: this.config.evm.chainId,
+        name: 'Custom Chain',
+        nativeCurrency: { name: 'ETH', symbol: 'ETH', decimals: 18 },
+        rpcUrls: {
+          default: { http: [this.config.evm.rpc] }
+        }
+      }
+    });
+
+    const client = new MailerClient(this.config.evm.contracts.mailer, publicClient);
+    const txHash = await client.setFee(newFee, walletClient, this.wallet.address);
+    const receipt = await publicClient.waitForTransactionReceipt({ hash: txHash });
+    const block = await publicClient.getBlock({ blockNumber: receipt.blockNumber });
+
+    return {
+      hash: txHash,
+      chainType: ChainType.EVM,
+      blockNumber: receipt.blockNumber,
+      timestamp: Number(block.timestamp) * 1000
+    };
+  }
+
+  private async setDelegationFeeEVM(newFee: bigint): Promise<UnifiedTransaction> {
+    const { viem, MailerClient } = await this.getEVMModules();
+
+    if (!this.config.evm?.contracts.mailer) {
+      throw new Error('EVM Mailer contract address not configured');
+    }
+
+    const publicClient = viem.createPublicClient({
+      transport: viem.http(this.config.evm.rpc),
+      chain: {
+        id: this.config.evm.chainId,
+        name: 'Custom Chain',
+        nativeCurrency: { name: 'ETH', symbol: 'ETH', decimals: 18 },
+        rpcUrls: {
+          default: { http: [this.config.evm.rpc] }
+        }
+      }
+    });
+
+    const walletClient = viem.createWalletClient({
+      transport: viem.http(this.config.evm.rpc),
+      chain: {
+        id: this.config.evm.chainId,
+        name: 'Custom Chain',
+        nativeCurrency: { name: 'ETH', symbol: 'ETH', decimals: 18 },
+        rpcUrls: {
+          default: { http: [this.config.evm.rpc] }
+        }
+      }
+    });
+
+    const client = new MailerClient(this.config.evm.contracts.mailer, publicClient);
+    const txHash = await client.setDelegationFee(newFee, walletClient, this.wallet.address);
+    const receipt = await publicClient.waitForTransactionReceipt({ hash: txHash });
+    const block = await publicClient.getBlock({ blockNumber: receipt.blockNumber });
+
+    return {
+      hash: txHash,
+      chainType: ChainType.EVM,
+      blockNumber: receipt.blockNumber,
+      timestamp: Number(block.timestamp) * 1000
+    };
+  }
+
+  private async getDelegationFeeEVM(): Promise<bigint> {
+    const { viem, MailerClient } = await this.getEVMModules();
+
+    if (!this.config.evm?.contracts.mailer) {
+      throw new Error('EVM Mailer contract address not configured');
+    }
+
+    const publicClient = viem.createPublicClient({
+      transport: viem.http(this.config.evm.rpc),
+      chain: {
+        id: this.config.evm.chainId,
+        name: 'Custom Chain',
+        nativeCurrency: { name: 'ETH', symbol: 'ETH', decimals: 18 },
+        rpcUrls: {
+          default: { http: [this.config.evm.rpc] }
+        }
+      }
+    });
+
+    const client = new MailerClient(this.config.evm.contracts.mailer, publicClient);
+    return client.getDelegationFee();
+  }
+
+  private async rejectDelegationEVM(delegatorAddress: string): Promise<UnifiedTransaction> {
+    const { viem, MailerClient } = await this.getEVMModules();
+
+    if (!this.config.evm?.contracts.mailer) {
+      throw new Error('EVM Mailer contract address not configured');
+    }
+
+    const publicClient = viem.createPublicClient({
+      transport: viem.http(this.config.evm.rpc),
+      chain: {
+        id: this.config.evm.chainId,
+        name: 'Custom Chain',
+        nativeCurrency: { name: 'ETH', symbol: 'ETH', decimals: 18 },
+        rpcUrls: {
+          default: { http: [this.config.evm.rpc] }
+        }
+      }
+    });
+
+    const walletClient = viem.createWalletClient({
+      transport: viem.http(this.config.evm.rpc),
+      chain: {
+        id: this.config.evm.chainId,
+        name: 'Custom Chain',
+        nativeCurrency: { name: 'ETH', symbol: 'ETH', decimals: 18 },
+        rpcUrls: {
+          default: { http: [this.config.evm.rpc] }
+        }
+      }
+    });
+
+    const client = new MailerClient(this.config.evm.contracts.mailer, publicClient);
+    const txHash = await client.rejectDelegation(delegatorAddress, walletClient, this.wallet.address);
+    const receipt = await publicClient.waitForTransactionReceipt({ hash: txHash });
+    const block = await publicClient.getBlock({ blockNumber: receipt.blockNumber });
+
+    return {
+      hash: txHash,
+      chainType: ChainType.EVM,
+      blockNumber: receipt.blockNumber,
+      timestamp: Number(block.timestamp) * 1000
+    };
+  }
+
+  private async claimOwnerShareEVM(): Promise<UnifiedTransaction> {
+    const { viem, MailerClient } = await this.getEVMModules();
+
+    if (!this.config.evm?.contracts.mailer) {
+      throw new Error('EVM Mailer contract address not configured');
+    }
+
+    const publicClient = viem.createPublicClient({
+      transport: viem.http(this.config.evm.rpc),
+      chain: {
+        id: this.config.evm.chainId,
+        name: 'Custom Chain',
+        nativeCurrency: { name: 'ETH', symbol: 'ETH', decimals: 18 },
+        rpcUrls: {
+          default: { http: [this.config.evm.rpc] }
+        }
+      }
+    });
+
+    const walletClient = viem.createWalletClient({
+      transport: viem.http(this.config.evm.rpc),
+      chain: {
+        id: this.config.evm.chainId,
+        name: 'Custom Chain',
+        nativeCurrency: { name: 'ETH', symbol: 'ETH', decimals: 18 },
+        rpcUrls: {
+          default: { http: [this.config.evm.rpc] }
+        }
+      }
+    });
+
+    const client = new MailerClient(this.config.evm.contracts.mailer, publicClient);
+    const txHash = await client.claimOwnerShare(walletClient, this.wallet.address);
+    const receipt = await publicClient.waitForTransactionReceipt({ hash: txHash });
+    const block = await publicClient.getBlock({ blockNumber: receipt.blockNumber });
+
+    return {
+      hash: txHash,
+      chainType: ChainType.EVM,
+      blockNumber: receipt.blockNumber,
+      timestamp: Number(block.timestamp) * 1000
+    };
+  }
+
+  private async claimExpiredSharesEVM(recipient: string): Promise<UnifiedTransaction> {
+    const { viem, MailerClient } = await this.getEVMModules();
+
+    if (!this.config.evm?.contracts.mailer) {
+      throw new Error('EVM Mailer contract address not configured');
+    }
+
+    const publicClient = viem.createPublicClient({
+      transport: viem.http(this.config.evm.rpc),
+      chain: {
+        id: this.config.evm.chainId,
+        name: 'Custom Chain',
+        nativeCurrency: { name: 'ETH', symbol: 'ETH', decimals: 18 },
+        rpcUrls: {
+          default: { http: [this.config.evm.rpc] }
+        }
+      }
+    });
+
+    const walletClient = viem.createWalletClient({
+      transport: viem.http(this.config.evm.rpc),
+      chain: {
+        id: this.config.evm.chainId,
+        name: 'Custom Chain',
+        nativeCurrency: { name: 'ETH', symbol: 'ETH', decimals: 18 },
+        rpcUrls: {
+          default: { http: [this.config.evm.rpc] }
+        }
+      }
+    });
+
+    const client = new MailerClient(this.config.evm.contracts.mailer, publicClient);
+    const txHash = await client.claimExpiredShares(recipient, walletClient, this.wallet.address);
+    const receipt = await publicClient.waitForTransactionReceipt({ hash: txHash });
+    const block = await publicClient.getBlock({ blockNumber: receipt.blockNumber });
+
+    return {
+      hash: txHash,
+      chainType: ChainType.EVM,
+      blockNumber: receipt.blockNumber,
+      timestamp: Number(block.timestamp) * 1000
+    };
+  }
+
+  private async pauseEVM(): Promise<UnifiedTransaction> {
+    const { viem, MailerClient } = await this.getEVMModules();
+
+    if (!this.config.evm?.contracts.mailer) {
+      throw new Error('EVM Mailer contract address not configured');
+    }
+
+    const publicClient = viem.createPublicClient({
+      transport: viem.http(this.config.evm.rpc),
+      chain: {
+        id: this.config.evm.chainId,
+        name: 'Custom Chain',
+        nativeCurrency: { name: 'ETH', symbol: 'ETH', decimals: 18 },
+        rpcUrls: {
+          default: { http: [this.config.evm.rpc] }
+        }
+      }
+    });
+
+    const walletClient = viem.createWalletClient({
+      transport: viem.http(this.config.evm.rpc),
+      chain: {
+        id: this.config.evm.chainId,
+        name: 'Custom Chain',
+        nativeCurrency: { name: 'ETH', symbol: 'ETH', decimals: 18 },
+        rpcUrls: {
+          default: { http: [this.config.evm.rpc] }
+        }
+      }
+    });
+
+    const client = new MailerClient(this.config.evm.contracts.mailer, publicClient);
+    const txHash = await client.pause(walletClient, this.wallet.address);
+    const receipt = await publicClient.waitForTransactionReceipt({ hash: txHash });
+    const block = await publicClient.getBlock({ blockNumber: receipt.blockNumber });
+
+    return {
+      hash: txHash,
+      chainType: ChainType.EVM,
+      blockNumber: receipt.blockNumber,
+      timestamp: Number(block.timestamp) * 1000
+    };
+  }
+
+  private async unpauseEVM(): Promise<UnifiedTransaction> {
+    const { viem, MailerClient } = await this.getEVMModules();
+
+    if (!this.config.evm?.contracts.mailer) {
+      throw new Error('EVM Mailer contract address not configured');
+    }
+
+    const publicClient = viem.createPublicClient({
+      transport: viem.http(this.config.evm.rpc),
+      chain: {
+        id: this.config.evm.chainId,
+        name: 'Custom Chain',
+        nativeCurrency: { name: 'ETH', symbol: 'ETH', decimals: 18 },
+        rpcUrls: {
+          default: { http: [this.config.evm.rpc] }
+        }
+      }
+    });
+
+    const walletClient = viem.createWalletClient({
+      transport: viem.http(this.config.evm.rpc),
+      chain: {
+        id: this.config.evm.chainId,
+        name: 'Custom Chain',
+        nativeCurrency: { name: 'ETH', symbol: 'ETH', decimals: 18 },
+        rpcUrls: {
+          default: { http: [this.config.evm.rpc] }
+        }
+      }
+    });
+
+    const client = new MailerClient(this.config.evm.contracts.mailer, publicClient);
+    const txHash = await client.unpause(walletClient, this.wallet.address);
+    const receipt = await publicClient.waitForTransactionReceipt({ hash: txHash });
+    const block = await publicClient.getBlock({ blockNumber: receipt.blockNumber });
+
+    return {
+      hash: txHash,
+      chainType: ChainType.EVM,
+      blockNumber: receipt.blockNumber,
+      timestamp: Number(block.timestamp) * 1000
+    };
+  }
+
+  private async emergencyUnpauseEVM(): Promise<UnifiedTransaction> {
+    const { viem, MailerClient } = await this.getEVMModules();
+
+    if (!this.config.evm?.contracts.mailer) {
+      throw new Error('EVM Mailer contract address not configured');
+    }
+
+    const publicClient = viem.createPublicClient({
+      transport: viem.http(this.config.evm.rpc),
+      chain: {
+        id: this.config.evm.chainId,
+        name: 'Custom Chain',
+        nativeCurrency: { name: 'ETH', symbol: 'ETH', decimals: 18 },
+        rpcUrls: {
+          default: { http: [this.config.evm.rpc] }
+        }
+      }
+    });
+
+    const walletClient = viem.createWalletClient({
+      transport: viem.http(this.config.evm.rpc),
+      chain: {
+        id: this.config.evm.chainId,
+        name: 'Custom Chain',
+        nativeCurrency: { name: 'ETH', symbol: 'ETH', decimals: 18 },
+        rpcUrls: {
+          default: { http: [this.config.evm.rpc] }
+        }
+      }
+    });
+
+    const client = new MailerClient(this.config.evm.contracts.mailer, publicClient);
+    const txHash = await client.emergencyUnpause(walletClient, this.wallet.address);
+    const receipt = await publicClient.waitForTransactionReceipt({ hash: txHash });
+    const block = await publicClient.getBlock({ blockNumber: receipt.blockNumber });
+
+    return {
+      hash: txHash,
+      chainType: ChainType.EVM,
+      blockNumber: receipt.blockNumber,
+      timestamp: Number(block.timestamp) * 1000
+    };
+  }
+
+  private async isPausedEVM(): Promise<boolean> {
+    const { viem, MailerClient } = await this.getEVMModules();
+
+    if (!this.config.evm?.contracts.mailer) {
+      throw new Error('EVM Mailer contract address not configured');
+    }
+
+    const publicClient = viem.createPublicClient({
+      transport: viem.http(this.config.evm.rpc),
+      chain: {
+        id: this.config.evm.chainId,
+        name: 'Custom Chain',
+        nativeCurrency: { name: 'ETH', symbol: 'ETH', decimals: 18 },
+        rpcUrls: {
+          default: { http: [this.config.evm.rpc] }
+        }
+      }
+    });
+
+    const client = new MailerClient(this.config.evm.contracts.mailer, publicClient);
+    return client.isPaused();
+  }
+
+  private async distributeClaimableFundsEVM(recipient: string): Promise<UnifiedTransaction> {
+    const { viem, MailerClient } = await this.getEVMModules();
+
+    if (!this.config.evm?.contracts.mailer) {
+      throw new Error('EVM Mailer contract address not configured');
+    }
+
+    const publicClient = viem.createPublicClient({
+      transport: viem.http(this.config.evm.rpc),
+      chain: {
+        id: this.config.evm.chainId,
+        name: 'Custom Chain',
+        nativeCurrency: { name: 'ETH', symbol: 'ETH', decimals: 18 },
+        rpcUrls: {
+          default: { http: [this.config.evm.rpc] }
+        }
+      }
+    });
+
+    const walletClient = viem.createWalletClient({
+      transport: viem.http(this.config.evm.rpc),
+      chain: {
+        id: this.config.evm.chainId,
+        name: 'Custom Chain',
+        nativeCurrency: { name: 'ETH', symbol: 'ETH', decimals: 18 },
+        rpcUrls: {
+          default: { http: [this.config.evm.rpc] }
+        }
+      }
+    });
+
+    const client = new MailerClient(this.config.evm.contracts.mailer, publicClient);
+    const txHash = await client.distributeClaimableFunds(recipient, walletClient, this.wallet.address);
+    const receipt = await publicClient.waitForTransactionReceipt({ hash: txHash });
+    const block = await publicClient.getBlock({ blockNumber: receipt.blockNumber });
+
+    return {
+      hash: txHash,
+      chainType: ChainType.EVM,
+      blockNumber: receipt.blockNumber,
+      timestamp: Number(block.timestamp) * 1000
+    };
+  }
+
+  // Solana Implementation Methods
+  private async sendPreparedSolana(to: string, mailId: string, priority: boolean, resolveSenderToName: boolean): Promise<MessageResult> {
+    const { MailerClient, PublicKey, Connection } = await this.getSolanaModules();
+
+    if (!this.config.solana?.programs.mailer) {
+      throw new Error('Solana Mailer program address not configured');
+    }
+
+    const connection = new Connection(this.config.solana.rpc, 'confirmed');
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const wallet = MailerClient.createWallet(this.wallet as any);
+    const programId = new PublicKey(this.config.solana.programs.mailer);
+    const usdcMint = new PublicKey(this.config.solana.usdcMint);
+    const recipientKey = new PublicKey(to);
+
+    const client = new MailerClient(connection, wallet, programId, usdcMint);
+    const txHash = await client.sendPrepared(recipientKey, mailId, priority, resolveSenderToName);
+
+    const fees = await client.getFees();
+    const slot = await connection.getSlot();
+    const tx = await connection.getTransaction(txHash, { commitment: 'confirmed', maxSupportedTransactionVersion: 0 });
+
+    return {
+      transactionHash: txHash,
+      chainType: ChainType.SOLANA,
+      fee: priority ? fees.sendFee : fees.sendFee / 10,
+      slot,
+      timestamp: tx?.blockTime ? tx.blockTime * 1000 : Date.now(),
+      isPriority: priority,
+      success: true
+    };
+  }
+
+  private async sendToEmailSolana(toEmail: string, subject: string, body: string): Promise<MessageResult> {
+    const { MailerClient, PublicKey, Connection } = await this.getSolanaModules();
+
+    if (!this.config.solana?.programs.mailer) {
+      throw new Error('Solana Mailer program address not configured');
+    }
+
+    const connection = new Connection(this.config.solana.rpc, 'confirmed');
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const wallet = MailerClient.createWallet(this.wallet as any);
+    const programId = new PublicKey(this.config.solana.programs.mailer);
+    const usdcMint = new PublicKey(this.config.solana.usdcMint);
+
+    const client = new MailerClient(connection, wallet, programId, usdcMint);
+    const txHash = await client.sendToEmail(toEmail, subject, body);
+
+    const fees = await client.getFees();
+    const slot = await connection.getSlot();
+    const tx = await connection.getTransaction(txHash, { commitment: 'confirmed', maxSupportedTransactionVersion: 0 });
+
+    return {
+      transactionHash: txHash,
+      chainType: ChainType.SOLANA,
+      fee: fees.sendFee / 10, // 10% fee only
+      slot,
+      timestamp: tx?.blockTime ? tx.blockTime * 1000 : Date.now(),
+      isPriority: false,
+      success: true
+    };
+  }
+
+  private async sendPreparedToEmailSolana(toEmail: string, mailId: string): Promise<MessageResult> {
+    const { MailerClient, PublicKey, Connection } = await this.getSolanaModules();
+
+    if (!this.config.solana?.programs.mailer) {
+      throw new Error('Solana Mailer program address not configured');
+    }
+
+    const connection = new Connection(this.config.solana.rpc, 'confirmed');
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const wallet = MailerClient.createWallet(this.wallet as any);
+    const programId = new PublicKey(this.config.solana.programs.mailer);
+    const usdcMint = new PublicKey(this.config.solana.usdcMint);
+
+    const client = new MailerClient(connection, wallet, programId, usdcMint);
+    const txHash = await client.sendPreparedToEmail(toEmail, mailId);
+
+    const fees = await client.getFees();
+    const slot = await connection.getSlot();
+    const tx = await connection.getTransaction(txHash, { commitment: 'confirmed', maxSupportedTransactionVersion: 0 });
+
+    return {
+      transactionHash: txHash,
+      chainType: ChainType.SOLANA,
+      fee: fees.sendFee / 10, // 10% fee only
+      slot,
+      timestamp: tx?.blockTime ? tx.blockTime * 1000 : Date.now(),
+      isPriority: false,
+      success: true
+    };
+  }
+
+  private async setFeeSolana(newFee: bigint): Promise<UnifiedTransaction> {
+    const { MailerClient, PublicKey, Connection } = await this.getSolanaModules();
+
+    if (!this.config.solana?.programs.mailer) {
+      throw new Error('Solana Mailer program address not configured');
+    }
+
+    const connection = new Connection(this.config.solana.rpc, 'confirmed');
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const wallet = MailerClient.createWallet(this.wallet as any);
+    const programId = new PublicKey(this.config.solana.programs.mailer);
+    const usdcMint = new PublicKey(this.config.solana.usdcMint);
+
+    const client = new MailerClient(connection, wallet, programId, usdcMint);
+    const txHash = await client.setFee(newFee);
+    const slot = await connection.getSlot();
+
+    return {
+      hash: txHash,
+      chainType: ChainType.SOLANA,
+      slot,
+      timestamp: Date.now()
+    };
+  }
+
+  private async setDelegationFeeSolana(newFee: bigint): Promise<UnifiedTransaction> {
+    const { MailerClient, PublicKey, Connection } = await this.getSolanaModules();
+
+    if (!this.config.solana?.programs.mailer) {
+      throw new Error('Solana Mailer program address not configured');
+    }
+
+    const connection = new Connection(this.config.solana.rpc, 'confirmed');
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const wallet = MailerClient.createWallet(this.wallet as any);
+    const programId = new PublicKey(this.config.solana.programs.mailer);
+    const usdcMint = new PublicKey(this.config.solana.usdcMint);
+
+    const client = new MailerClient(connection, wallet, programId, usdcMint);
+    const txHash = await client.setDelegationFee(newFee);
+    const slot = await connection.getSlot();
+
+    return {
+      hash: txHash,
+      chainType: ChainType.SOLANA,
+      slot,
+      timestamp: Date.now()
+    };
+  }
+
+  private async getDelegationFeeSolana(): Promise<bigint> {
+    const { MailerClient, PublicKey, Connection } = await this.getSolanaModules();
+
+    if (!this.config.solana?.programs.mailer) {
+      throw new Error('Solana Mailer program address not configured');
+    }
+
+    const connection = new Connection(this.config.solana.rpc, 'confirmed');
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const wallet = MailerClient.createWallet(this.wallet as any);
+    const programId = new PublicKey(this.config.solana.programs.mailer);
+    const usdcMint = new PublicKey(this.config.solana.usdcMint);
+
+    const client = new MailerClient(connection, wallet, programId, usdcMint);
+    const fees = await client.getFees();
+    return BigInt(fees.delegationFee);
+  }
+
+  private async rejectDelegationSolana(delegatorAddress: string): Promise<UnifiedTransaction> {
+    const { MailerClient, PublicKey, Connection } = await this.getSolanaModules();
+
+    if (!this.config.solana?.programs.mailer) {
+      throw new Error('Solana Mailer program address not configured');
+    }
+
+    const connection = new Connection(this.config.solana.rpc, 'confirmed');
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const wallet = MailerClient.createWallet(this.wallet as any);
+    const programId = new PublicKey(this.config.solana.programs.mailer);
+    const usdcMint = new PublicKey(this.config.solana.usdcMint);
+
+    const client = new MailerClient(connection, wallet, programId, usdcMint);
+    const txHash = await client.rejectDelegation(delegatorAddress);
+    const slot = await connection.getSlot();
+
+    return {
+      hash: txHash,
+      chainType: ChainType.SOLANA,
+      slot,
+      timestamp: Date.now()
+    };
+  }
+
+  private async claimOwnerShareSolana(): Promise<UnifiedTransaction> {
+    const { MailerClient, PublicKey, Connection } = await this.getSolanaModules();
+
+    if (!this.config.solana?.programs.mailer) {
+      throw new Error('Solana Mailer program address not configured');
+    }
+
+    const connection = new Connection(this.config.solana.rpc, 'confirmed');
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const wallet = MailerClient.createWallet(this.wallet as any);
+    const programId = new PublicKey(this.config.solana.programs.mailer);
+    const usdcMint = new PublicKey(this.config.solana.usdcMint);
+
+    const client = new MailerClient(connection, wallet, programId, usdcMint);
+    const txHash = await client.claimOwnerShare();
+    const slot = await connection.getSlot();
+
+    return {
+      hash: txHash,
+      chainType: ChainType.SOLANA,
+      slot,
+      timestamp: Date.now()
+    };
+  }
+
+  private async pauseSolana(): Promise<UnifiedTransaction> {
+    const { MailerClient, PublicKey, Connection } = await this.getSolanaModules();
+
+    if (!this.config.solana?.programs.mailer) {
+      throw new Error('Solana Mailer program address not configured');
+    }
+
+    const connection = new Connection(this.config.solana.rpc, 'confirmed');
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const wallet = MailerClient.createWallet(this.wallet as any);
+    const programId = new PublicKey(this.config.solana.programs.mailer);
+    const usdcMint = new PublicKey(this.config.solana.usdcMint);
+
+    const client = new MailerClient(connection, wallet, programId, usdcMint);
+    const txHash = await client.pause();
+    const slot = await connection.getSlot();
+
+    return {
+      hash: txHash,
+      chainType: ChainType.SOLANA,
+      slot,
+      timestamp: Date.now()
+    };
+  }
+
+  private async unpauseSolana(): Promise<UnifiedTransaction> {
+    const { MailerClient, PublicKey, Connection } = await this.getSolanaModules();
+
+    if (!this.config.solana?.programs.mailer) {
+      throw new Error('Solana Mailer program address not configured');
+    }
+
+    const connection = new Connection(this.config.solana.rpc, 'confirmed');
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const wallet = MailerClient.createWallet(this.wallet as any);
+    const programId = new PublicKey(this.config.solana.programs.mailer);
+    const usdcMint = new PublicKey(this.config.solana.usdcMint);
+
+    const client = new MailerClient(connection, wallet, programId, usdcMint);
+    const txHash = await client.unpause();
+    const slot = await connection.getSlot();
+
+    return {
+      hash: txHash,
+      chainType: ChainType.SOLANA,
+      slot,
+      timestamp: Date.now()
+    };
+  }
+
+  private async emergencyUnpauseSolana(): Promise<UnifiedTransaction> {
+    const { MailerClient, PublicKey, Connection } = await this.getSolanaModules();
+
+    if (!this.config.solana?.programs.mailer) {
+      throw new Error('Solana Mailer program address not configured');
+    }
+
+    const connection = new Connection(this.config.solana.rpc, 'confirmed');
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const wallet = MailerClient.createWallet(this.wallet as any);
+    const programId = new PublicKey(this.config.solana.programs.mailer);
+    const usdcMint = new PublicKey(this.config.solana.usdcMint);
+
+    const client = new MailerClient(connection, wallet, programId, usdcMint);
+    const txHash = await client.emergencyUnpause();
+    const slot = await connection.getSlot();
+
+    return {
+      hash: txHash,
+      chainType: ChainType.SOLANA,
+      slot,
+      timestamp: Date.now()
+    };
+  }
+
+  private async isPausedSolana(): Promise<boolean> {
+    const { MailerClient, PublicKey, Connection } = await this.getSolanaModules();
+
+    if (!this.config.solana?.programs.mailer) {
+      throw new Error('Solana Mailer program address not configured');
+    }
+
+    const connection = new Connection(this.config.solana.rpc, 'confirmed');
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const wallet = MailerClient.createWallet(this.wallet as any);
+    const programId = new PublicKey(this.config.solana.programs.mailer);
+    const usdcMint = new PublicKey(this.config.solana.usdcMint);
+
+    const client = new MailerClient(connection, wallet, programId, usdcMint);
+    return client.isPaused();
+  }
+
+  private async distributeClaimableFundsSolana(recipient: string): Promise<UnifiedTransaction> {
+    const { MailerClient, PublicKey, Connection } = await this.getSolanaModules();
+
+    if (!this.config.solana?.programs.mailer) {
+      throw new Error('Solana Mailer program address not configured');
+    }
+
+    const connection = new Connection(this.config.solana.rpc, 'confirmed');
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const wallet = MailerClient.createWallet(this.wallet as any);
+    const programId = new PublicKey(this.config.solana.programs.mailer);
+    const usdcMint = new PublicKey(this.config.solana.usdcMint);
+
+    const client = new MailerClient(connection, wallet, programId, usdcMint);
+    const txHash = await client.distributeClaimableFunds(recipient);
+    const slot = await connection.getSlot();
+
+    return {
+      hash: txHash,
+      chainType: ChainType.SOLANA,
+      slot,
+      timestamp: Date.now()
+    };
+  }
+
   // Utility methods
   getChainType(): ChainType {
     return this.chainType;
