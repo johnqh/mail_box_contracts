@@ -180,8 +180,8 @@
     "url": "https://github.com/johnqh/mail_box_contracts/issues"
   },
   "engines": {
-    "node": ">=16.0.0",
-    "npm": ">=7.0.0"
+    "node": ">=20.18.0",
+    "npm": ">=10.0.0"
   },
   "files": [
     "dist/",
