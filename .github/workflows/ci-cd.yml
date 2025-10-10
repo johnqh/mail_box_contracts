@@ -1,0 +1,226 @@
+---
+name: "CI/CD - Test and Release"
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+    types:
+      - closed
+
+env:
+  NPM_MODULE_NAME: "@johnqh/mail_box_contracts"
+  NODE_VERSION: "20.18"
+
+jobs:
+  test:
+    name: "Run Tests"
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        node:
+          - "20.x"
+          - "22.x"
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: "Use Node.js ${{ matrix.node }}"
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node }}
+
+      - name: "Install dependencies"
+        run: npm ci
+
+      - name: "Run type checking"
+        run: npm run typecheck
+
+      - name: "Run linting"
+        run: npm run lint
+
+      - name: "Build project"
+        run: npm run build:ci
+
+      - name: "Run tests"
+        run: npm run test:ci
+
+  check_for_release:
+    runs-on: ubuntu-latest
+    outputs:
+      should_release: ${{ steps.check.outputs.should_release }}
+      version: ${{ steps.check.outputs.version }}
+      version_tag: ${{ steps.check.outputs.version_tag }}
+    steps:
+      - name: "Checkout"
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: "Check if should trigger release"
+        id: check
+        run: |
+          # Skip only if explicitly marked with [skip ci] or [skip-ci]
+          COMMIT_MSG=$(git log -1 --pretty=%s)
+          echo "Commit message: $COMMIT_MSG"
+
+          # Skip release only for PR events that weren't merged
+          if [[ "${{ github.event_name }}" == "pull_request" ]] && [[ "${{ github.event.action }}" != "closed" || "${{ github.event.pull_request.merged }}" != "true" ]]; then
+            echo "should_release=false" >> $GITHUB_OUTPUT
+            echo "PR not merged, skipping release"
+            exit 0
+          fi
+
+          # Skip only if explicitly marked to skip CI
+          if [[ "$COMMIT_MSG" == *"[skip ci]"* ]] || [[ "$COMMIT_MSG" == *"[skip-ci]"* ]]; then
+            echo "should_release=false" >> $GITHUB_OUTPUT
+            echo "Commit marked to skip CI: $COMMIT_MSG"
+          else
+            echo "should_release=true" >> $GITHUB_OUTPUT
+
+            # Get current version from package.json
+            CURRENT_VERSION=$(node -p "require('./package.json').version")
+
+            echo "version=$CURRENT_VERSION" >> $GITHUB_OUTPUT
+            echo "version_tag=v$CURRENT_VERSION" >> $GITHUB_OUTPUT
+            echo "Will release version: $CURRENT_VERSION for commit: $COMMIT_MSG"
+          fi
+
+  release_npm:
+    needs:
+      - test
+      - check_for_release
+    if: ${{ needs.check_for_release.outputs.should_release == 'true' }}
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      id-token: write
+    steps:
+      - name: "Checkout"
+        uses: actions/checkout@v4
+
+      - name: "Setup Node.js"
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          registry-url: "https://registry.npmjs.org"
+
+      - name: "Verify package version"
+        run: |
+          echo "Using version: ${{ needs.check_for_release.outputs.version }}"
+          echo "Package.json version: $(node -p "require('./package.json').version")"
+
+      - name: "Install dependencies"
+        run: npm ci
+
+      - name: "Build full package"
+        run: npm run build
+
+      - name: "Run tests"
+        run: npm run test:ci
+
+      - name: "Verify build output"
+        run: |
+          echo "Build output contents:"
+          ls -la dist/
+          echo "Verifying package structure..."
+          if [ ! -d "dist/unified" ] || [ ! -d "dist/unified-esm" ]; then
+            echo "❌ Missing required build directories"
+            exit 1
+          fi
+          echo "✅ Build structure verified"
+
+      - name: "Create GitHub Release"
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ needs.check_for_release.outputs.version_tag }}
+          name: "Release ${{ needs.check_for_release.outputs.version }}"
+          body: |
+            ## Multi-Chain Mailer Contracts v${{ needs.check_for_release.outputs.version }}
+
+            TypeScript client library for multi-chain decentralized messaging with USDC fees, revenue sharing, and delegation management. Supports both EVM chains and Solana.
+
+            ### Features
+            - ✅ Multi-Chain Support - Single unified interface for EVM and Solana
+            - ✅ Complete Type Safety - Full TypeScript support with generated types
+            - ✅ React Integration - Built-in hooks using @tanstack/react-query
+            - ✅ React 19 Ready - Full support for React 18 and 19
+            - ✅ Tree-Shakeable - Peer dependencies for optimal bundle size
+            - ✅ Comprehensive Testing - 116 passing tests (75 EVM + 41 unified)
+            - ✅ USDC Integration - Revenue sharing and fee management
+            - ✅ Delegation System - Message handling delegation with rejection
+
+            ### Installation
+            ```bash
+            # EVM only
+            npm install @johnqh/mail_box_contracts@${{ needs.check_for_release.outputs.version }} viem
+
+            # Solana only
+            npm install @johnqh/mail_box_contracts@${{ needs.check_for_release.outputs.version }} @solana/web3.js @solana/spl-token
+
+            # Both chains
+            npm install @johnqh/mail_box_contracts@${{ needs.check_for_release.outputs.version }} viem @solana/web3.js @solana/spl-token
+
+            # With React hooks
+            npm install @johnqh/mail_box_contracts@${{ needs.check_for_release.outputs.version }} viem @solana/web3.js @solana/spl-token react @tanstack/react-query
+            ```
+
+            ### Quick Start
+            ```typescript
+            // Unified client (auto-detects chain)
+            import { OnchainMailerClient } from '@johnqh/mail_box_contracts';
+
+            const client = new OnchainMailerClient(wallet, config);
+            await client.sendMessage('Subject', 'Body', false);
+
+            // React hooks
+            import { MailerProvider, useSendMessage } from '@johnqh/mail_box_contracts/react';
+
+            function App() {
+              return (
+                <MailerProvider wallet={wallet} config={config}>
+                  <MessageSender />
+                </MailerProvider>
+              );
+            }
+
+            function MessageSender() {
+              const sendMessage = useSendMessage();
+
+              return (
+                <button onClick={() => sendMessage.mutate({
+                  subject: 'Hello',
+                  body: 'World'
+                })}>
+                  Send Message
+                </button>
+              );
+            }
+            ```
+
+            ### What's New
+            See the auto-generated release notes below for detailed changes.
+          generate_release_notes: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: "Publish to NPM"
+        run: npm publish --access public
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+      - name: "Notify deployment success"
+        if: success()
+        run: |
+          echo "🚀 Release ${{ needs.check_for_release.outputs.version }} deployed successfully!"
+          echo "• NPM: https://www.npmjs.com/package/@johnqh/mail_box_contracts/v/${{ needs.check_for_release.outputs.version }}"
+          echo "• GitHub: https://github.com/${{ github.repository }}/releases/tag/${{ needs.check_for_release.outputs.version_tag }}"
+          echo "• Documentation: https://github.com/${{ github.repository }}#readme"
+
+      - name: "Notify deployment failure"
+        if: failure()
+        run: |
+          echo "❌ Release deployment FAILED for commit ${{ github.sha }}"
+          echo "Check: https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}"
