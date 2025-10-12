@@ -33,12 +33,10 @@ jobs:
           node-version: ${{ matrix.node }}
           registry-url: "https://registry.npmjs.org"
 
-      - name: "Configure NPM authentication"
-        run: |
-          echo "//registry.npmjs.org/:_authToken=${{ secrets.NPM_TOKEN }}" > ~/.npmrc
-
       - name: "Install dependencies"
         run: npm ci
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
       - name: "Run type checking"
         run: npm run typecheck
@@ -117,12 +115,10 @@ jobs:
           echo "Using version: ${{ needs.check_for_release.outputs.version }}"
           echo "Package.json version: $(node -p "require('./package.json').version")"
 
-      - name: "Configure NPM authentication"
-        run: |
-          echo "//registry.npmjs.org/:_authToken=${{ secrets.NPM_TOKEN }}" > ~/.npmrc
-
       - name: "Install dependencies"
         run: npm ci
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
       - name: "Build full package"
         run: npm run build
