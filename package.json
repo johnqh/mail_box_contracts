@@ -1,5 +1,5 @@
 {
-  "name": "@johnqh/mail_box_contracts",
+  "name": "@sudobility/contracts",
   "version": "1.9.0",
   "type": "module",
   "main": "dist/unified-esm/src/unified/index.js",
@@ -62,7 +62,7 @@
     "prepublishOnly": "npm run clean && npm run compile && npm run build",
     "prepack": "npm run build",
     "ai:workflow": "npx ts-node scripts/ai-helpers/dev-workflow.ts",
-    "ai:status": "echo '🤖 Multi-Chain Messaging Contracts AI Status' && echo '📦 Package: @johnqh/mail_box_contracts v'$(node -p \"require('./package.json').version\") && echo '📊 Architecture: Single Mailer contracts on EVM & Solana' && git status --porcelain",
+    "ai:status": "echo '🤖 Multi-Chain Messaging Contracts AI Status' && echo '📦 Package: @sudobility/contracts v'$(node -p \"require('./package.json').version\") && echo '📊 Architecture: Single Mailer contracts on EVM & Solana' && git status --porcelain",
     "ai:build": "echo '🔨 AI-Optimized Build Process' && npm run clean && npm run compile && npm run build && echo '✅ Build Complete - Ready for Development'",
     "ai:test": "echo '🧪 Comprehensive Test Suite' && npm test && echo '📊 Test Summary: EVM(75) + Unified(41) = 116 tests ✅'",
     "ai:check": "echo '🔍 Quick Validation Check' && npx tsc --noEmit && npx eslint src/ test/ --ext .ts,.js && echo '✅ All validation checks passed'",
@@ -194,7 +194,7 @@
     "LICENSE"
   ],
   "publishConfig": {
-    "access": "public",
+    "access": "restricted",
     "registry": "https://registry.npmjs.org"
   },
   "devDependencies": {
@@ -224,7 +224,7 @@
     "viem": "^2.38.0"
   },
   "dependencies": {
-    "@johnqh/types": "^1.8.16"
+    "@sudobility/types": "^1.8.16"
   },
   "overrides": {
     "bigint-buffer": "^1.1.5",

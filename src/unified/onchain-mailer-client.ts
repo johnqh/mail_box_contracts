@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/ban-ts-comment */
 // @ts-nocheck - Suppress false TypeScript errors with ESNext modules accessing class properties
-import { ChainType } from '@johnqh/types';
+import { ChainType } from '@sudobility/types';
 import { WalletDetector } from './wallet-detector.js';
 import {
   UnifiedWallet,

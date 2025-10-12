@@ -1,5 +1,5 @@
 import { PublicKey } from '@solana/web3.js';
-import { Optional } from '@johnqh/types';
+import { Optional } from '@sudobility/types';
 
 export interface ClaimableInfo {
   amount: number;

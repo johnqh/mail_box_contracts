@@ -14,7 +14,7 @@ These packages are correctly placed and **should remain** in `dependencies`:
 |---------|-------|----------|--------|
 | `@solana/web3.js` | ✅ Used | `src/solana/mailer-client.ts`, `src/types/common.ts` | **KEEP** |
 | `@solana/spl-token` | ✅ Used | `src/solana/mailer-client.ts` | **KEEP** |
-| `@johnqh/types` | ✅ Used | Multiple files in `src/` (validation, types, chain-config) | **KEEP** |
+| `@sudobility/types` | ✅ Used | Multiple files in `src/` (validation, types, chain-config) | **KEEP** |
 | `viem` | ✅ Used | `src/evm/mailer-client.ts`, test files | **KEEP** |
 
 ### ❌ REMOVE: dependencies (Not Used in Runtime Code)
@@ -103,7 +103,7 @@ The React integration peer dependencies are correctly configured.
 
 **After cleanup:**
 - Runtime dependencies: 5 packages
-- Only essential: @solana/web3.js, @solana/spl-token, @johnqh/types, viem, dotenv (moved to dev)
+- Only essential: @solana/web3.js, @solana/spl-token, @sudobility/types, viem, dotenv (moved to dev)
 
 **Estimated savings**: ~40-50% reduction in production bundle size
 
@@ -131,8 +131,8 @@ import { Connection, PublicKey, Transaction, ... } from '@solana/web3.js';
 // @solana/spl-token - src/solana/mailer-client.ts
 import { TOKEN_PROGRAM_ID, getAssociatedTokenAddressSync, ... } from '@solana/spl-token';
 
-// @johnqh/types - src/utils/validation.ts, src/utils/chain-config.ts, etc.
-import { ChainType, Optional, isEvmAddress, ... } from '@johnqh/types';
+// @sudobility/types - src/utils/validation.ts, src/utils/chain-config.ts, etc.
+import { ChainType, Optional, isEvmAddress, ... } from '@sudobility/types';
 
 // viem - src/evm/mailer-client.ts
 import { Account, Address, Hash, PublicClient, ... } from 'viem';

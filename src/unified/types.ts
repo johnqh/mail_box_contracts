@@ -1,11 +1,11 @@
-// Import types from @johnqh/types package (now ESM compatible)
+// Import types from @sudobility/types package (now ESM compatible)
 import {
   ChainType,
   MessageSendResponse,
   DomainRegistrationResponse,
   MailboxDelegationResponse,
   Optional,
-} from '@johnqh/types';
+} from '@sudobility/types';
 
 export interface UnifiedTransaction {
   hash: string;
@@ -44,7 +44,7 @@ export interface SolanaConfig {
   usdcMint: string;
 }
 
-// Use types from @johnqh/types package for consistency
+// Use types from @sudobility/types package for consistency
 export type MessageResult = MessageSendResponse;
 export type DomainResult = DomainRegistrationResponse;
 export type DelegationResult = MailboxDelegationResponse;

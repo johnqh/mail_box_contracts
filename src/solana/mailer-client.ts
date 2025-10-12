@@ -12,7 +12,7 @@ import {
   getAssociatedTokenAddressSync,
   createAssociatedTokenAccountInstruction,
 } from '@solana/spl-token';
-import { Optional } from '@johnqh/types';
+import { Optional } from '@sudobility/types';
 // Removed borsh import - using manual encoding for native program
 import { ClaimableInfo, MailerFees } from './types.js';
 

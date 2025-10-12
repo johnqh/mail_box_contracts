@@ -6,7 +6,7 @@
  */
 
 import { PublicKey } from '@solana/web3.js';
-import { Optional } from '@johnqh/types';
+import { Optional } from '@sudobility/types';
 import { USDC_DECIMALS, CLAIM_PERIOD_DAYS } from '../utils/currency.js';
 
 // ============================================================================

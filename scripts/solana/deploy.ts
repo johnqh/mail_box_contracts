@@ -7,7 +7,7 @@ import {
   getAssociatedTokenAddressSync,
   createAssociatedTokenAccountInstruction,
 } from '@solana/spl-token';
-import { Optional } from '@johnqh/types';
+import { Optional } from '@sudobility/types';
 import { Mailer } from '../target/types/mailer';
 import * as fs from 'fs';
 import * as path from 'path';

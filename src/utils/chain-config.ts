@@ -1,4 +1,4 @@
-import { Optional, ChainConfig as TypesChainConfig, RpcHelpers, ChainType } from '@johnqh/types';
+import { Optional, ChainConfig as TypesChainConfig, RpcHelpers, ChainType } from '@sudobility/types';
 import { ChainConfig } from '../unified/types.js';
 
 export const DEFAULT_CHAIN_CONFIG: ChainConfig = {
@@ -147,16 +147,16 @@ export function createChainConfig(
 }
 
 /**
- * Build unified chain config from @johnqh/types ChainConfig
+ * Build unified chain config from @sudobility/types ChainConfig
  * Uses RpcHelpers to derive all chain information from API keys
  *
- * @param chainConfig - ChainConfig from @johnqh/types with chain enum and API keys
+ * @param chainConfig - ChainConfig from @sudobility/types with chain enum and API keys
  * @param mailerAddress - Optional mailer contract/program address
  * @returns ChainConfig compatible with unified client
  *
  * @example
  * ```typescript
- * import { Chain } from '@johnqh/types';
+ * import { Chain } from '@sudobility/types';
  *
  * const config = buildChainConfig({
  *   chain: Chain.ETH_MAINNET,

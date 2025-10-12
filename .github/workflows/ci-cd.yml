@@ -12,7 +12,7 @@ on:
       - closed
 
 env:
-  NPM_MODULE_NAME: "@johnqh/mail_box_contracts"
+  NPM_MODULE_NAME: "@sudobility/contracts"
   NODE_VERSION: "20.18"
 
 jobs:
@@ -31,6 +31,11 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: ${{ matrix.node }}
+          registry-url: "https://registry.npmjs.org"
+
+      - name: "Configure NPM authentication"
+        run: |
+          echo "//registry.npmjs.org/:_authToken=${{ secrets.NPM_TOKEN }}" > ~/.npmrc
 
       - name: "Install dependencies"
         run: npm ci
@@ -112,6 +117,10 @@ jobs:
           echo "Using version: ${{ needs.check_for_release.outputs.version }}"
           echo "Package.json version: $(node -p "require('./package.json').version")"
 
+      - name: "Configure NPM authentication"
+        run: |
+          echo "//registry.npmjs.org/:_authToken=${{ secrets.NPM_TOKEN }}" > ~/.npmrc
+
       - name: "Install dependencies"
         run: npm ci
 
@@ -155,28 +164,28 @@ jobs:
             ### Installation
             ```bash
             # EVM only
-            npm install @johnqh/mail_box_contracts@${{ needs.check_for_release.outputs.version }} viem
+            npm install @sudobility/contracts@${{ needs.check_for_release.outputs.version }} viem
 
             # Solana only
-            npm install @johnqh/mail_box_contracts@${{ needs.check_for_release.outputs.version }} @solana/web3.js @solana/spl-token
+            npm install @sudobility/contracts@${{ needs.check_for_release.outputs.version }} @solana/web3.js @solana/spl-token
 
             # Both chains
-            npm install @johnqh/mail_box_contracts@${{ needs.check_for_release.outputs.version }} viem @solana/web3.js @solana/spl-token
+            npm install @sudobility/contracts@${{ needs.check_for_release.outputs.version }} viem @solana/web3.js @solana/spl-token
 
             # With React hooks
-            npm install @johnqh/mail_box_contracts@${{ needs.check_for_release.outputs.version }} viem @solana/web3.js @solana/spl-token react @tanstack/react-query
+            npm install @sudobility/contracts@${{ needs.check_for_release.outputs.version }} viem @solana/web3.js @solana/spl-token react @tanstack/react-query
             ```
 
             ### Quick Start
             ```typescript
             // Unified client (auto-detects chain)
-            import { OnchainMailerClient } from '@johnqh/mail_box_contracts';
+            import { OnchainMailerClient } from '@sudobility/contracts';
 
             const client = new OnchainMailerClient(wallet, config);
             await client.sendMessage('Subject', 'Body', false);
 
             // React hooks
-            import { MailerProvider, useSendMessage } from '@johnqh/mail_box_contracts/react';
+            import { MailerProvider, useSendMessage } from '@sudobility/contracts/react';
 
             function App() {
               return (
@@ -207,7 +216,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: "Publish to NPM"
-        run: npm publish --access public
+        run: npm publish --access restricted
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
@@ -215,7 +224,7 @@ jobs:
         if: success()
         run: |
           echo "🚀 Release ${{ needs.check_for_release.outputs.version }} deployed successfully!"
-          echo "• NPM: https://www.npmjs.com/package/@johnqh/mail_box_contracts/v/${{ needs.check_for_release.outputs.version }}"
+          echo "• NPM: https://www.npmjs.com/package/@sudobility/contracts/v/${{ needs.check_for_release.outputs.version }}"
           echo "• GitHub: https://github.com/${{ github.repository }}/releases/tag/${{ needs.check_for_release.outputs.version_tag }}"
           echo "• Documentation: https://github.com/${{ github.repository }}#readme"
 

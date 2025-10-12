@@ -1,5 +1,5 @@
 import hre from "hardhat";
-import { RpcHelpers } from "@johnqh/types";
+import { RpcHelpers } from "@sudobility/types";
 const { ethers, network } = hre;
 
 async function deployMockUSDC() {

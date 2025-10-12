@@ -1,4 +1,4 @@
-import { ChainType, Optional, isEvmAddress, isSolanaAddress } from '@johnqh/types';
+import { ChainType, Optional, isEvmAddress, isSolanaAddress } from '@sudobility/types';
 
 export class WalletDetector {
   /**

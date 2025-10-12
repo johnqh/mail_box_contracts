@@ -40,7 +40,7 @@ yarn add @johnqh/mail_box_contracts
 The simplest way to initialize clients using API keys - all chain information is automatically derived:
 
 ```typescript
-import { Chain, RpcHelpers, ChainConfig } from '@johnqh/types';
+import { Chain, RpcHelpers, ChainConfig } from '@sudobility/types';
 import { buildChainConfig } from '@johnqh/mail_box_contracts';
 import { MailerClient } from '@johnqh/mail_box_contracts';
 

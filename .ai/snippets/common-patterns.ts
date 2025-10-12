@@ -160,9 +160,9 @@ npx ts-node scripts/unified/verify-deployments.ts
 // =====================================
 // Input validation across chains
 
-import { AddressValidator } from '@johnqh/types';
+import { AddressValidator } from '@sudobility/types';
 
-// Validate inputs before operations using @johnqh/types
+// Validate inputs before operations using @sudobility/types
 if (!AddressValidator.isValidEVMAddress(address) && !AddressValidator.isValidSolanaAddress(address)) {
   throw new Error('Invalid address format');
 }

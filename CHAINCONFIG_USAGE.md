@@ -2,7 +2,7 @@
 
 ## Overview
 
-This guide explains how to use `ChainConfig` from `@johnqh/types` (v1.8.1+) to initialize TypeScript clients with automatic chain information derivation using `RpcHelpers`.
+This guide explains how to use `ChainConfig` from `@sudobility/types` (v1.8.1+) to initialize TypeScript clients with automatic chain information derivation using `RpcHelpers`.
 
 ## What Changed
 
@@ -19,7 +19,7 @@ Everything else is automatically derived!
 ### Basic Usage
 
 ```typescript
-import { Chain, ChainConfig, RpcHelpers } from '@johnqh/types';
+import { Chain, ChainConfig, RpcHelpers } from '@sudobility/types';
 import { buildChainConfig } from '@johnqh/mail_box_contracts';
 
 // 1. Create config with minimal information
@@ -125,7 +125,7 @@ const testnetConfig: ChainConfig = {
 The `RpcHelpers` class provides many useful methods:
 
 ```typescript
-import { RpcHelpers, Chain } from '@johnqh/types';
+import { RpcHelpers, Chain } from '@sudobility/types';
 
 // Get chain type
 const type = RpcHelpers.getChainType(Chain.ETH_MAINNET);
@@ -176,7 +176,7 @@ ETHERSCAN_MULTICHAIN_API_KEY=your_etherscan_multichain_api_key_here
 4. **Easy Network Switching**: Change one enum value
 5. **Consistent API**: Works the same for EVM and Solana
 6. **Less Configuration**: Fewer environment variables needed
-7. **Automatic Updates**: New chains can be added to @johnqh/types package
+7. **Automatic Updates**: New chains can be added to @sudobility/types package
 
 ## Migration Guide
 
@@ -198,7 +198,7 @@ const config = {
 ### After (ChainConfig)
 
 ```typescript
-import { Chain, ChainConfig, RpcHelpers } from '@johnqh/types';
+import { Chain, ChainConfig, RpcHelpers } from '@sudobility/types';
 import { buildChainConfig } from '@johnqh/mail_box_contracts';
 
 const chainConfig: ChainConfig = {
@@ -223,6 +223,6 @@ See [`examples/config-usage.ts`](./examples/config-usage.ts) for complete workin
 
 ## Resources
 
-- [@johnqh/types Documentation](https://www.npmjs.com/package/@johnqh/types)
+- [@sudobility/types Documentation](https://www.npmjs.com/package/@sudobility/types)
 - [Alchemy API](https://www.alchemy.com/)
 - [Etherscan API](https://etherscan.io/apis)

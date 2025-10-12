@@ -2,8 +2,8 @@
  * Validation utilities for multi-chain operations
  */
 
-// Import ChainType and validation functions from @johnqh/types (now ESM compatible)
-import { ChainType, isEvmAddress, isSolanaAddress } from '@johnqh/types';
+// Import ChainType and validation functions from @sudobility/types (now ESM compatible)
+import { ChainType, isEvmAddress, isSolanaAddress } from '@sudobility/types';
 
 // Re-export ChainType for convenience
 export { ChainType };
@@ -48,7 +48,7 @@ export function validateAddress(
     throw new Error('Address cannot be empty');
   }
 
-  // Use validation functions from @johnqh/types for consistent validation
+  // Use validation functions from @sudobility/types for consistent validation
   if (chainType === ChainType.EVM) {
     if (!isEvmAddress(address)) {
       throw new Error('Invalid EVM address format');

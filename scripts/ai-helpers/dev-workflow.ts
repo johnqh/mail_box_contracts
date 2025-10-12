@@ -8,7 +8,7 @@
 
 import { exec } from 'child_process';
 import { promisify } from 'util';
-import { Optional } from '@johnqh/types';
+import { Optional } from '@sudobility/types';
 import { readFileSync, existsSync, writeFileSync } from 'fs';
 import { join } from 'path';
 

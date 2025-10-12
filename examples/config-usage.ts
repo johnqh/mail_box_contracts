@@ -1,12 +1,12 @@
 /**
- * Example: Using ChainConfig from @johnqh/types for client initialization
+ * Example: Using ChainConfig from @sudobility/types for client initialization
  *
  * This example demonstrates the simplified way to initialize mailer clients
  * using ChainConfig and RpcHelpers, which automatically derives all chain
  * information (RPC URLs, chain IDs, USDC addresses) from API keys.
  */
 
-import { Chain, ChainConfig, RpcHelpers } from '@johnqh/types';
+import { Chain, ChainConfig, RpcHelpers } from '@sudobility/types';
 import { buildChainConfig } from '../src/utils/index.js';
 import { MailerClient as EVMMailerClient } from '../src/evm/index.js';
 import { MailerClient as SolanaMailerClient } from '../src/solana/index.js';
