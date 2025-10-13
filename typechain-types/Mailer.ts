@@ -32,10 +32,13 @@ export interface MailerInterface extends Interface {
       | "claimExpiredShares"
       | "claimOwnerShare"
       | "claimRecipientShare"
+      | "clearCustomFeePercentage"
+      | "customFeeDiscount"
       | "delegateTo"
       | "delegationFee"
       | "distributeClaimableFunds"
       | "emergencyUnpause"
+      | "getCustomFeePercentage"
       | "getDelegationFee"
       | "getFee"
       | "getOwnerClaimable"
@@ -52,6 +55,7 @@ export interface MailerInterface extends Interface {
       | "sendPrepared"
       | "sendPreparedToEmailAddress"
       | "sendToEmailAddress"
+      | "setCustomFeePercentage"
       | "setDelegationFee"
       | "setFee"
       | "unpause"
@@ -62,6 +66,7 @@ export interface MailerInterface extends Interface {
     nameOrSignatureOrTopic:
       | "ContractPaused"
       | "ContractUnpaused"
+      | "CustomFeePercentageSet"
       | "DelegationFeeUpdated"
       | "DelegationSet"
       | "EmergencyUnpaused"
@@ -102,6 +107,14 @@ export interface MailerInterface extends Interface {
     values?: undefined
   ): string;
   encodeFunctionData(
+    functionFragment: "clearCustomFeePercentage",
+    values: [AddressLike]
+  ): string;
+  encodeFunctionData(
+    functionFragment: "customFeeDiscount",
+    values: [AddressLike]
+  ): string;
+  encodeFunctionData(
     functionFragment: "delegateTo",
     values: [AddressLike]
   ): string;
@@ -116,6 +129,10 @@ export interface MailerInterface extends Interface {
   encodeFunctionData(
     functionFragment: "emergencyUnpause",
     values?: undefined
+  ): string;
+  encodeFunctionData(
+    functionFragment: "getCustomFeePercentage",
+    values: [AddressLike]
   ): string;
   encodeFunctionData(
     functionFragment: "getDelegationFee",
@@ -164,6 +181,10 @@ export interface MailerInterface extends Interface {
     values: [string, string, string]
   ): string;
   encodeFunctionData(
+    functionFragment: "setCustomFeePercentage",
+    values: [AddressLike, BigNumberish]
+  ): string;
+  encodeFunctionData(
     functionFragment: "setDelegationFee",
     values: [BigNumberish]
   ): string;
@@ -198,6 +219,14 @@ export interface MailerInterface extends Interface {
     functionFragment: "claimRecipientShare",
     data: BytesLike
   ): Result;
+  decodeFunctionResult(
+    functionFragment: "clearCustomFeePercentage",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(
+    functionFragment: "customFeeDiscount",
+    data: BytesLike
+  ): Result;
   decodeFunctionResult(functionFragment: "delegateTo", data: BytesLike): Result;
   decodeFunctionResult(
     functionFragment: "delegationFee",
@@ -209,6 +238,10 @@ export interface MailerInterface extends Interface {
   ): Result;
   decodeFunctionResult(
     functionFragment: "emergencyUnpause",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(
+    functionFragment: "getCustomFeePercentage",
     data: BytesLike
   ): Result;
   decodeFunctionResult(
@@ -255,6 +288,10 @@ export interface MailerInterface extends Interface {
     data: BytesLike
   ): Result;
   decodeFunctionResult(
+    functionFragment: "setCustomFeePercentage",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(
     functionFragment: "setDelegationFee",
     data: BytesLike
   ): Result;
@@ -277,6 +314,19 @@ export namespace ContractUnpausedEvent {
   export type InputTuple = [];
   export type OutputTuple = [];
   export interface OutputObject {}
+  export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
+  export type Filter = TypedDeferredTopicFilter<Event>;
+  export type Log = TypedEventLog<Event>;
+  export type LogDescription = TypedLogDescription<Event>;
+}
+
+export namespace CustomFeePercentageSetEvent {
+  export type InputTuple = [account: AddressLike, percentage: BigNumberish];
+  export type OutputTuple = [account: string, percentage: bigint];
+  export interface OutputObject {
+    account: string;
+    percentage: bigint;
+  }
   export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
   export type Filter = TypedDeferredTopicFilter<Event>;
   export type Log = TypedEventLog<Event>;
@@ -562,6 +612,14 @@ export interface Mailer extends BaseContract {
 
   claimRecipientShare: TypedContractMethod<[], [void], "nonpayable">;
 
+  clearCustomFeePercentage: TypedContractMethod<
+    [account: AddressLike],
+    [void],
+    "nonpayable"
+  >;
+
+  customFeeDiscount: TypedContractMethod<[arg0: AddressLike], [bigint], "view">;
+
   delegateTo: TypedContractMethod<
     [delegate: AddressLike],
     [void],
@@ -577,6 +635,12 @@ export interface Mailer extends BaseContract {
   >;
 
   emergencyUnpause: TypedContractMethod<[], [void], "nonpayable">;
+
+  getCustomFeePercentage: TypedContractMethod<
+    [account: AddressLike],
+    [bigint],
+    "view"
+  >;
 
   getDelegationFee: TypedContractMethod<[], [bigint], "view">;
 
@@ -655,6 +719,12 @@ export interface Mailer extends BaseContract {
     "nonpayable"
   >;
 
+  setCustomFeePercentage: TypedContractMethod<
+    [account: AddressLike, percentage: BigNumberish],
+    [void],
+    "nonpayable"
+  >;
+
   setDelegationFee: TypedContractMethod<
     [usdcAmount: BigNumberish],
     [void],
@@ -690,6 +760,12 @@ export interface Mailer extends BaseContract {
     nameOrSignature: "claimRecipientShare"
   ): TypedContractMethod<[], [void], "nonpayable">;
   getFunction(
+    nameOrSignature: "clearCustomFeePercentage"
+  ): TypedContractMethod<[account: AddressLike], [void], "nonpayable">;
+  getFunction(
+    nameOrSignature: "customFeeDiscount"
+  ): TypedContractMethod<[arg0: AddressLike], [bigint], "view">;
+  getFunction(
     nameOrSignature: "delegateTo"
   ): TypedContractMethod<[delegate: AddressLike], [void], "nonpayable">;
   getFunction(
@@ -701,6 +777,9 @@ export interface Mailer extends BaseContract {
   getFunction(
     nameOrSignature: "emergencyUnpause"
   ): TypedContractMethod<[], [void], "nonpayable">;
+  getFunction(
+    nameOrSignature: "getCustomFeePercentage"
+  ): TypedContractMethod<[account: AddressLike], [bigint], "view">;
   getFunction(
     nameOrSignature: "getDelegationFee"
   ): TypedContractMethod<[], [bigint], "view">;
@@ -795,6 +874,13 @@ export interface Mailer extends BaseContract {
     "nonpayable"
   >;
   getFunction(
+    nameOrSignature: "setCustomFeePercentage"
+  ): TypedContractMethod<
+    [account: AddressLike, percentage: BigNumberish],
+    [void],
+    "nonpayable"
+  >;
+  getFunction(
     nameOrSignature: "setDelegationFee"
   ): TypedContractMethod<[usdcAmount: BigNumberish], [void], "nonpayable">;
   getFunction(
@@ -820,6 +906,13 @@ export interface Mailer extends BaseContract {
     ContractUnpausedEvent.InputTuple,
     ContractUnpausedEvent.OutputTuple,
     ContractUnpausedEvent.OutputObject
+  >;
+  getEvent(
+    key: "CustomFeePercentageSet"
+  ): TypedContractEvent<
+    CustomFeePercentageSetEvent.InputTuple,
+    CustomFeePercentageSetEvent.OutputTuple,
+    CustomFeePercentageSetEvent.OutputObject
   >;
   getEvent(
     key: "DelegationFeeUpdated"
@@ -934,6 +1027,17 @@ export interface Mailer extends BaseContract {
       ContractUnpausedEvent.InputTuple,
       ContractUnpausedEvent.OutputTuple,
       ContractUnpausedEvent.OutputObject
+    >;
+
+    "CustomFeePercentageSet(address,uint256)": TypedContractEvent<
+      CustomFeePercentageSetEvent.InputTuple,
+      CustomFeePercentageSetEvent.OutputTuple,
+      CustomFeePercentageSetEvent.OutputObject
+    >;
+    CustomFeePercentageSet: TypedContractEvent<
+      CustomFeePercentageSetEvent.InputTuple,
+      CustomFeePercentageSetEvent.OutputTuple,
+      CustomFeePercentageSetEvent.OutputObject
     >;
 
     "DelegationFeeUpdated(uint256,uint256)": TypedContractEvent<

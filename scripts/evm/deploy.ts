@@ -1,22 +1,22 @@
 import hre from "hardhat";
 import { RpcHelpers } from "@sudobility/types";
-const { ethers, network } = hre;
+import { formatEther, formatUnits, getAddress } from "viem";
+const { network } = hre;
 
 async function deployMockUSDC() {
   console.log("Deploying MockUSDC for testing...");
-  const MockUSDC = await ethers.getContractFactory("MockUSDC");
-  const mockUSDC = await MockUSDC.deploy();
-  await mockUSDC.waitForDeployment();
-  console.log("MockUSDC deployed to:", await mockUSDC.getAddress());
-  return await mockUSDC.getAddress();
+  const mockUSDC = await hre.viem.deployContract("MockUSDC");
+  console.log("MockUSDC deployed to:", mockUSDC.address);
+  return mockUSDC.address;
 }
 
 async function main() {
-  const [deployer] = await ethers.getSigners();
+  const [deployer] = await hre.viem.getWalletClients();
+  const publicClient = await hre.viem.getPublicClient();
   const networkName = network.name;
 
   // Get owner address from environment variable, fallback to deployer
-  const ownerAddress = process.env.OWNER_ADDRESS || deployer.address;
+  const ownerAddress = process.env.OWNER_ADDRESS || deployer.account.address;
   console.log("Contract owner will be:", ownerAddress);
 
   console.log("=".repeat(50));
@@ -24,11 +24,11 @@ async function main() {
   console.log("=".repeat(50));
   console.log("Network:", networkName);
   console.log("Chain ID:", network.config.chainId);
-  console.log("Deploying contracts with account:", deployer.address);
-  
-  const balance = await deployer.provider.getBalance(deployer.address);
-  console.log("Account balance:", ethers.formatEther(balance), "ETH");
-  
+  console.log("Deploying contracts with account:", deployer.account.address);
+
+  const balance = await publicClient.getBalance({ address: deployer.account.address });
+  console.log("Account balance:", formatEther(balance), "ETH");
+
   if (balance === 0n) {
     console.error("❌ Deployer account has no ETH balance! Please fund the account.");
     process.exit(1);
@@ -91,24 +91,22 @@ async function main() {
   }
 
   // Ensure address has proper checksum (convert to lowercase first to avoid checksum validation)
-  usdcAddress = ethers.getAddress(usdcAddress.toLowerCase());
+  usdcAddress = getAddress(usdcAddress.toLowerCase());
   console.log("Using USDC token address:", usdcAddress);
   console.log("-".repeat(50));
 
   try {
     // Deploy Mailer (with integrated MailService functionality)
     console.log("📧 Deploying Mailer with integrated delegation management...");
-    const Mailer = await ethers.getContractFactory("Mailer");
-    const mailer = await Mailer.deploy(usdcAddress, ownerAddress);
-    await mailer.waitForDeployment();
-    
-    const mailerAddress = await mailer.getAddress();
+    const mailer = await hre.viem.deployContract("Mailer", [usdcAddress, ownerAddress]);
+
+    const mailerAddress = mailer.address;
     console.log("✅ Mailer deployed to:", mailerAddress);
-    
-    const sendFee = await mailer.sendFee();
-    const delegationFee = await mailer.delegationFee();
-    console.log("   - Send fee:", ethers.formatUnits(sendFee, 6), "USDC");
-    console.log("   - Delegation fee:", ethers.formatUnits(delegationFee, 6), "USDC");
+
+    const sendFee = await mailer.read.sendFee();
+    const delegationFee = await mailer.read.delegationFee();
+    console.log("   - Send fee:", formatUnits(sendFee, 6), "USDC");
+    console.log("   - Delegation fee:", formatUnits(delegationFee, 6), "USDC");
 
     console.log("=".repeat(50));
     console.log("🎉 DEPLOYMENT COMPLETED SUCCESSFULLY!");
@@ -124,15 +122,15 @@ async function main() {
       network: networkName,
       chainId: network.config.chainId,
       timestamp: new Date().toISOString(),
-      deployer: deployer.address,
+      deployer: deployer.account.address,
       owner: ownerAddress,
       contracts: {
         usdc: usdcAddress,
         mailer: mailerAddress
       },
       fees: {
-        sendFee: ethers.formatUnits(sendFee, 6) + " USDC",
-        delegationFee: ethers.formatUnits(delegationFee, 6) + " USDC"
+        sendFee: formatUnits(sendFee, 6) + " USDC",
+        delegationFee: formatUnits(delegationFee, 6) + " USDC"
       }
     };
 

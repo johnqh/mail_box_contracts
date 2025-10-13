@@ -97,6 +97,20 @@ impl Delegation {
     pub const LEN: usize = 32 + 1 + 32 + 1; // 66 bytes (max with Some(Pubkey))
 }
 
+/// Fee discount account for custom fee percentages
+/// Stores discount (0-100) instead of percentage for cleaner default behavior
+/// 0 = no discount (100% fee), 100 = full discount (0% fee, free)
+#[derive(BorshSerialize, BorshDeserialize, Debug, Clone)]
+pub struct FeeDiscount {
+    pub account: Pubkey,
+    pub discount: u8, // 0-100: 0 = no discount (full fee), 100 = full discount (free)
+    pub bump: u8,
+}
+
+impl FeeDiscount {
+    pub const LEN: usize = 32 + 1 + 1; // 34 bytes
+}
+
 /// Instructions
 #[derive(BorshSerialize, BorshDeserialize, Debug)]
 pub enum MailerInstruction {
@@ -198,7 +212,27 @@ pub enum MailerInstruction {
     /// 0. `[signer]` Owner
     /// 1. `[writable]` Mailer state account (PDA)
     SetDelegationFee { new_fee: u64 },
-    
+
+    /// Set custom fee percentage for a specific address (owner only)
+    /// Accounts:
+    /// 0. `[signer]` Owner
+    /// 1. `[]` Mailer state account (PDA)
+    /// 2. `[writable]` Fee discount account (PDA)
+    /// 3. `[]` Account to set custom fee for
+    /// 4. `[signer]` Payer for account creation
+    /// 5. `[]` System program
+    SetCustomFeePercentage {
+        account: Pubkey,
+        percentage: u8, // 0-100: 0 = free, 100 = full fee
+    },
+
+    /// Clear custom fee percentage for a specific address (owner only)
+    /// Accounts:
+    /// 0. `[signer]` Owner
+    /// 1. `[]` Mailer state account (PDA)
+    /// 2. `[writable]` Fee discount account (PDA)
+    ClearCustomFeePercentage { account: Pubkey },
+
     /// Pause the contract (owner only)
     /// Accounts:
     /// 0. `[signer]` Owner
@@ -260,6 +294,8 @@ pub enum MailerError {
     ContractPaused,
     #[error("Contract is not paused")]
     ContractNotPaused,
+    #[error("Invalid percentage (must be 0-100)")]
+    InvalidPercentage,
 }
 
 impl From<MailerError> for ProgramError {
@@ -300,6 +336,12 @@ pub fn process_instruction(
         MailerInstruction::RejectDelegation => process_reject_delegation(program_id, accounts),
         MailerInstruction::SetDelegationFee { new_fee } => {
             process_set_delegation_fee(program_id, accounts, new_fee)
+        }
+        MailerInstruction::SetCustomFeePercentage { account, percentage } => {
+            process_set_custom_fee_percentage(program_id, accounts, account, percentage)
+        }
+        MailerInstruction::ClearCustomFeePercentage { account } => {
+            process_clear_custom_fee_percentage(program_id, accounts, account)
         }
         MailerInstruction::Pause => {
             process_pause(program_id, accounts)
@@ -407,6 +449,9 @@ fn process_send(
         return Err(MailerError::ContractPaused.into());
     }
 
+    // Calculate effective fee based on custom discount (if any)
+    let effective_fee = calculate_fee_with_discount(program_id, sender.key, accounts, mailer_state.send_fee)?;
+
     if revenue_share_to_receiver {
         // Priority mode: full fee with revenue sharing
 
@@ -453,50 +498,53 @@ fn process_send(
             drop(claim_data);
         }
 
-        // Transfer full send fee
-        invoke(
-            &spl_token::instruction::transfer(
-                token_program.key,
-                sender_usdc.key,
-                mailer_usdc.key,
-                sender.key,
-                &[],
-                mailer_state.send_fee,
-            )?,
-            &[
-                sender_usdc.clone(),
-                mailer_usdc.clone(),
-                sender.clone(),
-                token_program.clone(),
-            ],
-        )?;
+        // Transfer effective fee (may be discounted)
+        if effective_fee > 0 {
+            invoke(
+                &spl_token::instruction::transfer(
+                    token_program.key,
+                    sender_usdc.key,
+                    mailer_usdc.key,
+                    sender.key,
+                    &[],
+                    effective_fee,
+                )?,
+                &[
+                    sender_usdc.clone(),
+                    mailer_usdc.clone(),
+                    sender.clone(),
+                    token_program.clone(),
+                ],
+            )?;
 
-        // Record revenue shares
-        record_shares(recipient_claim, mailer_account, to, mailer_state.send_fee)?;
+            // Record revenue shares (only if fee > 0)
+            record_shares(recipient_claim, mailer_account, to, effective_fee)?;
+        }
 
-        msg!("Priority mail sent from {} to {}: {} (revenue share enabled, resolve sender: {})", sender.key, to, subject, _resolve_sender_to_name);
+        msg!("Priority mail sent from {} to {}: {} (revenue share enabled, resolve sender: {}, effective fee: {})", sender.key, to, subject, _resolve_sender_to_name, effective_fee);
     } else {
         // Standard mode: 10% fee only, no revenue sharing
-
-        let owner_fee = mailer_state.send_fee / 10; // 10% of send_fee
+        let owner_fee = (effective_fee * 10) / 100; // 10% of effective fee
 
         // Transfer only owner fee (10%)
-        invoke(
-            &spl_token::instruction::transfer(
-                token_program.key,
-                sender_usdc.key,
-                mailer_usdc.key,
-                sender.key,
-                &[],
-                owner_fee,
-            )?,
-            &[
-                sender_usdc.clone(),
-                mailer_usdc.clone(),
-                sender.clone(),
-                token_program.clone(),
-            ],
-        )?;
+        if owner_fee > 0 {
+            invoke(
+                &spl_token::instruction::transfer(
+                    token_program.key,
+                    sender_usdc.key,
+                    mailer_usdc.key,
+                    sender.key,
+                    &[],
+                    owner_fee,
+                )?,
+                &[
+                    sender_usdc.clone(),
+                    mailer_usdc.clone(),
+                    sender.clone(),
+                    token_program.clone(),
+                ],
+            )?;
+        }
 
         // Update owner claimable
         let mut mailer_data = mailer_account.try_borrow_mut_data()?;
@@ -504,7 +552,7 @@ fn process_send(
         mailer_state.owner_claimable += owner_fee;
         mailer_state.serialize(&mut &mut mailer_data[8..])?;
 
-        msg!("Standard mail sent from {} to {}: {} (resolve sender: {})", sender.key, to, subject, _resolve_sender_to_name);
+        msg!("Standard mail sent from {} to {}: {} (resolve sender: {}, effective fee: {})", sender.key, to, subject, _resolve_sender_to_name, effective_fee);
     }
 
     Ok(())
@@ -539,28 +587,33 @@ fn process_send_to_email(
         return Err(MailerError::ContractPaused.into());
     }
 
+    // Calculate effective fee based on custom discount (if any)
+    let effective_fee = calculate_fee_with_discount(_program_id, sender.key, accounts, mailer_state.send_fee)?;
+
     // Calculate 10% owner fee (no revenue share since no wallet address)
-    let owner_fee = (mailer_state.send_fee * 10) / 100;
+    let owner_fee = (effective_fee * 10) / 100;
 
     // Transfer fee from sender to mailer
-    let transfer_ix = spl_token::instruction::transfer(
-        token_program.key,
-        sender_usdc.key,
-        mailer_usdc.key,
-        sender.key,
-        &[],
-        owner_fee,
-    )?;
+    if owner_fee > 0 {
+        let transfer_ix = spl_token::instruction::transfer(
+            token_program.key,
+            sender_usdc.key,
+            mailer_usdc.key,
+            sender.key,
+            &[],
+            owner_fee,
+        )?;
 
-    invoke(
-        &transfer_ix,
-        &[
-            sender_usdc.clone(),
-            mailer_usdc.clone(),
-            sender.clone(),
-            token_program.clone(),
-        ],
-    )?;
+        invoke(
+            &transfer_ix,
+            &[
+                sender_usdc.clone(),
+                mailer_usdc.clone(),
+                sender.clone(),
+                token_program.clone(),
+            ],
+        )?;
+    }
 
     // Update owner claimable
     let mut mailer_data = mailer_account.try_borrow_mut_data()?;
@@ -568,7 +621,7 @@ fn process_send_to_email(
     mailer_state.owner_claimable += owner_fee;
     mailer_state.serialize(&mut &mut mailer_data[8..])?;
 
-    msg!("Mail sent from {} to email {}: {}", sender.key, to_email, subject);
+    msg!("Mail sent from {} to email {}: {} (effective fee: {})", sender.key, to_email, subject, effective_fee);
 
     Ok(())
 }
@@ -601,28 +654,33 @@ fn process_send_prepared_to_email(
         return Err(MailerError::ContractPaused.into());
     }
 
+    // Calculate effective fee based on custom discount (if any)
+    let effective_fee = calculate_fee_with_discount(_program_id, sender.key, accounts, mailer_state.send_fee)?;
+
     // Calculate 10% owner fee (no revenue share since no wallet address)
-    let owner_fee = (mailer_state.send_fee * 10) / 100;
+    let owner_fee = (effective_fee * 10) / 100;
 
     // Transfer fee from sender to mailer
-    let transfer_ix = spl_token::instruction::transfer(
-        token_program.key,
-        sender_usdc.key,
-        mailer_usdc.key,
-        sender.key,
-        &[],
-        owner_fee,
-    )?;
+    if owner_fee > 0 {
+        let transfer_ix = spl_token::instruction::transfer(
+            token_program.key,
+            sender_usdc.key,
+            mailer_usdc.key,
+            sender.key,
+            &[],
+            owner_fee,
+        )?;
 
-    invoke(
-        &transfer_ix,
-        &[
-            sender_usdc.clone(),
-            mailer_usdc.clone(),
-            sender.clone(),
-            token_program.clone(),
-        ],
-    )?;
+        invoke(
+            &transfer_ix,
+            &[
+                sender_usdc.clone(),
+                mailer_usdc.clone(),
+                sender.clone(),
+                token_program.clone(),
+            ],
+        )?;
+    }
 
     // Update owner claimable
     let mut mailer_data = mailer_account.try_borrow_mut_data()?;
@@ -630,7 +688,7 @@ fn process_send_prepared_to_email(
     mailer_state.owner_claimable += owner_fee;
     mailer_state.serialize(&mut &mut mailer_data[8..])?;
 
-    msg!("Prepared mail sent from {} to email {} (mailId: {})", sender.key, to_email, mail_id);
+    msg!("Prepared mail sent from {} to email {} (mailId: {}, effective fee: {})", sender.key, to_email, mail_id, effective_fee);
 
     Ok(())
 }
@@ -951,6 +1009,146 @@ fn process_set_delegation_fee(
     Ok(())
 }
 
+/// Set custom fee percentage for a specific address (owner only)
+fn process_set_custom_fee_percentage(
+    program_id: &Pubkey,
+    accounts: &[AccountInfo],
+    account: Pubkey,
+    percentage: u8,
+) -> ProgramResult {
+    let account_iter = &mut accounts.iter();
+    let owner = next_account_info(account_iter)?;
+    let mailer_account = next_account_info(account_iter)?;
+    let fee_discount_account = next_account_info(account_iter)?;
+    let _target_account = next_account_info(account_iter)?;
+    let payer = next_account_info(account_iter)?;
+    let system_program = next_account_info(account_iter)?;
+
+    if !owner.is_signer {
+        return Err(ProgramError::MissingRequiredSignature);
+    }
+
+    // Load mailer state and verify owner
+    let mailer_data = mailer_account.try_borrow_data()?;
+    let mailer_state: MailerState = BorshDeserialize::deserialize(&mut &mailer_data[8..])?;
+    drop(mailer_data);
+
+    if mailer_state.owner != *owner.key {
+        return Err(MailerError::OnlyOwner.into());
+    }
+
+    // Check if contract is paused
+    if mailer_state.paused {
+        return Err(MailerError::ContractPaused.into());
+    }
+
+    // Validate percentage
+    if percentage > 100 {
+        return Err(MailerError::InvalidPercentage.into());
+    }
+
+    // Verify fee discount account PDA
+    let (discount_pda, bump) = Pubkey::find_program_address(
+        &[b"discount", account.as_ref()],
+        program_id
+    );
+
+    if fee_discount_account.key != &discount_pda {
+        return Err(MailerError::InvalidPDA.into());
+    }
+
+    // Create or update fee discount account
+    if fee_discount_account.lamports() == 0 {
+        let rent = Rent::get()?;
+        let space = 8 + FeeDiscount::LEN;
+        let lamports = rent.minimum_balance(space);
+
+        invoke_signed(
+            &system_instruction::create_account(
+                payer.key,
+                fee_discount_account.key,
+                lamports,
+                space as u64,
+                program_id,
+            ),
+            &[payer.clone(), fee_discount_account.clone(), system_program.clone()],
+            &[&[b"discount", account.as_ref(), &[bump]]],
+        )?;
+
+        // Initialize discount account
+        let mut discount_data = fee_discount_account.try_borrow_mut_data()?;
+        discount_data[0..8].copy_from_slice(&hash_discriminator("account:FeeDiscount").to_le_bytes());
+
+        let fee_discount = FeeDiscount {
+            account,
+            discount: 100 - percentage, // Store as discount: 0% fee = 100 discount, 100% fee = 0 discount
+            bump,
+        };
+
+        fee_discount.serialize(&mut &mut discount_data[8..])?;
+    } else {
+        // Update existing discount account
+        let mut discount_data = fee_discount_account.try_borrow_mut_data()?;
+        let mut fee_discount: FeeDiscount = BorshDeserialize::deserialize(&mut &discount_data[8..])?;
+        fee_discount.discount = 100 - percentage; // Store as discount
+        fee_discount.serialize(&mut &mut discount_data[8..])?;
+    }
+
+    msg!("Custom fee percentage set for {}: {}%", account, percentage);
+    Ok(())
+}
+
+/// Clear custom fee percentage for a specific address (owner only)
+fn process_clear_custom_fee_percentage(
+    program_id: &Pubkey,
+    accounts: &[AccountInfo],
+    account: Pubkey,
+) -> ProgramResult {
+    let account_iter = &mut accounts.iter();
+    let owner = next_account_info(account_iter)?;
+    let mailer_account = next_account_info(account_iter)?;
+    let fee_discount_account = next_account_info(account_iter)?;
+
+    if !owner.is_signer {
+        return Err(ProgramError::MissingRequiredSignature);
+    }
+
+    // Load mailer state and verify owner
+    let mailer_data = mailer_account.try_borrow_data()?;
+    let mailer_state: MailerState = BorshDeserialize::deserialize(&mut &mailer_data[8..])?;
+    drop(mailer_data);
+
+    if mailer_state.owner != *owner.key {
+        return Err(MailerError::OnlyOwner.into());
+    }
+
+    // Check if contract is paused
+    if mailer_state.paused {
+        return Err(MailerError::ContractPaused.into());
+    }
+
+    // Verify fee discount account PDA
+    let (discount_pda, _) = Pubkey::find_program_address(
+        &[b"discount", account.as_ref()],
+        program_id
+    );
+
+    if fee_discount_account.key != &discount_pda {
+        return Err(MailerError::InvalidPDA.into());
+    }
+
+    // Clear by setting discount to 0 (no discount = 100% fee = default behavior)
+    if fee_discount_account.lamports() > 0 {
+        let mut discount_data = fee_discount_account.try_borrow_mut_data()?;
+        let mut fee_discount: FeeDiscount = BorshDeserialize::deserialize(&mut &discount_data[8..])?;
+        fee_discount.discount = 0; // 0 discount = 100% fee = default
+        fee_discount.serialize(&mut &mut discount_data[8..])?;
+    }
+
+    msg!("Custom fee percentage cleared for {} (reset to 100%)", account);
+    Ok(())
+}
+
 /// Record revenue shares for priority messages
 fn record_shares(
     recipient_claim: &AccountInfo,
@@ -979,6 +1177,44 @@ fn record_shares(
 
     msg!("Shares recorded: recipient {}, owner {}", recipient_amount, owner_amount);
     Ok(())
+}
+
+/// Calculate the effective fee for an account based on custom discount
+/// If no discount account exists, returns full base_fee (default behavior)
+/// Otherwise applies discount: fee = base_fee * (100 - discount) / 100
+fn calculate_fee_with_discount(
+    program_id: &Pubkey,
+    account: &Pubkey,
+    accounts: &[AccountInfo],
+    base_fee: u64,
+) -> Result<u64, ProgramError> {
+    // Try to find fee discount account
+    let (discount_pda, _) = Pubkey::find_program_address(
+        &[b"discount", account.as_ref()],
+        program_id
+    );
+
+    // Check if any account in the accounts slice matches the discount PDA
+    let discount_account = accounts.iter().find(|acc| acc.key == &discount_pda);
+
+    if let Some(discount_acc) = discount_account {
+        // Account exists and has lamports - load the discount
+        if discount_acc.lamports() > 0 {
+            let discount_data = discount_acc.try_borrow_data()?;
+            if discount_data.len() >= 8 + FeeDiscount::LEN {
+                let fee_discount: FeeDiscount = BorshDeserialize::deserialize(&mut &discount_data[8..])?;
+                let discount = fee_discount.discount as u64;
+
+                // Apply discount: fee = base_fee * (100 - discount) / 100
+                // Examples: discount=0 → 100% fee, discount=50 → 50% fee, discount=100 → 0% fee (free)
+                let effective_fee = (base_fee * (100 - discount)) / 100;
+                return Ok(effective_fee);
+            }
+        }
+    }
+
+    // No discount account or uninitialized - use full fee (default behavior)
+    Ok(base_fee)
 }
 
 /// Pause the contract and distribute owner claimable funds

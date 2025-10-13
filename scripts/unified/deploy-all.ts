@@ -4,7 +4,8 @@
  * @notice This script coordinates deployment across multiple chains
  */
 
-import { ethers } from 'hardhat';
+import hre from 'hardhat';
+import { formatEther } from 'viem';
 import { Connection, Keypair, PublicKey } from '@solana/web3.js';
 import { Wallet } from '@coral-xyz/anchor';
 import { Optional } from '@sudobility/types';
@@ -40,11 +41,15 @@ interface DeploymentAddresses {
 async function deployEVM(network: string): Promise<DeploymentAddresses['evm']> {
   console.log(`\n🔧 Deploying to EVM network: ${network}`);
 
-  const [deployer] = await ethers.getSigners();
-  console.log('EVM deployer address:', deployer.address);
+  const [deployer] = await hre.viem.getWalletClients();
+  const publicClient = await hre.viem.getPublicClient();
+
+  console.log('EVM deployer address:', deployer.account.address);
+
+  const balance = await publicClient.getBalance({ address: deployer.account.address });
   console.log(
     'EVM deployer balance:',
-    ethers.formatEther(await deployer.provider!.getBalance(deployer.address)),
+    formatEther(balance),
     'ETH'
   );
 
@@ -58,30 +63,26 @@ async function deployEVM(network: string): Promise<DeploymentAddresses['evm']> {
   let usdcAddress = networkConfig.usdc;
   if (!usdcAddress) {
     console.log('Deploying MockUSDC...');
-    const MockUSDCFactory = await ethers.getContractFactory('MockUSDC');
-    const mockUSDC = await MockUSDCFactory.deploy();
-    await mockUSDC.waitForDeployment();
-    usdcAddress = await mockUSDC.getAddress();
+    const mockUSDC = await hre.viem.deployContract('MockUSDC');
+    usdcAddress = mockUSDC.address;
     console.log('✅ MockUSDC deployed to:', usdcAddress);
   }
 
   // Deploy Mailer (with integrated delegation functionality)
   console.log('Deploying Mailer with integrated delegation management...');
-  const MailerFactory = await ethers.getContractFactory('Mailer');
-  const mailer = await MailerFactory.deploy(usdcAddress, deployer.address);
-  await mailer.waitForDeployment();
-  const mailerAddress = await mailer.getAddress();
+  const mailer = await hre.viem.deployContract('Mailer', [usdcAddress, deployer.account.address]);
+  const mailerAddress = mailer.address;
   console.log('✅ Mailer deployed to:', mailerAddress);
 
-  const currentBlock = await deployer.provider!.getBlockNumber();
+  const currentBlock = await publicClient.getBlockNumber();
 
   return {
     network,
     chainId: networkConfig.chainId,
     mailer: mailerAddress,
     usdc: usdcAddress,
-    deployer: deployer.address,
-    blockNumber: currentBlock,
+    deployer: deployer.account.address,
+    blockNumber: Number(currentBlock),
   };
 }
 
@@ -232,7 +233,6 @@ async function main() {
 
     if (deployment.evm) {
       console.log(`\n📗 EVM (${deployment.evm.network}):`);
-      console.log(`   MailService: ${deployment.evm.mailService}`);
       console.log(`   Mailer: ${deployment.evm.mailer}`);
       console.log(`   USDC: ${deployment.evm.usdc}`);
       console.log(`   Block: ${deployment.evm.blockNumber}`);
@@ -240,7 +240,6 @@ async function main() {
 
     if (deployment.solana) {
       console.log(`\n🟣 Solana (${deployment.solana.network}):`);
-      console.log(`   MailService: ${deployment.solana.mailService}`);
       console.log(`   Mailer: ${deployment.solana.mailer}`);
       console.log(`   USDC: ${deployment.solana.usdcMint}`);
       console.log(`   Slot: ${deployment.solana.slot}`);

@@ -6,7 +6,6 @@
 
 import { OnchainMailerClient, WalletDetector } from '../src/unified';
 import { DEFAULT_CHAIN_CONFIG, TESTNET_CHAIN_CONFIG } from '../src/utils';
-import { ethers } from 'ethers';
 import { Connection, Keypair } from '@solana/web3.js';
 import { Wallet } from '@coral-xyz/anchor';
 

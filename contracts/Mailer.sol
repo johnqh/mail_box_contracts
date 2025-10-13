@@ -51,7 +51,12 @@ contract Mailer {
     
     /// @notice Contract pause state - when true, all functions are paused and funds are distributed
     bool public paused;
-    
+
+    /// @notice Mapping of addresses to their custom fee discount (0-100)
+    /// @dev 0 = no discount (full fee), 100 = full discount (free)
+    ///      Internally stores discount instead of percentage for cleaner logic
+    mapping(address => uint256) public customFeeDiscount;
+
     event MailSent(
         address indexed from,
         address indexed to,
@@ -111,7 +116,12 @@ contract Mailer {
     /// @param recipient Address receiving funds
     /// @param amount Amount distributed
     event FundsDistributed(address indexed recipient, uint256 amount);
-    
+
+    /// @notice Emitted when custom fee percentage is set for an address
+    /// @param account Address that received custom fee percentage
+    /// @param percentage Fee percentage (0-100)
+    event CustomFeePercentageSet(address indexed account, uint256 percentage);
+
     error OnlyOwner();
     error NoClaimableAmount();
     error ClaimPeriodNotExpired();
@@ -122,7 +132,8 @@ contract Mailer {
     error MathOverflow();
     error ContractIsPaused();
     error ContractNotPaused();
-    
+    error InvalidPercentage();
+
     modifier onlyOwner() {
         if (msg.sender != owner) {
             revert OnlyOwner();
@@ -186,17 +197,22 @@ contract Mailer {
         bool resolveSenderToName
     ) external nonReentrant whenNotPaused {
         if (revenueShareToReceiver) {
-            // Priority mode: Transfer full fee from sender to contract
-            if (!usdcToken.transferFrom(msg.sender, address(this), sendFee)) {
+            // Priority mode: Calculate effective fee based on custom percentage
+            uint256 effectiveFee = _calculateFeeForAddress(msg.sender, sendFee);
+            // Transfer effective fee from sender to contract
+            if (effectiveFee > 0 && !usdcToken.transferFrom(msg.sender, address(this), effectiveFee)) {
                 revert FeePaymentRequired();
             }
-            // Record 90% for receiver, 10% for owner
-            _recordShares(to, sendFee);
+            // Record 90% for receiver, 10% for owner (only if fee > 0)
+            if (effectiveFee > 0) {
+                _recordShares(to, effectiveFee);
+            }
         } else {
-            // Standard mode: Calculate 10% owner fee
-            uint256 ownerFee = (sendFee * OWNER_SHARE) / 100;
-            // Transfer only 10% fee from sender to contract
-            if (!usdcToken.transferFrom(msg.sender, address(this), ownerFee)) {
+            // Standard mode: Calculate 10% owner fee based on effective fee
+            uint256 effectiveFee = _calculateFeeForAddress(msg.sender, sendFee);
+            uint256 ownerFee = (effectiveFee * OWNER_SHARE) / 100;
+            // Transfer only owner fee from sender to contract
+            if (ownerFee > 0 && !usdcToken.transferFrom(msg.sender, address(this), ownerFee)) {
                 revert FeePaymentRequired();
             }
             // All goes to owner, no revenue share
@@ -223,17 +239,22 @@ contract Mailer {
         bool resolveSenderToName
     ) external nonReentrant whenNotPaused {
         if (revenueShareToReceiver) {
-            // Priority mode: Transfer full fee from sender to contract
-            if (!usdcToken.transferFrom(msg.sender, address(this), sendFee)) {
+            // Priority mode: Calculate effective fee based on custom percentage
+            uint256 effectiveFee = _calculateFeeForAddress(msg.sender, sendFee);
+            // Transfer effective fee from sender to contract
+            if (effectiveFee > 0 && !usdcToken.transferFrom(msg.sender, address(this), effectiveFee)) {
                 revert FeePaymentRequired();
             }
-            // Record 90% for receiver, 10% for owner
-            _recordShares(to, sendFee);
+            // Record 90% for receiver, 10% for owner (only if fee > 0)
+            if (effectiveFee > 0) {
+                _recordShares(to, effectiveFee);
+            }
         } else {
-            // Standard mode: Calculate 10% owner fee
-            uint256 ownerFee = (sendFee * OWNER_SHARE) / 100;
-            // Transfer only 10% fee from sender to contract
-            if (!usdcToken.transferFrom(msg.sender, address(this), ownerFee)) {
+            // Standard mode: Calculate 10% owner fee based on effective fee
+            uint256 effectiveFee = _calculateFeeForAddress(msg.sender, sendFee);
+            uint256 ownerFee = (effectiveFee * OWNER_SHARE) / 100;
+            // Transfer only owner fee from sender to contract
+            if (ownerFee > 0 && !usdcToken.transferFrom(msg.sender, address(this), ownerFee)) {
                 revert FeePaymentRequired();
             }
             // All goes to owner, no revenue share
@@ -262,11 +283,12 @@ contract Mailer {
         string calldata subject,
         string calldata body
     ) external nonReentrant whenNotPaused {
-        // Calculate 10% owner fee (no revenue share since no wallet address)
-        uint256 ownerFee = (sendFee * OWNER_SHARE) / 100;
+        // Calculate effective fee based on custom percentage, then 10% owner fee (no revenue share since no wallet address)
+        uint256 effectiveFee = _calculateFeeForAddress(msg.sender, sendFee);
+        uint256 ownerFee = (effectiveFee * OWNER_SHARE) / 100;
 
-        // Transfer only 10% fee from sender to contract
-        if (!usdcToken.transferFrom(msg.sender, address(this), ownerFee)) {
+        // Transfer only owner fee from sender to contract
+        if (ownerFee > 0 && !usdcToken.transferFrom(msg.sender, address(this), ownerFee)) {
             revert FeePaymentRequired();
         }
 
@@ -289,11 +311,12 @@ contract Mailer {
         string calldata toEmail,
         string calldata mailId
     ) external nonReentrant whenNotPaused {
-        // Calculate 10% owner fee (no revenue share since no wallet address)
-        uint256 ownerFee = (sendFee * OWNER_SHARE) / 100;
+        // Calculate effective fee based on custom percentage, then 10% owner fee (no revenue share since no wallet address)
+        uint256 effectiveFee = _calculateFeeForAddress(msg.sender, sendFee);
+        uint256 ownerFee = (effectiveFee * OWNER_SHARE) / 100;
 
-        // Transfer only 10% fee from sender to contract
-        if (!usdcToken.transferFrom(msg.sender, address(this), ownerFee)) {
+        // Transfer only owner fee from sender to contract
+        if (ownerFee > 0 && !usdcToken.transferFrom(msg.sender, address(this), ownerFee)) {
             revert FeePaymentRequired();
         }
 
@@ -465,7 +488,62 @@ contract Mailer {
     function getDelegationFee() external view returns (uint256) {
         return delegationFee;
     }
-    
+
+    /// @notice Set custom fee percentage for a specific address
+    /// @dev Only owner can set. Percentage must be between 0-100 (inclusive)
+    ///      0 = free (no fee), 100 = full fee, anything in between reduces the fee proportionally
+    ///      Internally stores as discount (100 - percentage) for cleaner logic
+    /// @param account Address to set custom fee percentage for
+    /// @param percentage Fee percentage (0-100). Set to 0 for free messages, 100 for full fee
+    function setCustomFeePercentage(address account, uint256 percentage) external onlyOwner whenNotPaused {
+        if (account == address(0)) {
+            revert InvalidAddress();
+        }
+        if (percentage > 100) {
+            revert InvalidPercentage();
+        }
+
+        // Store as discount: 0% fee = 100 discount, 100% fee = 0 discount
+        customFeeDiscount[account] = 100 - percentage;
+        emit CustomFeePercentageSet(account, percentage);
+    }
+
+    /// @notice Clear custom fee percentage for a specific address
+    /// @dev Only owner can clear. After clearing, address will use default fee structure (100%)
+    /// @param account Address to clear custom fee percentage for
+    function clearCustomFeePercentage(address account) external onlyOwner whenNotPaused {
+        if (account == address(0)) {
+            revert InvalidAddress();
+        }
+
+        // Set discount to 0 (no discount = 100% fee = default behavior)
+        customFeeDiscount[account] = 0;
+        emit CustomFeePercentageSet(account, 100);
+    }
+
+    /// @notice Get custom fee percentage for an address
+    /// @param account Address to check
+    /// @return percentage Fee percentage (0-100), 100 means default (full fee)
+    function getCustomFeePercentage(address account) external view returns (uint256) {
+        // Convert discount back to percentage: 0 discount = 100% fee, 100 discount = 0% fee
+        return 100 - customFeeDiscount[account];
+    }
+
+    /// @notice Calculate the effective fee for an address based on custom discount
+    /// @dev Internal helper function. Uses discount calculation: fee = baseFee * (100 - discount) / 100
+    ///      Default discount of 0 means full fee (100%)
+    /// @param account Address to calculate fee for
+    /// @param baseFee Base fee amount to apply discount to
+    /// @return Calculated fee amount
+    function _calculateFeeForAddress(address account, uint256 baseFee) internal view returns (uint256) {
+        // Get discount (0-100): 0 = no discount (full fee), 100 = full discount (free)
+        uint256 discount = customFeeDiscount[account];
+
+        // Apply discount: fee = baseFee * (100 - discount) / 100
+        // Examples: discount=0 → 100% fee, discount=50 → 50% fee, discount=100 → 0% fee (free)
+        return (baseFee * (100 - discount)) / 100;
+    }
+
     /// @notice Pause the contract and distribute all claimable funds to their rightful owners
     /// @dev Only owner can pause. All recipient shares and owner claimable funds are distributed
     function pause() external onlyOwner {

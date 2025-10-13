@@ -1,5 +1,9 @@
 import { HardhatUserConfig } from "hardhat/config";
-import "@nomicfoundation/hardhat-toolbox";
+import "@nomicfoundation/hardhat-viem";
+import "@nomicfoundation/hardhat-verify";
+import "@nomicfoundation/hardhat-chai-matchers";
+import "@typechain/hardhat";
+import "hardhat-gas-reporter";
 import * as dotenv from "dotenv";
 import * as fs from "fs";
 
@@ -95,6 +99,10 @@ const config: HardhatUserConfig = {
   gasReporter: {
     enabled: process.env.REPORT_GAS !== undefined,
     currency: "USD",
+  },
+  typechain: {
+    outDir: "typechain-types",
+    target: "ethers-v6", // Keep ethers target for now since viem can use these types
   },
 };
 

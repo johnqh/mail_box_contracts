@@ -4,11 +4,11 @@
  * @notice Demonstrates messaging and delegation functionality on EVM chains
  */
 
-import { ethers } from "ethers";
+import hre from "hardhat";
 import { MailerClient } from "../src/evm/mailer-client";
-import { MockUSDC__factory } from "../typechain-types";
-import { createPublicClient, createWalletClient, http, defineChain } from "viem";
+import { createPublicClient, createWalletClient, http, defineChain, parseUnits, formatUnits, getContract } from "viem";
 import { privateKeyToAccount } from "viem/accounts";
+import MockUSDCArtifact from "../artifacts/contracts/MockUSDC.sol/MockUSDC.json" assert { type: "json" };
 
 // Define hardhat local chain for development
 const hardhatLocal = defineChain({
@@ -28,116 +28,108 @@ const hardhatLocal = defineChain({
 async function evmUsageExample() {
   console.log("🚀 Mailer EVM Usage Example");
   console.log("============================================");
-  
+
   // ===== SETUP =====
   console.log("\n📋 Setting up providers and accounts...");
-  
-  // Setup ethers for USDC deployment (simpler for contract deployment)
-  const provider = new ethers.JsonRpcProvider("http://localhost:8545");
-  const signer = new ethers.Wallet(
-    "0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80", // Hardhat account #0
-    provider
-  );
-  
-  console.log("📍 Deployer address:", signer.address);
-  
-  // Setup viem clients for MailerClient (required by the API)
+
+  // Setup viem clients
   const publicClient = createPublicClient({
     chain: hardhatLocal,
     transport: http("http://localhost:8545")
   });
 
   const account = privateKeyToAccount("0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80");
-  
+
   const walletClient = createWalletClient({
+    account,
     chain: hardhatLocal,
     transport: http("http://localhost:8545")
   });
 
+  console.log("📍 Deployer address:", account.address);
+
   // ===== DEPLOY USDC =====
   console.log("\n💰 Deploying MockUSDC...");
-  
-  const usdcFactory = new MockUSDC__factory(signer);
-  const mockUSDC = await usdcFactory.deploy();
-  await mockUSDC.waitForDeployment();
-  const usdcAddress = await mockUSDC.getAddress();
-  
+
+  const mockUSDC = await hre.viem.deployContract("MockUSDC");
+  const usdcAddress = mockUSDC.address;
+
   console.log("✅ MockUSDC deployed at:", usdcAddress);
 
   // ===== DEPLOY MAILER =====
   console.log("\n📦 Deploying MailerClient...");
-  
+
   try {
     const mailerClient = await MailerClient.deploy(
       walletClient,
-      publicClient, 
+      publicClient,
       account.address,
       usdcAddress,
-      signer.address // owner
+      account.address // owner
     );
-    
+
     const mailerAddress = mailerClient.getAddress();
     console.log("✅ MailerClient deployed at:", mailerAddress);
-    
+
     // ===== SETUP USDC =====
     console.log("\n💳 Setting up USDC tokens...");
-    
-    const usdcAmount = ethers.parseUnits("100", 6); // 100 USDC
-    await mockUSDC.mint(signer.address, usdcAmount);
-    await mockUSDC.approve(mailerAddress, usdcAmount);
-    
-    const balance = await mockUSDC.balanceOf(signer.address);
-    console.log("💰 USDC balance:", ethers.formatUnits(balance, 6), "USDC");
+
+    const usdcAmount = parseUnits("100", 6); // 100 USDC
+    await mockUSDC.write.mint([account.address, usdcAmount], { account: account.address });
+    await mockUSDC.write.approve([mailerAddress, usdcAmount], { account: account.address });
+
+    const balance = await mockUSDC.read.balanceOf([account.address]);
+    console.log("💰 USDC balance:", formatUnits(balance, 6), "USDC");
     
     // ===== CHECK FEES =====
     console.log("\n📊 Checking current fees...");
-    
+
     const sendFee = await mailerClient.getSendFee();
-    const delegationFee = await mailerClient.getDelegationFee(); 
-    
-    console.log("📧 Send fee:", ethers.formatUnits(sendFee, 6), "USDC");
-    console.log("👥 Delegation fee:", ethers.formatUnits(delegationFee, 6), "USDC");
+    const delegationFee = await mailerClient.getDelegationFee();
+
+    console.log("📧 Send fee:", formatUnits(sendFee, 6), "USDC");
+    console.log("👥 Delegation fee:", formatUnits(delegationFee, 6), "USDC");
     
     // ===== SEND MESSAGES =====
     console.log("\n📧 Sending messages...");
-    
+
     // Send priority message (with revenue sharing)
     console.log("Sending priority message...");
     const priorityHash = await mailerClient.sendPriority(
-      signer.address as `0x${string}`, // to (recipient)
+      account.address, // to (recipient)
       "EVM Priority Message", // subject
       "This is a priority message with 90% revenue share!", // body
       walletClient,
       account.address
     );
-    
+
     console.log("✅ Priority message sent! Hash:", priorityHash);
-    
+
     // Wait for transaction
-    const priorityReceipt = await publicClient.waitForTransactionReceipt({ 
-      hash: priorityHash 
+    const priorityReceipt = await publicClient.waitForTransactionReceipt({
+      hash: priorityHash
     });
     console.log("📦 Mined in block:", priorityReceipt.blockNumber);
-    
+
     // Send standard message (fee only)
     console.log("Sending standard message...");
     const standardHash = await mailerClient.send(
-      signer.address as `0x${string}`, // to (recipient)
+      account.address, // to (recipient)
       "EVM Standard Message", // subject
       "This is a standard message with 10% fee only.", // body
       walletClient,
       account.address
     );
-    
+
     console.log("✅ Standard message sent! Hash:", standardHash);
     
     // ===== CHECK REVENUE =====
     console.log("\n💰 Checking claimable revenue...");
-    
-    const claimInfo = await mailerClient.getRecipientClaimable(signer.address);
-    console.log("💸 Claimable amount:", ethers.formatUnits(claimInfo.amount, 6), "USDC");
+
+    const claimInfo = await mailerClient.getRecipientClaimable(account.address);
+    console.log("💸 Claimable amount:", formatUnits(claimInfo.amount, 6), "USDC");
     console.log("⏰ Is expired:", claimInfo.isExpired);
-    
+
     if (claimInfo.amount > BigInt(0) && !claimInfo.isExpired) {
       console.log("Claiming revenue share...");
       const claimHash = await mailerClient.claimRecipientShare(

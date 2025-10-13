@@ -1,9 +1,11 @@
 import hre from "hardhat";
-const { ethers, network } = hre;
+import type { Address } from "viem";
 
 async function main() {
+  const publicClient = await hre.viem.getPublicClient();
+
   // Get contract address from environment variable
-  const address = process.env.CONTRACT_ADDRESS;
+  const address = process.env.CONTRACT_ADDRESS as Address;
 
   if (!address) {
     console.error("Usage: CONTRACT_ADDRESS=<address> npx hardhat run scripts/evm/get-deployment-block.ts --network <network>");
@@ -14,19 +16,19 @@ async function main() {
   console.log(`Finding deployment block for contract: ${address}`);
 
   // Binary search to find deployment block
-  const currentBlock = await ethers.provider.getBlockNumber();
+  const currentBlock = await publicClient.getBlockNumber();
   console.log("Current block:", currentBlock);
 
-  let low = Math.max(0, currentBlock - 10000);
-  let high = currentBlock;
+  let low = Math.max(0, Number(currentBlock) - 10000);
+  let high = Number(currentBlock);
 
   console.log(`Searching blocks ${low} to ${high}...`);
 
   while (low < high) {
     const mid = Math.floor((low + high) / 2);
-    const codeAt = await ethers.provider.getCode(address, mid);
+    const codeAt = await publicClient.getBytecode({ address, blockNumber: BigInt(mid) });
 
-    if (codeAt === "0x") {
+    if (codeAt === undefined || codeAt === "0x") {
       low = mid + 1;
     } else {
       high = mid;
