@@ -1,15 +1,15 @@
 {
   "network": "sepolia",
   "chainId": 11155111,
-  "timestamp": "2025-10-07T17:46:37.635Z",
-  "deployer": "0x1996d64D8f6E47A5bF6fB92246EF4eFD6Ae881e0",
-  "owner": "0x1996d64D8f6E47A5bF6fB92246EF4eFD6Ae881e0",
+  "timestamp": "2025-10-13T16:04:50.873Z",
+  "deployer": "0x1996d64d8f6e47a5bf6fb92246ef4efd6ae881e0",
+  "owner": "0x1996d64d8f6e47a5bf6fb92246ef4efd6ae881e0",
   "contracts": {
     "usdc": "0x1c7D4B196Cb0C7B01d743Fbc6116a902379C7238",
-    "mailer": "0xd94938f1985E99b9Df2C7375b6ca5857cB06F39A"
+    "mailer": "0x7f20be6adae02c4640979afd86e56da288efab3e"
   },
   "fees": {
     "sendFee": "0.1 USDC",
-    "delegationFee": "10.0 USDC"
+    "delegationFee": "10 USDC"
   }
 }

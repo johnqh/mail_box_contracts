@@ -1,3 +1,4 @@
+use borsh::BorshDeserialize;
 use solana_program::{
     instruction::{AccountMeta, Instruction},
     program_pack::Pack,
@@ -13,11 +14,10 @@ use spl_token::{
     instruction as spl_instruction,
     state::{Account as TokenAccount, Mint},
 };
-use borsh::BorshDeserialize;
 use std::str::FromStr;
 
 // Import our program
-use mailer::{MailerInstruction, MailerState, RecipientClaim, Delegation};
+use mailer::{Delegation, MailerInstruction, MailerState, RecipientClaim};
 
 // Program ID for tests
 const PROGRAM_ID_STR: &str = "9FLkBDGpZBcR8LMsQ7MwwV6X9P4TDFgN3DeRh5qYyHJF";
@@ -51,7 +51,8 @@ async fn create_usdc_mint(
                 &payer.pubkey(),
                 None,
                 6, // USDC has 6 decimals
-            ).unwrap(),
+            )
+            .unwrap(),
         ],
         Some(&payer.pubkey()),
     );
@@ -82,12 +83,8 @@ async fn create_token_account(
                 TokenAccount::LEN as u64,
                 &spl_token::id(),
             ),
-            spl_instruction::initialize_account(
-                &spl_token::id(),
-                &account.pubkey(),
-                mint,
-                owner,
-            ).unwrap(),
+            spl_instruction::initialize_account(&spl_token::id(), &account.pubkey(), mint, owner)
+                .unwrap(),
         ],
         Some(&payer.pubkey()),
     );
@@ -114,7 +111,8 @@ async fn mint_to(
             &payer.pubkey(),
             &[],
             amount,
-        ).unwrap()],
+        )
+        .unwrap()],
         Some(&payer.pubkey()),
     );
     transaction.sign(&[payer], recent_blockhash);
@@ -170,7 +168,7 @@ async fn test_initialize_program() {
     // Verify the mailer state was initialized correctly
     let account = banks_client.get_account(mailer_pda).await.unwrap().unwrap();
     let mailer_state: MailerState = BorshDeserialize::deserialize(&mut &account.data[8..]).unwrap();
-    
+
     assert_eq!(mailer_state.owner, payer.pubkey());
     assert_eq!(mailer_state.usdc_mint, usdc_mint);
     assert_eq!(mailer_state.send_fee, 100_000); // 0.1 USDC
@@ -190,7 +188,7 @@ async fn test_send_priority_message() {
     // Create USDC mint and accounts
     let usdc_mint = create_usdc_mint(&mut banks_client, &payer, recent_blockhash).await;
     let (mailer_pda, _) = get_mailer_pda();
-    
+
     // Initialize the program first
     let init_instruction = Instruction::new_with_borsh(
         program_id(),
@@ -207,11 +205,33 @@ async fn test_send_priority_message() {
     banks_client.process_transaction(transaction).await.unwrap();
 
     // Create token accounts
-    let sender_usdc = create_token_account(&mut banks_client, &payer, recent_blockhash, &usdc_mint, &payer.pubkey()).await;
-    let mailer_usdc = create_token_account(&mut banks_client, &payer, recent_blockhash, &usdc_mint, &mailer_pda).await;
-    
+    let sender_usdc = create_token_account(
+        &mut banks_client,
+        &payer,
+        recent_blockhash,
+        &usdc_mint,
+        &payer.pubkey(),
+    )
+    .await;
+    let mailer_usdc = create_token_account(
+        &mut banks_client,
+        &payer,
+        recent_blockhash,
+        &usdc_mint,
+        &mailer_pda,
+    )
+    .await;
+
     // Mint USDC to sender
-    mint_to(&mut banks_client, &payer, recent_blockhash, &usdc_mint, &sender_usdc, 1_000_000).await; // 1 USDC
+    mint_to(
+        &mut banks_client,
+        &payer,
+        recent_blockhash,
+        &usdc_mint,
+        &sender_usdc,
+        1_000_000,
+    )
+    .await; // 1 USDC
 
     // Get recipient claim PDA
     let (recipient_claim_pda, _) = get_claim_pda(&payer.pubkey());
@@ -247,16 +267,22 @@ async fn test_send_priority_message() {
     let _recent_blockhash = banks_client.get_latest_blockhash().await.unwrap();
 
     // Verify recipient claim was created with correct amount
-    let claim_account = banks_client.get_account(recipient_claim_pda).await.unwrap().unwrap();
-    let recipient_claim: RecipientClaim = BorshDeserialize::deserialize(&mut &claim_account.data[8..]).unwrap();
-    
+    let claim_account = banks_client
+        .get_account(recipient_claim_pda)
+        .await
+        .unwrap()
+        .unwrap();
+    let recipient_claim: RecipientClaim =
+        BorshDeserialize::deserialize(&mut &claim_account.data[8..]).unwrap();
+
     assert_eq!(recipient_claim.recipient, payer.pubkey());
     assert_eq!(recipient_claim.amount, 90_000); // 90% of send_fee (100,000)
 
     // Verify mailer state was updated with owner share
     let mailer_account = banks_client.get_account(mailer_pda).await.unwrap().unwrap();
-    let mailer_state: MailerState = BorshDeserialize::deserialize(&mut &mailer_account.data[8..]).unwrap();
-    
+    let mailer_state: MailerState =
+        BorshDeserialize::deserialize(&mut &mailer_account.data[8..]).unwrap();
+
     // Debug output
     println!("Debug - Mailer state:");
     println!("  owner: {}", mailer_state.owner);
@@ -265,7 +291,7 @@ async fn test_send_priority_message() {
     println!("  delegation_fee: {}", mailer_state.delegation_fee);
     println!("  owner_claimable: {}", mailer_state.owner_claimable);
     println!("  bump: {}", mailer_state.bump);
-    
+
     assert_eq!(mailer_state.owner_claimable, 10_000); // 10% of send_fee
 }
 
@@ -281,7 +307,7 @@ async fn test_send_standard_message() {
     // Setup similar to priority test
     let usdc_mint = create_usdc_mint(&mut banks_client, &payer, recent_blockhash).await;
     let (mailer_pda, _) = get_mailer_pda();
-    
+
     // Initialize the program
     let init_instruction = Instruction::new_with_borsh(
         program_id(),
@@ -298,11 +324,33 @@ async fn test_send_standard_message() {
     banks_client.process_transaction(transaction).await.unwrap();
 
     // Create token accounts
-    let sender_usdc = create_token_account(&mut banks_client, &payer, recent_blockhash, &usdc_mint, &payer.pubkey()).await;
-    let mailer_usdc = create_token_account(&mut banks_client, &payer, recent_blockhash, &usdc_mint, &mailer_pda).await;
-    
+    let sender_usdc = create_token_account(
+        &mut banks_client,
+        &payer,
+        recent_blockhash,
+        &usdc_mint,
+        &payer.pubkey(),
+    )
+    .await;
+    let mailer_usdc = create_token_account(
+        &mut banks_client,
+        &payer,
+        recent_blockhash,
+        &usdc_mint,
+        &mailer_pda,
+    )
+    .await;
+
     // Mint USDC to sender
-    mint_to(&mut banks_client, &payer, recent_blockhash, &usdc_mint, &sender_usdc, 1_000_000).await;
+    mint_to(
+        &mut banks_client,
+        &payer,
+        recent_blockhash,
+        &usdc_mint,
+        &sender_usdc,
+        1_000_000,
+    )
+    .await;
 
     // Get recipient claim PDA (needed even if not used for standard send)
     let (recipient_claim_pda, _) = get_claim_pda(&payer.pubkey());
@@ -336,7 +384,8 @@ async fn test_send_standard_message() {
 
     // Verify only owner fee was charged (10% of send_fee = 10,000)
     let mailer_account = banks_client.get_account(mailer_pda).await.unwrap().unwrap();
-    let mailer_state: MailerState = BorshDeserialize::deserialize(&mut &mailer_account.data[8..]).unwrap();
+    let mailer_state: MailerState =
+        BorshDeserialize::deserialize(&mut &mailer_account.data[8..]).unwrap();
     assert_eq!(mailer_state.owner_claimable, 10_000); // Only 10% fee
 }
 
@@ -352,7 +401,7 @@ async fn test_claim_recipient_share() {
     // Setup and send priority message first (similar to previous test)
     let usdc_mint = create_usdc_mint(&mut banks_client, &payer, recent_blockhash).await;
     let (mailer_pda, _) = get_mailer_pda();
-    
+
     // Initialize
     let init_instruction = Instruction::new_with_borsh(
         program_id(),
@@ -369,11 +418,33 @@ async fn test_claim_recipient_share() {
     banks_client.process_transaction(transaction).await.unwrap();
 
     // Create token accounts
-    let sender_usdc = create_token_account(&mut banks_client, &payer, recent_blockhash, &usdc_mint, &payer.pubkey()).await;
-    let mailer_usdc = create_token_account(&mut banks_client, &payer, recent_blockhash, &usdc_mint, &mailer_pda).await;
-    
+    let sender_usdc = create_token_account(
+        &mut banks_client,
+        &payer,
+        recent_blockhash,
+        &usdc_mint,
+        &payer.pubkey(),
+    )
+    .await;
+    let mailer_usdc = create_token_account(
+        &mut banks_client,
+        &payer,
+        recent_blockhash,
+        &usdc_mint,
+        &mailer_pda,
+    )
+    .await;
+
     // Mint USDC
-    mint_to(&mut banks_client, &payer, recent_blockhash, &usdc_mint, &sender_usdc, 1_000_000).await;
+    mint_to(
+        &mut banks_client,
+        &payer,
+        recent_blockhash,
+        &usdc_mint,
+        &sender_usdc,
+        1_000_000,
+    )
+    .await;
 
     let (recipient_claim_pda, _) = get_claim_pda(&payer.pubkey());
 
@@ -385,7 +456,7 @@ async fn test_claim_recipient_share() {
             subject: "Test".to_string(),
             _body: "Test".to_string(),
             revenue_share_to_receiver: true,
-        resolve_sender_to_name: false,
+            resolve_sender_to_name: false,
         },
         vec![
             AccountMeta::new(payer.pubkey(), true),
@@ -403,7 +474,14 @@ async fn test_claim_recipient_share() {
     banks_client.process_transaction(transaction).await.unwrap();
 
     // Create recipient's own USDC account to receive the claim
-    let recipient_usdc = create_token_account(&mut banks_client, &payer, recent_blockhash, &usdc_mint, &payer.pubkey()).await;
+    let recipient_usdc = create_token_account(
+        &mut banks_client,
+        &payer,
+        recent_blockhash,
+        &usdc_mint,
+        &payer.pubkey(),
+    )
+    .await;
 
     // Now claim the recipient share
     let claim_instruction = Instruction::new_with_borsh(
@@ -424,12 +502,21 @@ async fn test_claim_recipient_share() {
     banks_client.process_transaction(transaction).await.unwrap();
 
     // Verify the claim was processed
-    let claim_account = banks_client.get_account(recipient_claim_pda).await.unwrap().unwrap();
-    let recipient_claim: RecipientClaim = BorshDeserialize::deserialize(&mut &claim_account.data[8..]).unwrap();
+    let claim_account = banks_client
+        .get_account(recipient_claim_pda)
+        .await
+        .unwrap()
+        .unwrap();
+    let recipient_claim: RecipientClaim =
+        BorshDeserialize::deserialize(&mut &claim_account.data[8..]).unwrap();
     assert_eq!(recipient_claim.amount, 0); // Should be zero after claiming
 
     // Verify tokens were transferred to recipient
-    let recipient_token_account = banks_client.get_account(recipient_usdc).await.unwrap().unwrap();
+    let recipient_token_account = banks_client
+        .get_account(recipient_usdc)
+        .await
+        .unwrap()
+        .unwrap();
     let token_account_data = TokenAccount::unpack(&recipient_token_account.data).unwrap();
     assert_eq!(token_account_data.amount, 90_000); // 90% of 100,000
 }
@@ -446,7 +533,7 @@ async fn test_claim_owner_share() {
     // Setup and send a message to accumulate owner fees
     let usdc_mint = create_usdc_mint(&mut banks_client, &payer, recent_blockhash).await;
     let (mailer_pda, _) = get_mailer_pda();
-    
+
     // Initialize
     let init_instruction = Instruction::new_with_borsh(
         program_id(),
@@ -463,11 +550,40 @@ async fn test_claim_owner_share() {
     banks_client.process_transaction(transaction).await.unwrap();
 
     // Setup token accounts and send standard message to accumulate owner fees
-    let sender_usdc = create_token_account(&mut banks_client, &payer, recent_blockhash, &usdc_mint, &payer.pubkey()).await;
-    let mailer_usdc = create_token_account(&mut banks_client, &payer, recent_blockhash, &usdc_mint, &mailer_pda).await;
-    let owner_usdc = create_token_account(&mut banks_client, &payer, recent_blockhash, &usdc_mint, &payer.pubkey()).await;
-    
-    mint_to(&mut banks_client, &payer, recent_blockhash, &usdc_mint, &sender_usdc, 1_000_000).await;
+    let sender_usdc = create_token_account(
+        &mut banks_client,
+        &payer,
+        recent_blockhash,
+        &usdc_mint,
+        &payer.pubkey(),
+    )
+    .await;
+    let mailer_usdc = create_token_account(
+        &mut banks_client,
+        &payer,
+        recent_blockhash,
+        &usdc_mint,
+        &mailer_pda,
+    )
+    .await;
+    let owner_usdc = create_token_account(
+        &mut banks_client,
+        &payer,
+        recent_blockhash,
+        &usdc_mint,
+        &payer.pubkey(),
+    )
+    .await;
+
+    mint_to(
+        &mut banks_client,
+        &payer,
+        recent_blockhash,
+        &usdc_mint,
+        &sender_usdc,
+        1_000_000,
+    )
+    .await;
 
     let (recipient_claim_pda, _) = get_claim_pda(&payer.pubkey());
 
@@ -479,7 +595,7 @@ async fn test_claim_owner_share() {
             subject: "Test".to_string(),
             _body: "Test".to_string(),
             revenue_share_to_receiver: false,
-        resolve_sender_to_name: false,
+            resolve_sender_to_name: false,
         },
         vec![
             AccountMeta::new(payer.pubkey(), true),
@@ -515,7 +631,8 @@ async fn test_claim_owner_share() {
 
     // Verify owner claimable was reset
     let mailer_account = banks_client.get_account(mailer_pda).await.unwrap().unwrap();
-    let mailer_state: MailerState = BorshDeserialize::deserialize(&mut &mailer_account.data[8..]).unwrap();
+    let mailer_state: MailerState =
+        BorshDeserialize::deserialize(&mut &mailer_account.data[8..]).unwrap();
     assert_eq!(mailer_state.owner_claimable, 0);
 
     // Verify tokens were transferred to owner
@@ -535,7 +652,7 @@ async fn test_set_fees() {
 
     let usdc_mint = create_usdc_mint(&mut banks_client, &payer, recent_blockhash).await;
     let (mailer_pda, _) = get_mailer_pda();
-    
+
     // Initialize
     let init_instruction = Instruction::new_with_borsh(
         program_id(),
@@ -561,32 +678,38 @@ async fn test_set_fees() {
         ],
     );
 
-    let mut transaction = Transaction::new_with_payer(&[set_fee_instruction], Some(&payer.pubkey()));
+    let mut transaction =
+        Transaction::new_with_payer(&[set_fee_instruction], Some(&payer.pubkey()));
     transaction.sign(&[&payer], recent_blockhash);
     banks_client.process_transaction(transaction).await.unwrap();
 
     // Verify fee was updated
     let mailer_account = banks_client.get_account(mailer_pda).await.unwrap().unwrap();
-    let mailer_state: MailerState = BorshDeserialize::deserialize(&mut &mailer_account.data[8..]).unwrap();
+    let mailer_state: MailerState =
+        BorshDeserialize::deserialize(&mut &mailer_account.data[8..]).unwrap();
     assert_eq!(mailer_state.send_fee, 200_000);
 
     // Test setting delegation fee
     let set_delegation_fee_instruction = Instruction::new_with_borsh(
         program_id(),
-        &MailerInstruction::SetDelegationFee { new_fee: 20_000_000 },
+        &MailerInstruction::SetDelegationFee {
+            new_fee: 20_000_000,
+        },
         vec![
             AccountMeta::new(payer.pubkey(), true),
             AccountMeta::new(mailer_pda, false),
         ],
     );
 
-    let mut transaction = Transaction::new_with_payer(&[set_delegation_fee_instruction], Some(&payer.pubkey()));
+    let mut transaction =
+        Transaction::new_with_payer(&[set_delegation_fee_instruction], Some(&payer.pubkey()));
     transaction.sign(&[&payer], recent_blockhash);
     banks_client.process_transaction(transaction).await.unwrap();
 
     // Verify delegation fee was updated
     let mailer_account = banks_client.get_account(mailer_pda).await.unwrap().unwrap();
-    let mailer_state: MailerState = BorshDeserialize::deserialize(&mut &mailer_account.data[8..]).unwrap();
+    let mailer_state: MailerState =
+        BorshDeserialize::deserialize(&mut &mailer_account.data[8..]).unwrap();
     assert_eq!(mailer_state.delegation_fee, 20_000_000);
 }
 
@@ -601,7 +724,7 @@ async fn test_delegation_functionality() {
 
     let usdc_mint = create_usdc_mint(&mut banks_client, &payer, recent_blockhash).await;
     let (mailer_pda, _) = get_mailer_pda();
-    
+
     // Initialize
     let init_instruction = Instruction::new_with_borsh(
         program_id(),
@@ -618,10 +741,32 @@ async fn test_delegation_functionality() {
     banks_client.process_transaction(transaction).await.unwrap();
 
     // Setup token accounts
-    let delegator_usdc = create_token_account(&mut banks_client, &payer, recent_blockhash, &usdc_mint, &payer.pubkey()).await;
-    let mailer_usdc = create_token_account(&mut banks_client, &payer, recent_blockhash, &usdc_mint, &mailer_pda).await;
-    
-    mint_to(&mut banks_client, &payer, recent_blockhash, &usdc_mint, &delegator_usdc, 50_000_000).await; // 50 USDC
+    let delegator_usdc = create_token_account(
+        &mut banks_client,
+        &payer,
+        recent_blockhash,
+        &usdc_mint,
+        &payer.pubkey(),
+    )
+    .await;
+    let mailer_usdc = create_token_account(
+        &mut banks_client,
+        &payer,
+        recent_blockhash,
+        &usdc_mint,
+        &mailer_pda,
+    )
+    .await;
+
+    mint_to(
+        &mut banks_client,
+        &payer,
+        recent_blockhash,
+        &usdc_mint,
+        &delegator_usdc,
+        50_000_000,
+    )
+    .await; // 50 USDC
 
     let delegate = Keypair::new();
     let (delegation_pda, _) = get_delegation_pda(&payer.pubkey());
@@ -643,13 +788,19 @@ async fn test_delegation_functionality() {
         ],
     );
 
-    let mut transaction = Transaction::new_with_payer(&[delegate_instruction], Some(&payer.pubkey()));
+    let mut transaction =
+        Transaction::new_with_payer(&[delegate_instruction], Some(&payer.pubkey()));
     transaction.sign(&[&payer], recent_blockhash);
     banks_client.process_transaction(transaction).await.unwrap();
 
     // Verify delegation was created
-    let delegation_account = banks_client.get_account(delegation_pda).await.unwrap().unwrap();
-    let delegation: Delegation = BorshDeserialize::deserialize(&mut &delegation_account.data[8..]).unwrap();
+    let delegation_account = banks_client
+        .get_account(delegation_pda)
+        .await
+        .unwrap()
+        .unwrap();
+    let delegation: Delegation =
+        BorshDeserialize::deserialize(&mut &delegation_account.data[8..]).unwrap();
     assert_eq!(delegation.delegator, payer.pubkey());
     assert_eq!(delegation.delegate, Some(delegate.pubkey()));
 
@@ -662,6 +813,7 @@ async fn test_delegation_functionality() {
         vec![
             AccountMeta::new(delegate.pubkey(), true),
             AccountMeta::new(delegation_pda, false),
+            AccountMeta::new_readonly(mailer_pda, false),
         ],
     );
 
@@ -687,11 +839,25 @@ async fn test_error_conditions() {
 
     let usdc_mint = create_usdc_mint(&mut banks_client, &payer, recent_blockhash).await;
     let (mailer_pda, _) = get_mailer_pda();
-    
+
     // Test claiming with no claimable amount (should fail)
     let (recipient_claim_pda, _) = get_claim_pda(&payer.pubkey());
-    let recipient_usdc = create_token_account(&mut banks_client, &payer, recent_blockhash, &usdc_mint, &payer.pubkey()).await;
-    let mailer_usdc = create_token_account(&mut banks_client, &payer, recent_blockhash, &usdc_mint, &mailer_pda).await;
+    let recipient_usdc = create_token_account(
+        &mut banks_client,
+        &payer,
+        recent_blockhash,
+        &usdc_mint,
+        &payer.pubkey(),
+    )
+    .await;
+    let mailer_usdc = create_token_account(
+        &mut banks_client,
+        &payer,
+        recent_blockhash,
+        &usdc_mint,
+        &mailer_pda,
+    )
+    .await;
 
     let claim_instruction = Instruction::new_with_borsh(
         program_id(),
@@ -708,8 +874,160 @@ async fn test_error_conditions() {
 
     let mut transaction = Transaction::new_with_payer(&[claim_instruction], Some(&payer.pubkey()));
     transaction.sign(&[&payer], recent_blockhash);
-    
+
     // This should fail because no claim exists
     let result = banks_client.process_transaction(transaction).await;
     assert!(result.is_err());
+}
+
+#[tokio::test]
+async fn test_claim_expired_shares_moves_funds_to_owner() {
+    let program_test = ProgramTest::new(
+        "mailer",
+        program_id(),
+        processor!(mailer::process_instruction),
+    );
+    let mut context = program_test.start_with_context().await;
+
+    let mut recent_blockhash = context.last_blockhash;
+
+    // Create USDC mint and initialize the program
+    let usdc_mint =
+        create_usdc_mint(&mut context.banks_client, &context.payer, recent_blockhash).await;
+    recent_blockhash = context.banks_client.get_latest_blockhash().await.unwrap();
+
+    let (mailer_pda, _) = get_mailer_pda();
+    let init_instruction = Instruction::new_with_borsh(
+        program_id(),
+        &MailerInstruction::Initialize { usdc_mint },
+        vec![
+            AccountMeta::new(context.payer.pubkey(), true),
+            AccountMeta::new(mailer_pda, false),
+            AccountMeta::new_readonly(system_program::id(), false),
+        ],
+    );
+
+    let mut transaction =
+        Transaction::new_with_payer(&[init_instruction], Some(&context.payer.pubkey()));
+    transaction.sign(&[&context.payer], recent_blockhash);
+    context
+        .banks_client
+        .process_transaction(transaction)
+        .await
+        .unwrap();
+    recent_blockhash = context.banks_client.get_latest_blockhash().await.unwrap();
+
+    // Prepare token accounts and fund the sender
+    let sender_usdc = create_token_account(
+        &mut context.banks_client,
+        &context.payer,
+        recent_blockhash,
+        &usdc_mint,
+        &context.payer.pubkey(),
+    )
+    .await;
+    recent_blockhash = context.banks_client.get_latest_blockhash().await.unwrap();
+
+    let mailer_usdc = create_token_account(
+        &mut context.banks_client,
+        &context.payer,
+        recent_blockhash,
+        &usdc_mint,
+        &mailer_pda,
+    )
+    .await;
+    recent_blockhash = context.banks_client.get_latest_blockhash().await.unwrap();
+
+    mint_to(
+        &mut context.banks_client,
+        &context.payer,
+        recent_blockhash,
+        &usdc_mint,
+        &sender_usdc,
+        1_000_000,
+    )
+    .await; // 1 USDC to cover priority message
+    recent_blockhash = context.banks_client.get_latest_blockhash().await.unwrap();
+
+    let (recipient_claim_pda, _) = get_claim_pda(&context.payer.pubkey());
+
+    // Send a priority message to create the claim record
+    let send_instruction = Instruction::new_with_borsh(
+        program_id(),
+        &MailerInstruction::Send {
+            to: context.payer.pubkey(),
+            subject: "Expired claim".to_string(),
+            _body: "Body".to_string(),
+            revenue_share_to_receiver: true,
+            resolve_sender_to_name: false,
+        },
+        vec![
+            AccountMeta::new(context.payer.pubkey(), true),
+            AccountMeta::new(recipient_claim_pda, false),
+            AccountMeta::new(mailer_pda, false),
+            AccountMeta::new(sender_usdc, false),
+            AccountMeta::new(mailer_usdc, false),
+            AccountMeta::new_readonly(spl_token::id(), false),
+            AccountMeta::new_readonly(system_program::id(), false),
+        ],
+    );
+
+    let mut transaction =
+        Transaction::new_with_payer(&[send_instruction], Some(&context.payer.pubkey()));
+    transaction.sign(&[&context.payer], recent_blockhash);
+    context
+        .banks_client
+        .process_transaction(transaction)
+        .await
+        .unwrap();
+    recent_blockhash = context.banks_client.get_latest_blockhash().await.unwrap();
+
+    // Warp forward so the claim expires (claim period is 60 days)
+    context.warp_to_slot(20_000_000).unwrap();
+    recent_blockhash = context.banks_client.get_latest_blockhash().await.unwrap();
+
+    // Owner reclaims expired shares
+    let claim_expired_instruction = Instruction::new_with_borsh(
+        program_id(),
+        &MailerInstruction::ClaimExpiredShares {
+            recipient: context.payer.pubkey(),
+        },
+        vec![
+            AccountMeta::new(context.payer.pubkey(), true),
+            AccountMeta::new(mailer_pda, false),
+            AccountMeta::new(recipient_claim_pda, false),
+        ],
+    );
+
+    let mut transaction =
+        Transaction::new_with_payer(&[claim_expired_instruction], Some(&context.payer.pubkey()));
+    transaction.sign(&[&context.payer], recent_blockhash);
+    context
+        .banks_client
+        .process_transaction(transaction)
+        .await
+        .unwrap();
+
+    // Recipient claim should be cleared
+    let claim_account = context
+        .banks_client
+        .get_account(recipient_claim_pda)
+        .await
+        .unwrap()
+        .unwrap();
+    let claim_state: RecipientClaim =
+        BorshDeserialize::deserialize(&mut &claim_account.data[8..]).unwrap();
+    assert_eq!(claim_state.amount, 0);
+    assert_eq!(claim_state.timestamp, 0);
+
+    // Owner claimable should now include both original owner share and reclaimed amount (total 100,000)
+    let mailer_account = context
+        .banks_client
+        .get_account(mailer_pda)
+        .await
+        .unwrap()
+        .unwrap();
+    let mailer_state: MailerState =
+        BorshDeserialize::deserialize(&mut &mailer_account.data[8..]).unwrap();
+    assert_eq!(mailer_state.owner_claimable, 100_000);
 }

@@ -232,7 +232,7 @@ export function useClaimOwnerShare(
 }
 
 /**
- * Hook to claim expired shares (owner only, EVM only)
+ * Hook to reclaim expired recipient shares (owner only)
  */
 export function useClaimExpiredShares(
   options?: UseMutationOptions<UnifiedTransaction, Error, { recipient: string }>

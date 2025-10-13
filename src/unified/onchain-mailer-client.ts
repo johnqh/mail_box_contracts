@@ -896,7 +896,7 @@ export class OnchainMailerClient {
   }
 
   /**
-   * Claim expired shares (owner only, EVM only)
+   * Claim expired shares (owner only)
    * @param recipient - Address to claim expired shares for
    * @returns Promise resolving to transaction details
    */
@@ -904,7 +904,7 @@ export class OnchainMailerClient {
     if (this.chainType === 'evm') {
       return this.claimExpiredSharesEVM(recipient);
     } else {
-      throw new Error('claimExpiredShares not available on Solana');
+      return this.claimExpiredSharesSolana(recipient);
     }
   }
 
@@ -1750,6 +1750,32 @@ export class OnchainMailerClient {
 
     const client = new MailerClient(connection, wallet, programId, usdcMint);
     const txHash = await client.claimOwnerShare();
+    const slot = await connection.getSlot();
+
+    return {
+      hash: txHash,
+      chainType: ChainType.SOLANA,
+      slot,
+      timestamp: Date.now()
+    };
+  }
+
+  private async claimExpiredSharesSolana(recipient: string): Promise<UnifiedTransaction> {
+    const { MailerClient, PublicKey, Connection } = await this.getSolanaModules();
+
+    if (!this.config.solana?.programs.mailer) {
+      throw new Error('Solana Mailer program address not configured');
+    }
+
+    const connection = new Connection(this.config.solana.rpc, 'confirmed');
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const wallet = MailerClient.createWallet(this.wallet as any);
+    const programId = new PublicKey(this.config.solana.programs.mailer);
+    const usdcMint = new PublicKey(this.config.solana.usdcMint);
+    const recipientKey = new PublicKey(recipient);
+
+    const client = new MailerClient(connection, wallet, programId, usdcMint);
+    const txHash = await client.claimExpiredShares(recipientKey);
     const slot = await connection.getSlot();
 
     return {

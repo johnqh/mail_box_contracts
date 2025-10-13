@@ -171,6 +171,13 @@ function encodeDelegateTo(delegate?: Optional<PublicKey>): Buffer {
   }
 }
 
+function encodeClaimExpiredShares(recipient: PublicKey): Buffer {
+  const data = Buffer.alloc(1 + 32);
+  data.writeUInt8(InstructionType.ClaimExpiredShares, 0);
+  recipient.toBuffer().copy(data, 1);
+  return data;
+}
+
 // Account data parsing interfaces
 interface MailerState {
   owner: PublicKey;
@@ -277,7 +284,8 @@ enum InstructionType {
   Pause = 10,
   Unpause = 11,
   DistributeClaimableFunds = 12,
-  EmergencyUnpause = 13,
+  ClaimExpiredShares = 13,
+  EmergencyUnpause = 14,
 }
 
 /**
@@ -500,6 +508,37 @@ export class MailerClient {
   }
 
   /**
+   * Claim expired recipient shares and move them under owner control
+   * @param recipient Recipient whose expired shares to reclaim
+   * @param options Transaction confirm options
+   * @returns Transaction signature
+   */
+  async claimExpiredShares(
+    recipient: string | PublicKey,
+    options?: ConfirmOptions
+  ): Promise<string> {
+    const recipientKey = typeof recipient === 'string' ? new PublicKey(recipient) : recipient;
+
+    const [recipientClaimPda] = PublicKey.findProgramAddressSync(
+      [Buffer.from('claim'), recipientKey.toBuffer()],
+      this.programId
+    );
+
+    const instruction = new TransactionInstruction({
+      keys: [
+        { pubkey: this.wallet.publicKey, isSigner: true, isWritable: false },
+        { pubkey: this.mailerStatePda, isSigner: false, isWritable: true },
+        { pubkey: recipientClaimPda, isSigner: false, isWritable: true },
+      ],
+      programId: this.programId,
+      data: encodeClaimExpiredShares(recipientKey),
+    });
+
+    const transaction = new Transaction().add(instruction);
+    return await this.sendTransaction(transaction, options);
+  }
+
+  /**
    * Delegate message handling to another address
    * @param delegate Address to delegate to, or null to clear delegation
    * @returns Transaction signature
@@ -562,6 +601,7 @@ export class MailerClient {
       keys: [
         { pubkey: this.wallet.publicKey, isSigner: true, isWritable: false },
         { pubkey: delegationPda, isSigner: false, isWritable: true },
+        { pubkey: this.mailerStatePda, isSigner: false, isWritable: false },
       ],
       programId: this.programId,
       data: encodeSimpleInstruction(InstructionType.RejectDelegation),

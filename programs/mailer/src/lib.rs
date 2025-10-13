@@ -1,6 +1,6 @@
 //! # Native Solana Mailer Program
 //!
-//! A native Solana program for decentralized messaging with delegation management, 
+//! A native Solana program for decentralized messaging with delegation management,
 //! USDC fees and revenue sharing - no Anchor dependencies.
 //!
 //! ## Key Features
@@ -24,7 +24,6 @@
 //! - Priority: Sender pays full fee, gets 90% back as claimable
 //! - Standard: Sender pays 10% fee only
 //! - Owner gets 10% of all fees
-
 
 use borsh::{BorshDeserialize, BorshSerialize};
 use solana_program::{
@@ -138,6 +137,22 @@ pub enum MailerInstruction {
         resolve_sender_to_name: bool,
     },
 
+    /// Send prepared message with optional revenue sharing (references off-chain content via mailId)
+    /// Accounts:
+    /// 0. `[signer]` Sender
+    /// 1. `[writable]` Recipient claim account (PDA)
+    /// 2. `[]` Mailer state account (PDA)
+    /// 3. `[writable]` Sender USDC account
+    /// 4. `[writable]` Mailer USDC account
+    /// 5. `[]` Token program
+    /// 6. `[]` System program
+    SendPrepared {
+        to: Pubkey,
+        mail_id: String,
+        revenue_share_to_receiver: bool,
+        resolve_sender_to_name: bool,
+    },
+
     /// Send message to email address (no wallet address known)
     /// Charges only 10% owner fee since recipient wallet is unknown
     /// Accounts:
@@ -160,10 +175,7 @@ pub enum MailerInstruction {
     /// 2. `[writable]` Sender USDC account
     /// 3. `[writable]` Mailer USDC account
     /// 4. `[]` Token program
-    SendPreparedToEmail {
-        to_email: String,
-        mail_id: String,
-    },
+    SendPreparedToEmail { to_email: String, mail_id: String },
 
     /// Claim recipient share
     /// Accounts:
@@ -205,6 +217,7 @@ pub enum MailerInstruction {
     /// Accounts:
     /// 0. `[signer]` Rejector
     /// 1. `[writable]` Delegation account (PDA)
+    /// 2. `[]` Mailer state account (PDA)
     RejectDelegation,
 
     /// Set delegation fee (owner only)
@@ -241,13 +254,13 @@ pub enum MailerInstruction {
     /// 3. `[writable]` Mailer USDC account  
     /// 4. `[]` Token program
     Pause,
-    
+
     /// Unpause the contract (owner only)
     /// Accounts:
     /// 0. `[signer]` Owner
     /// 1. `[writable]` Mailer state account (PDA)
     Unpause,
-    
+
     /// Distribute claimable funds (when paused)
     /// Accounts:
     /// 0. `[signer]` Anyone can call
@@ -257,6 +270,13 @@ pub enum MailerInstruction {
     /// 4. `[writable]` Mailer USDC account
     /// 5. `[]` Token program
     DistributeClaimableFunds { recipient: Pubkey },
+
+    /// Claim expired recipient shares (owner only)
+    /// Accounts:
+    /// 0. `[signer]` Owner
+    /// 1. `[writable]` Mailer state account (PDA)
+    /// 2. `[writable]` Recipient claim account (PDA)
+    ClaimExpiredShares { recipient: Pubkey },
 
     /// Emergency unpause without fund distribution (owner only)
     /// Accounts:
@@ -316,12 +336,39 @@ pub fn process_instruction(
         MailerInstruction::Initialize { usdc_mint } => {
             process_initialize(program_id, accounts, usdc_mint)
         }
-        MailerInstruction::Send { to, subject, _body, revenue_share_to_receiver, resolve_sender_to_name } => {
-            process_send(program_id, accounts, to, subject, _body, revenue_share_to_receiver, resolve_sender_to_name)
-        }
-        MailerInstruction::SendToEmail { to_email, subject, _body } => {
-            process_send_to_email(program_id, accounts, to_email, subject, _body)
-        }
+        MailerInstruction::Send {
+            to,
+            subject,
+            _body,
+            revenue_share_to_receiver,
+            resolve_sender_to_name,
+        } => process_send(
+            program_id,
+            accounts,
+            to,
+            subject,
+            _body,
+            revenue_share_to_receiver,
+            resolve_sender_to_name,
+        ),
+        MailerInstruction::SendPrepared {
+            to,
+            mail_id,
+            revenue_share_to_receiver,
+            resolve_sender_to_name,
+        } => process_send_prepared(
+            program_id,
+            accounts,
+            to,
+            mail_id,
+            revenue_share_to_receiver,
+            resolve_sender_to_name,
+        ),
+        MailerInstruction::SendToEmail {
+            to_email,
+            subject,
+            _body,
+        } => process_send_to_email(program_id, accounts, to_email, subject, _body),
         MailerInstruction::SendPreparedToEmail { to_email, mail_id } => {
             process_send_prepared_to_email(program_id, accounts, to_email, mail_id)
         }
@@ -337,24 +384,22 @@ pub fn process_instruction(
         MailerInstruction::SetDelegationFee { new_fee } => {
             process_set_delegation_fee(program_id, accounts, new_fee)
         }
-        MailerInstruction::SetCustomFeePercentage { account, percentage } => {
-            process_set_custom_fee_percentage(program_id, accounts, account, percentage)
-        }
+        MailerInstruction::SetCustomFeePercentage {
+            account,
+            percentage,
+        } => process_set_custom_fee_percentage(program_id, accounts, account, percentage),
         MailerInstruction::ClearCustomFeePercentage { account } => {
             process_clear_custom_fee_percentage(program_id, accounts, account)
         }
-        MailerInstruction::Pause => {
-            process_pause(program_id, accounts)
-        }
-        MailerInstruction::Unpause => {
-            process_unpause(program_id, accounts)
-        }
+        MailerInstruction::Pause => process_pause(program_id, accounts),
+        MailerInstruction::Unpause => process_unpause(program_id, accounts),
         MailerInstruction::DistributeClaimableFunds { recipient } => {
             process_distribute_claimable_funds(program_id, accounts, recipient)
         }
-        MailerInstruction::EmergencyUnpause => {
-            process_emergency_unpause(program_id, accounts)
+        MailerInstruction::ClaimExpiredShares { recipient } => {
+            process_claim_expired_shares(program_id, accounts, recipient)
         }
+        MailerInstruction::EmergencyUnpause => process_emergency_unpause(program_id, accounts),
     }
 }
 
@@ -392,7 +437,11 @@ fn process_initialize(
             space as u64,
             program_id,
         ),
-        &[owner.clone(), mailer_account.clone(), system_program.clone()],
+        &[
+            owner.clone(),
+            mailer_account.clone(),
+            system_program.clone(),
+        ],
         &[&[b"mailer", &[bump]]],
     )?;
 
@@ -440,6 +489,11 @@ fn process_send(
     }
 
     // Load mailer state
+    let (mailer_pda, _) = Pubkey::find_program_address(&[b"mailer"], program_id);
+    if mailer_account.key != &mailer_pda {
+        return Err(MailerError::InvalidPDA.into());
+    }
+
     let mailer_data = mailer_account.try_borrow_data()?;
     let mailer_state: MailerState = BorshDeserialize::deserialize(&mut &mailer_data[8..])?;
     drop(mailer_data);
@@ -450,16 +504,15 @@ fn process_send(
     }
 
     // Calculate effective fee based on custom discount (if any)
-    let effective_fee = calculate_fee_with_discount(program_id, sender.key, accounts, mailer_state.send_fee)?;
+    let effective_fee =
+        calculate_fee_with_discount(program_id, sender.key, accounts, mailer_state.send_fee)?;
 
     if revenue_share_to_receiver {
         // Priority mode: full fee with revenue sharing
 
         // Create or load recipient claim account
-        let (claim_pda, claim_bump) = Pubkey::find_program_address(
-            &[b"claim", to.as_ref()],
-            program_id
-        );
+        let (claim_pda, claim_bump) =
+            Pubkey::find_program_address(&[b"claim", to.as_ref()], program_id);
 
         if recipient_claim.key != &claim_pda {
             return Err(MailerError::InvalidPDA.into());
@@ -479,13 +532,18 @@ fn process_send(
                     space as u64,
                     program_id,
                 ),
-                &[sender.clone(), recipient_claim.clone(), system_program.clone()],
+                &[
+                    sender.clone(),
+                    recipient_claim.clone(),
+                    system_program.clone(),
+                ],
                 &[&[b"claim", to.as_ref(), &[claim_bump]]],
             )?;
 
             // Initialize claim account
             let mut claim_data = recipient_claim.try_borrow_mut_data()?;
-            claim_data[0..8].copy_from_slice(&hash_discriminator("account:RecipientClaim").to_le_bytes());
+            claim_data[0..8]
+                .copy_from_slice(&hash_discriminator("account:RecipientClaim").to_le_bytes());
 
             let claim_state = RecipientClaim {
                 recipient: to,
@@ -552,7 +610,166 @@ fn process_send(
         mailer_state.owner_claimable += owner_fee;
         mailer_state.serialize(&mut &mut mailer_data[8..])?;
 
-        msg!("Standard mail sent from {} to {}: {} (resolve sender: {}, effective fee: {})", sender.key, to, subject, _resolve_sender_to_name, effective_fee);
+        msg!(
+            "Standard mail sent from {} to {}: {} (resolve sender: {}, effective fee: {})",
+            sender.key,
+            to,
+            subject,
+            _resolve_sender_to_name,
+            effective_fee
+        );
+    }
+
+    Ok(())
+}
+
+/// Send prepared message with optional revenue sharing (references off-chain content via mailId)
+fn process_send_prepared(
+    program_id: &Pubkey,
+    accounts: &[AccountInfo],
+    to: Pubkey,
+    mail_id: String,
+    revenue_share_to_receiver: bool,
+    _resolve_sender_to_name: bool,
+) -> ProgramResult {
+    let account_iter = &mut accounts.iter();
+    let sender = next_account_info(account_iter)?;
+    let recipient_claim = next_account_info(account_iter)?;
+    let mailer_account = next_account_info(account_iter)?;
+    let sender_usdc = next_account_info(account_iter)?;
+    let mailer_usdc = next_account_info(account_iter)?;
+    let token_program = next_account_info(account_iter)?;
+    let system_program = next_account_info(account_iter)?;
+
+    if !sender.is_signer {
+        return Err(ProgramError::MissingRequiredSignature);
+    }
+
+    // Load mailer state
+    let mailer_data = mailer_account.try_borrow_data()?;
+    let mailer_state: MailerState = BorshDeserialize::deserialize(&mut &mailer_data[8..])?;
+    drop(mailer_data);
+
+    // Check if contract is paused
+    if mailer_state.paused {
+        return Err(MailerError::ContractPaused.into());
+    }
+
+    // Calculate effective fee based on custom discount (if any)
+    let effective_fee =
+        calculate_fee_with_discount(program_id, sender.key, accounts, mailer_state.send_fee)?;
+
+    if revenue_share_to_receiver {
+        // Priority mode: full fee with revenue sharing
+
+        // Create or load recipient claim account
+        let (claim_pda, claim_bump) =
+            Pubkey::find_program_address(&[b"claim", to.as_ref()], program_id);
+
+        if recipient_claim.key != &claim_pda {
+            return Err(MailerError::InvalidPDA.into());
+        }
+
+        // Create claim account if needed
+        if recipient_claim.lamports() == 0 {
+            let rent = Rent::get()?;
+            let space = 8 + RecipientClaim::LEN;
+            let lamports = rent.minimum_balance(space);
+
+            invoke_signed(
+                &system_instruction::create_account(
+                    sender.key,
+                    recipient_claim.key,
+                    lamports,
+                    space as u64,
+                    program_id,
+                ),
+                &[
+                    sender.clone(),
+                    recipient_claim.clone(),
+                    system_program.clone(),
+                ],
+                &[&[b"claim", to.as_ref(), &[claim_bump]]],
+            )?;
+
+            // Initialize claim account
+            let mut claim_data = recipient_claim.try_borrow_mut_data()?;
+            claim_data[0..8]
+                .copy_from_slice(&hash_discriminator("account:RecipientClaim").to_le_bytes());
+
+            let claim_state = RecipientClaim {
+                recipient: to,
+                amount: 0,
+                timestamp: 0,
+                bump: claim_bump,
+            };
+
+            claim_state.serialize(&mut &mut claim_data[8..])?;
+            drop(claim_data);
+        }
+
+        // Transfer effective fee (may be discounted)
+        if effective_fee > 0 {
+            invoke(
+                &spl_token::instruction::transfer(
+                    token_program.key,
+                    sender_usdc.key,
+                    mailer_usdc.key,
+                    sender.key,
+                    &[],
+                    effective_fee,
+                )?,
+                &[
+                    sender_usdc.clone(),
+                    mailer_usdc.clone(),
+                    sender.clone(),
+                    token_program.clone(),
+                ],
+            )?;
+
+            // Record revenue shares (only if fee > 0)
+            record_shares(recipient_claim, mailer_account, to, effective_fee)?;
+        }
+
+        msg!("Priority prepared mail sent from {} to {} (mailId: {}, revenue share enabled, resolve sender: {}, effective fee: {})", sender.key, to, mail_id, _resolve_sender_to_name, effective_fee);
+    } else {
+        // Standard mode: 10% fee only, no revenue sharing
+        let owner_fee = (effective_fee * 10) / 100; // 10% of effective fee
+
+        // Transfer only owner fee (10%)
+        if owner_fee > 0 {
+            invoke(
+                &spl_token::instruction::transfer(
+                    token_program.key,
+                    sender_usdc.key,
+                    mailer_usdc.key,
+                    sender.key,
+                    &[],
+                    owner_fee,
+                )?,
+                &[
+                    sender_usdc.clone(),
+                    mailer_usdc.clone(),
+                    sender.clone(),
+                    token_program.clone(),
+                ],
+            )?;
+        }
+
+        // Update owner claimable
+        let mut mailer_data = mailer_account.try_borrow_mut_data()?;
+        let mut mailer_state: MailerState = BorshDeserialize::deserialize(&mut &mailer_data[8..])?;
+        mailer_state.owner_claimable += owner_fee;
+        mailer_state.serialize(&mut &mut mailer_data[8..])?;
+
+        msg!(
+            "Standard prepared mail sent from {} to {} (mailId: {}, resolve sender: {}, effective fee: {})",
+            sender.key,
+            to,
+            mail_id,
+            _resolve_sender_to_name,
+            effective_fee
+        );
     }
 
     Ok(())
@@ -588,7 +805,8 @@ fn process_send_to_email(
     }
 
     // Calculate effective fee based on custom discount (if any)
-    let effective_fee = calculate_fee_with_discount(_program_id, sender.key, accounts, mailer_state.send_fee)?;
+    let effective_fee =
+        calculate_fee_with_discount(_program_id, sender.key, accounts, mailer_state.send_fee)?;
 
     // Calculate 10% owner fee (no revenue share since no wallet address)
     let owner_fee = (effective_fee * 10) / 100;
@@ -621,7 +839,13 @@ fn process_send_to_email(
     mailer_state.owner_claimable += owner_fee;
     mailer_state.serialize(&mut &mut mailer_data[8..])?;
 
-    msg!("Mail sent from {} to email {}: {} (effective fee: {})", sender.key, to_email, subject, effective_fee);
+    msg!(
+        "Mail sent from {} to email {}: {} (effective fee: {})",
+        sender.key,
+        to_email,
+        subject,
+        effective_fee
+    );
 
     Ok(())
 }
@@ -655,7 +879,8 @@ fn process_send_prepared_to_email(
     }
 
     // Calculate effective fee based on custom discount (if any)
-    let effective_fee = calculate_fee_with_discount(_program_id, sender.key, accounts, mailer_state.send_fee)?;
+    let effective_fee =
+        calculate_fee_with_discount(_program_id, sender.key, accounts, mailer_state.send_fee)?;
 
     // Calculate 10% owner fee (no revenue share since no wallet address)
     let owner_fee = (effective_fee * 10) / 100;
@@ -688,7 +913,13 @@ fn process_send_prepared_to_email(
     mailer_state.owner_claimable += owner_fee;
     mailer_state.serialize(&mut &mut mailer_data[8..])?;
 
-    msg!("Prepared mail sent from {} to email {} (mailId: {}, effective fee: {})", sender.key, to_email, mail_id, effective_fee);
+    msg!(
+        "Prepared mail sent from {} to email {} (mailId: {}, effective fee: {})",
+        sender.key,
+        to_email,
+        mail_id,
+        effective_fee
+    );
 
     Ok(())
 }
@@ -871,10 +1102,8 @@ fn process_delegate_to(
     }
 
     // Verify delegation account PDA
-    let (delegation_pda, delegation_bump) = Pubkey::find_program_address(
-        &[b"delegation", delegator.key.as_ref()], 
-        program_id
-    );
+    let (delegation_pda, delegation_bump) =
+        Pubkey::find_program_address(&[b"delegation", delegator.key.as_ref()], program_id);
 
     if delegation_account.key != &delegation_pda {
         return Err(MailerError::InvalidPDA.into());
@@ -904,7 +1133,8 @@ fn process_delegate_to(
 
         // Initialize delegation account
         let mut delegation_data = delegation_account.try_borrow_mut_data()?;
-        delegation_data[0..8].copy_from_slice(&hash_discriminator("account:Delegation").to_le_bytes());
+        delegation_data[0..8]
+            .copy_from_slice(&hash_discriminator("account:Delegation").to_le_bytes());
 
         let delegation_state = Delegation {
             delegator: *delegator.key,
@@ -940,7 +1170,8 @@ fn process_delegate_to(
 
     // Update delegation
     let mut delegation_data = delegation_account.try_borrow_mut_data()?;
-    let mut delegation_state: Delegation = BorshDeserialize::deserialize(&mut &delegation_data[8..])?;
+    let mut delegation_state: Delegation =
+        BorshDeserialize::deserialize(&mut &delegation_data[8..])?;
     delegation_state.delegate = delegate;
     delegation_state.serialize(&mut &mut delegation_data[8..])?;
 
@@ -949,18 +1180,34 @@ fn process_delegate_to(
 }
 
 /// Reject delegation
-fn process_reject_delegation(_program_id: &Pubkey, accounts: &[AccountInfo]) -> ProgramResult {
+fn process_reject_delegation(program_id: &Pubkey, accounts: &[AccountInfo]) -> ProgramResult {
     let account_iter = &mut accounts.iter();
     let rejector = next_account_info(account_iter)?;
     let delegation_account = next_account_info(account_iter)?;
+    let mailer_account = next_account_info(account_iter)?;
 
     if !rejector.is_signer {
         return Err(ProgramError::MissingRequiredSignature);
     }
 
+    // Verify mailer state PDA and ensure contract is not paused
+    let (mailer_pda, _) = Pubkey::find_program_address(&[b"mailer"], program_id);
+    if mailer_account.key != &mailer_pda {
+        return Err(MailerError::InvalidPDA.into());
+    }
+
+    let mailer_data = mailer_account.try_borrow_data()?;
+    let mailer_state: MailerState = BorshDeserialize::deserialize(&mut &mailer_data[8..])?;
+    drop(mailer_data);
+
+    if mailer_state.paused {
+        return Err(MailerError::ContractPaused.into());
+    }
+
     // Load and update delegation state
     let mut delegation_data = delegation_account.try_borrow_mut_data()?;
-    let mut delegation_state: Delegation = BorshDeserialize::deserialize(&mut &delegation_data[8..])?;
+    let mut delegation_state: Delegation =
+        BorshDeserialize::deserialize(&mut &delegation_data[8..])?;
 
     // Verify the rejector is the current delegate
     if delegation_state.delegate != Some(*rejector.key) {
@@ -1048,10 +1295,8 @@ fn process_set_custom_fee_percentage(
     }
 
     // Verify fee discount account PDA
-    let (discount_pda, bump) = Pubkey::find_program_address(
-        &[b"discount", account.as_ref()],
-        program_id
-    );
+    let (discount_pda, bump) =
+        Pubkey::find_program_address(&[b"discount", account.as_ref()], program_id);
 
     if fee_discount_account.key != &discount_pda {
         return Err(MailerError::InvalidPDA.into());
@@ -1071,13 +1316,18 @@ fn process_set_custom_fee_percentage(
                 space as u64,
                 program_id,
             ),
-            &[payer.clone(), fee_discount_account.clone(), system_program.clone()],
+            &[
+                payer.clone(),
+                fee_discount_account.clone(),
+                system_program.clone(),
+            ],
             &[&[b"discount", account.as_ref(), &[bump]]],
         )?;
 
         // Initialize discount account
         let mut discount_data = fee_discount_account.try_borrow_mut_data()?;
-        discount_data[0..8].copy_from_slice(&hash_discriminator("account:FeeDiscount").to_le_bytes());
+        discount_data[0..8]
+            .copy_from_slice(&hash_discriminator("account:FeeDiscount").to_le_bytes());
 
         let fee_discount = FeeDiscount {
             account,
@@ -1089,7 +1339,8 @@ fn process_set_custom_fee_percentage(
     } else {
         // Update existing discount account
         let mut discount_data = fee_discount_account.try_borrow_mut_data()?;
-        let mut fee_discount: FeeDiscount = BorshDeserialize::deserialize(&mut &discount_data[8..])?;
+        let mut fee_discount: FeeDiscount =
+            BorshDeserialize::deserialize(&mut &discount_data[8..])?;
         fee_discount.discount = 100 - percentage; // Store as discount
         fee_discount.serialize(&mut &mut discount_data[8..])?;
     }
@@ -1128,10 +1379,8 @@ fn process_clear_custom_fee_percentage(
     }
 
     // Verify fee discount account PDA
-    let (discount_pda, _) = Pubkey::find_program_address(
-        &[b"discount", account.as_ref()],
-        program_id
-    );
+    let (discount_pda, _) =
+        Pubkey::find_program_address(&[b"discount", account.as_ref()], program_id);
 
     if fee_discount_account.key != &discount_pda {
         return Err(MailerError::InvalidPDA.into());
@@ -1140,12 +1389,16 @@ fn process_clear_custom_fee_percentage(
     // Clear by setting discount to 0 (no discount = 100% fee = default behavior)
     if fee_discount_account.lamports() > 0 {
         let mut discount_data = fee_discount_account.try_borrow_mut_data()?;
-        let mut fee_discount: FeeDiscount = BorshDeserialize::deserialize(&mut &discount_data[8..])?;
+        let mut fee_discount: FeeDiscount =
+            BorshDeserialize::deserialize(&mut &discount_data[8..])?;
         fee_discount.discount = 0; // 0 discount = 100% fee = default
         fee_discount.serialize(&mut &mut discount_data[8..])?;
     }
 
-    msg!("Custom fee percentage cleared for {} (reset to 100%)", account);
+    msg!(
+        "Custom fee percentage cleared for {} (reset to 100%)",
+        account
+    );
     Ok(())
 }
 
@@ -1175,7 +1428,11 @@ fn record_shares(
     mailer_state.owner_claimable += owner_amount;
     mailer_state.serialize(&mut &mut mailer_data[8..])?;
 
-    msg!("Shares recorded: recipient {}, owner {}", recipient_amount, owner_amount);
+    msg!(
+        "Shares recorded: recipient {}, owner {}",
+        recipient_amount,
+        owner_amount
+    );
     Ok(())
 }
 
@@ -1189,10 +1446,8 @@ fn calculate_fee_with_discount(
     base_fee: u64,
 ) -> Result<u64, ProgramError> {
     // Try to find fee discount account
-    let (discount_pda, _) = Pubkey::find_program_address(
-        &[b"discount", account.as_ref()],
-        program_id
-    );
+    let (discount_pda, _) =
+        Pubkey::find_program_address(&[b"discount", account.as_ref()], program_id);
 
     // Check if any account in the accounts slice matches the discount PDA
     let discount_account = accounts.iter().find(|acc| acc.key == &discount_pda);
@@ -1202,7 +1457,8 @@ fn calculate_fee_with_discount(
         if discount_acc.lamports() > 0 {
             let discount_data = discount_acc.try_borrow_data()?;
             if discount_data.len() >= 8 + FeeDiscount::LEN {
-                let fee_discount: FeeDiscount = BorshDeserialize::deserialize(&mut &discount_data[8..])?;
+                let fee_discount: FeeDiscount =
+                    BorshDeserialize::deserialize(&mut &discount_data[8..])?;
                 let discount = fee_discount.discount as u64;
 
                 // Apply discount: fee = base_fee * (100 - discount) / 100
@@ -1263,7 +1519,12 @@ fn process_pause(_program_id: &Pubkey, accounts: &[AccountInfo]) -> ProgramResul
                 &[],
                 amount,
             )?,
-            &[mailer_usdc.clone(), owner_usdc.clone(), token_program.clone()],
+            &[
+                mailer_usdc.clone(),
+                owner_usdc.clone(),
+                mailer_account.clone(),
+                token_program.clone(),
+            ],
             &[&[b"mailer", &[bump]]],
         )?;
 
@@ -1272,7 +1533,7 @@ fn process_pause(_program_id: &Pubkey, accounts: &[AccountInfo]) -> ProgramResul
 
     // Save updated state
     mailer_state.serialize(&mut &mut mailer_data[8..])?;
-    
+
     msg!("Contract paused by owner: {}", owner.key);
     Ok(())
 }
@@ -1304,40 +1565,8 @@ fn process_unpause(_program_id: &Pubkey, accounts: &[AccountInfo]) -> ProgramRes
     // Set unpaused state
     mailer_state.paused = false;
     mailer_state.serialize(&mut &mut mailer_data[8..])?;
-    
+
     msg!("Contract unpaused by owner: {}", owner.key);
-    Ok(())
-}
-
-/// Emergency unpause without fund distribution (owner only)
-fn process_emergency_unpause(_program_id: &Pubkey, accounts: &[AccountInfo]) -> ProgramResult {
-    let account_iter = &mut accounts.iter();
-    let owner = next_account_info(account_iter)?;
-    let mailer_account = next_account_info(account_iter)?;
-
-    if !owner.is_signer {
-        return Err(ProgramError::MissingRequiredSignature);
-    }
-
-    // Load and update mailer state
-    let mut mailer_data = mailer_account.try_borrow_mut_data()?;
-    let mut mailer_state: MailerState = BorshDeserialize::deserialize(&mut &mailer_data[8..])?;
-
-    // Verify owner
-    if mailer_state.owner != *owner.key {
-        return Err(MailerError::OnlyOwner.into());
-    }
-
-    // Check if not paused
-    if !mailer_state.paused {
-        return Err(MailerError::ContractNotPaused.into());
-    }
-
-    // Set unpaused state without fund distribution
-    mailer_state.paused = false;
-    mailer_state.serialize(&mut &mut mailer_data[8..])?;
-    
-    msg!("Contract emergency unpaused by owner: {} - funds can be claimed manually", owner.key);
     Ok(())
 }
 
@@ -1394,13 +1623,111 @@ fn process_distribute_claimable_funds(
             &[],
             amount,
         )?,
-        &[mailer_usdc.clone(), recipient_usdc.clone(), token_program.clone()],
+        &[
+            mailer_usdc.clone(),
+            recipient_usdc.clone(),
+            mailer_account.clone(),
+            token_program.clone(),
+        ],
         &[&[b"mailer", &[bump]]],
     )?;
 
     claim_state.serialize(&mut &mut claim_data[8..])?;
-    
+
     msg!("Distributed claimable funds to {}: {}", recipient, amount);
+    Ok(())
+}
+
+/// Claim expired shares and move them under owner control (owner only)
+fn process_claim_expired_shares(
+    program_id: &Pubkey,
+    accounts: &[AccountInfo],
+    recipient: Pubkey,
+) -> ProgramResult {
+    let account_iter = &mut accounts.iter();
+    let owner = next_account_info(account_iter)?;
+    let mailer_account = next_account_info(account_iter)?;
+    let recipient_claim_account = next_account_info(account_iter)?;
+
+    if !owner.is_signer {
+        return Err(ProgramError::MissingRequiredSignature);
+    }
+
+    // Load and verify mailer state
+    let mut mailer_data = mailer_account.try_borrow_mut_data()?;
+    let mut mailer_state: MailerState = BorshDeserialize::deserialize(&mut &mailer_data[8..])?;
+
+    if mailer_state.owner != *owner.key {
+        return Err(MailerError::OnlyOwner.into());
+    }
+
+    // Verify recipient claim PDA
+    let (claim_pda, _) = Pubkey::find_program_address(&[b"claim", recipient.as_ref()], program_id);
+    if recipient_claim_account.key != &claim_pda {
+        return Err(MailerError::InvalidPDA.into());
+    }
+
+    // Load and validate claim state
+    let mut claim_data = recipient_claim_account.try_borrow_mut_data()?;
+    let mut claim_state: RecipientClaim = BorshDeserialize::deserialize(&mut &claim_data[8..])?;
+
+    if claim_state.recipient != recipient {
+        return Err(MailerError::InvalidRecipient.into());
+    }
+    if claim_state.amount == 0 {
+        return Err(MailerError::NoClaimableAmount.into());
+    }
+
+    let current_time = Clock::get()?.unix_timestamp;
+    if current_time <= claim_state.timestamp + CLAIM_PERIOD {
+        return Err(MailerError::ClaimPeriodNotExpired.into());
+    }
+
+    let amount = claim_state.amount;
+    claim_state.amount = 0;
+    claim_state.timestamp = 0;
+    claim_state.serialize(&mut &mut claim_data[8..])?;
+    drop(claim_data);
+
+    mailer_state.owner_claimable += amount;
+    mailer_state.serialize(&mut &mut mailer_data[8..])?;
+
+    msg!("Expired shares claimed for {}: {}", recipient, amount);
+    Ok(())
+}
+
+/// Emergency unpause without fund distribution (owner only)
+fn process_emergency_unpause(_program_id: &Pubkey, accounts: &[AccountInfo]) -> ProgramResult {
+    let account_iter = &mut accounts.iter();
+    let owner = next_account_info(account_iter)?;
+    let mailer_account = next_account_info(account_iter)?;
+
+    if !owner.is_signer {
+        return Err(ProgramError::MissingRequiredSignature);
+    }
+
+    // Load and update mailer state
+    let mut mailer_data = mailer_account.try_borrow_mut_data()?;
+    let mut mailer_state: MailerState = BorshDeserialize::deserialize(&mut &mailer_data[8..])?;
+
+    // Verify owner
+    if mailer_state.owner != *owner.key {
+        return Err(MailerError::OnlyOwner.into());
+    }
+
+    // Check if not paused
+    if !mailer_state.paused {
+        return Err(MailerError::ContractNotPaused.into());
+    }
+
+    // Set unpaused state without fund distribution
+    mailer_state.paused = false;
+    mailer_state.serialize(&mut &mut mailer_data[8..])?;
+
+    msg!(
+        "Contract emergency unpaused by owner: {} - funds can be claimed manually",
+        owner.key
+    );
     Ok(())
 }
 
