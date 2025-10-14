@@ -54,6 +54,7 @@ export interface MailerInterface extends Interface {
       | "sendFee"
       | "sendPrepared"
       | "sendPreparedToEmailAddress"
+      | "sendThroughWebhook"
       | "sendToEmailAddress"
       | "setCustomFeePercentage"
       | "setDelegationFee"
@@ -80,6 +81,7 @@ export interface MailerInterface extends Interface {
       | "PreparedMailSentToEmail"
       | "RecipientClaimed"
       | "SharesRecorded"
+      | "WebhookMailSent"
   ): EventFragment;
 
   encodeFunctionData(
@@ -175,6 +177,10 @@ export interface MailerInterface extends Interface {
   encodeFunctionData(
     functionFragment: "sendPreparedToEmailAddress",
     values: [string, string]
+  ): string;
+  encodeFunctionData(
+    functionFragment: "sendThroughWebhook",
+    values: [AddressLike, string, boolean, boolean]
   ): string;
   encodeFunctionData(
     functionFragment: "sendToEmailAddress",
@@ -281,6 +287,10 @@ export interface MailerInterface extends Interface {
   ): Result;
   decodeFunctionResult(
     functionFragment: "sendPreparedToEmailAddress",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(
+    functionFragment: "sendThroughWebhook",
     data: BytesLike
   ): Result;
   decodeFunctionResult(
@@ -553,6 +563,34 @@ export namespace SharesRecordedEvent {
   export type LogDescription = TypedLogDescription<Event>;
 }
 
+export namespace WebhookMailSentEvent {
+  export type InputTuple = [
+    from: AddressLike,
+    to: AddressLike,
+    webhookId: string,
+    revenueShareToReceiver: boolean,
+    resolveSenderToName: boolean
+  ];
+  export type OutputTuple = [
+    from: string,
+    to: string,
+    webhookId: string,
+    revenueShareToReceiver: boolean,
+    resolveSenderToName: boolean
+  ];
+  export interface OutputObject {
+    from: string;
+    to: string;
+    webhookId: string;
+    revenueShareToReceiver: boolean;
+    resolveSenderToName: boolean;
+  }
+  export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
+  export type Filter = TypedDeferredTopicFilter<Event>;
+  export type Log = TypedEventLog<Event>;
+  export type LogDescription = TypedLogDescription<Event>;
+}
+
 export interface Mailer extends BaseContract {
   connect(runner?: ContractRunner | null): Mailer;
   waitForDeployment(): Promise<this>;
@@ -713,6 +751,17 @@ export interface Mailer extends BaseContract {
     "nonpayable"
   >;
 
+  sendThroughWebhook: TypedContractMethod<
+    [
+      to: AddressLike,
+      webhookId: string,
+      revenueShareToReceiver: boolean,
+      resolveSenderToName: boolean
+    ],
+    [void],
+    "nonpayable"
+  >;
+
   sendToEmailAddress: TypedContractMethod<
     [toEmail: string, subject: string, body: string],
     [void],
@@ -867,6 +916,18 @@ export interface Mailer extends BaseContract {
     "nonpayable"
   >;
   getFunction(
+    nameOrSignature: "sendThroughWebhook"
+  ): TypedContractMethod<
+    [
+      to: AddressLike,
+      webhookId: string,
+      revenueShareToReceiver: boolean,
+      resolveSenderToName: boolean
+    ],
+    [void],
+    "nonpayable"
+  >;
+  getFunction(
     nameOrSignature: "sendToEmailAddress"
   ): TypedContractMethod<
     [toEmail: string, subject: string, body: string],
@@ -1004,6 +1065,13 @@ export interface Mailer extends BaseContract {
     SharesRecordedEvent.InputTuple,
     SharesRecordedEvent.OutputTuple,
     SharesRecordedEvent.OutputObject
+  >;
+  getEvent(
+    key: "WebhookMailSent"
+  ): TypedContractEvent<
+    WebhookMailSentEvent.InputTuple,
+    WebhookMailSentEvent.OutputTuple,
+    WebhookMailSentEvent.OutputObject
   >;
 
   filters: {
@@ -1181,6 +1249,17 @@ export interface Mailer extends BaseContract {
       SharesRecordedEvent.InputTuple,
       SharesRecordedEvent.OutputTuple,
       SharesRecordedEvent.OutputObject
+    >;
+
+    "WebhookMailSent(address,address,string,bool,bool)": TypedContractEvent<
+      WebhookMailSentEvent.InputTuple,
+      WebhookMailSentEvent.OutputTuple,
+      WebhookMailSentEvent.OutputObject
+    >;
+    WebhookMailSent: TypedContractEvent<
+      WebhookMailSentEvent.InputTuple,
+      WebhookMailSentEvent.OutputTuple,
+      WebhookMailSentEvent.OutputObject
     >;
   };
 }

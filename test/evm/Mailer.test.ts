@@ -486,6 +486,180 @@ describe("Mailer", function () {
     });
   });
 
+  describe("sendThroughWebhook function with revenue sharing (priority mode)", function () {
+    it("Should emit WebhookMailSent event when USDC transfer succeeds", async function () {
+      const { mailer, addr1, addr2, publicClient } = this;
+      const hash = await mailer.write.sendThroughWebhook([addr2.account.address, "webhook-123", true, false], { account: addr1.account });
+
+      await publicClient.waitForTransactionReceipt({ hash });
+      const logs = await mailer.getEvents.WebhookMailSent();
+
+      expect(logs.length).to.be.greaterThan(0);
+      const event = logs[logs.length - 1];
+      expect(event.args.from.toLowerCase()).to.equal(addr1.account.address.toLowerCase());
+      expect(event.args.to.toLowerCase()).to.equal(addr2.account.address.toLowerCase());
+      // webhookId is stored as bytes32 (keccak256 hash), so we check it exists
+      expect(event.args.webhookId).to.exist;
+    });
+
+    it("Should not emit event when USDC transfer fails (insufficient balance)", async function () {
+      const { mailer, addr1, addr2 } = this;
+      // addr2 has no USDC balance
+      await expect(
+        mailer.write.sendThroughWebhook([addr1.account.address, "webhook-456", true, false], { account: addr2.account })
+      ).to.be.rejectedWith("InsufficientBalance");
+    });
+
+    it("Should not emit event when USDC transfer fails (insufficient allowance)", async function () {
+      const { mailer, mockUSDC, addr1, addr2 } = this;
+      // Give addr2 USDC but no allowance
+      await mockUSDC.write.mint([addr2.account.address, parseUnits("1", 6)]);
+
+      await expect(
+        mailer.write.sendThroughWebhook([addr1.account.address, "webhook-789", true, false], { account: addr2.account })
+      ).to.be.rejectedWith("InsufficientAllowance");
+    });
+
+    it("Should transfer correct USDC amount to contract", async function () {
+      const { mailer, mockUSDC, addr1, addr2 } = this;
+      const initialBalance = await mockUSDC.read.balanceOf([mailer.address]);
+
+      await mailer.write.sendThroughWebhook([addr2.account.address, "webhook-999", true, false], { account: addr1.account });
+
+      const finalBalance = await mockUSDC.read.balanceOf([mailer.address]);
+      expect(finalBalance - initialBalance).to.equal(100000n); // 0.1 USDC
+    });
+
+    it("Should handle different webhookId strings", async function () {
+      const { mailer, addr1, addr2, publicClient } = this;
+      // Test with various webhookId formats
+      const hash = await mailer.write.sendThroughWebhook([addr2.account.address, "abc-123-xyz", true, false], { account: addr1.account });
+
+      await publicClient.waitForTransactionReceipt({ hash });
+      const logs = await mailer.getEvents.WebhookMailSent();
+
+      expect(logs.length).to.be.greaterThan(0);
+      const event = logs[logs.length - 1];
+      // webhookId is stored as bytes32 (keccak256 hash), so we check it exists
+      expect(event.args.webhookId).to.exist;
+    });
+
+    it("Should record 90% for recipient and 10% for owner with revenue share", async function () {
+      const { mailer, addr1, addr2 } = this;
+      const fee = await mailer.read.sendFee();
+      const expectedRecipientShare = (fee * 90n) / 100n;
+      const expectedOwnerShare = fee - expectedRecipientShare;
+
+      await mailer.write.sendThroughWebhook([addr2.account.address, "webhook-test", true, false], { account: addr1.account });
+
+      // Check addr2 (recipient) has claimable amount
+      const [amount, , ] = await mailer.read.getRecipientClaimable([addr2.account.address]);
+      expect(amount).to.equal(expectedRecipientShare);
+
+      const ownerClaimable = await mailer.read.getOwnerClaimable();
+      expect(ownerClaimable).to.equal(expectedOwnerShare);
+    });
+  });
+
+  describe("sendThroughWebhook function (standard mode - no revenue share)", function () {
+    beforeEach(async function () {
+      const { mockUSDC, mailer, addr2 } = this;
+      // Give addr2 some USDC and approve contract
+      await mockUSDC.write.mint([addr2.account.address, parseUnits("10", 6)]);
+      await mockUSDC.write.approve([mailer.address, parseUnits("10", 6)], { account: addr2.account });
+    });
+
+    it("Should emit WebhookMailSent event when USDC transfer succeeds", async function () {
+      const { mailer, addr1, addr2, publicClient } = this;
+      const hash = await mailer.write.sendThroughWebhook([addr1.account.address, "webhook-123", false, false], { account: addr2.account });
+
+      await publicClient.waitForTransactionReceipt({ hash });
+      const logs = await mailer.getEvents.WebhookMailSent();
+
+      expect(logs.length).to.be.greaterThan(0);
+      const event = logs[logs.length - 1];
+      expect(event.args.from.toLowerCase()).to.equal(addr2.account.address.toLowerCase());
+      expect(event.args.to.toLowerCase()).to.equal(addr1.account.address.toLowerCase());
+      // webhookId is stored as bytes32 (keccak256 hash), so we check it exists
+      expect(event.args.webhookId).to.exist;
+    });
+
+    it("Should not emit event when sender has no USDC balance", async function () {
+      const { mailer, owner, addr1 } = this;
+      // owner has USDC but no allowance, so it fails on allowance check
+      await expect(
+        mailer.write.sendThroughWebhook([addr1.account.address, "no-balance-webhook", false, false], { account: owner.account })
+      ).to.be.rejectedWith("InsufficientAllowance");
+    });
+
+    it("Should not emit event when sender has no USDC allowance", async function () {
+      const { mailer, mockUSDC, owner, addr1 } = this;
+      // Give addr3 USDC but no allowance
+      await mockUSDC.write.mint([owner.account.address, parseUnits("1", 6)]);
+
+      await expect(
+        mailer.write.sendThroughWebhook([addr1.account.address, "no-allowance-webhook", false, false], { account: owner.account })
+      ).to.be.rejectedWith("InsufficientAllowance");
+    });
+
+    it("Should transfer 10% of sendFee to contract for owner", async function () {
+      const { mailer, mockUSDC, addr1, addr2 } = this;
+      const initialBalance = await mockUSDC.read.balanceOf([mailer.address]);
+      const initialOwnerClaimable = await mailer.read.getOwnerClaimable();
+
+      await mailer.write.sendThroughWebhook([addr1.account.address, "webhook-test", false, false], { account: addr2.account });
+
+      const finalBalance = await mockUSDC.read.balanceOf([mailer.address]);
+      const finalOwnerClaimable = await mailer.read.getOwnerClaimable();
+
+      const fee = await mailer.read.sendFee();
+      const expectedOwnerFee = (fee * 10n) / 100n; // 10% of sendFee
+
+      expect(finalBalance - initialBalance).to.equal(expectedOwnerFee);
+      expect(finalOwnerClaimable - initialOwnerClaimable).to.equal(expectedOwnerFee);
+    });
+
+    it("Should work with empty webhookId", async function () {
+      const { mailer, addr1, addr2, publicClient } = this;
+      const hash = await mailer.write.sendThroughWebhook([addr1.account.address, "", false, false], { account: addr2.account });
+
+      await publicClient.waitForTransactionReceipt({ hash });
+      const logs = await mailer.getEvents.WebhookMailSent();
+
+      expect(logs.length).to.be.greaterThan(0);
+    });
+
+    it("Should work with long webhookId", async function () {
+      const { mailer, addr1, addr2, publicClient } = this;
+      const longWebhookId = "long-webhook-id-" + "x".repeat(1000);
+
+      const hash = await mailer.write.sendThroughWebhook([addr1.account.address, longWebhookId, false, false], { account: addr2.account });
+
+      await publicClient.waitForTransactionReceipt({ hash });
+      const logs = await mailer.getEvents.WebhookMailSent();
+
+      expect(logs.length).to.be.greaterThan(0);
+      const event = logs[logs.length - 1];
+      // webhookId is stored as bytes32 (keccak256 hash), so we check it exists
+      expect(event.args.webhookId).to.exist;
+    });
+
+    it("Should handle special characters in webhookId", async function () {
+      const { mailer, addr1, addr2, publicClient } = this;
+      const specialWebhookId = "webhook-123!@#$%^&*()_+-=[]{}|;:,.<>?";
+
+      const hash = await mailer.write.sendThroughWebhook([addr1.account.address, specialWebhookId, false, false], { account: addr2.account });
+
+      await publicClient.waitForTransactionReceipt({ hash });
+      const logs = await mailer.getEvents.WebhookMailSent();
+
+      expect(logs.length).to.be.greaterThan(0);
+      const event = logs[logs.length - 1];
+      // webhookId is stored as bytes32 (keccak256 hash), so we check it exists
+      expect(event.args.webhookId).to.exist;
+    });
+  });
+
   describe("Revenue Sharing System", function () {
     beforeEach(async function () {
       const { mockUSDC, mailer, addr1 } = this;

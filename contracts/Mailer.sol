@@ -87,6 +87,14 @@ contract Mailer {
         string indexed mailId
     );
 
+    event WebhookMailSent(
+        address indexed from,
+        address indexed to,
+        string indexed webhookId,
+        bool revenueShareToReceiver,
+        bool resolveSenderToName
+    );
+
     event FeeUpdated(uint256 oldFee, uint256 newFee);
     event SharesRecorded(address indexed recipient, uint256 recipientAmount, uint256 ownerAmount);
     event RecipientClaimed(address indexed recipient, uint256 amount);
@@ -324,6 +332,48 @@ contract Mailer {
         ownerClaimable += ownerFee;
 
         emit PreparedMailSentToEmail(msg.sender, toEmail, mailId);
+    }
+
+    /**
+     * @notice Send a message through webhook (referenced by webhookId)
+     * @dev Same as sendPrepared but for webhook-triggered messages
+     * @param to Recipient address who receives the message and potential revenue share
+     * @param webhookId Reference ID to webhook configuration
+     * @param revenueShareToReceiver If true, receiver gets 90% revenue share; if false, no revenue share
+     * @param resolveSenderToName If true, resolve sender address to name via off-chain service
+     *
+     * Use case: For webhook-triggered automated messages where content is generated dynamically
+     * based on webhook configuration.
+     */
+    function sendThroughWebhook(
+        address to,
+        string calldata webhookId,
+        bool revenueShareToReceiver,
+        bool resolveSenderToName
+    ) external nonReentrant whenNotPaused {
+        if (revenueShareToReceiver) {
+            // Priority mode: Calculate effective fee based on custom percentage
+            uint256 effectiveFee = _calculateFeeForAddress(msg.sender, sendFee);
+            // Transfer effective fee from sender to contract
+            if (effectiveFee > 0 && !usdcToken.transferFrom(msg.sender, address(this), effectiveFee)) {
+                revert FeePaymentRequired();
+            }
+            // Record 90% for receiver, 10% for owner (only if fee > 0)
+            if (effectiveFee > 0) {
+                _recordShares(to, effectiveFee);
+            }
+        } else {
+            // Standard mode: Calculate 10% owner fee based on effective fee
+            uint256 effectiveFee = _calculateFeeForAddress(msg.sender, sendFee);
+            uint256 ownerFee = (effectiveFee * OWNER_SHARE) / 100;
+            // Transfer only owner fee from sender to contract
+            if (ownerFee > 0 && !usdcToken.transferFrom(msg.sender, address(this), ownerFee)) {
+                revert FeePaymentRequired();
+            }
+            // All goes to owner, no revenue share
+            ownerClaimable += ownerFee;
+        }
+        emit WebhookMailSent(msg.sender, to, webhookId, revenueShareToReceiver, resolveSenderToName);
     }
 
     function setFee(uint256 usdcAmount) external onlyOwner whenNotPaused {

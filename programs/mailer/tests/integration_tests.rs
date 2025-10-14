@@ -390,6 +390,205 @@ async fn test_send_standard_message() {
 }
 
 #[tokio::test]
+async fn test_send_through_webhook_priority() {
+    let program_test = ProgramTest::new(
+        "mailer",
+        program_id(),
+        processor!(mailer::process_instruction),
+    );
+    let (mut banks_client, payer, recent_blockhash) = program_test.start().await;
+
+    // Setup similar to priority test
+    let usdc_mint = create_usdc_mint(&mut banks_client, &payer, recent_blockhash).await;
+    let (mailer_pda, _) = get_mailer_pda();
+
+    // Initialize the program
+    let init_instruction = Instruction::new_with_borsh(
+        program_id(),
+        &MailerInstruction::Initialize { usdc_mint },
+        vec![
+            AccountMeta::new(payer.pubkey(), true),
+            AccountMeta::new(mailer_pda, false),
+            AccountMeta::new_readonly(system_program::id(), false),
+        ],
+    );
+
+    let mut transaction = Transaction::new_with_payer(&[init_instruction], Some(&payer.pubkey()));
+    transaction.sign(&[&payer], recent_blockhash);
+    banks_client.process_transaction(transaction).await.unwrap();
+
+    // Create token accounts
+    let sender_usdc = create_token_account(
+        &mut banks_client,
+        &payer,
+        recent_blockhash,
+        &usdc_mint,
+        &payer.pubkey(),
+    )
+    .await;
+    let mailer_usdc = create_token_account(
+        &mut banks_client,
+        &payer,
+        recent_blockhash,
+        &usdc_mint,
+        &mailer_pda,
+    )
+    .await;
+
+    // Mint USDC to sender
+    mint_to(
+        &mut banks_client,
+        &payer,
+        recent_blockhash,
+        &usdc_mint,
+        &sender_usdc,
+        1_000_000,
+    )
+    .await; // 1 USDC
+
+    // Get recipient claim PDA
+    let (recipient_claim_pda, _) = get_claim_pda(&payer.pubkey());
+
+    // Send message through webhook with revenue sharing (priority mode)
+    let instruction_data = MailerInstruction::SendThroughWebhook {
+        to: payer.pubkey(),
+        webhook_id: "webhook-123".to_string(),
+        revenue_share_to_receiver: true,
+        resolve_sender_to_name: false,
+    };
+
+    let instruction = Instruction::new_with_borsh(
+        program_id(),
+        &instruction_data,
+        vec![
+            AccountMeta::new(payer.pubkey(), true),
+            AccountMeta::new(recipient_claim_pda, false),
+            AccountMeta::new(mailer_pda, false), // Must be writable for record_shares to update owner_claimable
+            AccountMeta::new(sender_usdc, false),
+            AccountMeta::new(mailer_usdc, false),
+            AccountMeta::new_readonly(spl_token::id(), false),
+            AccountMeta::new_readonly(system_program::id(), false),
+        ],
+    );
+
+    let mut transaction = Transaction::new_with_payer(&[instruction], Some(&payer.pubkey()));
+    transaction.sign(&[&payer], recent_blockhash);
+    banks_client.process_transaction(transaction).await.unwrap();
+
+    // Verify recipient claim was created with correct amount
+    let claim_account = banks_client
+        .get_account(recipient_claim_pda)
+        .await
+        .unwrap()
+        .unwrap();
+    let recipient_claim: RecipientClaim =
+        BorshDeserialize::deserialize(&mut &claim_account.data[8..]).unwrap();
+
+    assert_eq!(recipient_claim.recipient, payer.pubkey());
+    assert_eq!(recipient_claim.amount, 90_000); // 90% of send_fee (100,000)
+
+    // Verify mailer state was updated with owner share
+    let mailer_account = banks_client.get_account(mailer_pda).await.unwrap().unwrap();
+    let mailer_state: MailerState =
+        BorshDeserialize::deserialize(&mut &mailer_account.data[8..]).unwrap();
+
+    assert_eq!(mailer_state.owner_claimable, 10_000); // 10% of send_fee
+}
+
+#[tokio::test]
+async fn test_send_through_webhook_standard() {
+    let program_test = ProgramTest::new(
+        "mailer",
+        program_id(),
+        processor!(mailer::process_instruction),
+    );
+    let (mut banks_client, payer, recent_blockhash) = program_test.start().await;
+
+    // Setup similar to standard test
+    let usdc_mint = create_usdc_mint(&mut banks_client, &payer, recent_blockhash).await;
+    let (mailer_pda, _) = get_mailer_pda();
+
+    // Initialize the program
+    let init_instruction = Instruction::new_with_borsh(
+        program_id(),
+        &MailerInstruction::Initialize { usdc_mint },
+        vec![
+            AccountMeta::new(payer.pubkey(), true),
+            AccountMeta::new(mailer_pda, false),
+            AccountMeta::new_readonly(system_program::id(), false),
+        ],
+    );
+
+    let mut transaction = Transaction::new_with_payer(&[init_instruction], Some(&payer.pubkey()));
+    transaction.sign(&[&payer], recent_blockhash);
+    banks_client.process_transaction(transaction).await.unwrap();
+
+    // Create token accounts
+    let sender_usdc = create_token_account(
+        &mut banks_client,
+        &payer,
+        recent_blockhash,
+        &usdc_mint,
+        &payer.pubkey(),
+    )
+    .await;
+    let mailer_usdc = create_token_account(
+        &mut banks_client,
+        &payer,
+        recent_blockhash,
+        &usdc_mint,
+        &mailer_pda,
+    )
+    .await;
+
+    // Mint USDC to sender
+    mint_to(
+        &mut banks_client,
+        &payer,
+        recent_blockhash,
+        &usdc_mint,
+        &sender_usdc,
+        1_000_000,
+    )
+    .await;
+
+    // Get recipient claim PDA (needed even if not used for standard send)
+    let (recipient_claim_pda, _) = get_claim_pda(&payer.pubkey());
+
+    // Send webhook message (standard mode - no revenue sharing)
+    let instruction_data = MailerInstruction::SendThroughWebhook {
+        to: payer.pubkey(),
+        webhook_id: "webhook-456".to_string(),
+        revenue_share_to_receiver: false,
+        resolve_sender_to_name: false,
+    };
+
+    let instruction = Instruction::new_with_borsh(
+        program_id(),
+        &instruction_data,
+        vec![
+            AccountMeta::new(payer.pubkey(), true),
+            AccountMeta::new_readonly(recipient_claim_pda, false), // Not used for standard send but required
+            AccountMeta::new(mailer_pda, false), // Needs to be writable to update owner_claimable
+            AccountMeta::new(sender_usdc, false),
+            AccountMeta::new(mailer_usdc, false),
+            AccountMeta::new_readonly(spl_token::id(), false),
+            AccountMeta::new_readonly(system_program::id(), false),
+        ],
+    );
+
+    let mut transaction = Transaction::new_with_payer(&[instruction], Some(&payer.pubkey()));
+    transaction.sign(&[&payer], recent_blockhash);
+    banks_client.process_transaction(transaction).await.unwrap();
+
+    // Verify only owner fee was charged (10% of send_fee = 10,000)
+    let mailer_account = banks_client.get_account(mailer_pda).await.unwrap().unwrap();
+    let mailer_state: MailerState =
+        BorshDeserialize::deserialize(&mut &mailer_account.data[8..]).unwrap();
+    assert_eq!(mailer_state.owner_claimable, 10_000); // Only 10% fee
+}
+
+#[tokio::test]
 async fn test_claim_recipient_share() {
     let program_test = ProgramTest::new(
         "mailer",

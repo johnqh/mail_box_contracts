@@ -177,6 +177,22 @@ pub enum MailerInstruction {
     /// 4. `[]` Token program
     SendPreparedToEmail { to_email: String, mail_id: String },
 
+    /// Send message through webhook (referenced by webhookId)
+    /// Accounts:
+    /// 0. `[signer]` Sender
+    /// 1. `[writable]` Recipient claim account (PDA)
+    /// 2. `[]` Mailer state account (PDA)
+    /// 3. `[writable]` Sender USDC account
+    /// 4. `[writable]` Mailer USDC account
+    /// 5. `[]` Token program
+    /// 6. `[]` System program
+    SendThroughWebhook {
+        to: Pubkey,
+        webhook_id: String,
+        revenue_share_to_receiver: bool,
+        resolve_sender_to_name: bool,
+    },
+
     /// Claim recipient share
     /// Accounts:
     /// 0. `[signer]` Recipient
@@ -372,6 +388,19 @@ pub fn process_instruction(
         MailerInstruction::SendPreparedToEmail { to_email, mail_id } => {
             process_send_prepared_to_email(program_id, accounts, to_email, mail_id)
         }
+        MailerInstruction::SendThroughWebhook {
+            to,
+            webhook_id,
+            revenue_share_to_receiver,
+            resolve_sender_to_name,
+        } => process_send_through_webhook(
+            program_id,
+            accounts,
+            to,
+            webhook_id,
+            revenue_share_to_receiver,
+            resolve_sender_to_name,
+        ),
         MailerInstruction::ClaimRecipientShare => {
             process_claim_recipient_share(program_id, accounts)
         }
@@ -920,6 +949,158 @@ fn process_send_prepared_to_email(
         mail_id,
         effective_fee
     );
+
+    Ok(())
+}
+
+/// Send message through webhook (references webhook by webhookId)
+fn process_send_through_webhook(
+    program_id: &Pubkey,
+    accounts: &[AccountInfo],
+    to: Pubkey,
+    webhook_id: String,
+    revenue_share_to_receiver: bool,
+    _resolve_sender_to_name: bool,
+) -> ProgramResult {
+    let account_iter = &mut accounts.iter();
+    let sender = next_account_info(account_iter)?;
+    let recipient_claim = next_account_info(account_iter)?;
+    let mailer_account = next_account_info(account_iter)?;
+    let sender_usdc = next_account_info(account_iter)?;
+    let mailer_usdc = next_account_info(account_iter)?;
+    let token_program = next_account_info(account_iter)?;
+    let system_program = next_account_info(account_iter)?;
+
+    if !sender.is_signer {
+        return Err(ProgramError::MissingRequiredSignature);
+    }
+
+    // Load mailer state
+    let mailer_data = mailer_account.try_borrow_data()?;
+    let mailer_state: MailerState = BorshDeserialize::deserialize(&mut &mailer_data[8..])?;
+    drop(mailer_data);
+
+    // Check if contract is paused
+    if mailer_state.paused {
+        return Err(MailerError::ContractPaused.into());
+    }
+
+    // Calculate effective fee based on custom discount (if any)
+    let effective_fee =
+        calculate_fee_with_discount(program_id, sender.key, accounts, mailer_state.send_fee)?;
+
+    if revenue_share_to_receiver {
+        // Priority mode: full fee with revenue sharing
+
+        // Create or load recipient claim account
+        let (claim_pda, claim_bump) =
+            Pubkey::find_program_address(&[b"claim", to.as_ref()], program_id);
+
+        if recipient_claim.key != &claim_pda {
+            return Err(MailerError::InvalidPDA.into());
+        }
+
+        // Create claim account if needed
+        if recipient_claim.lamports() == 0 {
+            let rent = Rent::get()?;
+            let space = 8 + RecipientClaim::LEN;
+            let lamports = rent.minimum_balance(space);
+
+            invoke_signed(
+                &system_instruction::create_account(
+                    sender.key,
+                    recipient_claim.key,
+                    lamports,
+                    space as u64,
+                    program_id,
+                ),
+                &[
+                    sender.clone(),
+                    recipient_claim.clone(),
+                    system_program.clone(),
+                ],
+                &[&[b"claim", to.as_ref(), &[claim_bump]]],
+            )?;
+
+            // Initialize claim account
+            let mut claim_data = recipient_claim.try_borrow_mut_data()?;
+            claim_data[0..8]
+                .copy_from_slice(&hash_discriminator("account:RecipientClaim").to_le_bytes());
+
+            let claim_state = RecipientClaim {
+                recipient: to,
+                amount: 0,
+                timestamp: 0,
+                bump: claim_bump,
+            };
+
+            claim_state.serialize(&mut &mut claim_data[8..])?;
+            drop(claim_data);
+        }
+
+        // Transfer effective fee (may be discounted)
+        if effective_fee > 0 {
+            invoke(
+                &spl_token::instruction::transfer(
+                    token_program.key,
+                    sender_usdc.key,
+                    mailer_usdc.key,
+                    sender.key,
+                    &[],
+                    effective_fee,
+                )?,
+                &[
+                    sender_usdc.clone(),
+                    mailer_usdc.clone(),
+                    sender.clone(),
+                    token_program.clone(),
+                ],
+            )?;
+
+            // Record revenue shares (only if fee > 0)
+            record_shares(recipient_claim, mailer_account, to, effective_fee)?;
+        }
+
+        msg!("Webhook mail sent from {} to {} (webhookId: {}, revenue share enabled, resolve sender: {}, effective fee: {})", sender.key, to, webhook_id, _resolve_sender_to_name, effective_fee);
+    } else {
+        // Standard mode: 10% fee only, no revenue sharing
+        let owner_fee = (effective_fee * 10) / 100; // 10% of effective fee
+
+        // Transfer only owner fee (10%)
+        if owner_fee > 0 {
+            invoke(
+                &spl_token::instruction::transfer(
+                    token_program.key,
+                    sender_usdc.key,
+                    mailer_usdc.key,
+                    sender.key,
+                    &[],
+                    owner_fee,
+                )?,
+                &[
+                    sender_usdc.clone(),
+                    mailer_usdc.clone(),
+                    sender.clone(),
+                    token_program.clone(),
+                ],
+            )?;
+        }
+
+        // Update owner claimable
+        let mut mailer_data = mailer_account.try_borrow_mut_data()?;
+        let mut mailer_state: MailerState = BorshDeserialize::deserialize(&mut &mailer_data[8..])?;
+        mailer_state.owner_claimable += owner_fee;
+        mailer_state.serialize(&mut &mut mailer_data[8..])?;
+
+        msg!(
+            "Webhook mail sent from {} to {} (webhookId: {}, resolve sender: {}, effective fee: {})",
+            sender.key,
+            to,
+            webhook_id,
+            _resolve_sender_to_name,
+            effective_fee
+        );
+    }
 
     Ok(())
 }
