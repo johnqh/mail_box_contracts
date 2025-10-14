@@ -1,6 +1,6 @@
 {
   "name": "@sudobility/contracts",
-  "version": "1.10.1",
+  "version": "1.10.2",
   "type": "module",
   "main": "dist/unified-esm/src/unified/index.js",
   "module": "dist/unified-esm/src/unified/index.js",
@@ -10,6 +10,11 @@
       "import": "./dist/unified-esm/src/unified/index.js",
       "require": "./dist/unified/src/unified/index.js",
       "types": "./dist/unified/src/unified/index.d.ts"
+    },
+    "./evm": {
+      "import": "./dist/unified-esm/src/evm/index.js",
+      "require": "./dist/unified/src/evm/index.js",
+      "types": "./dist/unified/src/evm/index.d.ts"
     },
     "./react": {
       "import": "./dist/unified-esm/src/react/index.js",

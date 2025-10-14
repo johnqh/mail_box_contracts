@@ -980,10 +980,14 @@ async fn test_claim_expired_shares_moves_funds_to_owner() {
         .process_transaction(transaction)
         .await
         .unwrap();
-    recent_blockhash = context.banks_client.get_latest_blockhash().await.unwrap();
 
-    // Warp forward so the claim expires (claim period is 60 days)
-    context.warp_to_slot(20_000_000).unwrap();
+    // Warp forward so the claim expires (claim period is 60 days = 5,184,000 seconds)
+    // Manually set the clock to a future timestamp beyond the claim period
+    use solana_sdk::clock::Clock;
+    let mut clock = context.banks_client.get_sysvar::<Clock>().await.unwrap();
+    clock.unix_timestamp += 60 * 24 * 60 * 60 + 1; // 60 days + 1 second
+    context.set_sysvar(&clock);
+
     recent_blockhash = context.banks_client.get_latest_blockhash().await.unwrap();
 
     // Owner reclaims expired shares
