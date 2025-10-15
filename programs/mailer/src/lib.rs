@@ -33,11 +33,13 @@ use solana_program::{
     msg,
     program::{invoke, invoke_signed},
     program_error::ProgramError,
+    program_pack::Pack,
     pubkey::Pubkey,
     rent::Rent,
     system_instruction,
     sysvar::Sysvar,
 };
+use spl_token::state::Account as TokenAccount;
 use thiserror::Error;
 
 // Program ID for the Native Mailer program
@@ -326,6 +328,10 @@ pub enum MailerError {
     InvalidPDA,
     #[error("Invalid account owner")]
     InvalidAccountOwner,
+    #[error("Invalid token mint")]
+    InvalidMint,
+    #[error("Invalid token program")]
+    InvalidTokenProgram,
     #[error("Contract is paused")]
     ContractPaused,
     #[error("Contract is not paused")]
@@ -518,14 +524,14 @@ fn process_send(
     }
 
     // Load mailer state
-    let (mailer_pda, _) = Pubkey::find_program_address(&[b"mailer"], program_id);
-    if mailer_account.key != &mailer_pda {
-        return Err(MailerError::InvalidPDA.into());
-    }
-
+    let (mailer_pda, _) = assert_mailer_account(program_id, mailer_account)?;
     let mailer_data = mailer_account.try_borrow_data()?;
     let mailer_state: MailerState = BorshDeserialize::deserialize(&mut &mailer_data[8..])?;
     drop(mailer_data);
+
+    assert_token_program(token_program)?;
+    assert_token_account(sender_usdc, sender.key, &mailer_state.usdc_mint)?;
+    assert_token_account(mailer_usdc, &mailer_pda, &mailer_state.usdc_mint)?;
 
     // Check if contract is paused
     if mailer_state.paused {
@@ -675,9 +681,14 @@ fn process_send_prepared(
     }
 
     // Load mailer state
+    let (mailer_pda, _) = assert_mailer_account(program_id, mailer_account)?;
     let mailer_data = mailer_account.try_borrow_data()?;
     let mailer_state: MailerState = BorshDeserialize::deserialize(&mut &mailer_data[8..])?;
     drop(mailer_data);
+
+    assert_token_program(token_program)?;
+    assert_token_account(sender_usdc, sender.key, &mailer_state.usdc_mint)?;
+    assert_token_account(mailer_usdc, &mailer_pda, &mailer_state.usdc_mint)?;
 
     // Check if contract is paused
     if mailer_state.paused {
@@ -824,9 +835,14 @@ fn process_send_to_email(
     }
 
     // Load mailer state
+    let (mailer_pda, _) = assert_mailer_account(_program_id, mailer_account)?;
     let mailer_data = mailer_account.try_borrow_data()?;
     let mailer_state: MailerState = BorshDeserialize::deserialize(&mut &mailer_data[8..])?;
     drop(mailer_data);
+
+    assert_token_program(token_program)?;
+    assert_token_account(sender_usdc, sender.key, &mailer_state.usdc_mint)?;
+    assert_token_account(mailer_usdc, &mailer_pda, &mailer_state.usdc_mint)?;
 
     // Check if contract is paused
     if mailer_state.paused {
@@ -898,9 +914,14 @@ fn process_send_prepared_to_email(
     }
 
     // Load mailer state
+    let (mailer_pda, _) = assert_mailer_account(_program_id, mailer_account)?;
     let mailer_data = mailer_account.try_borrow_data()?;
     let mailer_state: MailerState = BorshDeserialize::deserialize(&mut &mailer_data[8..])?;
     drop(mailer_data);
+
+    assert_token_program(token_program)?;
+    assert_token_account(sender_usdc, sender.key, &mailer_state.usdc_mint)?;
+    assert_token_account(mailer_usdc, &mailer_pda, &mailer_state.usdc_mint)?;
 
     // Check if contract is paused
     if mailer_state.paused {
@@ -976,9 +997,14 @@ fn process_send_through_webhook(
     }
 
     // Load mailer state
+    let (mailer_pda, _) = assert_mailer_account(program_id, mailer_account)?;
     let mailer_data = mailer_account.try_borrow_data()?;
     let mailer_state: MailerState = BorshDeserialize::deserialize(&mut &mailer_data[8..])?;
     drop(mailer_data);
+
+    assert_token_program(token_program)?;
+    assert_token_account(sender_usdc, sender.key, &mailer_state.usdc_mint)?;
+    assert_token_account(mailer_usdc, &mailer_pda, &mailer_state.usdc_mint)?;
 
     // Check if contract is paused
     if mailer_state.paused {
@@ -1119,6 +1145,13 @@ fn process_claim_recipient_share(_program_id: &Pubkey, accounts: &[AccountInfo])
         return Err(ProgramError::MissingRequiredSignature);
     }
 
+    let (mailer_pda, _) = assert_mailer_account(_program_id, mailer_account)?;
+    let (claim_pda, _) =
+        Pubkey::find_program_address(&[b"claim", recipient.key.as_ref()], _program_id);
+    if recipient_claim.key != &claim_pda {
+        return Err(MailerError::InvalidPDA.into());
+    }
+
     // Load claim state
     let mut claim_data = recipient_claim.try_borrow_mut_data()?;
     let mut claim_state: RecipientClaim = BorshDeserialize::deserialize(&mut &claim_data[8..])?;
@@ -1145,6 +1178,11 @@ fn process_claim_recipient_share(_program_id: &Pubkey, accounts: &[AccountInfo])
     // Load mailer state for PDA signing
     let mailer_data = mailer_account.try_borrow_data()?;
     let mailer_state: MailerState = BorshDeserialize::deserialize(&mut &mailer_data[8..])?;
+    drop(mailer_data);
+
+    assert_token_program(token_program)?;
+    assert_token_account(recipient_usdc, recipient.key, &mailer_state.usdc_mint)?;
+    assert_token_account(mailer_usdc, &mailer_pda, &mailer_state.usdc_mint)?;
 
     // Transfer USDC from mailer to recipient
     invoke_signed(
@@ -1182,6 +1220,8 @@ fn process_claim_owner_share(_program_id: &Pubkey, accounts: &[AccountInfo]) -> 
         return Err(ProgramError::MissingRequiredSignature);
     }
 
+    let (mailer_pda, _) = assert_mailer_account(_program_id, mailer_account)?;
+
     // Load and update mailer state
     let mut mailer_data = mailer_account.try_borrow_mut_data()?;
     let mut mailer_state: MailerState = BorshDeserialize::deserialize(&mut &mailer_data[8..])?;
@@ -1198,6 +1238,10 @@ fn process_claim_owner_share(_program_id: &Pubkey, accounts: &[AccountInfo]) -> 
     mailer_state.owner_claimable = 0;
     mailer_state.serialize(&mut &mut mailer_data[8..])?;
     drop(mailer_data);
+
+    assert_token_program(token_program)?;
+    assert_token_account(owner_usdc, owner.key, &mailer_state.usdc_mint)?;
+    assert_token_account(mailer_usdc, &mailer_pda, &mailer_state.usdc_mint)?;
 
     // Transfer USDC from mailer to owner
     invoke_signed(
@@ -1231,6 +1275,8 @@ fn process_set_fee(_program_id: &Pubkey, accounts: &[AccountInfo], new_fee: u64)
     if !owner.is_signer {
         return Err(ProgramError::MissingRequiredSignature);
     }
+
+    assert_mailer_account(_program_id, mailer_account)?;
 
     // Load and update mailer state
     let mut mailer_data = mailer_account.try_borrow_mut_data()?;
@@ -1272,10 +1318,16 @@ fn process_delegate_to(
         return Err(ProgramError::MissingRequiredSignature);
     }
 
+    let (mailer_pda, _) = assert_mailer_account(program_id, mailer_account)?;
+
     // Load mailer state
     let mailer_data = mailer_account.try_borrow_data()?;
     let mailer_state: MailerState = BorshDeserialize::deserialize(&mut &mailer_data[8..])?;
     drop(mailer_data);
+
+    assert_token_program(token_program)?;
+    assert_token_account(delegator_usdc, delegator.key, &mailer_state.usdc_mint)?;
+    assert_token_account(mailer_usdc, &mailer_pda, &mailer_state.usdc_mint)?;
 
     // Check if contract is paused
     if mailer_state.paused {
@@ -1372,10 +1424,7 @@ fn process_reject_delegation(program_id: &Pubkey, accounts: &[AccountInfo]) -> P
     }
 
     // Verify mailer state PDA and ensure contract is not paused
-    let (mailer_pda, _) = Pubkey::find_program_address(&[b"mailer"], program_id);
-    if mailer_account.key != &mailer_pda {
-        return Err(MailerError::InvalidPDA.into());
-    }
+    let (_mailer_pda, _) = assert_mailer_account(program_id, mailer_account)?;
 
     let mailer_data = mailer_account.try_borrow_data()?;
     let mailer_state: MailerState = BorshDeserialize::deserialize(&mut &mailer_data[8..])?;
@@ -1416,6 +1465,8 @@ fn process_set_delegation_fee(
         return Err(ProgramError::MissingRequiredSignature);
     }
 
+    assert_mailer_account(_program_id, mailer_account)?;
+
     // Load and update mailer state
     let mut mailer_data = mailer_account.try_borrow_mut_data()?;
     let mut mailer_state: MailerState = BorshDeserialize::deserialize(&mut &mailer_data[8..])?;
@@ -1455,6 +1506,8 @@ fn process_set_custom_fee_percentage(
     if !owner.is_signer {
         return Err(ProgramError::MissingRequiredSignature);
     }
+
+    assert_mailer_account(program_id, mailer_account)?;
 
     // Load mailer state and verify owner
     let mailer_data = mailer_account.try_borrow_data()?;
@@ -1545,6 +1598,8 @@ fn process_clear_custom_fee_percentage(
         return Err(ProgramError::MissingRequiredSignature);
     }
 
+    assert_mailer_account(program_id, mailer_account)?;
+
     // Load mailer state and verify owner
     let mailer_data = mailer_account.try_borrow_data()?;
     let mailer_state: MailerState = BorshDeserialize::deserialize(&mut &mailer_data[8..])?;
@@ -1581,6 +1636,44 @@ fn process_clear_custom_fee_percentage(
         account
     );
     Ok(())
+}
+
+fn assert_token_program(token_program: &AccountInfo) -> Result<(), ProgramError> {
+    if token_program.key != &spl_token::id() {
+        return Err(MailerError::InvalidTokenProgram.into());
+    }
+    Ok(())
+}
+
+fn assert_token_account(
+    token_account_info: &AccountInfo,
+    expected_owner: &Pubkey,
+    expected_mint: &Pubkey,
+) -> Result<(), ProgramError> {
+    let data = token_account_info.try_borrow_data()?;
+    let token_account = TokenAccount::unpack(&data)?;
+    drop(data);
+
+    if token_account.owner != *expected_owner {
+        return Err(MailerError::InvalidAccountOwner.into());
+    }
+
+    if token_account.mint != *expected_mint {
+        return Err(MailerError::InvalidMint.into());
+    }
+
+    Ok(())
+}
+
+fn assert_mailer_account(
+    program_id: &Pubkey,
+    mailer_account: &AccountInfo,
+) -> Result<(Pubkey, u8), ProgramError> {
+    let (mailer_pda, bump) = Pubkey::find_program_address(&[b"mailer"], program_id);
+    if mailer_account.key != &mailer_pda {
+        return Err(MailerError::InvalidPDA.into());
+    }
+    Ok((mailer_pda, bump))
 }
 
 /// Record revenue shares for priority messages
@@ -1667,6 +1760,8 @@ fn process_pause(_program_id: &Pubkey, accounts: &[AccountInfo]) -> ProgramResul
         return Err(ProgramError::MissingRequiredSignature);
     }
 
+    let (mailer_pda, _) = assert_mailer_account(_program_id, mailer_account)?;
+
     // Load and update mailer state
     let mut mailer_data = mailer_account.try_borrow_mut_data()?;
     let mut mailer_state: MailerState = BorshDeserialize::deserialize(&mut &mailer_data[8..])?;
@@ -1684,13 +1779,17 @@ fn process_pause(_program_id: &Pubkey, accounts: &[AccountInfo]) -> ProgramResul
     // Set paused state
     mailer_state.paused = true;
 
+    assert_token_program(token_program)?;
+
     // Distribute owner claimable funds if any
     if mailer_state.owner_claimable > 0 {
         let amount = mailer_state.owner_claimable;
         mailer_state.owner_claimable = 0;
 
+        assert_token_account(owner_usdc, owner.key, &mailer_state.usdc_mint)?;
+        assert_token_account(mailer_usdc, &mailer_pda, &mailer_state.usdc_mint)?;
+
         // Transfer USDC from mailer to owner
-        let (mailer_pda, bump) = Pubkey::find_program_address(&[b"mailer"], _program_id);
         invoke_signed(
             &spl_token::instruction::transfer(
                 token_program.key,
@@ -1706,7 +1805,7 @@ fn process_pause(_program_id: &Pubkey, accounts: &[AccountInfo]) -> ProgramResul
                 mailer_account.clone(),
                 token_program.clone(),
             ],
-            &[&[b"mailer", &[bump]]],
+            &[&[b"mailer", &[mailer_state.bump]]],
         )?;
 
         msg!("Distributed owner funds during pause: {}", amount);
@@ -1728,6 +1827,8 @@ fn process_unpause(_program_id: &Pubkey, accounts: &[AccountInfo]) -> ProgramRes
     if !owner.is_signer {
         return Err(ProgramError::MissingRequiredSignature);
     }
+
+    assert_mailer_account(_program_id, mailer_account)?;
 
     // Load and update mailer state
     let mut mailer_data = mailer_account.try_borrow_mut_data()?;
@@ -1765,6 +1866,8 @@ fn process_distribute_claimable_funds(
     let mailer_usdc = next_account_info(account_iter)?;
     let token_program = next_account_info(account_iter)?;
 
+    let (mailer_pda, _) = assert_mailer_account(_program_id, mailer_account)?;
+
     // Load mailer state to check if paused
     let mailer_data = mailer_account.try_borrow_data()?;
     let mailer_state: MailerState = BorshDeserialize::deserialize(&mut &mailer_data[8..])?;
@@ -1781,6 +1884,8 @@ fn process_distribute_claimable_funds(
         return Err(MailerError::InvalidPDA.into());
     }
 
+    assert_token_program(token_program)?;
+
     // Load and update recipient claim
     let mut claim_data = recipient_claim_account.try_borrow_mut_data()?;
     let mut claim_state: RecipientClaim = BorshDeserialize::deserialize(&mut &claim_data[8..])?;
@@ -1793,8 +1898,10 @@ fn process_distribute_claimable_funds(
     claim_state.amount = 0;
     claim_state.timestamp = 0;
 
+    assert_token_account(recipient_usdc, &recipient, &mailer_state.usdc_mint)?;
+    assert_token_account(mailer_usdc, &mailer_pda, &mailer_state.usdc_mint)?;
+
     // Transfer USDC from mailer to recipient
-    let (mailer_pda, bump) = Pubkey::find_program_address(&[b"mailer"], _program_id);
     invoke_signed(
         &spl_token::instruction::transfer(
             token_program.key,
@@ -1810,7 +1917,7 @@ fn process_distribute_claimable_funds(
             mailer_account.clone(),
             token_program.clone(),
         ],
-        &[&[b"mailer", &[bump]]],
+        &[&[b"mailer", &[mailer_state.bump]]],
     )?;
 
     claim_state.serialize(&mut &mut claim_data[8..])?;
@@ -1833,6 +1940,8 @@ fn process_claim_expired_shares(
     if !owner.is_signer {
         return Err(ProgramError::MissingRequiredSignature);
     }
+
+    let (_mailer_pda, _) = assert_mailer_account(program_id, mailer_account)?;
 
     // Load and verify mailer state
     let mut mailer_data = mailer_account.try_borrow_mut_data()?;
@@ -1886,6 +1995,8 @@ fn process_emergency_unpause(_program_id: &Pubkey, accounts: &[AccountInfo]) -> 
     if !owner.is_signer {
         return Err(ProgramError::MissingRequiredSignature);
     }
+
+    assert_mailer_account(_program_id, mailer_account)?;
 
     // Load and update mailer state
     let mut mailer_data = mailer_account.try_borrow_mut_data()?;
