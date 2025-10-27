@@ -213,10 +213,10 @@
     "@typechain/hardhat": "^9.1.0",
     "@types/chai": "^4.3.20",
     "@types/mocha": "^10.0.10",
-    "@types/node": "^22.10.7",
-    "@types/react": "^19.0.6",
-    "@typescript-eslint/eslint-plugin": "^8.21.2",
-    "@typescript-eslint/parser": "^8.21.2",
+    "@types/node": "^22.18.12",
+    "@types/react": "^19.2.2",
+    "@typescript-eslint/eslint-plugin": "^8.46.2",
+    "@typescript-eslint/parser": "^8.46.2",
     "chai": "^4.5.0",
     "chai-as-promised": "^7.1.2",
     "dotenv": "^17.2.3",
@@ -230,10 +230,11 @@
     "ts-node": "^10.9.2",
     "typescript": "^5.9.3",
     "typechain": "^8.3.2",
-    "viem": "^2.38.0"
+    "viem": "^2.38.4"
   },
   "dependencies": {
-    "@sudobility/types": "^1.8.16"
+    "@sudobility/configs": "^0.0.6",
+    "@sudobility/types": "^1.8.33"
   },
   "overrides": {
     "bigint-buffer": "^1.1.5",

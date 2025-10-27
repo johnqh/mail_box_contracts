@@ -1,5 +1,9 @@
-import { Optional, ChainConfig as TypesChainConfig, RpcHelpers, ChainType } from '@sudobility/types';
+import { Optional } from '@sudobility/types';
 import { ChainConfig } from '../unified/types.js';
+
+// Note: ChainConfig from '@sudobility/types' is imported but renamed to avoid conflict
+// RpcHelpers and ChainType imports removed as they don't exist in @sudobility/types yet
+// buildChainConfig function below is commented out until RpcHelpers is implemented
 
 export const DEFAULT_CHAIN_CONFIG: ChainConfig = {
   evm: {
@@ -150,6 +154,9 @@ export function createChainConfig(
  * Build unified chain config from @sudobility/types ChainConfig
  * Uses RpcHelpers to derive all chain information from API keys
  *
+ * NOTE: This function is temporarily commented out because RpcHelpers and ChainType
+ * are not yet implemented in @sudobility/types. Use createChainConfig() instead.
+ *
  * @param chainConfig - ChainConfig from @sudobility/types with chain enum and API keys
  * @param mailerAddress - Optional mailer contract/program address
  * @returns ChainConfig compatible with unified client
@@ -167,6 +174,7 @@ export function createChainConfig(
  * // Returns a complete config with RPC URL, chain ID, USDC address all derived
  * ```
  */
+/* Commented out until RpcHelpers is implemented in @sudobility/types
 export function buildChainConfig(
   chainConfig: TypesChainConfig,
   mailerAddress?: Optional<string>
@@ -208,3 +216,4 @@ export function buildChainConfig(
 
   return config;
 }
+*/

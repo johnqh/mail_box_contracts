@@ -1,5 +1,6 @@
 import hre from "hardhat";
-import { RpcHelpers } from "@sudobility/types";
+import { RpcHelpers } from "@sudobility/configs";
+import { ChainType } from "@sudobility/types";
 import { formatEther, formatUnits, getAddress } from "viem";
 const { network } = hre;
 
@@ -57,37 +58,27 @@ async function main() {
       process.exit(1);
     }
 
-    const visibleChains = RpcHelpers.getVisibleChains(true); // Include testnets
-    const chain = visibleChains.find(c => {
-      const info = RpcHelpers.getChainInfo({
-        chain: c,
-        alchemyApiKey: process.env.ALCHEMY_API_KEY,
-        etherscanApiKey: process.env.ETHERSCAN_MULTICHAIN_API_KEY
-      });
-      return info.chainId === chainId;
-    });
+    // Get both dev and prod EVM chains
+    const devChains = RpcHelpers.getVisibleChains(ChainType.EVM, true); // testnets
+    const prodChains = RpcHelpers.getVisibleChains(ChainType.EVM, false); // mainnets
+    const visibleChains = [...devChains, ...prodChains];
 
-    if (!chain) {
+    const chainInfo = visibleChains.find(c => c.chainId === chainId);
+
+    if (!chainInfo) {
       console.error(`❌ Unsupported chain ID: ${chainId} for network: ${networkName}`);
       console.error("This chain is not in the visible chains list. Please set USDC_ADDRESS environment variable.");
       process.exit(1);
     }
 
-    const chainConfig = {
-      chain,
-      alchemyApiKey: process.env.ALCHEMY_API_KEY,
-      etherscanApiKey: process.env.ETHERSCAN_MULTICHAIN_API_KEY
-    };
-    const chainInfo = RpcHelpers.getChainInfo(chainConfig);
-
     if (!chainInfo.usdcAddress) {
-      console.error(`❌ No USDC address available for chain: ${chain} (chainId: ${chainId})`);
+      console.error(`❌ No USDC address available for chain: ${chainInfo.name} (chainId: ${chainId})`);
       console.error("This chain may not have USDC deployed. Please set USDC_ADDRESS environment variable.");
       process.exit(1);
     }
 
     usdcAddress = chainInfo.usdcAddress;
-    console.log(`Using USDC address from RpcHelper for ${chain}:`, usdcAddress);
+    console.log(`Using USDC address from RpcHelper for ${chainInfo.name}:`, usdcAddress);
   }
 
   // Ensure address has proper checksum (convert to lowercase first to avoid checksum validation)

@@ -6,7 +6,8 @@
  * information (RPC URLs, chain IDs, USDC addresses) from API keys.
  */
 
-import { Chain, ChainConfig, RpcHelpers } from '@sudobility/types';
+import { Chain, ChainConfig } from '@sudobility/types';
+import { RpcHelpers } from '@sudobility/configs';
 import { buildChainConfig } from '../src/utils/index.js';
 import { MailerClient as EVMMailerClient } from '../src/evm/index.js';
 import { MailerClient as SolanaMailerClient } from '../src/solana/index.js';
@@ -27,7 +28,7 @@ async function initializeEVMClient() {
   };
 
   // Step 2: Get all derived chain information
-  const chainInfo = RpcHelpers.getChainInfo(chainConfig);
+  const chainInfo = RpcHelpers.deriveChainInfo(chainConfig);
   console.log('Chain Info:', {
     name: chainInfo.name,
     chainId: chainInfo.chainId,
@@ -81,7 +82,7 @@ async function initializeSolanaClient() {
   };
 
   // Step 2: Get derived chain information
-  const chainInfo = RpcHelpers.getChainInfo(chainConfig);
+  const chainInfo = RpcHelpers.deriveChainInfo(chainConfig);
   console.log('Solana Chain Info:', {
     name: chainInfo.name,
     rpcUrl: chainInfo.rpcUrl,
@@ -132,7 +133,7 @@ async function initializeMultiChain() {
       etherscanApiKey,
     };
 
-    const chainInfo = RpcHelpers.getChainInfo(chainConfig);
+    const chainInfo = RpcHelpers.deriveChainInfo(chainConfig);
     console.log(`Initializing ${chainInfo.name}...`);
 
     // Build config and create client

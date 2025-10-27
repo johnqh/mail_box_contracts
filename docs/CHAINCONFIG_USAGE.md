@@ -19,7 +19,8 @@ Everything else is automatically derived!
 ### Basic Usage
 
 ```typescript
-import { Chain, ChainConfig, RpcHelpers } from '@sudobility/types';
+import { Chain, ChainConfig } from '@sudobility/types';
+import { RpcHelpers } from '@sudobility/configs';
 import { buildChainConfig } from '@johnqh/mail_box_contracts';
 
 // 1. Create config with minimal information
@@ -30,7 +31,7 @@ const chainConfig: ChainConfig = {
 };
 
 // 2. Get all derived chain information
-const chainInfo = RpcHelpers.getChainInfo(chainConfig);
+const chainInfo = RpcHelpers.deriveChainInfo(chainConfig);
 console.log('Chain:', chainInfo.name);           // "Ethereum"
 console.log('RPC URL:', chainInfo.rpcUrl);       // Auto-generated Alchemy URL
 console.log('Chain ID:', chainInfo.chainId);     // 1
@@ -125,7 +126,8 @@ const testnetConfig: ChainConfig = {
 The `RpcHelpers` class provides many useful methods:
 
 ```typescript
-import { RpcHelpers, Chain } from '@sudobility/types';
+import { Chain } from '@sudobility/types';
+import { RpcHelpers, RpcEndpoint } from '@sudobility/configs';
 
 // Get chain type
 const type = RpcHelpers.getChainType(Chain.ETH_MAINNET);
@@ -143,9 +145,10 @@ const usdc = RpcHelpers.getUSDCAddress(Chain.POLYGON_MAINNET);
 const name = RpcHelpers.getUserFriendlyName(Chain.BASE_MAINNET);
 // Returns: "Base"
 
-// Get RPC URL
-const rpcUrl = RpcHelpers.getRpcUrl(alchemyApiKey, Chain.ETH_MAINNET);
-// Returns: "https://eth-mainnet.g.alchemy.com/v2/YOUR_KEY"
+// Get RPC URL (with API keys object)
+const apiKeys = { alchemyApiKey: 'your-key' };
+const rpcUrl = RpcHelpers.getRpcUrl(apiKeys, Chain.ETH_MAINNET, RpcEndpoint.Alchemy);
+// Returns: "https://eth-mainnet.g.alchemy.com/v2/your-key"
 
 // Get block explorer API URL
 const explorerApi = RpcHelpers.getExplorerApiUrl(etherscanApiKey, Chain.ETH_MAINNET);
@@ -198,7 +201,8 @@ const config = {
 ### After (ChainConfig)
 
 ```typescript
-import { Chain, ChainConfig, RpcHelpers } from '@sudobility/types';
+import { Chain, ChainConfig } from '@sudobility/types';
+import { RpcHelpers } from '@sudobility/configs';
 import { buildChainConfig } from '@johnqh/mail_box_contracts';
 
 const chainConfig: ChainConfig = {

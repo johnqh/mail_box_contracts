@@ -116,7 +116,9 @@
       "Bash(git log:*)",
       "Bash(curl -s \"https://api-sepolia.etherscan.io/api?module=contract&action=getcontractcreation&contractaddresses=0xd94938f1985E99b9Df2C7375b6ca5857cB06F39A&apikey=$ETHERSCAN_MULTICHAIN_API_KEY\")",
       "Bash(CONTRACT_ADDRESS=0xd94938f1985E99b9Df2C7375b6ca5857cB06F39A npx hardhat run scripts/evm/get-deployment-block.ts --network sepolia)",
-      "Read(//Users/johnhuang/0xmail/wildduck_client/.github/workflows/**)"
+      "Read(//Users/johnhuang/0xmail/wildduck_client/.github/workflows/**)",
+      "WebFetch(domain:registry.npmjs.org)",
+      "Bash(tee:*)"
     ],
     "deny": [],
     "defaultMode": "acceptEdits"
