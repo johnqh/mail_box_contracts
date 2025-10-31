@@ -33,6 +33,7 @@ export interface MailerInterface extends Interface {
       | "claimOwnerShare"
       | "claimRecipientShare"
       | "clearCustomFeePercentage"
+      | "clearPermission"
       | "customFeeDiscount"
       | "delegateTo"
       | "delegationFee"
@@ -48,6 +49,7 @@ export interface MailerInterface extends Interface {
       | "ownerClaimable"
       | "pause"
       | "paused"
+      | "permissions"
       | "recipientClaims"
       | "rejectDelegation"
       | "send"
@@ -59,6 +61,7 @@ export interface MailerInterface extends Interface {
       | "setCustomFeePercentage"
       | "setDelegationFee"
       | "setFee"
+      | "setPermission"
       | "unpause"
       | "usdcToken"
   ): FunctionFragment;
@@ -77,6 +80,8 @@ export interface MailerInterface extends Interface {
       | "MailSent"
       | "MailSentToEmail"
       | "OwnerClaimed"
+      | "PermissionGranted"
+      | "PermissionRevoked"
       | "PreparedMailSent"
       | "PreparedMailSentToEmail"
       | "RecipientClaimed"
@@ -110,6 +115,10 @@ export interface MailerInterface extends Interface {
   ): string;
   encodeFunctionData(
     functionFragment: "clearCustomFeePercentage",
+    values: [AddressLike]
+  ): string;
+  encodeFunctionData(
+    functionFragment: "clearPermission",
     values: [AddressLike]
   ): string;
   encodeFunctionData(
@@ -158,6 +167,10 @@ export interface MailerInterface extends Interface {
   encodeFunctionData(functionFragment: "pause", values?: undefined): string;
   encodeFunctionData(functionFragment: "paused", values?: undefined): string;
   encodeFunctionData(
+    functionFragment: "permissions",
+    values: [AddressLike]
+  ): string;
+  encodeFunctionData(
     functionFragment: "recipientClaims",
     values: [AddressLike]
   ): string;
@@ -198,6 +211,10 @@ export interface MailerInterface extends Interface {
     functionFragment: "setFee",
     values: [BigNumberish]
   ): string;
+  encodeFunctionData(
+    functionFragment: "setPermission",
+    values: [AddressLike]
+  ): string;
   encodeFunctionData(functionFragment: "unpause", values?: undefined): string;
   encodeFunctionData(functionFragment: "usdcToken", values?: undefined): string;
 
@@ -227,6 +244,10 @@ export interface MailerInterface extends Interface {
   ): Result;
   decodeFunctionResult(
     functionFragment: "clearCustomFeePercentage",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(
+    functionFragment: "clearPermission",
     data: BytesLike
   ): Result;
   decodeFunctionResult(
@@ -272,6 +293,10 @@ export interface MailerInterface extends Interface {
   decodeFunctionResult(functionFragment: "pause", data: BytesLike): Result;
   decodeFunctionResult(functionFragment: "paused", data: BytesLike): Result;
   decodeFunctionResult(
+    functionFragment: "permissions",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(
     functionFragment: "recipientClaims",
     data: BytesLike
   ): Result;
@@ -306,6 +331,10 @@ export interface MailerInterface extends Interface {
     data: BytesLike
   ): Result;
   decodeFunctionResult(functionFragment: "setFee", data: BytesLike): Result;
+  decodeFunctionResult(
+    functionFragment: "setPermission",
+    data: BytesLike
+  ): Result;
   decodeFunctionResult(functionFragment: "unpause", data: BytesLike): Result;
   decodeFunctionResult(functionFragment: "usdcToken", data: BytesLike): Result;
 }
@@ -486,6 +515,32 @@ export namespace OwnerClaimedEvent {
   export type LogDescription = TypedLogDescription<Event>;
 }
 
+export namespace PermissionGrantedEvent {
+  export type InputTuple = [contractAddress: AddressLike, wallet: AddressLike];
+  export type OutputTuple = [contractAddress: string, wallet: string];
+  export interface OutputObject {
+    contractAddress: string;
+    wallet: string;
+  }
+  export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
+  export type Filter = TypedDeferredTopicFilter<Event>;
+  export type Log = TypedEventLog<Event>;
+  export type LogDescription = TypedLogDescription<Event>;
+}
+
+export namespace PermissionRevokedEvent {
+  export type InputTuple = [contractAddress: AddressLike, wallet: AddressLike];
+  export type OutputTuple = [contractAddress: string, wallet: string];
+  export interface OutputObject {
+    contractAddress: string;
+    wallet: string;
+  }
+  export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
+  export type Filter = TypedDeferredTopicFilter<Event>;
+  export type Log = TypedEventLog<Event>;
+  export type LogDescription = TypedLogDescription<Event>;
+}
+
 export namespace PreparedMailSentEvent {
   export type InputTuple = [
     from: AddressLike,
@@ -656,6 +711,12 @@ export interface Mailer extends BaseContract {
     "nonpayable"
   >;
 
+  clearPermission: TypedContractMethod<
+    [contractAddress: AddressLike],
+    [void],
+    "nonpayable"
+  >;
+
   customFeeDiscount: TypedContractMethod<[arg0: AddressLike], [bigint], "view">;
 
   delegateTo: TypedContractMethod<
@@ -707,6 +768,8 @@ export interface Mailer extends BaseContract {
   pause: TypedContractMethod<[], [void], "nonpayable">;
 
   paused: TypedContractMethod<[], [boolean], "view">;
+
+  permissions: TypedContractMethod<[arg0: AddressLike], [string], "view">;
 
   recipientClaims: TypedContractMethod<
     [arg0: AddressLike],
@@ -782,6 +845,12 @@ export interface Mailer extends BaseContract {
 
   setFee: TypedContractMethod<[usdcAmount: BigNumberish], [void], "nonpayable">;
 
+  setPermission: TypedContractMethod<
+    [contractAddress: AddressLike],
+    [void],
+    "nonpayable"
+  >;
+
   unpause: TypedContractMethod<[], [void], "nonpayable">;
 
   usdcToken: TypedContractMethod<[], [string], "view">;
@@ -811,6 +880,9 @@ export interface Mailer extends BaseContract {
   getFunction(
     nameOrSignature: "clearCustomFeePercentage"
   ): TypedContractMethod<[account: AddressLike], [void], "nonpayable">;
+  getFunction(
+    nameOrSignature: "clearPermission"
+  ): TypedContractMethod<[contractAddress: AddressLike], [void], "nonpayable">;
   getFunction(
     nameOrSignature: "customFeeDiscount"
   ): TypedContractMethod<[arg0: AddressLike], [bigint], "view">;
@@ -866,6 +938,9 @@ export interface Mailer extends BaseContract {
   getFunction(
     nameOrSignature: "paused"
   ): TypedContractMethod<[], [boolean], "view">;
+  getFunction(
+    nameOrSignature: "permissions"
+  ): TypedContractMethod<[arg0: AddressLike], [string], "view">;
   getFunction(
     nameOrSignature: "recipientClaims"
   ): TypedContractMethod<
@@ -947,6 +1022,9 @@ export interface Mailer extends BaseContract {
   getFunction(
     nameOrSignature: "setFee"
   ): TypedContractMethod<[usdcAmount: BigNumberish], [void], "nonpayable">;
+  getFunction(
+    nameOrSignature: "setPermission"
+  ): TypedContractMethod<[contractAddress: AddressLike], [void], "nonpayable">;
   getFunction(
     nameOrSignature: "unpause"
   ): TypedContractMethod<[], [void], "nonpayable">;
@@ -1037,6 +1115,20 @@ export interface Mailer extends BaseContract {
     OwnerClaimedEvent.InputTuple,
     OwnerClaimedEvent.OutputTuple,
     OwnerClaimedEvent.OutputObject
+  >;
+  getEvent(
+    key: "PermissionGranted"
+  ): TypedContractEvent<
+    PermissionGrantedEvent.InputTuple,
+    PermissionGrantedEvent.OutputTuple,
+    PermissionGrantedEvent.OutputObject
+  >;
+  getEvent(
+    key: "PermissionRevoked"
+  ): TypedContractEvent<
+    PermissionRevokedEvent.InputTuple,
+    PermissionRevokedEvent.OutputTuple,
+    PermissionRevokedEvent.OutputObject
   >;
   getEvent(
     key: "PreparedMailSent"
@@ -1205,6 +1297,28 @@ export interface Mailer extends BaseContract {
       OwnerClaimedEvent.InputTuple,
       OwnerClaimedEvent.OutputTuple,
       OwnerClaimedEvent.OutputObject
+    >;
+
+    "PermissionGranted(address,address)": TypedContractEvent<
+      PermissionGrantedEvent.InputTuple,
+      PermissionGrantedEvent.OutputTuple,
+      PermissionGrantedEvent.OutputObject
+    >;
+    PermissionGranted: TypedContractEvent<
+      PermissionGrantedEvent.InputTuple,
+      PermissionGrantedEvent.OutputTuple,
+      PermissionGrantedEvent.OutputObject
+    >;
+
+    "PermissionRevoked(address,address)": TypedContractEvent<
+      PermissionRevokedEvent.InputTuple,
+      PermissionRevokedEvent.OutputTuple,
+      PermissionRevokedEvent.OutputObject
+    >;
+    PermissionRevoked: TypedContractEvent<
+      PermissionRevokedEvent.InputTuple,
+      PermissionRevokedEvent.OutputTuple,
+      PermissionRevokedEvent.OutputObject
     >;
 
     "PreparedMailSent(address,address,string,bool,bool)": TypedContractEvent<

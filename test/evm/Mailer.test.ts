@@ -996,6 +996,31 @@ describe("Mailer", function () {
             mailer.write.delegateTo([addr2.account.address], { account: addr1.account })
           ).to.be.rejected; // Just check that it reverts, not the specific error
         });
+
+        it("Should credit owner claimable balance and allow owner to withdraw delegation fees", async function () {
+          const { mailer, mockUSDC, owner, addr1, addr2, publicClient } = this;
+          const ownerBalanceBefore = await mockUSDC.read.balanceOf([owner.account.address]);
+          const contractBalanceBefore = await mockUSDC.read.balanceOf([mailer.address]);
+          const delegationFee = await mailer.read.delegationFee();
+
+          const hash = await mailer.write.delegateTo([addr2.account.address], { account: addr1.account });
+          await publicClient.waitForTransactionReceipt({ hash });
+
+          expect(await mailer.read.ownerClaimable()).to.equal(delegationFee);
+
+          const contractBalanceAfterDelegation = await mockUSDC.read.balanceOf([mailer.address]);
+          expect(contractBalanceAfterDelegation - contractBalanceBefore).to.equal(delegationFee);
+
+          const claimHash = await mailer.write.claimOwnerShare([], { account: owner.account });
+          await publicClient.waitForTransactionReceipt({ hash: claimHash });
+
+          expect(await mailer.read.ownerClaimable()).to.equal(0n);
+          const ownerBalanceAfter = await mockUSDC.read.balanceOf([owner.account.address]);
+          expect(ownerBalanceAfter - ownerBalanceBefore).to.equal(delegationFee);
+
+          const contractBalanceAfterClaim = await mockUSDC.read.balanceOf([mailer.address]);
+          expect(contractBalanceAfterClaim).to.equal(contractBalanceBefore);
+        });
       });
 
       describe("rejectDelegation function", function () {

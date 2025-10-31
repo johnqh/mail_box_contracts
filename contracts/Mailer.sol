@@ -57,6 +57,11 @@ contract Mailer {
     ///      Internally stores discount instead of percentage for cleaner logic
     mapping(address => uint256) public customFeeDiscount;
 
+    /// @notice Mapping of contract addresses to wallet addresses that pay fees
+    /// @dev Allows smart contracts to send messages while a wallet pays the fees
+    ///      permissions[contractAddress] = walletAddress
+    mapping(address => address) public permissions;
+
     event MailSent(
         address indexed from,
         address indexed to,
@@ -129,6 +134,16 @@ contract Mailer {
     /// @param account Address that received custom fee percentage
     /// @param percentage Fee percentage (0-100)
     event CustomFeePercentageSet(address indexed account, uint256 percentage);
+
+    /// @notice Emitted when a wallet grants permission for a contract to send messages
+    /// @param contractAddress The contract being granted permission
+    /// @param wallet The wallet that will pay fees for the contract
+    event PermissionGranted(address indexed contractAddress, address indexed wallet);
+
+    /// @notice Emitted when permission is revoked
+    /// @param contractAddress The contract having permission revoked
+    /// @param wallet The wallet that was paying fees
+    event PermissionRevoked(address indexed contractAddress, address indexed wallet);
 
     error OnlyOwner();
     error NoClaimableAmount();
@@ -204,28 +219,7 @@ contract Mailer {
         bool revenueShareToReceiver,
         bool resolveSenderToName
     ) external nonReentrant whenNotPaused {
-        if (revenueShareToReceiver) {
-            // Priority mode: Calculate effective fee based on custom percentage
-            uint256 effectiveFee = _calculateFeeForAddress(msg.sender, sendFee);
-            // Transfer effective fee from sender to contract
-            if (effectiveFee > 0 && !usdcToken.transferFrom(msg.sender, address(this), effectiveFee)) {
-                revert FeePaymentRequired();
-            }
-            // Record 90% for receiver, 10% for owner (only if fee > 0)
-            if (effectiveFee > 0) {
-                _recordShares(to, effectiveFee);
-            }
-        } else {
-            // Standard mode: Calculate 10% owner fee based on effective fee
-            uint256 effectiveFee = _calculateFeeForAddress(msg.sender, sendFee);
-            uint256 ownerFee = (effectiveFee * OWNER_SHARE) / 100;
-            // Transfer only owner fee from sender to contract
-            if (ownerFee > 0 && !usdcToken.transferFrom(msg.sender, address(this), ownerFee)) {
-                revert FeePaymentRequired();
-            }
-            // All goes to owner, no revenue share
-            ownerClaimable += ownerFee;
-        }
+        _processFee(to, revenueShareToReceiver);
         emit MailSent(msg.sender, to, subject, body, revenueShareToReceiver, resolveSenderToName);
     }
     
@@ -246,69 +240,37 @@ contract Mailer {
         bool revenueShareToReceiver,
         bool resolveSenderToName
     ) external nonReentrant whenNotPaused {
-        if (revenueShareToReceiver) {
-            // Priority mode: Calculate effective fee based on custom percentage
-            uint256 effectiveFee = _calculateFeeForAddress(msg.sender, sendFee);
-            // Transfer effective fee from sender to contract
-            if (effectiveFee > 0 && !usdcToken.transferFrom(msg.sender, address(this), effectiveFee)) {
-                revert FeePaymentRequired();
-            }
-            // Record 90% for receiver, 10% for owner (only if fee > 0)
-            if (effectiveFee > 0) {
-                _recordShares(to, effectiveFee);
-            }
-        } else {
-            // Standard mode: Calculate 10% owner fee based on effective fee
-            uint256 effectiveFee = _calculateFeeForAddress(msg.sender, sendFee);
-            uint256 ownerFee = (effectiveFee * OWNER_SHARE) / 100;
-            // Transfer only owner fee from sender to contract
-            if (ownerFee > 0 && !usdcToken.transferFrom(msg.sender, address(this), ownerFee)) {
-                revert FeePaymentRequired();
-            }
-            // All goes to owner, no revenue share
-            ownerClaimable += ownerFee;
-        }
+        _processFee(to, revenueShareToReceiver);
         emit PreparedMailSent(msg.sender, to, mailId, revenueShareToReceiver, resolveSenderToName);
     }
 
     /**
      * @notice Send a message to an email address (no wallet address known)
-     * @dev Charges only 10% owner fee since recipient wallet is unknown (no revenue share possible)
+     * @dev Always charges standard 10% fee (0.01 USDC) since there's no recipient wallet for revenue sharing
      * @param toEmail Email address of the recipient
      * @param subject Message subject line
      * @param body Message body content
      *
      * Use case: Send to users who haven't set up a wallet yet
-     * Cost: Sender pays 0.01 USDC (10% of sendFee), all goes to owner
+     * Cost: 0.01 USDC (10% of sendFee), all goes to owner
      *
      * Requirements:
      * - Contract must not be paused
-     * - Sender must have approved this contract to spend required USDC amount
-     * - Sender must have sufficient USDC balance
+     * - Payer must have approved this contract to spend required USDC amount
+     * - Payer must have sufficient USDC balance
      */
     function sendToEmailAddress(
         string calldata toEmail,
         string calldata subject,
         string calldata body
     ) external nonReentrant whenNotPaused {
-        // Calculate effective fee based on custom percentage, then 10% owner fee (no revenue share since no wallet address)
-        uint256 effectiveFee = _calculateFeeForAddress(msg.sender, sendFee);
-        uint256 ownerFee = (effectiveFee * OWNER_SHARE) / 100;
-
-        // Transfer only owner fee from sender to contract
-        if (ownerFee > 0 && !usdcToken.transferFrom(msg.sender, address(this), ownerFee)) {
-            revert FeePaymentRequired();
-        }
-
-        // All goes to owner
-        ownerClaimable += ownerFee;
-
+        _processFee(address(0), false);
         emit MailSentToEmail(msg.sender, toEmail, subject, body);
     }
 
     /**
      * @notice Send a pre-prepared message to an email address (no wallet address known)
-     * @dev Same as sendToEmailAddress but references off-chain stored content via mailId
+     * @dev Always charges standard 10% fee (0.01 USDC) since there's no recipient wallet for revenue sharing
      * @param toEmail Email address of the recipient
      * @param mailId Reference ID to pre-prepared message content
      *
@@ -319,18 +281,7 @@ contract Mailer {
         string calldata toEmail,
         string calldata mailId
     ) external nonReentrant whenNotPaused {
-        // Calculate effective fee based on custom percentage, then 10% owner fee (no revenue share since no wallet address)
-        uint256 effectiveFee = _calculateFeeForAddress(msg.sender, sendFee);
-        uint256 ownerFee = (effectiveFee * OWNER_SHARE) / 100;
-
-        // Transfer only owner fee from sender to contract
-        if (ownerFee > 0 && !usdcToken.transferFrom(msg.sender, address(this), ownerFee)) {
-            revert FeePaymentRequired();
-        }
-
-        // All goes to owner
-        ownerClaimable += ownerFee;
-
+        _processFee(address(0), false);
         emit PreparedMailSentToEmail(msg.sender, toEmail, mailId);
     }
 
@@ -351,28 +302,7 @@ contract Mailer {
         bool revenueShareToReceiver,
         bool resolveSenderToName
     ) external nonReentrant whenNotPaused {
-        if (revenueShareToReceiver) {
-            // Priority mode: Calculate effective fee based on custom percentage
-            uint256 effectiveFee = _calculateFeeForAddress(msg.sender, sendFee);
-            // Transfer effective fee from sender to contract
-            if (effectiveFee > 0 && !usdcToken.transferFrom(msg.sender, address(this), effectiveFee)) {
-                revert FeePaymentRequired();
-            }
-            // Record 90% for receiver, 10% for owner (only if fee > 0)
-            if (effectiveFee > 0) {
-                _recordShares(to, effectiveFee);
-            }
-        } else {
-            // Standard mode: Calculate 10% owner fee based on effective fee
-            uint256 effectiveFee = _calculateFeeForAddress(msg.sender, sendFee);
-            uint256 ownerFee = (effectiveFee * OWNER_SHARE) / 100;
-            // Transfer only owner fee from sender to contract
-            if (ownerFee > 0 && !usdcToken.transferFrom(msg.sender, address(this), ownerFee)) {
-                revert FeePaymentRequired();
-            }
-            // All goes to owner, no revenue share
-            ownerClaimable += ownerFee;
-        }
+        _processFee(to, revenueShareToReceiver);
         emit WebhookMailSent(msg.sender, to, webhookId, revenueShareToReceiver, resolveSenderToName);
     }
 
@@ -418,7 +348,56 @@ contract Mailer {
 
         emit SharesRecorded(recipient, recipientAmount, ownerAmount);
     }
-    
+
+    /**
+     * @notice Process fee payment for any send operation
+     * @dev Unified fee processing with revenue sharing support
+     *      Gas optimized with unchecked math and early return for zero fees
+     * @param recipient Address to receive revenue share (use address(0) for email sends with no revenue share)
+     * @param revenueShareToReceiver If true, splits fee 90/10; if false, charges 10% owner fee only
+     *
+     * Fee logic:
+     * - Priority mode (revenueShareToReceiver=true):
+     *   - Charges full fee
+     *   - If recipient != address(0): 90% to recipient, 10% to owner
+     *   - If recipient == address(0): 100% to owner (email case)
+     * - Standard mode (revenueShareToReceiver=false):
+     *   - Charges 10% fee only, all to owner
+     *
+     * Gas optimizations:
+     * - Ternary operator for conditional assignment (cheaper than if/else)
+     * - Unchecked math for safe operations (division/multiplication cannot overflow)
+     * - Early return on zero fee (avoids unnecessary transfer and storage write)
+     */
+    function _processFee(address recipient, bool revenueShareToReceiver) internal {
+        address payer = _getPayer(msg.sender);
+        uint256 effectiveFee = _calculateFeeForAddress(payer, sendFee);
+
+        // Early return if no fee (saves gas on zero transfers and storage writes)
+        if (effectiveFee == 0) return;
+
+        // Calculate fee to charge
+        uint256 feeToCharge;
+        unchecked {
+            // Safe: division by 100 reduces value, multiplication by 10 then division cannot overflow
+            feeToCharge = revenueShareToReceiver ? effectiveFee : (effectiveFee * OWNER_SHARE) / 100;
+        }
+
+        // Transfer fee from payer to contract
+        if (!usdcToken.transferFrom(payer, address(this), feeToCharge)) {
+            revert FeePaymentRequired();
+        }
+
+        // Handle revenue sharing or direct owner payment
+        if (revenueShareToReceiver && recipient != address(0)) {
+            // Split fee between recipient (90%) and owner (10%)
+            _recordShares(recipient, effectiveFee);
+        } else {
+            // All fees go to owner (standard mode or email send)
+            ownerClaimable += feeToCharge;
+        }
+    }
+
     /**
      * @notice Claim your accumulated revenue share from priority messages received
      * @dev Must be called within 60 days of the most recent reward being recorded
@@ -511,9 +490,11 @@ contract Mailer {
     function delegateTo(address delegate) external nonReentrant whenNotPaused {
         // If clearing delegation (setting to address(0)), no fee required
         if (delegate != address(0)) {
-            if (!usdcToken.transferFrom(msg.sender, address(this), delegationFee)) {
+            uint256 fee = delegationFee;
+            if (!usdcToken.transferFrom(msg.sender, address(this), fee)) {
                 revert FeePaymentRequired();
             }
+            ownerClaimable += fee;
         }
         emit DelegationSet(msg.sender, delegate);
     }
@@ -666,11 +647,66 @@ contract Mailer {
         if (!paused) {
             revert ContractNotPaused();
         }
-        
+
         paused = false;
         emit EmergencyUnpaused();
     }
-    
+
+    /// @notice Grant permission for a contract to send messages using caller's USDC balance
+    /// @dev Allows smart contracts to send messages while the wallet pays fees
+    ///      If permission already exists, emits PermissionRevoked for the old wallet
+    /// @param contractAddress The contract address to grant permission to
+    ///
+    /// Requirements:
+    /// - contractAddress must not be address(0)
+    /// - Caller must have approved this Mailer contract to spend their USDC
+    ///
+    /// Usage:
+    /// 1. Wallet calls: usdc.approve(mailer, largeAmount)
+    /// 2. Wallet calls: mailer.setPermission(myContract)
+    /// 3. Contract can now call: mailer.send(...) and fees are paid by wallet
+    function setPermission(address contractAddress) external whenNotPaused {
+        if (contractAddress == address(0)) {
+            revert InvalidAddress();
+        }
+
+        // If there's an existing permission, revoke it first
+        address previousWallet = permissions[contractAddress];
+        if (previousWallet != address(0)) {
+            emit PermissionRevoked(contractAddress, previousWallet);
+        }
+
+        permissions[contractAddress] = msg.sender;
+        emit PermissionGranted(contractAddress, msg.sender);
+    }
+
+    /// @notice Revoke permission from a contract to send messages using caller's USDC balance
+    /// @param contractAddress The contract address to revoke permission from
+    ///
+    /// Requirements:
+    /// - Caller must be the wallet that granted permission
+    function clearPermission(address contractAddress) external {
+        if (permissions[contractAddress] != msg.sender) {
+            revert OnlyOwner(); // Reusing error for "only the one who set it can clear it"
+        }
+
+        address wallet = permissions[contractAddress];
+        delete permissions[contractAddress];
+        emit PermissionRevoked(contractAddress, wallet);
+    }
+
+    /// @notice Get the address that will pay fees for a given sender
+    /// @dev If sender has a permission set, returns the associated wallet; otherwise returns sender
+    /// @param sender The address calling the send function (msg.sender)
+    /// @return The address that should pay the fees
+    function _getPayer(address sender) internal view returns (address) {
+        address permittedWallet = permissions[sender];
+        if (permittedWallet != address(0)) {
+            return permittedWallet;
+        }
+        return sender;
+    }
+
     /// @notice Check if contract is currently paused
     /// @return True if contract is paused, false otherwise
     function isPaused() external view returns (bool) {

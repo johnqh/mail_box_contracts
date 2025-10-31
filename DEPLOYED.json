@@ -1,35 +1,61 @@
 {
   "description": "Deployment tracking for multi-chain Mailer contracts",
-  "lastUpdated": "2025-10-13T00:00:00.000Z",
+  "lastUpdated": "2025-10-31T18:01:50.125Z",
+  "version": "1.11.1",
   "architecture": {
     "evm": {
       "contracts": {
-        "mailer": "Single contract with messaging and delegation functionality"
+        "mailer": "Single contract with messaging, delegation, and permission system"
       },
-      "deployment": "Standard deployment (non-deterministic addresses)"
+      "deployment": "Standard deployment (non-deterministic addresses)",
+      "features": [
+        "Permission system for smart contract sponsorship",
+        "Unified fee processing with gas optimizations",
+        "Simplified email functions",
+        "Revenue sharing (90/10 split)",
+        "Delegation management with rejection",
+        "Custom fee discounts (0-100%)",
+        "Pause/unpause functionality",
+        "60-day claim period for revenue shares"
+      ]
     },
     "solana": {
       "programs": {
         "mailer": "Native Solana program with messaging and delegation"
       },
-      "deployment": "Standard Solana program deployment"
+      "deployment": "Standard Solana program deployment",
+      "features": [
+        "Treasury PDA pattern (no permission system needed)",
+        "Unified fee processing",
+        "Simplified email functions",
+        "Revenue sharing (90/10 split)",
+        "Delegation management with rejection",
+        "Custom fee discounts (0-100%)",
+        "Pause/unpause functionality",
+        "60-day claim period for revenue shares"
+      ]
     }
   },
   "deployments": {
-    "note": "Actual deployment addresses will be recorded here when contracts are deployed",
+    "note": "Latest deployment addresses with permission system and gas optimizations",
     "evm": {
       "sepolia": {
         "chainId": 11155111,
         "network": "sepolia",
-        "mailer": "0x7f20be6adae02c4640979afd86e56da288efab3e",
-        "blockNumber": 9403932,
+        "mailer": "0x8de9c081a31cbb14a5974b6b4a04aa8502a796f7",
+        "blockNumber": 9531686,
+        "transactionHash": "0xc7b7e13b4216c81ab06d8cfab540be149ace8fef98c8df574dca6ffa2876a7d7",
         "usdc": "0x1c7D4B196Cb0C7B01d743Fbc6116a902379C7238",
-        "deployer": "0x1996d64D8f6E47A5bF6fB92246EF4eFD6Ae881e0",
-        "owner": "0x1996d64D8f6E47A5bF6fB92246EF4eFD6Ae881e0",
-        "timestamp": "2025-10-13T00:00:00.000Z",
+        "deployer": "0x1996d64d8f6e47a5bf6fb92246ef4efd6ae881e0",
+        "owner": "0x1996d64d8f6e47a5bf6fb92246ef4efd6ae881e0",
+        "timestamp": "2025-10-31T18:01:50.125Z",
         "fees": {
           "sendFee": "0.1 USDC",
-          "delegationFee": "10.0 USDC"
+          "delegationFee": "10 USDC"
+        },
+        "verification": {
+          "etherscan": "https://sepolia.etherscan.io/address/0x8de9c081a31cbb14a5974b6b4a04aa8502a796f7",
+          "transaction": "https://sepolia.etherscan.io/tx/0xc7b7e13b4216c81ab06d8cfab540be149ace8fef98c8df574dca6ffa2876a7d7"
         }
       }
     },

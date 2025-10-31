@@ -47,7 +47,7 @@ const config: HardhatUserConfig = {
       gasPrice: "auto",
     },
     sepolia: {
-      url: getAlchemyUrl("eth-sepolia"),
+      url: process.env.SEPOLIA_RPC_URL || getAlchemyUrl("eth-sepolia") || "https://ethereum-sepolia-rpc.publicnode.com",
       accounts: process.env.PRIVATE_KEY ? [process.env.PRIVATE_KEY] : [],
       chainId: 11155111,
       gasPrice: "auto",
