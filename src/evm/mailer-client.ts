@@ -1,200 +1,242 @@
-import { 
+import {
   Account,
   Address,
   Hash,
   PublicClient,
   WalletClient,
-  getAddress
-} from "viem";
-import { Mailer__factory } from "../../typechain-types/factories/Mailer__factory.js";
+  getAddress,
+} from 'viem';
+import { Mailer__factory } from '../../typechain-types/factories/Mailer__factory.js';
 
-// Get ABI from typechain-generated factories
 const MAILER_ABI = Mailer__factory.abi;
-
-// Get bytecode from typechain-generated factories
 const MAILER_BYTECODE = Mailer__factory.bytecode as `0x${string}`;
 
 /**
- * @class MailerClient
- * @description High-level TypeScript client for the Mailer contract using viem
- * @notice Provides easy-to-use methods for sending messages with USDC fees and revenue sharing
- * 
- * ## Key Features:
- * - **Delegation Management**: Delegate mail handling with rejection capability
- * - **Priority Messages**: Full fee (0.1 USDC) with 90% revenue share to recipient
- * - **Standard Messages**: 10% fee only (0.01 USDC) with no revenue share
- * - **Revenue Claims**: 60-day claim period for priority message revenue shares
- * 
- * ## Usage Examples:
- * ```typescript
- * // Connect to existing contract
- * import { createPublicClient, createWalletClient, http } from 'viem';
- * import { mainnet } from 'viem/chains';
- * 
- * const publicClient = createPublicClient({
- *   chain: mainnet,
- *   transport: http()
- * });
- * 
- * const mailer = new MailerClient('CONTRACT_ADDRESS', publicClient);
- * 
- * // Send message with revenue sharing to recipient
- * const walletClient = createWalletClient({
- *   chain: mainnet,
- *   transport: http()
- * });
- *
- * await mailer.send('0x...', 'Subject', 'Body', true, walletClient, account);
- *
- * // Claim your revenue share (as recipient)
- * await mailer.claimRecipientShare(walletClient, account);
- * ```
+ * Normalize any Address-like input (string with checksum or lowercase) to checksum format.
+ */
+function normalizeAddress(value: Address | string): Address {
+  return getAddress(value);
+}
+
+type RecipientClaim = {
+  amount: bigint;
+  expiresAt: bigint;
+  isExpired: boolean;
+};
+
+/**
+ * High-level client for interacting with the EVM Mailer contract.
+ * Exposes every callable contract function with type-safe wrappers.
  */
 export class MailerClient {
-  private contractAddress: Address;
-  private publicClient: PublicClient;
+  static readonly abi = MAILER_ABI;
+  static readonly bytecode = MAILER_BYTECODE;
 
-  /**
-   * @description Creates a new MailerClient instance
-   * @param contractAddress The deployed Mailer contract address
-   * @param publicClient Viem public client for reading blockchain state
-   */
-  constructor(contractAddress: string, publicClient: PublicClient) {
-    this.contractAddress = getAddress(contractAddress);
+  private readonly contractAddress: Address;
+  private readonly publicClient: PublicClient;
+
+  constructor(contractAddress: string | Address, publicClient: PublicClient) {
+    this.contractAddress = normalizeAddress(contractAddress);
     this.publicClient = publicClient;
   }
 
   /**
-   * @description Deploy a new Mailer contract and return a client instance
-   * @param walletClient Viem wallet client with deployment permissions
-   * @param account Account to deploy from
-   * @param usdcTokenAddress Address of the USDC token contract
-   * @param ownerAddress Address that will own the deployed contract
-   * @returns Promise resolving to a MailerClient instance
+   * Deploy a fresh Mailer contract instance.
    */
   static async deploy(
     walletClient: WalletClient,
     publicClient: PublicClient,
     account: Account | Address,
-    usdcTokenAddress: string,
-    ownerAddress: string
+    usdcTokenAddress: string | Address,
+    ownerAddress: string | Address
   ): Promise<MailerClient> {
     const hash = await walletClient.deployContract({
       abi: MAILER_ABI,
       bytecode: MAILER_BYTECODE,
-      args: [getAddress(usdcTokenAddress), getAddress(ownerAddress)],
+      args: [normalizeAddress(usdcTokenAddress), normalizeAddress(ownerAddress)],
       account,
       chain: walletClient.chain,
     });
 
     const receipt = await publicClient.waitForTransactionReceipt({ hash });
-    
     if (!receipt.contractAddress) {
-      throw new Error("Contract deployment failed");
+      throw new Error('Contract deployment failed');
     }
 
     return new MailerClient(receipt.contractAddress, publicClient);
-  }
-
-  /**
-   * @description Send a message with optional revenue sharing
-   * @notice Two modes:
-   *   - revenueShareToReceiver=true: Sender pays 0.1 USDC, recipient gets 90% claimable
-   *   - revenueShareToReceiver=false: Sender pays 0.01 USDC only
-   * @param to Recipient address who receives the message and potential revenue share
-   * @param subject Message subject line
-   * @param body Message content
-   * @param revenueShareToReceiver If true, recipient gets 90% revenue share; if false, no revenue share
-   * @param resolveSenderToName If true, resolve sender address to name via off-chain service
-   * @param walletClient Viem wallet client for transaction
-   * @param account Account to send from
-   * @returns Promise resolving to transaction hash
-   * @example
-   * ```typescript
-   * // Send with revenue share to recipient
-   * const hash = await mailer.send('0x...', 'Subject', 'Priority message', true, false, walletClient, account);
-   * // Send standard message (no revenue share)
-   * const hash2 = await mailer.send('0x...', 'Subject', 'Standard message', false, false, walletClient, account);
-   * await publicClient.waitForTransactionReceipt({ hash });
-   * ```
-   */
-  async send(
-    to: Address,
-    subject: string,
-    body: string,
-    revenueShareToReceiver: boolean,
-    resolveSenderToName: boolean = false,
-    walletClient: WalletClient,
-    account: Account | Address
-  ): Promise<Hash> {
-    return await walletClient.writeContract({
-      address: this.contractAddress,
-      abi: MAILER_ABI,
-      functionName: 'send',
-      args: [to, subject, body, revenueShareToReceiver, resolveSenderToName],
-      account,
-      chain: walletClient.chain,
-    });
-  }
-
-  /**
-   * @description Send a message using a pre-prepared mail ID with optional revenue sharing
-   * @notice Two modes:
-   *   - revenueShareToReceiver=true: Sender pays 0.1 USDC, recipient gets 90% claimable
-   *   - revenueShareToReceiver=false: Sender pays 0.01 USDC only
-   * @param to Recipient address who receives the message and potential revenue share
-   * @param mailId Pre-prepared message identifier
-   * @param revenueShareToReceiver If true, recipient gets 90% revenue share; if false, no revenue share
-   * @param resolveSenderToName If true, resolve sender address to name via off-chain service
-   * @param walletClient Viem wallet client for transaction
-   * @param account Account to send from
-   * @returns Promise resolving to transaction hash
-   */
-  async sendPrepared(
-    to: Address,
-    mailId: string,
-    revenueShareToReceiver: boolean,
-    resolveSenderToName: boolean = false,
-    walletClient: WalletClient,
-    account: Account | Address
-  ): Promise<Hash> {
-    return await walletClient.writeContract({
-      address: this.contractAddress,
-      abi: MAILER_ABI,
-      functionName: 'sendPrepared',
-      args: [to, mailId, revenueShareToReceiver, resolveSenderToName],
-      account,
-      chain: walletClient.chain,
-    });
-  }
-
-  async getSendFee(): Promise<bigint> {
-    return await this.publicClient.readContract({
-      address: this.contractAddress,
-      abi: MAILER_ABI,
-      functionName: 'sendFee',
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    } as any) as bigint;
-  }
-
-  async getUsdcToken(): Promise<Address> {
-    return await this.publicClient.readContract({
-      address: this.contractAddress,
-      abi: MAILER_ABI,
-      functionName: 'usdcToken',
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    } as any) as Address;
   }
 
   getAddress(): Address {
     return this.contractAddress;
   }
 
+  /**
+   * Core message send with explicit payer control.
+   */
+  async send(
+    to: Address | string,
+    subject: string,
+    body: string,
+    payer: Address | string,
+    revenueShareToReceiver: boolean,
+    resolveSenderToName: boolean,
+    walletClient: WalletClient,
+    account: Account | Address
+  ): Promise<Hash> {
+    return walletClient.writeContract({
+      address: this.contractAddress,
+      abi: MAILER_ABI,
+      functionName: 'send',
+      args: [
+        normalizeAddress(to),
+        subject,
+        body,
+        normalizeAddress(payer),
+        revenueShareToReceiver,
+        resolveSenderToName,
+      ],
+      account,
+      chain: walletClient.chain,
+    });
+  }
+
+  async sendPrepared(
+    to: Address | string,
+    mailId: string,
+    payer: Address | string,
+    revenueShareToReceiver: boolean,
+    resolveSenderToName: boolean,
+    walletClient: WalletClient,
+    account: Account | Address
+  ): Promise<Hash> {
+    return walletClient.writeContract({
+      address: this.contractAddress,
+      abi: MAILER_ABI,
+      functionName: 'sendPrepared',
+      args: [
+        normalizeAddress(to),
+        mailId,
+        normalizeAddress(payer),
+        revenueShareToReceiver,
+        resolveSenderToName,
+      ],
+      account,
+      chain: walletClient.chain,
+    });
+  }
+
+  async sendThroughWebhook(
+    to: Address | string,
+    webhookId: string,
+    payer: Address | string,
+    revenueShareToReceiver: boolean,
+    resolveSenderToName: boolean,
+    walletClient: WalletClient,
+    account: Account | Address
+  ): Promise<Hash> {
+    return walletClient.writeContract({
+      address: this.contractAddress,
+      abi: MAILER_ABI,
+      functionName: 'sendThroughWebhook',
+      args: [
+        normalizeAddress(to),
+        webhookId,
+        normalizeAddress(payer),
+        revenueShareToReceiver,
+        resolveSenderToName,
+      ],
+      account,
+      chain: walletClient.chain,
+    });
+  }
+
+  async sendToEmailAddress(
+    toEmail: string,
+    subject: string,
+    body: string,
+    payer: Address | string,
+    walletClient: WalletClient,
+    account: Account | Address
+  ): Promise<Hash> {
+    return walletClient.writeContract({
+      address: this.contractAddress,
+      abi: MAILER_ABI,
+      functionName: 'sendToEmailAddress',
+      args: [toEmail, subject, body, normalizeAddress(payer)],
+      account,
+      chain: walletClient.chain,
+    });
+  }
+
+  async sendPreparedToEmailAddress(
+    toEmail: string,
+    mailId: string,
+    payer: Address | string,
+    walletClient: WalletClient,
+    account: Account | Address
+  ): Promise<Hash> {
+    return walletClient.writeContract({
+      address: this.contractAddress,
+      abi: MAILER_ABI,
+      functionName: 'sendPreparedToEmailAddress',
+      args: [toEmail, mailId, normalizeAddress(payer)],
+      account,
+      chain: walletClient.chain,
+    });
+  }
+
+  async getFee(): Promise<bigint> {
+    return (await this.publicClient.readContract({
+      address: this.contractAddress,
+      abi: MAILER_ABI,
+      functionName: 'getFee',
+    })) as bigint;
+  }
+
+  async getSendFee(): Promise<bigint> {
+    return (await this.publicClient.readContract({
+      address: this.contractAddress,
+      abi: MAILER_ABI,
+      functionName: 'sendFee',
+    })) as bigint;
+  }
+
+  async setFee(
+    newFee: bigint,
+    walletClient: WalletClient,
+    account: Account | Address
+  ): Promise<Hash> {
+    return walletClient.writeContract({
+      address: this.contractAddress,
+      abi: MAILER_ABI,
+      functionName: 'setFee',
+      args: [newFee],
+      account,
+      chain: walletClient.chain,
+    });
+  }
+
+  async getUsdcToken(): Promise<Address> {
+    return (await this.publicClient.readContract({
+      address: this.contractAddress,
+      abi: MAILER_ABI,
+      functionName: 'usdcToken',
+    })) as Address;
+  }
+
+  async getOwner(): Promise<Address> {
+    return (await this.publicClient.readContract({
+      address: this.contractAddress,
+      abi: MAILER_ABI,
+      functionName: 'owner',
+    })) as Address;
+  }
+
   async claimRecipientShare(
     walletClient: WalletClient,
     account: Account | Address
   ): Promise<Hash> {
-    return await walletClient.writeContract({
+    return walletClient.writeContract({
       address: this.contractAddress,
       abi: MAILER_ABI,
       functionName: 'claimRecipientShare',
@@ -207,7 +249,7 @@ export class MailerClient {
     walletClient: WalletClient,
     account: Account | Address
   ): Promise<Hash> {
-    return await walletClient.writeContract({
+    return walletClient.writeContract({
       address: this.contractAddress,
       abi: MAILER_ABI,
       functionName: 'claimOwnerShare',
@@ -217,117 +259,83 @@ export class MailerClient {
   }
 
   async claimExpiredShares(
-    recipient: string,
+    recipient: Address | string,
     walletClient: WalletClient,
     account: Account | Address
   ): Promise<Hash> {
-    return await walletClient.writeContract({
+    return walletClient.writeContract({
       address: this.contractAddress,
       abi: MAILER_ABI,
       functionName: 'claimExpiredShares',
-      args: [getAddress(recipient)],
+      args: [normalizeAddress(recipient)],
       account,
       chain: walletClient.chain,
     });
   }
 
-  async getRecipientClaimable(recipient: string): Promise<{amount: bigint, expiresAt: bigint, isExpired: boolean}> {
-    const result = await this.publicClient.readContract({
+  async getRecipientClaimable(recipient: Address | string): Promise<RecipientClaim> {
+    const [amount, expiresAt, isExpired] = (await this.publicClient.readContract({
       address: this.contractAddress,
       abi: MAILER_ABI,
       functionName: 'getRecipientClaimable',
-      args: [getAddress(recipient)],
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    } as any) as [bigint, bigint, boolean];
-    
-    return {
-      amount: result[0],
-      expiresAt: result[1], 
-      isExpired: result[2]
-    };
+      args: [normalizeAddress(recipient)],
+    })) as [bigint, bigint, boolean];
+
+    return { amount, expiresAt, isExpired };
   }
 
   async getOwnerClaimable(): Promise<bigint> {
-    return await this.publicClient.readContract({
+    return (await this.publicClient.readContract({
       address: this.contractAddress,
       abi: MAILER_ABI,
-      functionName: 'getOwnerClaimable'
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    } as any) as bigint;
+      functionName: 'getOwnerClaimable',
+    })) as bigint;
   }
 
-  // Delegation functionality
-
-  /**
-   * Delegate mail handling to another address
-   * @param delegate Address to delegate to (or 0x0 to clear delegation)
-   * @param walletClient Connected wallet client
-   * @param account Account to send transaction from
-   * @returns Transaction hash
-   */
   async delegateTo(
-    delegate: string,
+    delegate: Address | string,
     walletClient: WalletClient,
     account: Account | Address
   ): Promise<Hash> {
-    return await walletClient.writeContract({
+    return walletClient.writeContract({
       address: this.contractAddress,
       abi: MAILER_ABI,
       functionName: 'delegateTo',
-      args: [getAddress(delegate)],
+      args: [normalizeAddress(delegate)],
       account,
       chain: walletClient.chain,
     });
   }
 
-  /**
-   * Reject a delegation made to you by another address
-   * @param delegatingAddress Address that delegated to you
-   * @param walletClient Connected wallet client
-   * @param account Account to send transaction from
-   * @returns Transaction hash
-   */
   async rejectDelegation(
-    delegatingAddress: string,
+    delegatingAddress: Address | string,
     walletClient: WalletClient,
     account: Account | Address
   ): Promise<Hash> {
-    return await walletClient.writeContract({
+    return walletClient.writeContract({
       address: this.contractAddress,
       abi: MAILER_ABI,
       functionName: 'rejectDelegation',
-      args: [getAddress(delegatingAddress)],
+      args: [normalizeAddress(delegatingAddress)],
       account,
       chain: walletClient.chain,
     });
   }
 
-  /**
-   * Get current delegation fee in USDC (6 decimals)
-   * @returns Delegation fee amount
-   */
   async getDelegationFee(): Promise<bigint> {
-    return await this.publicClient.readContract({
+    return (await this.publicClient.readContract({
       address: this.contractAddress,
       abi: MAILER_ABI,
       functionName: 'getDelegationFee',
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    } as any) as bigint;
+    })) as bigint;
   }
 
-  /**
-   * Update delegation fee (owner only)
-   * @param newFee New fee amount in USDC (6 decimals) 
-   * @param walletClient Connected wallet client
-   * @param account Account to send transaction from
-   * @returns Transaction hash
-   */
   async setDelegationFee(
     newFee: bigint,
     walletClient: WalletClient,
     account: Account | Address
   ): Promise<Hash> {
-    return await walletClient.writeContract({
+    return walletClient.writeContract({
       address: this.contractAddress,
       abi: MAILER_ABI,
       functionName: 'setDelegationFee',
@@ -337,110 +345,102 @@ export class MailerClient {
     });
   }
 
-  /**
-   * @description Send a message to an email address (no wallet known)
-   * @notice Charges only 10% owner fee since recipient wallet is unknown
-   * @param toEmail Email address of the recipient
-   * @param subject Message subject line
-   * @param body Message content
-   * @param walletClient Viem wallet client for transaction
-   * @param account Account to send from
-   * @returns Promise resolving to transaction hash
-   * @example
-   * ```typescript
-   * // Send to email address
-   * const hash = await mailer.sendToEmailAddress('user@example.com', 'Subject', 'Body', walletClient, account);
-   * await publicClient.waitForTransactionReceipt({ hash });
-   * ```
-   */
-  async sendToEmailAddress(
-    toEmail: string,
-    subject: string,
-    body: string,
+  async setCustomFeePercentage(
+    target: Address | string,
+    percentage: number,
     walletClient: WalletClient,
     account: Account | Address
   ): Promise<Hash> {
-    return await walletClient.writeContract({
+    return walletClient.writeContract({
       address: this.contractAddress,
       abi: MAILER_ABI,
-      functionName: 'sendToEmailAddress',
-      args: [toEmail, subject, body],
+      functionName: 'setCustomFeePercentage',
+      args: [normalizeAddress(target), BigInt(percentage)],
       account,
       chain: walletClient.chain,
     });
   }
 
-  /**
-   * @description Send a pre-prepared message to an email address (no wallet known)
-   * @notice Charges only 10% owner fee since recipient wallet is unknown
-   * @param toEmail Email address of the recipient
-   * @param mailId Pre-prepared message identifier
-   * @param walletClient Viem wallet client for transaction
-   * @param account Account to send from
-   * @returns Promise resolving to transaction hash
-   */
-  async sendPreparedToEmailAddress(
-    toEmail: string,
-    mailId: string,
+  async clearCustomFeePercentage(
+    target: Address | string,
     walletClient: WalletClient,
     account: Account | Address
   ): Promise<Hash> {
-    return await walletClient.writeContract({
+    return walletClient.writeContract({
       address: this.contractAddress,
       abi: MAILER_ABI,
-      functionName: 'sendPreparedToEmailAddress',
-      args: [toEmail, mailId],
+      functionName: 'clearCustomFeePercentage',
+      args: [normalizeAddress(target)],
       account,
       chain: walletClient.chain,
     });
   }
 
-  /**
-   * Set the send fee (owner only)
-   * @param newFee New fee amount in USDC (6 decimals)
-   * @param walletClient Viem wallet client for transaction
-   * @param account Account to send from (must be owner)
-   * @returns Promise resolving to transaction hash
-   */
-  async setFee(
-    newFee: bigint,
+  async getCustomFeePercentage(target: Address | string): Promise<number> {
+    const percentage = (await this.publicClient.readContract({
+      address: this.contractAddress,
+      abi: MAILER_ABI,
+      functionName: 'getCustomFeePercentage',
+      args: [normalizeAddress(target)],
+    })) as bigint;
+    return Number(percentage);
+  }
+
+  async getCustomFeeDiscount(target: Address | string): Promise<number> {
+    const discount = (await this.publicClient.readContract({
+      address: this.contractAddress,
+      abi: MAILER_ABI,
+      functionName: 'customFeeDiscount',
+      args: [normalizeAddress(target)],
+    })) as bigint;
+    return Number(discount);
+  }
+
+  async setPermission(
+    contractAddress: Address | string,
     walletClient: WalletClient,
     account: Account | Address
   ): Promise<Hash> {
-    return await walletClient.writeContract({
+    return walletClient.writeContract({
       address: this.contractAddress,
       abi: MAILER_ABI,
-      functionName: 'setFee',
-      args: [newFee],
+      functionName: 'setPermission',
+      args: [normalizeAddress(contractAddress)],
       account,
       chain: walletClient.chain,
     });
   }
 
-  /**
-   * Get the current send fee
-   * @returns Current send fee in USDC (6 decimals)
-   */
-  async getFee(): Promise<bigint> {
-    return await this.publicClient.readContract({
+  async removePermission(
+    contractAddress: Address | string,
+    walletClient: WalletClient,
+    account: Account | Address
+  ): Promise<Hash> {
+    return walletClient.writeContract({
       address: this.contractAddress,
       abi: MAILER_ABI,
-      functionName: 'getFee',
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    } as any) as bigint;
+      functionName: 'removePermission',
+      args: [normalizeAddress(contractAddress)],
+      account,
+      chain: walletClient.chain,
+    });
   }
 
-  /**
-   * Pause the contract and distribute all claimable funds (owner only)
-   * @param walletClient Viem wallet client for transaction
-   * @param account Account to send from (must be owner)
-   * @returns Promise resolving to transaction hash
-   */
+  async hasPermission(contractAddress: Address | string, wallet: Address | string): Promise<boolean> {
+    const permitted = (await this.publicClient.readContract({
+      address: this.contractAddress,
+      abi: MAILER_ABI,
+      functionName: 'permissions',
+      args: [normalizeAddress(contractAddress), normalizeAddress(wallet)],
+    })) as boolean;
+    return permitted;
+  }
+
   async pause(
     walletClient: WalletClient,
     account: Account | Address
   ): Promise<Hash> {
-    return await walletClient.writeContract({
+    return walletClient.writeContract({
       address: this.contractAddress,
       abi: MAILER_ABI,
       functionName: 'pause',
@@ -449,17 +449,11 @@ export class MailerClient {
     });
   }
 
-  /**
-   * Unpause the contract (owner only)
-   * @param walletClient Viem wallet client for transaction
-   * @param account Account to send from (must be owner)
-   * @returns Promise resolving to transaction hash
-   */
   async unpause(
     walletClient: WalletClient,
     account: Account | Address
   ): Promise<Hash> {
-    return await walletClient.writeContract({
+    return walletClient.writeContract({
       address: this.contractAddress,
       abi: MAILER_ABI,
       functionName: 'unpause',
@@ -468,17 +462,11 @@ export class MailerClient {
     });
   }
 
-  /**
-   * Emergency unpause without fund distribution (owner only)
-   * @param walletClient Viem wallet client for transaction
-   * @param account Account to send from (must be owner)
-   * @returns Promise resolving to transaction hash
-   */
   async emergencyUnpause(
     walletClient: WalletClient,
     account: Account | Address
   ): Promise<Hash> {
-    return await walletClient.writeContract({
+    return walletClient.writeContract({
       address: this.contractAddress,
       abi: MAILER_ABI,
       functionName: 'emergencyUnpause',
@@ -487,40 +475,26 @@ export class MailerClient {
     });
   }
 
-  /**
-   * Check if contract is currently paused
-   * @returns True if contract is paused, false otherwise
-   */
   async isPaused(): Promise<boolean> {
-    return await this.publicClient.readContract({
+    return (await this.publicClient.readContract({
       address: this.contractAddress,
       abi: MAILER_ABI,
       functionName: 'isPaused',
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    } as any) as boolean;
+    })) as boolean;
   }
 
-  /**
-   * Distribute a specific recipient's claimable funds during pause
-   * Anyone can call this function when contract is paused
-   * @param recipient Address to distribute funds for
-   * @param walletClient Viem wallet client for transaction
-   * @param account Account to send from
-   * @returns Promise resolving to transaction hash
-   */
   async distributeClaimableFunds(
-    recipient: string,
+    recipient: Address | string,
     walletClient: WalletClient,
     account: Account | Address
   ): Promise<Hash> {
-    return await walletClient.writeContract({
+    return walletClient.writeContract({
       address: this.contractAddress,
       abi: MAILER_ABI,
       functionName: 'distributeClaimableFunds',
-      args: [getAddress(recipient)],
+      args: [normalizeAddress(recipient)],
       account,
       chain: walletClient.chain,
     });
   }
 }
-

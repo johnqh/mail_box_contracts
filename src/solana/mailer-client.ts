@@ -75,6 +75,35 @@ function encodeSend(
   return data;
 }
 
+function encodeSendPrepared(
+  to: PublicKey,
+  mailId: string,
+  revenueShareToReceiver: boolean,
+  resolveSenderToName: boolean = false
+): Buffer {
+  const mailIdBytes = Buffer.from(mailId, 'utf8');
+  const data = Buffer.alloc(1 + 32 + 4 + mailIdBytes.length + 1 + 1);
+  let offset = 0;
+
+  data.writeUInt8(InstructionType.SendPrepared, offset);
+  offset += 1;
+
+  to.toBuffer().copy(data, offset);
+  offset += 32;
+
+  data.writeUInt32LE(mailIdBytes.length, offset);
+  offset += 4;
+  mailIdBytes.copy(data, offset);
+  offset += mailIdBytes.length;
+
+  data.writeUInt8(revenueShareToReceiver ? 1 : 0, offset);
+  offset += 1;
+
+  data.writeUInt8(resolveSenderToName ? 1 : 0, offset);
+
+  return data;
+}
+
 function encodeSendToEmail(
   toEmail: string,
   subject: string,
@@ -134,6 +163,35 @@ function encodeSendPreparedToEmail(
   return data;
 }
 
+function encodeSendThroughWebhook(
+  to: PublicKey,
+  webhookId: string,
+  revenueShareToReceiver: boolean,
+  resolveSenderToName: boolean = false
+): Buffer {
+  const webhookBytes = Buffer.from(webhookId, 'utf8');
+  const data = Buffer.alloc(1 + 32 + 4 + webhookBytes.length + 1 + 1);
+  let offset = 0;
+
+  data.writeUInt8(InstructionType.SendThroughWebhook, offset);
+  offset += 1;
+
+  to.toBuffer().copy(data, offset);
+  offset += 32;
+
+  data.writeUInt32LE(webhookBytes.length, offset);
+  offset += 4;
+  webhookBytes.copy(data, offset);
+  offset += webhookBytes.length;
+
+  data.writeUInt8(revenueShareToReceiver ? 1 : 0, offset);
+  offset += 1;
+
+  data.writeUInt8(resolveSenderToName ? 1 : 0, offset);
+
+  return data;
+}
+
 function encodeSimpleInstruction(instructionType: InstructionType): Buffer {
   const data = Buffer.alloc(1);
   data.writeUInt8(instructionType, 0);
@@ -151,6 +209,24 @@ function encodeSetDelegationFee(newFee: bigint): Buffer {
   const data = Buffer.alloc(1 + 8);
   data.writeUInt8(InstructionType.SetDelegationFee, 0);
   data.writeBigUInt64LE(newFee, 1);
+  return data;
+}
+
+function encodeSetCustomFeePercentage(
+  account: PublicKey,
+  percentage: number
+): Buffer {
+  const data = Buffer.alloc(1 + 32 + 1);
+  data.writeUInt8(InstructionType.SetCustomFeePercentage, 0);
+  account.toBuffer().copy(data, 1);
+  data.writeUInt8(percentage, 33);
+  return data;
+}
+
+function encodeClearCustomFeePercentage(account: PublicKey): Buffer {
+  const data = Buffer.alloc(1 + 32);
+  data.writeUInt8(InstructionType.ClearCustomFeePercentage, 0);
+  account.toBuffer().copy(data, 1);
   return data;
 }
 
@@ -199,6 +275,12 @@ interface RecipientClaim {
 interface Delegation {
   delegator: PublicKey;
   delegate?: Optional<PublicKey>;
+  bump: number;
+}
+
+interface FeeDiscountAccount {
+  account: PublicKey;
+  discount: number;
   bump: number;
 }
 
@@ -267,25 +349,41 @@ function parseDelegation(data: Buffer): Delegation {
   };
 }
 
-/**
- * Instruction types for the native Solana program
- */
+function parseFeeDiscount(data: Buffer): FeeDiscountAccount {
+  let offset = 0;
+  const account = new PublicKey(data.slice(offset, offset + 32));
+  offset += 32;
+  const discount = data.readUInt8(offset);
+  offset += 1;
+  const bump = data.readUInt8(offset);
+
+  return {
+    account,
+    discount,
+    bump,
+  };
+}
+
 enum InstructionType {
   Initialize = 0,
   Send = 1,
-  SendToEmail = 2,
-  SendPreparedToEmail = 3,
-  ClaimRecipientShare = 4,
-  ClaimOwnerShare = 5,
-  SetFee = 6,
-  DelegateTo = 7,
-  RejectDelegation = 8,
-  SetDelegationFee = 9,
-  Pause = 10,
-  Unpause = 11,
-  DistributeClaimableFunds = 12,
-  ClaimExpiredShares = 13,
-  EmergencyUnpause = 14,
+  SendPrepared = 2,
+  SendToEmail = 3,
+  SendPreparedToEmail = 4,
+  SendThroughWebhook = 5,
+  ClaimRecipientShare = 6,
+  ClaimOwnerShare = 7,
+  SetFee = 8,
+  DelegateTo = 9,
+  RejectDelegation = 10,
+  SetDelegationFee = 11,
+  SetCustomFeePercentage = 12,
+  ClearCustomFeePercentage = 13,
+  Pause = 14,
+  Unpause = 15,
+  DistributeClaimableFunds = 16,
+  ClaimExpiredShares = 17,
+  EmergencyUnpause = 18,
 }
 
 /**
@@ -651,6 +749,82 @@ export class MailerClient {
     return await this.sendTransaction(transaction);
   }
 
+  async setCustomFeePercentage(
+    account: string | PublicKey,
+    percentage: number,
+    payer?: Optional<string | PublicKey>
+  ): Promise<string> {
+    const normalizedPercentage = Math.trunc(percentage);
+    if (normalizedPercentage < 0 || normalizedPercentage > 100) {
+      throw new Error('Percentage must be between 0 and 100');
+    }
+
+    const accountKey = typeof account === 'string' ? new PublicKey(account) : account;
+    const payerKey = payer
+      ? typeof payer === 'string'
+        ? new PublicKey(payer)
+        : payer
+      : this.wallet.publicKey;
+
+    const [discountPda] = PublicKey.findProgramAddressSync(
+      [Buffer.from('discount'), accountKey.toBuffer()],
+      this.programId
+    );
+
+    const instruction = new TransactionInstruction({
+      keys: [
+        { pubkey: this.wallet.publicKey, isSigner: true, isWritable: false },
+        { pubkey: this.mailerStatePda, isSigner: false, isWritable: false },
+        { pubkey: discountPda, isSigner: false, isWritable: true },
+        { pubkey: accountKey, isSigner: false, isWritable: false },
+        { pubkey: payerKey, isSigner: true, isWritable: true },
+        { pubkey: SystemProgram.programId, isSigner: false, isWritable: false },
+      ],
+      programId: this.programId,
+      data: encodeSetCustomFeePercentage(accountKey, normalizedPercentage),
+    });
+
+    const transaction = new Transaction().add(instruction);
+    return this.sendTransaction(transaction);
+  }
+
+  async clearCustomFeePercentage(account: string | PublicKey): Promise<string> {
+    const accountKey = typeof account === 'string' ? new PublicKey(account) : account;
+    const [discountPda] = PublicKey.findProgramAddressSync(
+      [Buffer.from('discount'), accountKey.toBuffer()],
+      this.programId
+    );
+
+    const instruction = new TransactionInstruction({
+      keys: [
+        { pubkey: this.wallet.publicKey, isSigner: true, isWritable: false },
+        { pubkey: this.mailerStatePda, isSigner: false, isWritable: false },
+        { pubkey: discountPda, isSigner: false, isWritable: true },
+      ],
+      programId: this.programId,
+      data: encodeClearCustomFeePercentage(accountKey),
+    });
+
+    const transaction = new Transaction().add(instruction);
+    return this.sendTransaction(transaction);
+  }
+
+  async getCustomFeePercentage(account: string | PublicKey): Promise<number> {
+    const accountKey = typeof account === 'string' ? new PublicKey(account) : account;
+    const [discountPda] = PublicKey.findProgramAddressSync(
+      [Buffer.from('discount'), accountKey.toBuffer()],
+      this.programId
+    );
+
+    const accountInfo = await this.connection.getAccountInfo(discountPda);
+    if (!accountInfo) {
+      return 100;
+    }
+
+    const discountState = parseFeeDiscount(accountInfo.data);
+    return 100 - discountState.discount;
+  }
+
   /**
    * Get current fees from the mailer state
    * @returns MailerFees object with current fees
@@ -899,8 +1073,120 @@ export class MailerClient {
     revenueShareToReceiver: boolean = false,
     resolveSenderToName: boolean = false
   ): Promise<string> {
-    // For Solana, we send the mailId as both subject and body to indicate it's a prepared message
-    return this.send(to, mailId, '', revenueShareToReceiver, resolveSenderToName);
+    const recipientKey = typeof to === 'string' ? new PublicKey(to) : to;
+    const [recipientClaimPda] = PublicKey.findProgramAddressSync(
+      [Buffer.from('claim'), recipientKey.toBuffer()],
+      this.programId
+    );
+
+    const senderTokenAccount = getAssociatedTokenAddressSync(
+      this.usdcMint,
+      this.wallet.publicKey
+    );
+    const mailerTokenAccount = getAssociatedTokenAddressSync(
+      this.usdcMint,
+      this.mailerStatePda,
+      true
+    );
+
+    const instructions: TransactionInstruction[] = [];
+
+    const mailerTokenInfo =
+      await this.connection.getAccountInfo(mailerTokenAccount);
+    if (!mailerTokenInfo) {
+      instructions.push(
+        createAssociatedTokenAccountInstruction(
+          this.wallet.publicKey,
+          mailerTokenAccount,
+          this.mailerStatePda,
+          this.usdcMint
+        )
+      );
+    }
+
+    const sendInstruction = new TransactionInstruction({
+      keys: [
+        { pubkey: this.wallet.publicKey, isSigner: true, isWritable: false },
+        { pubkey: recipientClaimPda, isSigner: false, isWritable: true },
+        { pubkey: this.mailerStatePda, isSigner: false, isWritable: false },
+        { pubkey: senderTokenAccount, isSigner: false, isWritable: true },
+        { pubkey: mailerTokenAccount, isSigner: false, isWritable: true },
+        { pubkey: TOKEN_PROGRAM_ID, isSigner: false, isWritable: false },
+        { pubkey: SystemProgram.programId, isSigner: false, isWritable: false },
+      ],
+      programId: this.programId,
+      data: encodeSendPrepared(
+        recipientKey,
+        mailId,
+        revenueShareToReceiver,
+        resolveSenderToName
+      ),
+    });
+
+    instructions.push(sendInstruction);
+    const transaction = new Transaction().add(...instructions);
+    return this.sendTransaction(transaction);
+  }
+
+  async sendThroughWebhook(
+    to: string | PublicKey,
+    webhookId: string,
+    revenueShareToReceiver: boolean = false,
+    resolveSenderToName: boolean = false
+  ): Promise<string> {
+    const recipientKey = typeof to === 'string' ? new PublicKey(to) : to;
+    const [recipientClaimPda] = PublicKey.findProgramAddressSync(
+      [Buffer.from('claim'), recipientKey.toBuffer()],
+      this.programId
+    );
+
+    const senderTokenAccount = getAssociatedTokenAddressSync(
+      this.usdcMint,
+      this.wallet.publicKey
+    );
+    const mailerTokenAccount = getAssociatedTokenAddressSync(
+      this.usdcMint,
+      this.mailerStatePda,
+      true
+    );
+
+    const instructions: TransactionInstruction[] = [];
+
+    const mailerTokenInfo =
+      await this.connection.getAccountInfo(mailerTokenAccount);
+    if (!mailerTokenInfo) {
+      instructions.push(
+        createAssociatedTokenAccountInstruction(
+          this.wallet.publicKey,
+          mailerTokenAccount,
+          this.mailerStatePda,
+          this.usdcMint
+        )
+      );
+    }
+
+    const sendInstruction = new TransactionInstruction({
+      keys: [
+        { pubkey: this.wallet.publicKey, isSigner: true, isWritable: false },
+        { pubkey: recipientClaimPda, isSigner: false, isWritable: true },
+        { pubkey: this.mailerStatePda, isSigner: false, isWritable: false },
+        { pubkey: senderTokenAccount, isSigner: false, isWritable: true },
+        { pubkey: mailerTokenAccount, isSigner: false, isWritable: true },
+        { pubkey: TOKEN_PROGRAM_ID, isSigner: false, isWritable: false },
+        { pubkey: SystemProgram.programId, isSigner: false, isWritable: false },
+      ],
+      programId: this.programId,
+      data: encodeSendThroughWebhook(
+        recipientKey,
+        webhookId,
+        revenueShareToReceiver,
+        resolveSenderToName
+      ),
+    });
+
+    instructions.push(sendInstruction);
+    const transaction = new Transaction().add(...instructions);
+    return this.sendTransaction(transaction);
   }
 
   /**

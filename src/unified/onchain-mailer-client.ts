@@ -367,7 +367,17 @@ export class OnchainMailerClient {
       
       let txHash: `0x${string}`;
       try {
-        txHash = await client.send(this.wallet.address, subject, body, priority, resolveSenderToName, walletClient, this.wallet.address);
+        const payer = this.wallet.address;
+        txHash = await client.send(
+          this.wallet.address,
+          subject,
+          body,
+          payer,
+          priority,
+          resolveSenderToName,
+          walletClient,
+          this.wallet.address
+        );
       } catch (error) {
         const errorMessage = error instanceof Error ? error.message : String(error);
         if (errorMessage.includes('insufficient funds')) {
@@ -1002,7 +1012,16 @@ export class OnchainMailerClient {
     });
 
     const client = new MailerClient(this.config.evm.contracts.mailer, publicClient);
-    const txHash = await client.sendPrepared(to, mailId, priority, resolveSenderToName, walletClient, this.wallet.address);
+    const payer = this.wallet.address;
+    const txHash = await client.sendPrepared(
+      to,
+      mailId,
+      payer,
+      priority,
+      resolveSenderToName,
+      walletClient,
+      this.wallet.address
+    );
     const receipt = await publicClient.waitForTransactionReceipt({ hash: txHash });
 
     return {
@@ -1047,7 +1066,15 @@ export class OnchainMailerClient {
     });
 
     const client = new MailerClient(this.config.evm.contracts.mailer, publicClient);
-    const txHash = await client.sendToEmailAddress(toEmail, subject, body, walletClient, this.wallet.address);
+    const payer = this.wallet.address;
+    const txHash = await client.sendToEmailAddress(
+      toEmail,
+      subject,
+      body,
+      payer,
+      walletClient,
+      this.wallet.address
+    );
     const receipt = await publicClient.waitForTransactionReceipt({ hash: txHash });
 
     return {
@@ -1092,7 +1119,14 @@ export class OnchainMailerClient {
     });
 
     const client = new MailerClient(this.config.evm.contracts.mailer, publicClient);
-    const txHash = await client.sendPreparedToEmailAddress(toEmail, mailId, walletClient, this.wallet.address);
+    const payer = this.wallet.address;
+    const txHash = await client.sendPreparedToEmailAddress(
+      toEmail,
+      mailId,
+      payer,
+      walletClient,
+      this.wallet.address
+    );
     const receipt = await publicClient.waitForTransactionReceipt({ hash: txHash });
 
     return {
@@ -1901,6 +1935,161 @@ export class OnchainMailerClient {
       slot,
       timestamp: Date.now()
     };
+  }
+
+  /**
+   * Set permission for a contract to use your wallet as payer (EVM only)
+   * @param contractAddress - Contract address to grant permission to
+   * @returns Promise resolving to transaction details
+   * @throws {Error} When called on Solana (not supported)
+   */
+  async setPermission(contractAddress: string): Promise<UnifiedTransaction> {
+    if (this.chainType === 'evm') {
+      return this.setPermissionEVM(contractAddress);
+    } else {
+      throw new Error('Permission management is only available on EVM chains');
+    }
+  }
+
+  /**
+   * Remove permission for a contract to use your wallet as payer (EVM only)
+   * @param contractAddress - Contract address to revoke permission from
+   * @returns Promise resolving to transaction details
+   * @throws {Error} When called on Solana (not supported)
+   */
+  async removePermission(contractAddress: string): Promise<UnifiedTransaction> {
+    if (this.chainType === 'evm') {
+      return this.removePermissionEVM(contractAddress);
+    } else {
+      throw new Error('Permission management is only available on EVM chains');
+    }
+  }
+
+  /**
+   * Check if a contract has permission to use a wallet as payer (EVM only)
+   * @param contractAddress - Contract address to check
+   * @param wallet - Wallet address to check permission for (defaults to connected wallet)
+   * @returns Promise resolving to true if permission exists, false otherwise
+   * @throws {Error} When called on Solana (not supported)
+   */
+  async hasPermission(contractAddress: string, wallet?: string): Promise<boolean> {
+    if (this.chainType === 'evm') {
+      return this.hasPermissionEVM(contractAddress, wallet || this.wallet.address);
+    } else {
+      throw new Error('Permission management is only available on EVM chains');
+    }
+  }
+
+  // EVM Permission Management Implementation
+  private async setPermissionEVM(contractAddress: string): Promise<UnifiedTransaction> {
+    const { viem, MailerClient } = await this.getEVMModules();
+
+    if (!this.config.evm?.contracts.mailer) {
+      throw new Error('EVM Mailer contract address not configured');
+    }
+
+    const publicClient = viem.createPublicClient({
+      transport: viem.http(this.config.evm.rpc),
+      chain: {
+        id: this.config.evm.chainId,
+        name: 'Custom Chain',
+        nativeCurrency: { name: 'ETH', symbol: 'ETH', decimals: 18 },
+        rpcUrls: {
+          default: { http: [this.config.evm.rpc] }
+        }
+      }
+    });
+
+    const walletClient = viem.createWalletClient({
+      transport: viem.http(this.config.evm.rpc),
+      chain: {
+        id: this.config.evm.chainId,
+        name: 'Custom Chain',
+        nativeCurrency: { name: 'ETH', symbol: 'ETH', decimals: 18 },
+        rpcUrls: {
+          default: { http: [this.config.evm.rpc] }
+        }
+      }
+    });
+
+    const client = new MailerClient(this.config.evm.contracts.mailer, publicClient);
+    const txHash = await client.setPermission(contractAddress, walletClient, this.wallet.address);
+    const receipt = await publicClient.waitForTransactionReceipt({ hash: txHash });
+    const block = await publicClient.getBlock({ blockNumber: receipt.blockNumber });
+
+    return {
+      hash: txHash,
+      chainType: ChainType.EVM,
+      blockNumber: receipt.blockNumber,
+      timestamp: Number(block.timestamp) * 1000
+    };
+  }
+
+  private async removePermissionEVM(contractAddress: string): Promise<UnifiedTransaction> {
+    const { viem, MailerClient } = await this.getEVMModules();
+
+    if (!this.config.evm?.contracts.mailer) {
+      throw new Error('EVM Mailer contract address not configured');
+    }
+
+    const publicClient = viem.createPublicClient({
+      transport: viem.http(this.config.evm.rpc),
+      chain: {
+        id: this.config.evm.chainId,
+        name: 'Custom Chain',
+        nativeCurrency: { name: 'ETH', symbol: 'ETH', decimals: 18 },
+        rpcUrls: {
+          default: { http: [this.config.evm.rpc] }
+        }
+      }
+    });
+
+    const walletClient = viem.createWalletClient({
+      transport: viem.http(this.config.evm.rpc),
+      chain: {
+        id: this.config.evm.chainId,
+        name: 'Custom Chain',
+        nativeCurrency: { name: 'ETH', symbol: 'ETH', decimals: 18 },
+        rpcUrls: {
+          default: { http: [this.config.evm.rpc] }
+        }
+      }
+    });
+
+    const client = new MailerClient(this.config.evm.contracts.mailer, publicClient);
+    const txHash = await client.removePermission(contractAddress, walletClient, this.wallet.address);
+    const receipt = await publicClient.waitForTransactionReceipt({ hash: txHash });
+    const block = await publicClient.getBlock({ blockNumber: receipt.blockNumber });
+
+    return {
+      hash: txHash,
+      chainType: ChainType.EVM,
+      blockNumber: receipt.blockNumber,
+      timestamp: Number(block.timestamp) * 1000
+    };
+  }
+
+  private async hasPermissionEVM(contractAddress: string, wallet: string): Promise<boolean> {
+    const { viem, MailerClient } = await this.getEVMModules();
+
+    if (!this.config.evm?.contracts.mailer) {
+      throw new Error('EVM Mailer contract address not configured');
+    }
+
+    const publicClient = viem.createPublicClient({
+      transport: viem.http(this.config.evm.rpc),
+      chain: {
+        id: this.config.evm.chainId,
+        name: 'Custom Chain',
+        nativeCurrency: { name: 'ETH', symbol: 'ETH', decimals: 18 },
+        rpcUrls: {
+          default: { http: [this.config.evm.rpc] }
+        }
+      }
+    });
+
+    const client = new MailerClient(this.config.evm.contracts.mailer, publicClient);
+    return client.hasPermission(contractAddress, wallet);
   }
 
   // Utility methods

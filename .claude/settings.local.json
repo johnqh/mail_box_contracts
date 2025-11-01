@@ -118,7 +118,19 @@
       "Bash(CONTRACT_ADDRESS=0xd94938f1985E99b9Df2C7375b6ca5857cB06F39A npx hardhat run scripts/evm/get-deployment-block.ts --network sepolia)",
       "Read(//Users/johnhuang/0xmail/wildduck_client/.github/workflows/**)",
       "WebFetch(domain:registry.npmjs.org)",
-      "Bash(tee:*)"
+      "Bash(tee:*)",
+      "Bash(npx solhint:*)",
+      "Bash(if [ -f .env ])",
+      "Bash(then echo \"✅ .env exists\")",
+      "Bash(else echo \"❌ .env not found\")",
+      "Bash(SEPOLIA_RPC_URL=\"https://rpc.sepolia.org\" npx hardhat run:*)",
+      "Bash(SEPOLIA_RPC_URL=\"https://rpc.sepolia.org\" npm run deploy:evm:sepolia:*)",
+      "Bash(SEPOLIA_RPC_URL=\"https://ethereum-sepolia-rpc.publicnode.com\" npm run deploy:evm:sepolia:*)",
+      "Bash(curl:*)",
+      "Bash(SEPOLIA_RPC_URL=\"https://ethereum-sepolia-rpc.publicnode.com\" CONTRACT_ADDRESS=0x8de9c081a31cbb14a5974b6b4a04aa8502a796f7 npx hardhat run:*)",
+      "WebFetch(domain:sepolia.etherscan.io)",
+      "Bash(awk:*)",
+      "Bash(sh -s -- -y)"
     ],
     "deny": [],
     "defaultMode": "acceptEdits"

@@ -51,7 +51,7 @@ describe("Mailer", function () {
   describe("send function with revenue sharing (priority mode)", function () {
     it("Should emit MailSent event when USDC transfer succeeds", async function () {
       const { mailer, addr1, addr2, publicClient } = this;
-      const hash = await mailer.write.send([addr2.account.address, "Test Subject", "Test Body", true, false], { account: addr1.account });
+      const hash = await mailer.write.send([addr2.account.address, "Test Subject", "Test Body", addr1.account .address, true, false], { account: addr1.account  });
 
       await publicClient.waitForTransactionReceipt({ hash });
       const logs = await mailer.getEvents.MailSent();
@@ -66,7 +66,7 @@ describe("Mailer", function () {
       const { mailer, addr1, addr2 } = this;
       // addr2 has no USDC balance
       await expect(
-        mailer.write.send([addr1.account.address, "Test Subject", "Test Body", true, false], { account: addr2.account })
+        mailer.write.send([addr1.account.address, "Test Subject", "Test Body", addr2.account .address, true, false], { account: addr2.account  })
       ).to.be.rejectedWith("InsufficientBalance");
     });
 
@@ -76,7 +76,7 @@ describe("Mailer", function () {
       await mockUSDC.write.mint([addr2.account.address, parseUnits("1", 6)]);
 
       await expect(
-        mailer.write.send([addr1.account.address, "Test Subject", "Test Body", true, false], { account: addr2.account })
+        mailer.write.send([addr1.account.address, "Test Subject", "Test Body", addr2.account .address, true, false], { account: addr2.account  })
       ).to.be.rejectedWith("InsufficientAllowance");
     });
 
@@ -84,7 +84,7 @@ describe("Mailer", function () {
       const { mailer, mockUSDC, addr1, addr2 } = this;
       const initialBalance = await mockUSDC.read.balanceOf([mailer.address]);
 
-      await mailer.write.send([addr2.account.address, "Test Subject", "Test Body", true, false], { account: addr1.account });
+      await mailer.write.send([addr2.account.address, "Test Subject", "Test Body", addr1.account .address, true, false], { account: addr1.account  });
 
       const finalBalance = await mockUSDC.read.balanceOf([mailer.address]);
       expect(finalBalance - initialBalance).to.equal(100000n); // 0.1 USDC
@@ -94,7 +94,7 @@ describe("Mailer", function () {
   describe("sendPrepared function with revenue sharing (priority mode)", function () {
     it("Should emit PreparedMailSent event when USDC transfer succeeds", async function () {
       const { mailer, addr1, addr2, publicClient } = this;
-      const hash = await mailer.write.sendPrepared([addr2.account.address, "mail-123", true, false], { account: addr1.account });
+      const hash = await mailer.write.sendPrepared([addr2.account.address, "mail-123", addr1.account .address, true, false], { account: addr1.account  });
 
       await publicClient.waitForTransactionReceipt({ hash });
       const logs = await mailer.getEvents.PreparedMailSent();
@@ -111,7 +111,7 @@ describe("Mailer", function () {
       const { mailer, addr1, addr2 } = this;
       // addr2 has no USDC balance
       await expect(
-        mailer.write.sendPrepared([addr1.account.address, "mail-456", true, false], { account: addr2.account })
+        mailer.write.sendPrepared([addr1.account.address, "mail-456", addr2.account .address, true, false], { account: addr2.account  })
       ).to.be.rejectedWith("InsufficientBalance");
     });
 
@@ -121,7 +121,7 @@ describe("Mailer", function () {
       await mockUSDC.write.mint([addr2.account.address, parseUnits("1", 6)]);
 
       await expect(
-        mailer.write.sendPrepared([addr1.account.address, "mail-789", true, false], { account: addr2.account })
+        mailer.write.sendPrepared([addr1.account.address, "mail-789", addr2.account .address, true, false], { account: addr2.account  })
       ).to.be.rejectedWith("InsufficientAllowance");
     });
 
@@ -129,7 +129,7 @@ describe("Mailer", function () {
       const { mailer, mockUSDC, addr1, addr2 } = this;
       const initialBalance = await mockUSDC.read.balanceOf([mailer.address]);
 
-      await mailer.write.sendPrepared([addr2.account.address, "mail-999", true, false], { account: addr1.account });
+      await mailer.write.sendPrepared([addr2.account.address, "mail-999", addr1.account .address, true, false], { account: addr1.account  });
 
       const finalBalance = await mockUSDC.read.balanceOf([mailer.address]);
       expect(finalBalance - initialBalance).to.equal(100000n); // 0.1 USDC
@@ -138,7 +138,7 @@ describe("Mailer", function () {
     it("Should handle different mailId strings", async function () {
       const { mailer, addr1, addr2, publicClient } = this;
       // Test with various mailId formats
-      const hash = await mailer.write.sendPrepared([addr2.account.address, "abc-123-xyz", true, false], { account: addr1.account });
+      const hash = await mailer.write.sendPrepared([addr2.account.address, "abc-123-xyz", addr1.account .address, true, false], { account: addr1.account  });
 
       await publicClient.waitForTransactionReceipt({ hash });
       const logs = await mailer.getEvents.PreparedMailSent();
@@ -246,7 +246,7 @@ describe("Mailer", function () {
         const { mailer, mockUSDC, addr1, addr2 } = this;
         const initialBalance = await mockUSDC.read.balanceOf([mailer.address]);
 
-        await mailer.write.send([addr2.account.address, "Test", "Body", true, false], { account: addr1.account });
+        await mailer.write.send([addr2.account.address, "Test", "Body", addr1.account .address, true, false], { account: addr1.account  });
 
         const finalBalance = await mockUSDC.read.balanceOf([mailer.address]);
         expect(finalBalance - initialBalance).to.equal(50000n); // Updated fee
@@ -256,7 +256,7 @@ describe("Mailer", function () {
         const { mailer, mockUSDC, addr1, addr2 } = this;
         const initialBalance = await mockUSDC.read.balanceOf([mailer.address]);
 
-        await mailer.write.sendPrepared([addr2.account.address, "test-mail", true, false], { account: addr1.account });
+        await mailer.write.sendPrepared([addr2.account.address, "test-mail", addr1.account .address, true, false], { account: addr1.account  });
 
         const finalBalance = await mockUSDC.read.balanceOf([mailer.address]);
         expect(finalBalance - initialBalance).to.equal(50000n); // Updated fee
@@ -269,7 +269,7 @@ describe("Mailer", function () {
 
         // addr1 only has 10 USDC, should fail
         await expect(
-          mailer.write.send([addr2.account.address, "Test", "Body", true, false], { account: addr1.account })
+          mailer.write.send([addr2.account.address, "Test", "Body", addr1.account .address, true, false], { account: addr1.account  })
         ).to.be.rejectedWith("InsufficientBalance");
       });
 
@@ -279,7 +279,7 @@ describe("Mailer", function () {
 
         const initialBalance = await mockUSDC.read.balanceOf([mailer.address]);
 
-        const hash = await mailer.write.send([addr2.account.address, "Test", "Body", true, false], { account: addr1.account });
+        const hash = await mailer.write.send([addr2.account.address, "Test", "Body", addr1.account .address, true, false], { account: addr1.account  });
         await publicClient.waitForTransactionReceipt({ hash });
 
         const logs = await mailer.getEvents.MailSent();
@@ -292,14 +292,14 @@ describe("Mailer", function () {
       it("Should handle fee changes mid-transaction flow", async function () {
         const { mailer, mockUSDC, owner, addr1, addr2 } = this;
         // Send with original fee
-        await mailer.write.send([addr2.account.address, "Test1", "Body1", true, false], { account: addr1.account });
+        await mailer.write.send([addr2.account.address, "Test1", "Body1", addr1.account .address, true, false], { account: addr1.account  });
 
         // Change fee
         await mailer.write.setFee([75000n], { account: owner.account }); // 0.075 USDC
 
         // Send with new fee
         const initialBalance = await mockUSDC.read.balanceOf([mailer.address]);
-        await mailer.write.send([addr2.account.address, "Test2", "Body2", true, false], { account: addr1.account });
+        await mailer.write.send([addr2.account.address, "Test2", "Body2", addr1.account .address, true, false], { account: addr1.account  });
         const finalBalance = await mockUSDC.read.balanceOf([mailer.address]);
 
         expect(finalBalance - initialBalance).to.equal(75000n); // New fee
@@ -317,7 +317,7 @@ describe("Mailer", function () {
 
     it("Should emit MailSent event when USDC transfer succeeds", async function () {
       const { mailer, addr1, addr2, publicClient } = this;
-      const hash = await mailer.write.send([addr1.account.address, "Test Subject", "Test Body", false, false], { account: addr2.account });
+      const hash = await mailer.write.send([addr1.account.address, "Test Subject", "Test Body", addr2.account .address, false, false], { account: addr2.account  });
 
       await publicClient.waitForTransactionReceipt({ hash });
       const logs = await mailer.getEvents.MailSent();
@@ -332,7 +332,7 @@ describe("Mailer", function () {
       const { mailer, owner, addr1 } = this;
       // owner has USDC but no allowance, so it fails on allowance check
       await expect(
-        mailer.write.send([addr1.account.address, "No Balance", "Should Fail", false, false], { account: owner.account })
+        mailer.write.send([addr1.account.address, "No Balance", "Should Fail", owner.account .address, false, false], { account: owner.account  })
       ).to.be.rejectedWith("InsufficientAllowance");
     });
 
@@ -342,7 +342,7 @@ describe("Mailer", function () {
       await mockUSDC.write.mint([owner.account.address, parseUnits("1", 6)]);
 
       await expect(
-        mailer.write.send([addr1.account.address, "No Allowance", "Should Fail", false, false], { account: owner.account })
+        mailer.write.send([addr1.account.address, "No Allowance", "Should Fail", owner.account .address, false, false], { account: owner.account  })
       ).to.be.rejectedWith("InsufficientAllowance");
     });
 
@@ -351,7 +351,7 @@ describe("Mailer", function () {
       const initialBalance = await mockUSDC.read.balanceOf([mailer.address]);
       const initialOwnerClaimable = await mailer.read.getOwnerClaimable();
 
-      await mailer.write.send([addr1.account.address, "Test", "Body", false, false], { account: addr2.account });
+      await mailer.write.send([addr1.account.address, "Test", "Body", addr2.account .address, false, false], { account: addr2.account  });
 
       const finalBalance = await mockUSDC.read.balanceOf([mailer.address]);
       const finalOwnerClaimable = await mailer.read.getOwnerClaimable();
@@ -365,7 +365,7 @@ describe("Mailer", function () {
 
     it("Should work with empty strings", async function () {
       const { mailer, addr1, addr2, publicClient } = this;
-      const hash = await mailer.write.send([addr1.account.address, "", "", false, false], { account: addr2.account });
+      const hash = await mailer.write.send([addr1.account.address, "", "", addr2.account .address, false, false], { account: addr2.account  });
 
       await publicClient.waitForTransactionReceipt({ hash });
       const logs = await mailer.getEvents.MailSent();
@@ -378,7 +378,7 @@ describe("Mailer", function () {
       const longSubject = "A".repeat(1000);
       const longBody = "B".repeat(5000);
 
-      const hash = await mailer.write.send([addr1.account.address, longSubject, longBody, false, false], { account: addr2.account });
+      const hash = await mailer.write.send([addr1.account.address, longSubject, longBody, addr2.account .address, false, false], { account: addr2.account  });
 
       await publicClient.waitForTransactionReceipt({ hash });
       const logs = await mailer.getEvents.MailSent();
@@ -397,7 +397,7 @@ describe("Mailer", function () {
 
     it("Should emit PreparedMailSent event when USDC transfer succeeds", async function () {
       const { mailer, addr1, addr2, publicClient } = this;
-      const hash = await mailer.write.sendPrepared([addr1.account.address, "mail-123", false, false], { account: addr2.account });
+      const hash = await mailer.write.sendPrepared([addr1.account.address, "mail-123", addr2.account .address, false, false], { account: addr2.account  });
 
       await publicClient.waitForTransactionReceipt({ hash });
       const logs = await mailer.getEvents.PreparedMailSent();
@@ -414,7 +414,7 @@ describe("Mailer", function () {
       const { mailer, owner, addr1 } = this;
       // owner has USDC but no allowance, so it fails on allowance check
       await expect(
-        mailer.write.sendPrepared([addr1.account.address, "no-balance-mail", false, false], { account: owner.account })
+        mailer.write.sendPrepared([addr1.account.address, "no-balance-mail", owner.account .address, false, false], { account: owner.account  })
       ).to.be.rejectedWith("InsufficientAllowance");
     });
 
@@ -424,7 +424,7 @@ describe("Mailer", function () {
       await mockUSDC.write.mint([owner.account.address, parseUnits("1", 6)]);
 
       await expect(
-        mailer.write.sendPrepared([addr1.account.address, "no-allowance-mail", false, false], { account: owner.account })
+        mailer.write.sendPrepared([addr1.account.address, "no-allowance-mail", owner.account .address, false, false], { account: owner.account  })
       ).to.be.rejectedWith("InsufficientAllowance");
     });
 
@@ -433,7 +433,7 @@ describe("Mailer", function () {
       const initialBalance = await mockUSDC.read.balanceOf([mailer.address]);
       const initialOwnerClaimable = await mailer.read.getOwnerClaimable();
 
-      await mailer.write.sendPrepared([addr1.account.address, "prepared-test", false, false], { account: addr2.account });
+      await mailer.write.sendPrepared([addr1.account.address, "prepared-test", addr2.account .address, false, false], { account: addr2.account  });
 
       const finalBalance = await mockUSDC.read.balanceOf([mailer.address]);
       const finalOwnerClaimable = await mailer.read.getOwnerClaimable();
@@ -447,7 +447,7 @@ describe("Mailer", function () {
 
     it("Should work with empty mailId", async function () {
       const { mailer, addr1, addr2, publicClient } = this;
-      const hash = await mailer.write.sendPrepared([addr1.account.address, "", false, false], { account: addr2.account });
+      const hash = await mailer.write.sendPrepared([addr1.account.address, "", addr2.account .address, false, false], { account: addr2.account  });
 
       await publicClient.waitForTransactionReceipt({ hash });
       const logs = await mailer.getEvents.PreparedMailSent();
@@ -459,7 +459,7 @@ describe("Mailer", function () {
       const { mailer, addr1, addr2, publicClient } = this;
       const longMailId = "long-mail-id-" + "x".repeat(1000);
 
-      const hash = await mailer.write.sendPrepared([addr1.account.address, longMailId, false, false], { account: addr2.account });
+      const hash = await mailer.write.sendPrepared([addr1.account.address, longMailId, addr2.account .address, false, false], { account: addr2.account  });
 
       await publicClient.waitForTransactionReceipt({ hash });
       const logs = await mailer.getEvents.PreparedMailSent();
@@ -474,7 +474,7 @@ describe("Mailer", function () {
       const { mailer, addr1, addr2, publicClient } = this;
       const specialMailId = "mail-123!@#$%^&*()_+-=[]{}|;:,.<>?";
 
-      const hash = await mailer.write.sendPrepared([addr1.account.address, specialMailId, false, false], { account: addr2.account });
+      const hash = await mailer.write.sendPrepared([addr1.account.address, specialMailId, addr2.account .address, false, false], { account: addr2.account  });
 
       await publicClient.waitForTransactionReceipt({ hash });
       const logs = await mailer.getEvents.PreparedMailSent();
@@ -489,7 +489,7 @@ describe("Mailer", function () {
   describe("sendThroughWebhook function with revenue sharing (priority mode)", function () {
     it("Should emit WebhookMailSent event when USDC transfer succeeds", async function () {
       const { mailer, addr1, addr2, publicClient } = this;
-      const hash = await mailer.write.sendThroughWebhook([addr2.account.address, "webhook-123", true, false], { account: addr1.account });
+      const hash = await mailer.write.sendThroughWebhook([addr2.account.address, "webhook-123", addr1.account .address, true, false], { account: addr1.account  });
 
       await publicClient.waitForTransactionReceipt({ hash });
       const logs = await mailer.getEvents.WebhookMailSent();
@@ -506,7 +506,7 @@ describe("Mailer", function () {
       const { mailer, addr1, addr2 } = this;
       // addr2 has no USDC balance
       await expect(
-        mailer.write.sendThroughWebhook([addr1.account.address, "webhook-456", true, false], { account: addr2.account })
+        mailer.write.sendThroughWebhook([addr1.account.address, "webhook-456", addr2.account .address, true, false], { account: addr2.account  })
       ).to.be.rejectedWith("InsufficientBalance");
     });
 
@@ -516,7 +516,7 @@ describe("Mailer", function () {
       await mockUSDC.write.mint([addr2.account.address, parseUnits("1", 6)]);
 
       await expect(
-        mailer.write.sendThroughWebhook([addr1.account.address, "webhook-789", true, false], { account: addr2.account })
+        mailer.write.sendThroughWebhook([addr1.account.address, "webhook-789", addr2.account .address, true, false], { account: addr2.account  })
       ).to.be.rejectedWith("InsufficientAllowance");
     });
 
@@ -524,7 +524,7 @@ describe("Mailer", function () {
       const { mailer, mockUSDC, addr1, addr2 } = this;
       const initialBalance = await mockUSDC.read.balanceOf([mailer.address]);
 
-      await mailer.write.sendThroughWebhook([addr2.account.address, "webhook-999", true, false], { account: addr1.account });
+      await mailer.write.sendThroughWebhook([addr2.account.address, "webhook-999", addr1.account .address, true, false], { account: addr1.account  });
 
       const finalBalance = await mockUSDC.read.balanceOf([mailer.address]);
       expect(finalBalance - initialBalance).to.equal(100000n); // 0.1 USDC
@@ -533,7 +533,7 @@ describe("Mailer", function () {
     it("Should handle different webhookId strings", async function () {
       const { mailer, addr1, addr2, publicClient } = this;
       // Test with various webhookId formats
-      const hash = await mailer.write.sendThroughWebhook([addr2.account.address, "abc-123-xyz", true, false], { account: addr1.account });
+      const hash = await mailer.write.sendThroughWebhook([addr2.account.address, "abc-123-xyz", addr1.account .address, true, false], { account: addr1.account  });
 
       await publicClient.waitForTransactionReceipt({ hash });
       const logs = await mailer.getEvents.WebhookMailSent();
@@ -550,7 +550,7 @@ describe("Mailer", function () {
       const expectedRecipientShare = (fee * 90n) / 100n;
       const expectedOwnerShare = fee - expectedRecipientShare;
 
-      await mailer.write.sendThroughWebhook([addr2.account.address, "webhook-test", true, false], { account: addr1.account });
+      await mailer.write.sendThroughWebhook([addr2.account.address, "webhook-test", addr1.account .address, true, false], { account: addr1.account  });
 
       // Check addr2 (recipient) has claimable amount
       const [amount, , ] = await mailer.read.getRecipientClaimable([addr2.account.address]);
@@ -571,7 +571,7 @@ describe("Mailer", function () {
 
     it("Should emit WebhookMailSent event when USDC transfer succeeds", async function () {
       const { mailer, addr1, addr2, publicClient } = this;
-      const hash = await mailer.write.sendThroughWebhook([addr1.account.address, "webhook-123", false, false], { account: addr2.account });
+      const hash = await mailer.write.sendThroughWebhook([addr1.account.address, "webhook-123", addr2.account .address, false, false], { account: addr2.account  });
 
       await publicClient.waitForTransactionReceipt({ hash });
       const logs = await mailer.getEvents.WebhookMailSent();
@@ -588,7 +588,7 @@ describe("Mailer", function () {
       const { mailer, owner, addr1 } = this;
       // owner has USDC but no allowance, so it fails on allowance check
       await expect(
-        mailer.write.sendThroughWebhook([addr1.account.address, "no-balance-webhook", false, false], { account: owner.account })
+        mailer.write.sendThroughWebhook([addr1.account.address, "no-balance-webhook", owner.account .address, false, false], { account: owner.account  })
       ).to.be.rejectedWith("InsufficientAllowance");
     });
 
@@ -598,7 +598,7 @@ describe("Mailer", function () {
       await mockUSDC.write.mint([owner.account.address, parseUnits("1", 6)]);
 
       await expect(
-        mailer.write.sendThroughWebhook([addr1.account.address, "no-allowance-webhook", false, false], { account: owner.account })
+        mailer.write.sendThroughWebhook([addr1.account.address, "no-allowance-webhook", owner.account .address, false, false], { account: owner.account  })
       ).to.be.rejectedWith("InsufficientAllowance");
     });
 
@@ -607,7 +607,7 @@ describe("Mailer", function () {
       const initialBalance = await mockUSDC.read.balanceOf([mailer.address]);
       const initialOwnerClaimable = await mailer.read.getOwnerClaimable();
 
-      await mailer.write.sendThroughWebhook([addr1.account.address, "webhook-test", false, false], { account: addr2.account });
+      await mailer.write.sendThroughWebhook([addr1.account.address, "webhook-test", addr2.account .address, false, false], { account: addr2.account  });
 
       const finalBalance = await mockUSDC.read.balanceOf([mailer.address]);
       const finalOwnerClaimable = await mailer.read.getOwnerClaimable();
@@ -621,7 +621,7 @@ describe("Mailer", function () {
 
     it("Should work with empty webhookId", async function () {
       const { mailer, addr1, addr2, publicClient } = this;
-      const hash = await mailer.write.sendThroughWebhook([addr1.account.address, "", false, false], { account: addr2.account });
+      const hash = await mailer.write.sendThroughWebhook([addr1.account.address, "", addr2.account .address, false, false], { account: addr2.account  });
 
       await publicClient.waitForTransactionReceipt({ hash });
       const logs = await mailer.getEvents.WebhookMailSent();
@@ -633,7 +633,7 @@ describe("Mailer", function () {
       const { mailer, addr1, addr2, publicClient } = this;
       const longWebhookId = "long-webhook-id-" + "x".repeat(1000);
 
-      const hash = await mailer.write.sendThroughWebhook([addr1.account.address, longWebhookId, false, false], { account: addr2.account });
+      const hash = await mailer.write.sendThroughWebhook([addr1.account.address, longWebhookId, addr2.account .address, false, false], { account: addr2.account  });
 
       await publicClient.waitForTransactionReceipt({ hash });
       const logs = await mailer.getEvents.WebhookMailSent();
@@ -648,7 +648,7 @@ describe("Mailer", function () {
       const { mailer, addr1, addr2, publicClient } = this;
       const specialWebhookId = "webhook-123!@#$%^&*()_+-=[]{}|;:,.<>?";
 
-      const hash = await mailer.write.sendThroughWebhook([addr1.account.address, specialWebhookId, false, false], { account: addr2.account });
+      const hash = await mailer.write.sendThroughWebhook([addr1.account.address, specialWebhookId, addr2.account .address, false, false], { account: addr2.account  });
 
       await publicClient.waitForTransactionReceipt({ hash });
       const logs = await mailer.getEvents.WebhookMailSent();
@@ -676,7 +676,7 @@ describe("Mailer", function () {
         const expectedOwnerShare = fee - expectedRecipientShare; // 10000
 
         // addr1 sends to addr2 with revenue sharing - addr2 gets the revenue share
-        const hash = await mailer.write.send([addr2.account.address, "Test", "Body", true, false], { account: addr1.account });
+        const hash = await mailer.write.send([addr2.account.address, "Test", "Body", addr1.account .address, true, false], { account: addr1.account  });
         await publicClient.waitForTransactionReceipt({ hash });
 
         const logs = await mailer.getEvents.SharesRecorded();
@@ -698,7 +698,7 @@ describe("Mailer", function () {
         const expectedOwnerShare = fee - expectedRecipientShare;
 
         // addr1 sends to addr2 with revenue sharing - addr2 gets the revenue share
-        const hash = await mailer.write.sendPrepared([addr2.account.address, "mail-123", true, false], { account: addr1.account });
+        const hash = await mailer.write.sendPrepared([addr2.account.address, "mail-123", addr1.account .address, true, false], { account: addr1.account  });
         await publicClient.waitForTransactionReceipt({ hash });
 
         const logs = await mailer.getEvents.SharesRecorded();
@@ -719,8 +719,8 @@ describe("Mailer", function () {
         const expectedRecipientShare = (fee * 90n) / 100n;
 
         // Send two messages to addr2 - addr2 should accumulate revenue shares
-        await mailer.write.send([addr2.account.address, "Test1", "Body1", true, false], { account: addr1.account });
-        await mailer.write.send([addr2.account.address, "Test2", "Body2", true, false], { account: addr1.account });
+        await mailer.write.send([addr2.account.address, "Test1", "Body1", addr1.account .address, true, false], { account: addr1.account  });
+        await mailer.write.send([addr2.account.address, "Test2", "Body2", addr1.account .address, true, false], { account: addr1.account  });
 
         // Check addr2 (recipient) has accumulated claimable amount
         const [amount, , ] = await mailer.read.getRecipientClaimable([addr2.account.address]);
@@ -732,7 +732,7 @@ describe("Mailer", function () {
       beforeEach(async function () {
         const { mailer, addr1, addr2 } = this;
         // addr1 sends to addr2 with revenue sharing - addr2 gets the claimable amount
-        await mailer.write.send([addr2.account.address, "Test", "Body", true, false], { account: addr1.account });
+        await mailer.write.send([addr2.account.address, "Test", "Body", addr1.account .address, true, false], { account: addr1.account  });
       });
 
       it("Should allow recipient to claim their share", async function () {
@@ -807,7 +807,7 @@ describe("Mailer", function () {
       beforeEach(async function () {
         const { mailer, addr1, addr2 } = this;
         // addr1 sends to addr2 with revenue sharing
-        await mailer.write.send([addr2.account.address, "Test", "Body", true, false], { account: addr1.account });
+        await mailer.write.send([addr2.account.address, "Test", "Body", addr1.account .address, true, false], { account: addr1.account  });
       });
 
       it("Should allow owner to claim their share", async function () {
@@ -854,7 +854,7 @@ describe("Mailer", function () {
       beforeEach(async function () {
         const { mailer, addr1, addr2 } = this;
         // addr1 sends to addr2 with revenue sharing - addr2 gets the claimable amount
-        await mailer.write.send([addr2.account.address, "Test", "Body", true, false], { account: addr1.account });
+        await mailer.write.send([addr2.account.address, "Test", "Body", addr1.account .address, true, false], { account: addr1.account  });
       });
 
       it("Should allow owner to claim expired shares", async function () {
@@ -912,7 +912,7 @@ describe("Mailer", function () {
         expect(isExpired).to.be.false;
 
         // After addr1 sends to addr2 with revenue sharing - addr2 gets claimable amount
-        await mailer.write.send([addr2.account.address, "Test", "Body", true, false], { account: addr1.account });
+        await mailer.write.send([addr2.account.address, "Test", "Body", addr1.account .address, true, false], { account: addr1.account  });
         [amount, expiresAt, isExpired] = await mailer.read.getRecipientClaimable([addr2.account.address]);
 
         const fee = await mailer.read.sendFee();
@@ -929,7 +929,7 @@ describe("Mailer", function () {
         const { mailer, addr1, addr2 } = this;
         expect(await mailer.read.getOwnerClaimable()).to.equal(0n);
 
-        await mailer.write.send([addr2.account.address, "Test", "Body", true, false], { account: addr1.account });
+        await mailer.write.send([addr2.account.address, "Test", "Body", addr1.account .address, true, false], { account: addr1.account  });
 
         const fee = await mailer.read.sendFee();
         const expectedAmount = fee - (fee * 90n) / 100n; // 10%
@@ -1214,7 +1214,7 @@ describe("Mailer", function () {
           await mailer.write.setCustomFeePercentage([addr1.account.address, 50], { account: owner.account });
 
           const initialBalance = await mockUSDC.read.balanceOf([mailer.address]);
-          await mailer.write.send([addr2.account.address, "Test", "Body", true, false], { account: addr1.account });
+          await mailer.write.send([addr2.account.address, "Test", "Body", addr1.account .address, true, false], { account: addr1.account  });
           const finalBalance = await mockUSDC.read.balanceOf([mailer.address]);
 
           const sendFee = await mailer.read.sendFee();
@@ -1227,7 +1227,7 @@ describe("Mailer", function () {
           await mailer.write.setCustomFeePercentage([addr1.account.address, 0], { account: owner.account });
 
           const initialBalance = await mockUSDC.read.balanceOf([mailer.address]);
-          await mailer.write.send([addr2.account.address, "Test", "Body", true, false], { account: addr1.account });
+          await mailer.write.send([addr2.account.address, "Test", "Body", addr1.account .address, true, false], { account: addr1.account  });
           const finalBalance = await mockUSDC.read.balanceOf([mailer.address]);
 
           expect(finalBalance - initialBalance).to.equal(0n);
@@ -1238,7 +1238,7 @@ describe("Mailer", function () {
           await mailer.write.setCustomFeePercentage([addr1.account.address, 100], { account: owner.account });
 
           const initialBalance = await mockUSDC.read.balanceOf([mailer.address]);
-          await mailer.write.send([addr2.account.address, "Test", "Body", true, false], { account: addr1.account });
+          await mailer.write.send([addr2.account.address, "Test", "Body", addr1.account .address, true, false], { account: addr1.account  });
           const finalBalance = await mockUSDC.read.balanceOf([mailer.address]);
 
           expect(finalBalance - initialBalance).to.equal(await mailer.read.sendFee());
@@ -1247,7 +1247,7 @@ describe("Mailer", function () {
         it("Should use default fee when no custom percentage is set", async function () {
           const { mailer, mockUSDC, addr1, addr2 } = this;
           const initialBalance = await mockUSDC.read.balanceOf([mailer.address]);
-          await mailer.write.send([addr2.account.address, "Test", "Body", true, false], { account: addr1.account });
+          await mailer.write.send([addr2.account.address, "Test", "Body", addr1.account .address, true, false], { account: addr1.account  });
           const finalBalance = await mockUSDC.read.balanceOf([mailer.address]);
 
           expect(finalBalance - initialBalance).to.equal(await mailer.read.sendFee());
@@ -1258,7 +1258,7 @@ describe("Mailer", function () {
           await mailer.write.setCustomFeePercentage([addr2.account.address, 50], { account: owner.account });
 
           const initialBalance = await mockUSDC.read.balanceOf([mailer.address]);
-          await mailer.write.send([addr1.account.address, "Test", "Body", false, false], { account: addr2.account });
+          await mailer.write.send([addr1.account.address, "Test", "Body", addr2.account .address, false, false], { account: addr2.account  });
           const finalBalance = await mockUSDC.read.balanceOf([mailer.address]);
 
           const sendFee = await mailer.read.sendFee();
@@ -1274,7 +1274,7 @@ describe("Mailer", function () {
           const initialBalance = await mockUSDC.read.balanceOf([mailer.address]);
           const initialOwnerClaimable = await mailer.read.getOwnerClaimable();
 
-          await mailer.write.send([addr2.account.address, "Test", "Body", true, false], { account: addr1.account });
+          await mailer.write.send([addr2.account.address, "Test", "Body", addr1.account .address, true, false], { account: addr1.account  });
 
           const finalBalance = await mockUSDC.read.balanceOf([mailer.address]);
           const finalOwnerClaimable = await mailer.read.getOwnerClaimable();
@@ -1294,7 +1294,7 @@ describe("Mailer", function () {
           await mailer.write.setCustomFeePercentage([addr1.account.address, 25], { account: owner.account });
 
           const initialBalance = await mockUSDC.read.balanceOf([mailer.address]);
-          await mailer.write.sendPrepared([addr2.account.address, "mail-123", true, false], { account: addr1.account });
+          await mailer.write.sendPrepared([addr2.account.address, "mail-123", addr1.account .address, true, false], { account: addr1.account  });
           const finalBalance = await mockUSDC.read.balanceOf([mailer.address]);
 
           const sendFee = await mailer.read.sendFee();
@@ -1307,7 +1307,7 @@ describe("Mailer", function () {
           await mailer.write.setCustomFeePercentage([addr2.account.address, 75], { account: owner.account });
 
           const initialBalance = await mockUSDC.read.balanceOf([mailer.address]);
-          await mailer.write.sendPrepared([addr1.account.address, "mail-456", false, false], { account: addr2.account });
+          await mailer.write.sendPrepared([addr1.account.address, "mail-456", addr2.account .address, false, false], { account: addr2.account  });
           const finalBalance = await mockUSDC.read.balanceOf([mailer.address]);
 
           const sendFee = await mailer.read.sendFee();
@@ -1323,7 +1323,7 @@ describe("Mailer", function () {
           await mailer.write.setCustomFeePercentage([addr1.account.address, 40], { account: owner.account });
 
           const initialBalance = await mockUSDC.read.balanceOf([mailer.address]);
-          await mailer.write.sendToEmailAddress(["test@example.com", "Subject", "Body"], { account: addr1.account });
+          await mailer.write.sendToEmailAddress(["test@example.com", "Subject", "Body", addr1.account .address], { account: addr1.account  });
           const finalBalance = await mockUSDC.read.balanceOf([mailer.address]);
 
           const sendFee = await mailer.read.sendFee();
@@ -1339,7 +1339,7 @@ describe("Mailer", function () {
           await mailer.write.setCustomFeePercentage([addr1.account.address, 30], { account: owner.account });
 
           const initialBalance = await mockUSDC.read.balanceOf([mailer.address]);
-          await mailer.write.sendPreparedToEmailAddress(["test@example.com", "mail-789"], { account: addr1.account });
+          await mailer.write.sendPreparedToEmailAddress(["test@example.com", "mail-789", addr1.account .address], { account: addr1.account  });
           const finalBalance = await mockUSDC.read.balanceOf([mailer.address]);
 
           const sendFee = await mailer.read.sendFee();
@@ -1359,7 +1359,7 @@ describe("Mailer", function () {
           const expectedRecipientShare = (effectiveFee * 90n) / 100n;
           const expectedOwnerShare = effectiveFee - expectedRecipientShare;
 
-          await mailer.write.send([addr2.account.address, "Test", "Body", true, false], { account: addr1.account });
+          await mailer.write.send([addr2.account.address, "Test", "Body", addr1.account .address, true, false], { account: addr1.account  });
 
           const [recipientAmount, , ] = await mailer.read.getRecipientClaimable([addr2.account.address]);
           expect(recipientAmount).to.equal(expectedRecipientShare);
@@ -1423,7 +1423,7 @@ describe("Mailer", function () {
         const { mailer, mockUSDC, owner, addr1, addr2, publicClient } = this;
         // First send a standard message to accumulate owner fees
         await mockUSDC.write.approve([mailer.address, parseUnits("1", 6)], { account: addr1.account });
-        await mailer.write.send([addr2.account.address, "Test", "Test", false, false], { account: addr1.account });
+        await mailer.write.send([addr2.account.address, "Test", "Test", addr1.account .address, false, false], { account: addr1.account  });
 
         const ownerBalanceBefore = await mockUSDC.read.balanceOf([owner.account.address]);
         const contractBalanceBefore = await mockUSDC.read.balanceOf([mailer.address]);
@@ -1450,11 +1450,11 @@ describe("Mailer", function () {
         await mockUSDC.write.approve([mailer.address, parseUnits("1", 6)], { account: addr1.account });
 
         await expect(
-          mailer.write.send([addr2.account.address, "Test", "Test", true, false], { account: addr1.account })
+          mailer.write.send([addr2.account.address, "Test", "Test", addr1.account .address, true, false], { account: addr1.account  })
         ).to.be.rejectedWith("ContractIsPaused");
 
         await expect(
-          mailer.write.send([addr2.account.address, "Test", "Test", false, false], { account: addr1.account })
+          mailer.write.send([addr2.account.address, "Test", "Test", addr1.account .address, false, false], { account: addr1.account  })
         ).to.be.rejectedWith("ContractIsPaused");
 
         await expect(
@@ -1506,7 +1506,7 @@ describe("Mailer", function () {
         await testMockUSDC.write.approve([testMailer.address, parseUnits("1", 6)], { account: testAddr1.account });
 
         // testAddr1 sends to testAddr2 with revenue sharing - testAddr2 gets the 90% claimable amount
-        await testMailer.write.send([testAddr2.account.address, "Test", "Test", true, false], { account: testAddr1.account });
+        await testMailer.write.send([testAddr2.account.address, "Test", "Test", testAddr1.account .address, true, false], { account: testAddr1.account  });
 
         // Verify recipient (testAddr2) has claimable amount before pause
         const [claimableAmount] = await testMailer.read.getRecipientClaimable([testAddr2.account.address]);
@@ -1553,7 +1553,7 @@ describe("Mailer", function () {
 
         // Should be able to send messages again
         await mockUSDC.write.approve([mailer.address, parseUnits("1", 6)], { account: addr1.account });
-        const hash = await mailer.write.send([addr2.account.address, "Test", "Test", false, false], { account: addr1.account });
+        const hash = await mailer.write.send([addr2.account.address, "Test", "Test", addr1.account .address, false, false], { account: addr1.account  });
         await publicClient.waitForTransactionReceipt({ hash });
 
         const logs = await mailer.getEvents.MailSent();

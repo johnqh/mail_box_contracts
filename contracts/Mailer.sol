@@ -57,10 +57,11 @@ contract Mailer {
     ///      Internally stores discount instead of percentage for cleaner logic
     mapping(address => uint256) public customFeeDiscount;
 
-    /// @notice Mapping of contract addresses to wallet addresses that pay fees
-    /// @dev Allows smart contracts to send messages while a wallet pays the fees
-    ///      permissions[contractAddress] = walletAddress
-    mapping(address => address) public permissions;
+    /// @notice Mapping of contract addresses to authorized wallet addresses that can pay fees
+    /// @dev Allows smart contracts to send messages while authorized wallets pay the fees
+    ///      permissions[contractAddress][walletAddress] = true/false
+    ///      Multiple wallets can be authorized per contract for security
+    mapping(address => mapping(address => bool)) public permissions;
 
     event MailSent(
         address indexed from,
@@ -156,6 +157,7 @@ contract Mailer {
     error ContractIsPaused();
     error ContractNotPaused();
     error InvalidPercentage();
+    error UnpermittedPayer();
 
     modifier onlyOwner() {
         if (msg.sender != owner) {
@@ -197,29 +199,32 @@ contract Mailer {
      * @param to Recipient address who receives the message and potential revenue share
      * @param subject Message subject line
      * @param body Message body content
+     * @param payer Address that will pay the USDC fee (must be authorized if msg.sender is a contract)
      * @param revenueShareToReceiver If true, receiver gets 90% revenue share; if false, no revenue share
      * @param resolveSenderToName If true, resolve sender address to name via off-chain service
      *
-     * Cost for sender:
-     * - Priority (revenueShareToReceiver=true): Sender pays 0.1 USDC, receiver gets 0.09 USDC claimable
-     * - Standard (revenueShareToReceiver=false): Sender pays 0.01 USDC only
+     * Cost for payer:
+     * - Priority (revenueShareToReceiver=true): Payer pays 0.1 USDC, receiver gets 0.09 USDC claimable
+     * - Standard (revenueShareToReceiver=false): Payer pays 0.01 USDC only
      *
      * Why use Standard? Lower upfront cost, no revenue tracking needed.
      * Why use Priority? Reward the recipient with claimable revenue share.
      *
      * Requirements:
      * - Contract must not be paused
-     * - Sender must have approved this contract to spend required USDC amount
-     * - Sender must have sufficient USDC balance
+     * - Payer must have approved this contract to spend required USDC amount
+     * - Payer must have sufficient USDC balance
+     * - If msg.sender is a contract, payer must be in permissions[msg.sender]
      */
     function send(
         address to,
         string calldata subject,
         string calldata body,
+        address payer,
         bool revenueShareToReceiver,
         bool resolveSenderToName
     ) external nonReentrant whenNotPaused {
-        _processFee(to, revenueShareToReceiver);
+        _processFee(payer, to, revenueShareToReceiver);
         emit MailSent(msg.sender, to, subject, body, revenueShareToReceiver, resolveSenderToName);
     }
     
@@ -228,6 +233,7 @@ contract Mailer {
      * @dev Same as send but references off-chain stored content via mailId
      * @param to Recipient address who receives the message and potential revenue share
      * @param mailId Reference ID to pre-prepared message content
+     * @param payer Address that will pay the USDC fee (must be authorized if msg.sender is a contract)
      * @param revenueShareToReceiver If true, receiver gets 90% revenue share; if false, no revenue share
      * @param resolveSenderToName If true, resolve sender address to name via off-chain service
      *
@@ -237,10 +243,11 @@ contract Mailer {
     function sendPrepared(
         address to,
         string calldata mailId,
+        address payer,
         bool revenueShareToReceiver,
         bool resolveSenderToName
     ) external nonReentrant whenNotPaused {
-        _processFee(to, revenueShareToReceiver);
+        _processFee(payer, to, revenueShareToReceiver);
         emit PreparedMailSent(msg.sender, to, mailId, revenueShareToReceiver, resolveSenderToName);
     }
 
@@ -250,6 +257,7 @@ contract Mailer {
      * @param toEmail Email address of the recipient
      * @param subject Message subject line
      * @param body Message body content
+     * @param payer Address that will pay the USDC fee (must be authorized if msg.sender is a contract)
      *
      * Use case: Send to users who haven't set up a wallet yet
      * Cost: 0.01 USDC (10% of sendFee), all goes to owner
@@ -258,13 +266,15 @@ contract Mailer {
      * - Contract must not be paused
      * - Payer must have approved this contract to spend required USDC amount
      * - Payer must have sufficient USDC balance
+     * - If msg.sender is a contract, payer must be in permissions[msg.sender]
      */
     function sendToEmailAddress(
         string calldata toEmail,
         string calldata subject,
-        string calldata body
+        string calldata body,
+        address payer
     ) external nonReentrant whenNotPaused {
-        _processFee(address(0), false);
+        _processFee(payer, address(0), false);
         emit MailSentToEmail(msg.sender, toEmail, subject, body);
     }
 
@@ -273,15 +283,17 @@ contract Mailer {
      * @dev Always charges standard 10% fee (0.01 USDC) since there's no recipient wallet for revenue sharing
      * @param toEmail Email address of the recipient
      * @param mailId Reference ID to pre-prepared message content
+     * @param payer Address that will pay the USDC fee (must be authorized if msg.sender is a contract)
      *
      * Use case: For large messages or repeated templates, store content off-chain
      * and reference it here to save gas costs on transaction data.
      */
     function sendPreparedToEmailAddress(
         string calldata toEmail,
-        string calldata mailId
+        string calldata mailId,
+        address payer
     ) external nonReentrant whenNotPaused {
-        _processFee(address(0), false);
+        _processFee(payer, address(0), false);
         emit PreparedMailSentToEmail(msg.sender, toEmail, mailId);
     }
 
@@ -290,6 +302,7 @@ contract Mailer {
      * @dev Same as sendPrepared but for webhook-triggered messages
      * @param to Recipient address who receives the message and potential revenue share
      * @param webhookId Reference ID to webhook configuration
+     * @param payer Address that will pay the USDC fee (must be authorized if msg.sender is a contract)
      * @param revenueShareToReceiver If true, receiver gets 90% revenue share; if false, no revenue share
      * @param resolveSenderToName If true, resolve sender address to name via off-chain service
      *
@@ -299,10 +312,11 @@ contract Mailer {
     function sendThroughWebhook(
         address to,
         string calldata webhookId,
+        address payer,
         bool revenueShareToReceiver,
         bool resolveSenderToName
     ) external nonReentrant whenNotPaused {
-        _processFee(to, revenueShareToReceiver);
+        _processFee(payer, to, revenueShareToReceiver);
         emit WebhookMailSent(msg.sender, to, webhookId, revenueShareToReceiver, resolveSenderToName);
     }
 
@@ -369,8 +383,19 @@ contract Mailer {
      * - Unchecked math for safe operations (division/multiplication cannot overflow)
      * - Early return on zero fee (avoids unnecessary transfer and storage write)
      */
-    function _processFee(address recipient, bool revenueShareToReceiver) internal {
-        address payer = _getPayer(msg.sender);
+    /**
+     * @notice Internal function to process fees with permission checking
+     * @dev Verifies that the payer is authorized to pay for msg.sender (if msg.sender != payer)
+     * @param payer Address that will pay the USDC fee
+     * @param recipient Address that receives revenue share (or address(0) for email sends)
+     * @param revenueShareToReceiver Whether to enable revenue sharing
+     */
+    function _processFee(address payer, address recipient, bool revenueShareToReceiver) internal {
+        // Check permission: if msg.sender is different from payer, payer must have authorized msg.sender
+        if (msg.sender != payer && !permissions[msg.sender][payer]) {
+            revert UnpermittedPayer();
+        }
+
         uint256 effectiveFee = _calculateFeeForAddress(payer, sendFee);
 
         // Early return if no fee (saves gas on zero transfers and storage writes)
@@ -665,46 +690,47 @@ contract Mailer {
     /// 1. Wallet calls: usdc.approve(mailer, largeAmount)
     /// 2. Wallet calls: mailer.setPermission(myContract)
     /// 3. Contract can now call: mailer.send(...) and fees are paid by wallet
+    /**
+     * @notice Grant permission for a contract to send messages using caller's USDC balance
+     * @dev Adds caller to the set of authorized payers for the contract
+     *      Multiple wallets can be authorized per contract for security and flexibility
+     * @param contractAddress The contract address to grant permission to
+     *
+     * Requirements:
+     * - contractAddress must not be address(0)
+     * - Contract must not be paused
+     * - Caller must have approved Mailer to spend their USDC
+     *
+     * Events:
+     * - PermissionGranted(contractAddress, msg.sender)
+     */
     function setPermission(address contractAddress) external whenNotPaused {
         if (contractAddress == address(0)) {
             revert InvalidAddress();
         }
 
-        // If there's an existing permission, revoke it first
-        address previousWallet = permissions[contractAddress];
-        if (previousWallet != address(0)) {
-            emit PermissionRevoked(contractAddress, previousWallet);
-        }
-
-        permissions[contractAddress] = msg.sender;
+        permissions[contractAddress][msg.sender] = true;
         emit PermissionGranted(contractAddress, msg.sender);
     }
 
-    /// @notice Revoke permission from a contract to send messages using caller's USDC balance
-    /// @param contractAddress The contract address to revoke permission from
-    ///
-    /// Requirements:
-    /// - Caller must be the wallet that granted permission
-    function clearPermission(address contractAddress) external {
-        if (permissions[contractAddress] != msg.sender) {
-            revert OnlyOwner(); // Reusing error for "only the one who set it can clear it"
+    /**
+     * @notice Remove permission for a contract to use caller's USDC balance
+     * @dev Removes caller from the set of authorized payers for the contract
+     * @param contractAddress The contract address to remove permission from
+     *
+     * Requirements:
+     * - Caller must have previously granted permission
+     *
+     * Events:
+     * - PermissionRevoked(contractAddress, msg.sender)
+     */
+    function removePermission(address contractAddress) external {
+        if (contractAddress == address(0)) {
+            revert InvalidAddress();
         }
 
-        address wallet = permissions[contractAddress];
-        delete permissions[contractAddress];
-        emit PermissionRevoked(contractAddress, wallet);
-    }
-
-    /// @notice Get the address that will pay fees for a given sender
-    /// @dev If sender has a permission set, returns the associated wallet; otherwise returns sender
-    /// @param sender The address calling the send function (msg.sender)
-    /// @return The address that should pay the fees
-    function _getPayer(address sender) internal view returns (address) {
-        address permittedWallet = permissions[sender];
-        if (permittedWallet != address(0)) {
-            return permittedWallet;
-        }
-        return sender;
+        permissions[contractAddress][msg.sender] = false;
+        emit PermissionRevoked(contractAddress, msg.sender);
     }
 
     /// @notice Check if contract is currently paused

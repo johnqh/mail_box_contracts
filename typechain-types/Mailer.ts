@@ -33,7 +33,6 @@ export interface MailerInterface extends Interface {
       | "claimOwnerShare"
       | "claimRecipientShare"
       | "clearCustomFeePercentage"
-      | "clearPermission"
       | "customFeeDiscount"
       | "delegateTo"
       | "delegationFee"
@@ -52,6 +51,7 @@ export interface MailerInterface extends Interface {
       | "permissions"
       | "recipientClaims"
       | "rejectDelegation"
+      | "removePermission"
       | "send"
       | "sendFee"
       | "sendPrepared"
@@ -118,10 +118,6 @@ export interface MailerInterface extends Interface {
     values: [AddressLike]
   ): string;
   encodeFunctionData(
-    functionFragment: "clearPermission",
-    values: [AddressLike]
-  ): string;
-  encodeFunctionData(
     functionFragment: "customFeeDiscount",
     values: [AddressLike]
   ): string;
@@ -168,7 +164,7 @@ export interface MailerInterface extends Interface {
   encodeFunctionData(functionFragment: "paused", values?: undefined): string;
   encodeFunctionData(
     functionFragment: "permissions",
-    values: [AddressLike]
+    values: [AddressLike, AddressLike]
   ): string;
   encodeFunctionData(
     functionFragment: "recipientClaims",
@@ -179,25 +175,29 @@ export interface MailerInterface extends Interface {
     values: [AddressLike]
   ): string;
   encodeFunctionData(
+    functionFragment: "removePermission",
+    values: [AddressLike]
+  ): string;
+  encodeFunctionData(
     functionFragment: "send",
-    values: [AddressLike, string, string, boolean, boolean]
+    values: [AddressLike, string, string, AddressLike, boolean, boolean]
   ): string;
   encodeFunctionData(functionFragment: "sendFee", values?: undefined): string;
   encodeFunctionData(
     functionFragment: "sendPrepared",
-    values: [AddressLike, string, boolean, boolean]
+    values: [AddressLike, string, AddressLike, boolean, boolean]
   ): string;
   encodeFunctionData(
     functionFragment: "sendPreparedToEmailAddress",
-    values: [string, string]
+    values: [string, string, AddressLike]
   ): string;
   encodeFunctionData(
     functionFragment: "sendThroughWebhook",
-    values: [AddressLike, string, boolean, boolean]
+    values: [AddressLike, string, AddressLike, boolean, boolean]
   ): string;
   encodeFunctionData(
     functionFragment: "sendToEmailAddress",
-    values: [string, string, string]
+    values: [string, string, string, AddressLike]
   ): string;
   encodeFunctionData(
     functionFragment: "setCustomFeePercentage",
@@ -244,10 +244,6 @@ export interface MailerInterface extends Interface {
   ): Result;
   decodeFunctionResult(
     functionFragment: "clearCustomFeePercentage",
-    data: BytesLike
-  ): Result;
-  decodeFunctionResult(
-    functionFragment: "clearPermission",
     data: BytesLike
   ): Result;
   decodeFunctionResult(
@@ -302,6 +298,10 @@ export interface MailerInterface extends Interface {
   ): Result;
   decodeFunctionResult(
     functionFragment: "rejectDelegation",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(
+    functionFragment: "removePermission",
     data: BytesLike
   ): Result;
   decodeFunctionResult(functionFragment: "send", data: BytesLike): Result;
@@ -711,12 +711,6 @@ export interface Mailer extends BaseContract {
     "nonpayable"
   >;
 
-  clearPermission: TypedContractMethod<
-    [contractAddress: AddressLike],
-    [void],
-    "nonpayable"
-  >;
-
   customFeeDiscount: TypedContractMethod<[arg0: AddressLike], [bigint], "view">;
 
   delegateTo: TypedContractMethod<
@@ -769,7 +763,11 @@ export interface Mailer extends BaseContract {
 
   paused: TypedContractMethod<[], [boolean], "view">;
 
-  permissions: TypedContractMethod<[arg0: AddressLike], [string], "view">;
+  permissions: TypedContractMethod<
+    [arg0: AddressLike, arg1: AddressLike],
+    [boolean],
+    "view"
+  >;
 
   recipientClaims: TypedContractMethod<
     [arg0: AddressLike],
@@ -783,11 +781,18 @@ export interface Mailer extends BaseContract {
     "nonpayable"
   >;
 
+  removePermission: TypedContractMethod<
+    [contractAddress: AddressLike],
+    [void],
+    "nonpayable"
+  >;
+
   send: TypedContractMethod<
     [
       to: AddressLike,
       subject: string,
       body: string,
+      payer: AddressLike,
       revenueShareToReceiver: boolean,
       resolveSenderToName: boolean
     ],
@@ -801,6 +806,7 @@ export interface Mailer extends BaseContract {
     [
       to: AddressLike,
       mailId: string,
+      payer: AddressLike,
       revenueShareToReceiver: boolean,
       resolveSenderToName: boolean
     ],
@@ -809,7 +815,7 @@ export interface Mailer extends BaseContract {
   >;
 
   sendPreparedToEmailAddress: TypedContractMethod<
-    [toEmail: string, mailId: string],
+    [toEmail: string, mailId: string, payer: AddressLike],
     [void],
     "nonpayable"
   >;
@@ -818,6 +824,7 @@ export interface Mailer extends BaseContract {
     [
       to: AddressLike,
       webhookId: string,
+      payer: AddressLike,
       revenueShareToReceiver: boolean,
       resolveSenderToName: boolean
     ],
@@ -826,7 +833,7 @@ export interface Mailer extends BaseContract {
   >;
 
   sendToEmailAddress: TypedContractMethod<
-    [toEmail: string, subject: string, body: string],
+    [toEmail: string, subject: string, body: string, payer: AddressLike],
     [void],
     "nonpayable"
   >;
@@ -880,9 +887,6 @@ export interface Mailer extends BaseContract {
   getFunction(
     nameOrSignature: "clearCustomFeePercentage"
   ): TypedContractMethod<[account: AddressLike], [void], "nonpayable">;
-  getFunction(
-    nameOrSignature: "clearPermission"
-  ): TypedContractMethod<[contractAddress: AddressLike], [void], "nonpayable">;
   getFunction(
     nameOrSignature: "customFeeDiscount"
   ): TypedContractMethod<[arg0: AddressLike], [bigint], "view">;
@@ -940,7 +944,11 @@ export interface Mailer extends BaseContract {
   ): TypedContractMethod<[], [boolean], "view">;
   getFunction(
     nameOrSignature: "permissions"
-  ): TypedContractMethod<[arg0: AddressLike], [string], "view">;
+  ): TypedContractMethod<
+    [arg0: AddressLike, arg1: AddressLike],
+    [boolean],
+    "view"
+  >;
   getFunction(
     nameOrSignature: "recipientClaims"
   ): TypedContractMethod<
@@ -956,12 +964,16 @@ export interface Mailer extends BaseContract {
     "nonpayable"
   >;
   getFunction(
+    nameOrSignature: "removePermission"
+  ): TypedContractMethod<[contractAddress: AddressLike], [void], "nonpayable">;
+  getFunction(
     nameOrSignature: "send"
   ): TypedContractMethod<
     [
       to: AddressLike,
       subject: string,
       body: string,
+      payer: AddressLike,
       revenueShareToReceiver: boolean,
       resolveSenderToName: boolean
     ],
@@ -977,6 +989,7 @@ export interface Mailer extends BaseContract {
     [
       to: AddressLike,
       mailId: string,
+      payer: AddressLike,
       revenueShareToReceiver: boolean,
       resolveSenderToName: boolean
     ],
@@ -986,7 +999,7 @@ export interface Mailer extends BaseContract {
   getFunction(
     nameOrSignature: "sendPreparedToEmailAddress"
   ): TypedContractMethod<
-    [toEmail: string, mailId: string],
+    [toEmail: string, mailId: string, payer: AddressLike],
     [void],
     "nonpayable"
   >;
@@ -996,6 +1009,7 @@ export interface Mailer extends BaseContract {
     [
       to: AddressLike,
       webhookId: string,
+      payer: AddressLike,
       revenueShareToReceiver: boolean,
       resolveSenderToName: boolean
     ],
@@ -1005,7 +1019,7 @@ export interface Mailer extends BaseContract {
   getFunction(
     nameOrSignature: "sendToEmailAddress"
   ): TypedContractMethod<
-    [toEmail: string, subject: string, body: string],
+    [toEmail: string, subject: string, body: string, payer: AddressLike],
     [void],
     "nonpayable"
   >;
