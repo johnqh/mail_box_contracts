@@ -45,3 +45,7 @@ logs/
 # Coverage reports
 coverage/
 .nyc_output/
+
+# Rust/Cargo build artifacts
+target/debug/
+target/release/
