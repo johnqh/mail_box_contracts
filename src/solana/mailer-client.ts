@@ -6,6 +6,7 @@ import {
   Keypair,
   SystemProgram,
   ConfirmOptions,
+  ComputeBudgetProgram,
 } from '@solana/web3.js';
 import {
   TOKEN_PROGRAM_ID,
@@ -23,6 +24,66 @@ export interface Wallet {
   publicKey: PublicKey;
   signTransaction<T extends Transaction>(transaction: T): Promise<T>;
   signAllTransactions<T extends Transaction>(transactions: T[]): Promise<T[]>;
+}
+
+/**
+ * Compute unit optimization options for Solana transactions
+ */
+export interface ComputeUnitOptions {
+  /**
+   * Compute unit limit for the transaction (default: 200,000)
+   * Max: 1,400,000
+   */
+  computeUnitLimit?: number;
+
+  /**
+   * Priority fee in micro-lamports per compute unit
+   * Higher values = faster inclusion during congestion
+   */
+  computeUnitPrice?: number;
+
+  /**
+   * Automatically simulate and optimize compute units
+   * @default false
+   */
+  autoOptimize?: boolean;
+
+  /**
+   * Multiplier for compute unit buffer when auto-optimizing
+   * @default 1.2 (20% buffer)
+   */
+  computeUnitMultiplier?: number;
+
+  /**
+   * Skip compute unit settings entirely
+   * @default false
+   */
+  skipComputeUnits?: boolean;
+}
+
+/**
+ * Transaction result with compute unit details
+ */
+export interface TransactionResult {
+  /**
+   * Transaction signature
+   */
+  signature: string;
+
+  /**
+   * Simulated compute units (if auto-optimized)
+   */
+  simulatedUnits?: number;
+
+  /**
+   * Actual compute unit limit set
+   */
+  computeUnitLimit?: number;
+
+  /**
+   * Priority fee per compute unit (if set)
+   */
+  computeUnitPrice?: number;
 }
 
 /**
@@ -427,6 +488,7 @@ export class MailerClient {
   private usdcMint: PublicKey;
   private mailerStatePda: PublicKey;
   private mailerBump: number;
+  private defaultComputeUnitMultiplier = 1.2; // 20% buffer by default
 
   constructor(
     connection: Connection,
@@ -449,9 +511,88 @@ export class MailerClient {
   }
 
   /**
-   * Initialize the mailer program (owner only)
+   * Optimize compute units for a transaction
+   * @param transaction Transaction to optimize
+   * @param options Compute unit options
+   * @returns Optimized transaction with compute budget instructions
    */
-  async initialize(): Promise<string> {
+  private async optimizeComputeUnits(
+    transaction: Transaction,
+    options?: ComputeUnitOptions
+  ): Promise<{ transaction: Transaction; simulatedUnits?: number }> {
+    // Skip if explicitly disabled
+    if (options?.skipComputeUnits) {
+      return { transaction };
+    }
+
+    let simulatedUnits: number | undefined;
+    let computeUnitLimit = options?.computeUnitLimit;
+
+    // Auto-optimize by simulating transaction
+    if (options?.autoOptimize && !computeUnitLimit) {
+      try {
+        // Set a high limit for simulation
+        const simTransaction = new Transaction().add(...transaction.instructions);
+        simTransaction.add(
+          ComputeBudgetProgram.setComputeUnitLimit({
+            units: 1_400_000, // Max for simulation
+          })
+        );
+        simTransaction.recentBlockhash = (await this.connection.getLatestBlockhash()).blockhash;
+        simTransaction.feePayer = this.wallet.publicKey;
+
+        const simulation = await this.connection.simulateTransaction(simTransaction);
+
+        if (simulation.value.err === null && simulation.value.unitsConsumed) {
+          simulatedUnits = simulation.value.unitsConsumed;
+          const multiplier = options.computeUnitMultiplier ?? this.defaultComputeUnitMultiplier;
+          computeUnitLimit = Math.min(
+            Math.ceil(simulatedUnits * multiplier),
+            1_400_000 // Max compute units
+          );
+        }
+      } catch (error) {
+        console.warn('Failed to simulate transaction for compute unit optimization:', error);
+        // Fall back to default or specified limit
+        computeUnitLimit = computeUnitLimit ?? 200_000;
+      }
+    }
+
+    // Create new transaction with compute budget instructions prepended
+    const optimizedTx = new Transaction();
+
+    // Add compute unit limit if specified or auto-optimized
+    if (computeUnitLimit) {
+      optimizedTx.add(
+        ComputeBudgetProgram.setComputeUnitLimit({
+          units: computeUnitLimit,
+        })
+      );
+    }
+
+    // Add priority fee if specified
+    if (options?.computeUnitPrice) {
+      optimizedTx.add(
+        ComputeBudgetProgram.setComputeUnitPrice({
+          microLamports: options.computeUnitPrice,
+        })
+      );
+    }
+
+    // Add original instructions
+    optimizedTx.add(...transaction.instructions);
+
+    return {
+      transaction: optimizedTx,
+      simulatedUnits,
+    };
+  }
+
+  /**
+   * Initialize the mailer program (owner only)
+   * @param computeOptions Compute unit optimization options
+   */
+  async initialize(computeOptions?: ComputeUnitOptions): Promise<TransactionResult> {
     const instruction = new TransactionInstruction({
       keys: [
         { pubkey: this.wallet.publicKey, isSigner: true, isWritable: false },
@@ -463,7 +604,7 @@ export class MailerClient {
     });
 
     const transaction = new Transaction().add(instruction);
-    return await this.sendTransaction(transaction);
+    return await this.sendTransaction(transaction, undefined, computeOptions);
   }
 
   /**
@@ -473,15 +614,17 @@ export class MailerClient {
    * @param body Message body
    * @param revenueShareToReceiver If true, recipient gets 90% revenue share; if false, no revenue share
    * @param resolveSenderToName If true, resolve sender address to name via off-chain service
-   * @returns Transaction signature
+   * @param computeOptions Compute unit optimization options
+   * @returns Transaction result with signature and compute details
    */
   async send(
     to: string | PublicKey,
     subject: string,
     body: string,
     revenueShareToReceiver: boolean = false,
-    resolveSenderToName: boolean = false
-  ): Promise<string> {
+    resolveSenderToName: boolean = false,
+    computeOptions?: ComputeUnitOptions
+  ): Promise<TransactionResult> {
     const recipientKey = typeof to === 'string' ? new PublicKey(to) : to;
     // Derive recipient claim PDA
     const [recipientClaimPda] = PublicKey.findProgramAddressSync(
@@ -534,14 +677,14 @@ export class MailerClient {
 
     instructions.push(sendInstruction);
     const transaction = new Transaction().add(...instructions);
-    return await this.sendTransaction(transaction);
+    return await this.sendTransaction(transaction, undefined, computeOptions);
   }
 
   /**
    * Claim recipient share of revenue
-   * @returns Transaction signature
+   * @returns Transaction result
    */
-  async claimRecipientShare(): Promise<string> {
+  async claimRecipientShare(computeOptions?: ComputeUnitOptions): Promise<TransactionResult> {
     const [recipientClaimPda] = PublicKey.findProgramAddressSync(
       [Buffer.from('claim'), this.wallet.publicKey.toBuffer()],
       this.programId
@@ -571,14 +714,14 @@ export class MailerClient {
     });
 
     const transaction = new Transaction().add(instruction);
-    return await this.sendTransaction(transaction);
+    return await this.sendTransaction(transaction, undefined, computeOptions);
   }
 
   /**
    * Claim owner share of fees (owner only)
-   * @returns Transaction signature
+   * @returns Transaction result
    */
-  async claimOwnerShare(): Promise<string> {
+  async claimOwnerShare(computeOptions?: ComputeUnitOptions): Promise<TransactionResult> {
     const ownerTokenAccount = getAssociatedTokenAddressSync(
       this.usdcMint,
       this.wallet.publicKey
@@ -602,7 +745,7 @@ export class MailerClient {
     });
 
     const transaction = new Transaction().add(instruction);
-    return await this.sendTransaction(transaction);
+    return await this.sendTransaction(transaction, undefined, computeOptions);
   }
 
   /**
@@ -614,7 +757,7 @@ export class MailerClient {
   async claimExpiredShares(
     recipient: string | PublicKey,
     options?: ConfirmOptions
-  ): Promise<string> {
+  , computeOptions?: ComputeUnitOptions): Promise<TransactionResult> {
     const recipientKey = typeof recipient === 'string' ? new PublicKey(recipient) : recipient;
 
     const [recipientClaimPda] = PublicKey.findProgramAddressSync(
@@ -633,7 +776,7 @@ export class MailerClient {
     });
 
     const transaction = new Transaction().add(instruction);
-    return await this.sendTransaction(transaction, options);
+    return await this.sendTransaction(transaction, options, computeOptions);
   }
 
   /**
@@ -641,7 +784,7 @@ export class MailerClient {
    * @param delegate Address to delegate to, or null to clear delegation
    * @returns Transaction signature
    */
-  async delegateTo(delegate?: Optional<string | PublicKey>): Promise<string> {
+  async delegateTo(delegate?: Optional<string | PublicKey>, computeOptions?: ComputeUnitOptions): Promise<TransactionResult> {
     const delegateKey = delegate
       ? typeof delegate === 'string'
         ? new PublicKey(delegate)
@@ -678,7 +821,7 @@ export class MailerClient {
     });
 
     const transaction = new Transaction().add(instruction);
-    return await this.sendTransaction(transaction);
+    return await this.sendTransaction(transaction, undefined, computeOptions);
   }
 
   /**
@@ -686,7 +829,7 @@ export class MailerClient {
    * @param delegator Address that delegated to you
    * @returns Transaction signature
    */
-  async rejectDelegation(delegator: string | PublicKey): Promise<string> {
+  async rejectDelegation(delegator: string | PublicKey, computeOptions?: ComputeUnitOptions): Promise<TransactionResult> {
     const delegatorKey =
       typeof delegator === 'string' ? new PublicKey(delegator) : delegator;
 
@@ -706,15 +849,16 @@ export class MailerClient {
     });
 
     const transaction = new Transaction().add(instruction);
-    return await this.sendTransaction(transaction);
+    return await this.sendTransaction(transaction, undefined, computeOptions);
   }
 
   /**
    * Set the send fee (owner only)
    * @param newFee New fee in USDC micro-units (6 decimals)
-   * @returns Transaction signature
+   * @param computeOptions Compute unit optimization options
+   * @returns Transaction result
    */
-  async setFee(newFee: number | bigint): Promise<string> {
+  async setFee(newFee: number | bigint, computeOptions?: ComputeUnitOptions): Promise<TransactionResult> {
     const instruction = new TransactionInstruction({
       keys: [
         { pubkey: this.wallet.publicKey, isSigner: true, isWritable: false },
@@ -725,7 +869,7 @@ export class MailerClient {
     });
 
     const transaction = new Transaction().add(instruction);
-    return await this.sendTransaction(transaction);
+    return await this.sendTransaction(transaction, undefined, computeOptions);
   }
 
   /**
@@ -733,7 +877,7 @@ export class MailerClient {
    * @param newFee New delegation fee in USDC micro-units (6 decimals)
    * @returns Transaction signature
    */
-  async setDelegationFee(newFee: number | bigint): Promise<string> {
+  async setDelegationFee(newFee: number | bigint, computeOptions?: ComputeUnitOptions): Promise<TransactionResult> {
     const instruction = new TransactionInstruction({
       keys: [
         { pubkey: this.wallet.publicKey, isSigner: true, isWritable: false },
@@ -746,14 +890,14 @@ export class MailerClient {
     });
 
     const transaction = new Transaction().add(instruction);
-    return await this.sendTransaction(transaction);
+    return await this.sendTransaction(transaction, undefined, computeOptions);
   }
 
   async setCustomFeePercentage(
     account: string | PublicKey,
     percentage: number,
     payer?: Optional<string | PublicKey>
-  ): Promise<string> {
+  , computeOptions?: ComputeUnitOptions): Promise<TransactionResult> {
     const normalizedPercentage = Math.trunc(percentage);
     if (normalizedPercentage < 0 || normalizedPercentage > 100) {
       throw new Error('Percentage must be between 0 and 100');
@@ -785,10 +929,10 @@ export class MailerClient {
     });
 
     const transaction = new Transaction().add(instruction);
-    return this.sendTransaction(transaction);
+    return this.sendTransaction(transaction, undefined, computeOptions);
   }
 
-  async clearCustomFeePercentage(account: string | PublicKey): Promise<string> {
+  async clearCustomFeePercentage(account: string | PublicKey, computeOptions?: ComputeUnitOptions): Promise<TransactionResult> {
     const accountKey = typeof account === 'string' ? new PublicKey(account) : account;
     const [discountPda] = PublicKey.findProgramAddressSync(
       [Buffer.from('discount'), accountKey.toBuffer()],
@@ -806,7 +950,7 @@ export class MailerClient {
     });
 
     const transaction = new Transaction().add(instruction);
-    return this.sendTransaction(transaction);
+    return this.sendTransaction(transaction, undefined, computeOptions);
   }
 
   async getCustomFeePercentage(account: string | PublicKey): Promise<number> {
@@ -945,7 +1089,7 @@ export class MailerClient {
     subject: string,
     body: string,
     options?: ConfirmOptions
-  ): Promise<string> {
+  , computeOptions?: ComputeUnitOptions): Promise<TransactionResult> {
     // Get associated token accounts
     const senderTokenAccount = getAssociatedTokenAddressSync(
       this.usdcMint,
@@ -993,7 +1137,7 @@ export class MailerClient {
     );
 
     const transaction = new Transaction().add(...instructions);
-    return this.sendTransaction(transaction, options);
+    return this.sendTransaction(transaction, options, computeOptions);
   }
 
   /**
@@ -1008,7 +1152,7 @@ export class MailerClient {
     toEmail: string,
     mailId: string,
     options?: ConfirmOptions
-  ): Promise<string> {
+  , computeOptions?: ComputeUnitOptions): Promise<TransactionResult> {
     // Get associated token accounts
     const senderTokenAccount = getAssociatedTokenAddressSync(
       this.usdcMint,
@@ -1056,7 +1200,7 @@ export class MailerClient {
     );
 
     const transaction = new Transaction().add(...instructions);
-    return this.sendTransaction(transaction, options);
+    return this.sendTransaction(transaction, options, computeOptions);
   }
 
   /**
@@ -1072,7 +1216,7 @@ export class MailerClient {
     mailId: string,
     revenueShareToReceiver: boolean = false,
     resolveSenderToName: boolean = false
-  ): Promise<string> {
+  , computeOptions?: ComputeUnitOptions): Promise<TransactionResult> {
     const recipientKey = typeof to === 'string' ? new PublicKey(to) : to;
     const [recipientClaimPda] = PublicKey.findProgramAddressSync(
       [Buffer.from('claim'), recipientKey.toBuffer()],
@@ -1125,7 +1269,7 @@ export class MailerClient {
 
     instructions.push(sendInstruction);
     const transaction = new Transaction().add(...instructions);
-    return this.sendTransaction(transaction);
+    return this.sendTransaction(transaction, undefined, computeOptions);
   }
 
   async sendThroughWebhook(
@@ -1133,7 +1277,7 @@ export class MailerClient {
     webhookId: string,
     revenueShareToReceiver: boolean = false,
     resolveSenderToName: boolean = false
-  ): Promise<string> {
+  , computeOptions?: ComputeUnitOptions): Promise<TransactionResult> {
     const recipientKey = typeof to === 'string' ? new PublicKey(to) : to;
     const [recipientClaimPda] = PublicKey.findProgramAddressSync(
       [Buffer.from('claim'), recipientKey.toBuffer()],
@@ -1186,7 +1330,7 @@ export class MailerClient {
 
     instructions.push(sendInstruction);
     const transaction = new Transaction().add(...instructions);
-    return this.sendTransaction(transaction);
+    return this.sendTransaction(transaction, undefined, computeOptions);
   }
 
   /**
@@ -1194,7 +1338,7 @@ export class MailerClient {
    * @param options Transaction confirm options
    * @returns Transaction signature
    */
-  async pause(options?: ConfirmOptions): Promise<string> {
+  async pause(options?: ConfirmOptions, computeOptions?: ComputeUnitOptions): Promise<TransactionResult> {
     const ownerTokenAccount = getAssociatedTokenAddressSync(
       this.usdcMint,
       this.wallet.publicKey
@@ -1218,7 +1362,7 @@ export class MailerClient {
     });
 
     const transaction = new Transaction().add(instruction);
-    return await this.sendTransaction(transaction, options);
+    return await this.sendTransaction(transaction, options, computeOptions);
   }
 
   /**
@@ -1226,7 +1370,7 @@ export class MailerClient {
    * @param options Transaction confirm options
    * @returns Transaction signature
    */
-  async unpause(options?: ConfirmOptions): Promise<string> {
+  async unpause(options?: ConfirmOptions, computeOptions?: ComputeUnitOptions): Promise<TransactionResult> {
     const instruction = new TransactionInstruction({
       keys: [
         { pubkey: this.wallet.publicKey, isSigner: true, isWritable: false },
@@ -1237,7 +1381,7 @@ export class MailerClient {
     });
 
     const transaction = new Transaction().add(instruction);
-    return await this.sendTransaction(transaction, options);
+    return await this.sendTransaction(transaction, options, computeOptions);
   }
 
   /**
@@ -1245,7 +1389,7 @@ export class MailerClient {
    * @param options Transaction confirm options
    * @returns Transaction signature
    */
-  async emergencyUnpause(options?: ConfirmOptions): Promise<string> {
+  async emergencyUnpause(options?: ConfirmOptions, computeOptions?: ComputeUnitOptions): Promise<TransactionResult> {
     const instruction = new TransactionInstruction({
       keys: [
         { pubkey: this.wallet.publicKey, isSigner: true, isWritable: false },
@@ -1256,7 +1400,7 @@ export class MailerClient {
     });
 
     const transaction = new Transaction().add(instruction);
-    return await this.sendTransaction(transaction, options);
+    return await this.sendTransaction(transaction, options, computeOptions);
   }
 
   /**
@@ -1268,7 +1412,7 @@ export class MailerClient {
   async distributeClaimableFunds(
     recipient: string | PublicKey,
     options?: ConfirmOptions
-  ): Promise<string> {
+  , computeOptions?: ComputeUnitOptions): Promise<TransactionResult> {
     const recipientKey = typeof recipient === 'string' ? new PublicKey(recipient) : recipient;
 
     const [recipientClaimPda] = PublicKey.findProgramAddressSync(
@@ -1305,7 +1449,7 @@ export class MailerClient {
     });
 
     const transaction = new Transaction().add(instruction);
-    return await this.sendTransaction(transaction, options);
+    return await this.sendTransaction(transaction, options, computeOptions);
   }
 
   /**
@@ -1344,15 +1488,22 @@ export class MailerClient {
    */
   private async sendTransaction(
     transaction: Transaction,
-    options?: Optional<ConfirmOptions>
-  ): Promise<string> {
+    options?: Optional<ConfirmOptions>,
+    computeOptions?: ComputeUnitOptions
+  ): Promise<TransactionResult> {
+    // Optimize compute units if requested
+    const { transaction: optimizedTx, simulatedUnits } = await this.optimizeComputeUnits(
+      transaction,
+      computeOptions
+    );
+
     // Get recent blockhash
     const { blockhash } = await this.connection.getLatestBlockhash();
-    transaction.recentBlockhash = blockhash;
-    transaction.feePayer = this.wallet.publicKey;
+    optimizedTx.recentBlockhash = blockhash;
+    optimizedTx.feePayer = this.wallet.publicKey;
 
     // Sign transaction
-    const signedTx = await this.wallet.signTransaction(transaction);
+    const signedTx = await this.wallet.signTransaction(optimizedTx);
 
     // Send and confirm
     const signature = await this.connection.sendRawTransaction(
@@ -1363,7 +1514,12 @@ export class MailerClient {
       options?.commitment || 'confirmed'
     );
 
-    return signature;
+    return {
+      signature,
+      simulatedUnits,
+      computeUnitLimit: computeOptions?.computeUnitLimit,
+      computeUnitPrice: computeOptions?.computeUnitPrice,
+    };
   }
 
   /**
