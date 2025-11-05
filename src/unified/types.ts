@@ -6,6 +6,15 @@ import {
   MailboxDelegationResponse,
   Optional,
 } from '@sudobility/types';
+import type { WalletClient, PublicClient } from 'viem';
+
+// For Solana, we'll use a minimal wallet interface matching what's needed
+export interface SolanaWalletInterface {
+  publicKey?: { toString(): string } | null;
+  signTransaction<T extends { serialize(): Buffer }>(transaction: T): Promise<T>;
+  signAllTransactions?<T extends { serialize(): Buffer }>(transactions: T[]): Promise<T[]>;
+  connected?: boolean;
+}
 
 export interface UnifiedTransaction {
   hash: string;
@@ -15,12 +24,10 @@ export interface UnifiedTransaction {
   timestamp?: Optional<number>;
 }
 
-export interface UnifiedWallet {
-  address: string;
-  chainType: ChainType;
-  signTransaction: (tx: unknown) => Promise<unknown>;
-  publicKey?: Optional<string>; // For Solana wallets
-}
+// Standard wallet types from ecosystem libraries
+export type EVMWalletClient = WalletClient;
+export type EVMPublicClient = PublicClient;
+export type SolanaWalletAdapter = SolanaWalletInterface;
 
 export interface ChainConfig {
   evm?: Optional<EVMConfig>;

@@ -130,7 +130,8 @@
       "Bash(SEPOLIA_RPC_URL=\"https://ethereum-sepolia-rpc.publicnode.com\" CONTRACT_ADDRESS=0x8de9c081a31cbb14a5974b6b4a04aa8502a796f7 npx hardhat run:*)",
       "WebFetch(domain:sepolia.etherscan.io)",
       "Bash(awk:*)",
-      "Bash(sh -s -- -y)"
+      "Bash(sh -s -- -y)",
+      "Bash(bash:*)"
     ],
     "deny": [],
     "defaultMode": "acceptEdits"

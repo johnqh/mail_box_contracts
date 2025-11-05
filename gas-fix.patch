@@ -1,0 +1,38 @@
+--- src/evm/mailer-client.ts.bak	2025-01-01 00:00:00.000000000 +0000
++++ src/evm/mailer-client.ts	2025-01-01 00:00:00.000000000 +0000
+@@ -292,11 +292,27 @@
+     })) as bigint;
+   }
+
+   async delegateTo(
+     delegate: Address | string,
+     walletClient: WalletClient,
+     account: Account | Address
+   ): Promise<Hash> {
++    // Estimate gas first
++    let estimatedGas: bigint | undefined;
++    try {
++      estimatedGas = await this.publicClient.estimateContractGas({
++        address: this.contractAddress,
++        abi: MAILER_ABI,
++        functionName: 'delegateTo',
++        args: [normalizeAddress(delegate)],
++        account,
++      });
++      // Add 20% buffer for safety
++      estimatedGas = (estimatedGas * 120n) / 100n;
++    } catch (error) {
++      console.warn('Gas estimation failed for delegateTo, proceeding without explicit gas limit:', error);
++      // Let viem handle gas estimation
++    }
++
+     return walletClient.writeContract({
+       address: this.contractAddress,
+       abi: MAILER_ABI,
+@@ -304,6 +320,7 @@
+       args: [normalizeAddress(delegate)],
+       account,
+       chain: walletClient.chain,
++      ...(estimatedGas && { gas: estimatedGas }),
+     });
+   }

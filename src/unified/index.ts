@@ -3,7 +3,9 @@ export { OnchainMailerClient } from './onchain-mailer-client.js';
 export { WalletDetector } from './wallet-detector.js';
 export type {
   UnifiedTransaction,
-  UnifiedWallet,
+  EVMWalletClient,
+  EVMPublicClient,
+  SolanaWalletAdapter,
   ChainConfig,
   EVMConfig,
   SolanaConfig,

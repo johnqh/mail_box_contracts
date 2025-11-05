@@ -208,6 +208,7 @@
     "@nomicfoundation/hardhat-verify": "^2.0.0",
     "@nomicfoundation/hardhat-viem": "^2.0.0",
     "@solana/spl-token": "^0.4.14",
+    "@solana/wallet-adapter-base": "^0.9.27",
     "@solana/web3.js": "^1.98.4",
     "@tanstack/react-query": "^5.90.1",
     "@typechain/hardhat": "^9.1.0",
@@ -228,8 +229,8 @@
     "react": "^19.0.0",
     "ts-mocha": "^11.1.0",
     "ts-node": "^10.9.2",
-    "typescript": "^5.9.3",
     "typechain": "^8.3.2",
+    "typescript": "^5.9.3",
     "viem": "^2.38.4"
   },
   "dependencies": {
