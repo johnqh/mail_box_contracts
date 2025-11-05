@@ -11,5 +11,8 @@ export type {
   SolanaConfig,
   MessageResult,
   DomainResult,
-  DelegationResult
+  DelegationResult,
+  Wallet,
+  EVMWallet,
+  SolanaWallet
 } from './types.js';
