@@ -1,6 +1,6 @@
 {
   "name": "@sudobility/contracts",
-  "version": "0.14.0",
+  "version": "0.15.1",
   "type": "module",
   "main": "dist/unified-esm/src/unified/index.js",
   "module": "dist/unified-esm/src/unified/index.js",
@@ -74,8 +74,8 @@
     "ai:dev": "echo '🚀 AI Development Helper Commands:' && echo '• npm run ai:status    - Check project health' && echo '• npm run ai:build     - Clean build everything' && echo '• npm run ai:test      - Run all 116 tests' && echo '• npm run ai:check     - TypeScript + ESLint validation' && echo '• npm run ai:examples  - Test all examples compile' && echo '• npm run ai:docs      - Show AI documentation files' && npm run ai:status",
     "ai:examples": "echo '📋 Testing AI Examples Compilation...' && npx tsc --noEmit --skipLibCheck examples/solana-usage.ts && npx tsc --noEmit --skipLibCheck examples/unified-usage.ts && echo '✅ Solana and Unified examples compile successfully (EVM example temporarily disabled due to viem v2.37.7 compatibility)'",
     "ai:docs": "echo '📚 AI Documentation Files:' && echo '• README.md - Main project documentation' && echo '• CLAUDE.md - AI assistant development guide' && echo '• contracts/Mailer.sol - Single contract with all functionality' && echo '• programs/mailer/ - Single Solana program' && echo '• src/unified/ - Cross-chain client library' && echo '• test/ - 116 comprehensive tests'",
-    "lint": "eslint --ext .ts,.js .",
-    "lint:fix": "eslint --ext .ts,.js . --fix",
+    "lint": "eslint --ext .ts,.js . --ignore-pattern 'examples/**'",
+    "lint:fix": "eslint --ext .ts,.js . --ignore-pattern 'examples/**' --fix",
     "typecheck": "tsc --noEmit",
     "format": "prettier --write \"**/*.{ts,js,json,md}\"",
     "format:check": "prettier --check \"**/*.{ts,js,json,md}\"",

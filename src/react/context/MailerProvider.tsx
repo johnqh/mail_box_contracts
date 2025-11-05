@@ -1,12 +1,19 @@
 import React, { createContext, useContext, ReactNode } from 'react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { OnchainMailerClient } from '../../unified/onchain-mailer-client';
-import type { ChainConfig } from '../../unified/types';
+import type { ChainConfig, ChainInfo } from '../../unified/types';
+import type { Wallet } from '../../unified/types';
 
 /**
- * Context for OnchainMailerClient
+ * Context for Mailer client and configuration
  */
-const MailerClientContext = createContext<OnchainMailerClient | null>(null);
+interface MailerContextValue {
+  client: OnchainMailerClient;
+  wallet: Wallet;
+  chainInfo: ChainInfo;
+}
+
+const MailerClientContext = createContext<MailerContextValue | null>(null);
 
 /**
  * Props for MailerProvider
@@ -15,10 +22,9 @@ export interface MailerProviderProps {
   /** Child components */
   children: ReactNode;
   /** Wallet instance (EVM or Solana) */
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  wallet: any;
-  /** Chain configuration */
-  config: ChainConfig;
+  wallet: Wallet;
+  /** Chain information */
+  chainInfo: ChainInfo;
   /** Optional React Query client (creates default if not provided) */
   queryClient?: QueryClient;
 }
@@ -49,22 +55,14 @@ const defaultQueryClient = new QueryClient({
  * @example
  * ```tsx
  * import { MailerProvider } from '@johnqh/mail_box_contracts/react';
+ * import { getChainInfo } from '@sudobility/configs';
  *
  * function App() {
  *   const wallet = useWallet(); // Your wallet hook
- *   const config = {
- *     evm: {
- *       rpc: 'https://eth-mainnet.g.alchemy.com/v2/YOUR-KEY',
- *       chainId: 1,
- *       contracts: {
- *         mailer: '0x123...',
- *         usdc: '0x456...'
- *       }
- *     }
- *   };
+ *   const chainInfo = getChainInfo('ethereum'); // Get chain configuration
  *
  *   return (
- *     <MailerProvider wallet={wallet} config={config}>
+ *     <MailerProvider wallet={wallet} chainInfo={chainInfo}>
  *       <YourApp />
  *     </MailerProvider>
  *   );
@@ -87,7 +85,7 @@ const defaultQueryClient = new QueryClient({
  *   return (
  *     <MailerProvider
  *       wallet={wallet}
- *       config={config}
+ *       chainInfo={chainInfo}
  *       queryClient={customQueryClient}
  *     >
  *       <YourApp />
@@ -96,18 +94,24 @@ const defaultQueryClient = new QueryClient({
  * }
  * ```
  */
-export function MailerProvider({ children, wallet, config, queryClient }: MailerProviderProps) {
-  // Create OnchainMailerClient instance
+export function MailerProvider({ children, wallet, chainInfo, queryClient }: MailerProviderProps) {
+  // Create OnchainMailerClient instance (stateless, no constructor params)
   const client = React.useMemo(
-    () => new OnchainMailerClient(wallet, config),
-    [wallet, config]
+    () => new OnchainMailerClient(),
+    []
+  );
+
+  // Create context value with client, wallet, and chainInfo
+  const contextValue = React.useMemo(
+    () => ({ client, wallet, chainInfo }),
+    [client, wallet, chainInfo]
   );
 
   const qc = queryClient || defaultQueryClient;
 
   return (
     <QueryClientProvider client={qc}>
-      <MailerClientContext.Provider value={client}>
+      <MailerClientContext.Provider value={contextValue}>
         {children}
       </MailerClientContext.Provider>
     </QueryClientProvider>
@@ -115,7 +119,7 @@ export function MailerProvider({ children, wallet, config, queryClient }: Mailer
 }
 
 /**
- * Hook to access the OnchainMailerClient instance
+ * Hook to access the Mailer context
  *
  * Must be used within a MailerProvider component.
  *
@@ -124,11 +128,11 @@ export function MailerProvider({ children, wallet, config, queryClient }: Mailer
  * @example
  * ```tsx
  * function MyComponent() {
- *   const client = useMailerClient();
+ *   const { client, wallet, chainInfo } = useMailerContext();
  *
  *   const handleDirectCall = async () => {
  *     // Direct API call (not recommended, use hooks instead)
- *     const fee = await client.getSendFee();
+ *     const fee = await client.getSendFee(wallet, chainInfo);
  *     console.log('Fee:', fee);
  *   };
  *
@@ -136,13 +140,22 @@ export function MailerProvider({ children, wallet, config, queryClient }: Mailer
  * }
  * ```
  */
-export function useMailerClient(): OnchainMailerClient {
-  const client = useContext(MailerClientContext);
+export function useMailerContext(): MailerContextValue {
+  const context = useContext(MailerClientContext);
 
-  if (!client) {
-    throw new Error('useMailerClient must be used within a MailerProvider');
+  if (!context) {
+    throw new Error('useMailerContext must be used within a MailerProvider');
   }
 
+  return context;
+}
+
+/**
+ * Hook to access the OnchainMailerClient instance
+ * @deprecated Use useMailerContext() instead to get client, wallet, and chainInfo
+ */
+export function useMailerClient(): OnchainMailerClient {
+  const { client } = useMailerContext();
   return client;
 }
 

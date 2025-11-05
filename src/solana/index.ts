@@ -1,7 +1,10 @@
+// Export stateless client and types
 export {
-  MailerClient,
+  SolanaMailerClient,
+  type SolanaWallet,
   type Wallet,
   type ComputeUnitOptions,
   type TransactionResult
-} from './mailer-client.js';
+} from './solana-mailer-client.js';
+
 export * from './types.js';

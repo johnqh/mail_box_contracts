@@ -1,193 +1,1119 @@
 /* eslint-disable @typescript-eslint/ban-ts-comment */
 // @ts-nocheck - Suppress false TypeScript errors with ESNext modules accessing class properties
 import { ChainType } from '@sudobility/types';
+import { ChainInfo } from '@sudobility/configs';
+import type {
+  EVMWallet,
+} from '../evm/evm-mailer-client.js';
+import type {
+  SolanaWallet,
+} from '../solana/solana-mailer-client.js';
+
 import {
-  ChainConfig,
   MessageResult,
   DomainResult,
   DelegationResult,
   UnifiedTransaction,
-  EVMWalletClient,
-  EVMPublicClient
+  Wallet
 } from './types.js';
-import type { Address } from 'viem';
 
 /**
- * OnchainMailerClient v2 - Refactored to use standard wallet libraries
+ * OnchainMailerClient - Stateless multi-chain messaging client
  *
- * This version removes the UnifiedWallet abstraction and instead accepts
- * standard wallet clients from wagmi (EVM) or wallet-adapter (Solana).
+ * This version uses stateless EVM and Solana clients underneath.
+ * All wallet connections and chain information are passed as parameters to each method.
  *
- * @example EVM Usage with wagmi
+ * @example EVM Usage
  * ```typescript
  * import { createWalletClient, createPublicClient, http } from 'viem';
- * import { mainnet } from 'viem/chains';
+ * import { RpcHelpers } from '@sudobility/configs';
+ * import { Chain } from '@sudobility/types';
  *
+ * const chainInfo = RpcHelpers.getChainInfo(Chain.ETH_MAINNET);
  * const walletClient = createWalletClient({
  *   chain: mainnet,
  *   transport: http()
  * });
- * const publicClient = createPublicClient({
- *   chain: mainnet,
- *   transport: http()
- * });
  *
- * const client = OnchainMailerClient.forEVM(
- *   walletClient,
- *   publicClient,
- *   '0xMailerContractAddress',
- *   '0xUSDCAddress'
+ * const client = new OnchainMailerClient();
+ * await client.sendMessage(
+ *   'Subject',
+ *   'Body',
+ *   { walletClient },
+ *   chainInfo,
+ *   { priority: true }
  * );
  * ```
  *
- * @example Solana Usage with wallet-adapter
+ * @example Solana Usage
  * ```typescript
  * import { useWallet } from '@solana/wallet-adapter-react';
  * import { Connection } from '@solana/web3.js';
+ * import { RpcHelpers } from '@sudobility/configs';
+ * import { Chain } from '@sudobility/types';
  *
+ * const chainInfo = RpcHelpers.getChainInfo(Chain.SOLANA_MAINNET);
  * const wallet = useWallet();
- * const connection = new Connection('https://api.mainnet-beta.solana.com');
  *
- * const client = OnchainMailerClient.forSolana(
- *   wallet,
- *   connection,
- *   'MailerProgramId',
- *   'USDCMintAddress'
+ * const client = new OnchainMailerClient();
+ * await client.sendMessage(
+ *   'Subject',
+ *   'Body',
+ *   { wallet },
+ *   chainInfo,
+ *   { priority: true }
  * );
  * ```
  */
 export class OnchainMailerClient {
-  protected chainType: ChainType;
-
-  // EVM-specific properties
-  protected evmWalletClient?: EVMWalletClient;
-  protected evmPublicClient?: EVMPublicClient;
-  protected evmContractAddress?: Address;
-  protected evmUsdcAddress?: Address;
-
-  // Solana-specific properties
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  protected solanaWallet?: any; // Wallet adapter interface
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  protected solanaConnection?: any; // Connection
-  protected solanaProgramId?: string;
-  protected solanaUsdcMint?: string;
-
   // Cache for dynamic imports
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  protected static evmModules: any = null;
+  private static evmClient: any = null;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  protected static solanaModules: any = null;
-
+  private static solanaClient: any = null;
 
   /**
-   * Create an OnchainMailerClient for EVM chains using wagmi clients
-   *
-   * @param walletClient - wagmi WalletClient for signing transactions
-   * @param publicClient - wagmi PublicClient for reading chain data
-   * @param mailerAddress - Deployed Mailer contract address
-   * @param usdcAddress - USDC token contract address
-   * @returns Configured OnchainMailerClient for EVM
+   * Create a new stateless OnchainMailerClient
+   * No configuration needed in constructor
    */
-  static forEVM(
-    walletClient: EVMWalletClient,
-    publicClient: EVMPublicClient,
-    mailerAddress: string,
-    usdcAddress?: string
-  ): OnchainMailerClient {
-    const client = new OnchainMailerClient({}, { evm: undefined, solana: undefined });
-    client.chainType = ChainType.EVM;
-    client.evmWalletClient = walletClient;
-    client.evmPublicClient = publicClient;
-    client.evmContractAddress = mailerAddress as Address;
-    client.evmUsdcAddress = usdcAddress as Address;
-    return client;
+  constructor() {
+    // Stateless - no initialization needed
+  }
+
+  // Performance optimization: cache client imports
+  private async getEVMClient() {
+    if (!OnchainMailerClient.evmClient) {
+      const { EVMMailerClient } = await import('../evm/evm-mailer-client.js');
+      OnchainMailerClient.evmClient = new EVMMailerClient();
+    }
+    return OnchainMailerClient.evmClient;
+  }
+
+  private async getSolanaClient() {
+    if (!OnchainMailerClient.solanaClient) {
+      const { SolanaMailerClient } = await import('../solana/solana-mailer-client.js');
+      OnchainMailerClient.solanaClient = new SolanaMailerClient();
+    }
+    return OnchainMailerClient.solanaClient;
   }
 
   /**
-   * Create an OnchainMailerClient for Solana using wallet-adapter
-   *
-   * @param wallet - Solana wallet adapter
-   * @param connection - Solana connection
-   * @param programId - Deployed Mailer program ID
-   * @param usdcMint - USDC mint address
-   * @returns Configured OnchainMailerClient for Solana
+   * Send a message on the blockchain
+   * @param subject - Message subject (1-200 characters)
+   * @param body - Message body (1-10000 characters)
+   * @param wallet - Wallet connection (EVM or Solana)
+   * @param chainInfo - Chain information including RPC endpoints and contract addresses
+   * @param options - Optional parameters
+   * @returns Transaction result
    */
-  static forSolana(
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    wallet: any, // Wallet adapter interface
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    connection: any, // Connection
-    programId: string,
-    usdcMint: string
-  ): OnchainMailerClient {
-    const client = new OnchainMailerClient({}, { evm: undefined, solana: undefined });
-    client.chainType = ChainType.SOLANA;
-    client.solanaWallet = wallet;
-    client.solanaConnection = connection;
-    client.solanaProgramId = programId;
-    client.solanaUsdcMint = usdcMint;
-    return client;
-  }
+  async sendMessage(
+    connectedWallet: Wallet,
+    chainInfo: ChainInfo,
+    subject: string,
+    body: string,
+    options?: {
+      priority?: boolean;
+      to?: string;
+      resolveSenderToName?: boolean;
+      gasOptions?: any; // Gas options for EVM
+      computeOptions?: any; // Compute options for Solana
+    }
+  ): Promise<MessageResult> {
+    // Validate message
+    if (!subject || subject.length > 200) {
+      throw new Error('Subject must be 1-200 characters');
+    }
+    if (!body || body.length > 10000) {
+      throw new Error('Body must be 1-10000 characters');
+    }
 
-  /**
-   * Create an OnchainMailerClient from a generic config (backward compatibility)
-   * This constructor is provided for backward compatibility with React provider
-   */
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  constructor(wallet: any, config: ChainConfig) {
-    // Simple chain detection based on wallet properties
-    const hasEthereumProperties = wallet && (wallet.address || wallet.request || wallet.selectedAddress);
-    const hasSolanaProperties = wallet && wallet.publicKey && typeof wallet.signTransaction === 'function';
+    // Route to appropriate implementation based on chain type
+    if (chainInfo.chainType === ChainType.EVM) {
+      const evmClient = await this.getEVMClient();
+      const evmWallet = connectedWallet as EVMWallet;
+      const [account] = await evmWallet.walletClient.getAddresses();
 
-    if (hasEthereumProperties) {
-      this.chainType = ChainType.EVM;
-      if (config.evm) {
-        // Store config for lazy initialization
-        this.evmContractAddress = config.evm.contracts.mailer as Address;
-        this.evmUsdcAddress = config.evm.contracts.usdc as Address;
-        // Wallet and public clients will be created on first use
+      const to = options?.to || account;
+      const priority = options?.priority ?? false;
+      const resolveSenderToName = options?.resolveSenderToName ?? false;
 
-        // Store raw wallet for backward compatibility
-        // @ts-ignore
-        this._rawEvmWallet = wallet;
-      } else {
-        throw new Error('EVM configuration required for EVM wallet');
-      }
-    } else if (hasSolanaProperties) {
-      this.chainType = ChainType.SOLANA;
-      if (config.solana) {
-        this.solanaWallet = wallet;
-        // Connection will be created on first use
-        this.solanaProgramId = config.solana.programs.mailer;
-        this.solanaUsdcMint = config.solana.usdcMint;
-      } else {
-        throw new Error('Solana configuration required for Solana wallet');
-      }
+      const result = await evmClient.send(
+        evmWallet,
+        chainInfo,
+        to,
+        subject,
+        body,
+        account, // payer
+        priority, // revenueShareToReceiver
+        resolveSenderToName,
+        options?.gasOptions
+      );
+
+      return {
+        transactionHash: result.hash,
+        chainType: ChainType.EVM,
+        fee: BigInt(priority ? '100000' : '10000'),
+        gasUsed: result.gasUsed,
+        isPriority: priority,
+        success: true
+      };
+    } else if (chainInfo.chainType === ChainType.SOLANA) {
+      const solanaClient = await this.getSolanaClient();
+      const solanaWallet = connectedWallet as SolanaWallet;
+
+      const to = options?.to || solanaWallet.wallet.publicKey.toBase58();
+      const priority = options?.priority ?? false;
+
+      const result = await solanaClient.send(
+        solanaWallet,
+        chainInfo,
+        to,
+        subject,
+        body,
+        priority, // revenueShareToReceiver
+        options?.computeOptions
+      );
+
+      return {
+        transactionHash: result.transactionHash,
+        chainType: ChainType.SOLANA,
+        fee: BigInt(priority ? '100000' : '10000'),
+        isPriority: priority,
+        success: true
+      };
     } else {
-      throw new Error('Unable to detect wallet type from provided wallet object');
+      throw new Error(`Unsupported chain type: ${chainInfo.chainType}`);
     }
   }
 
+  /**
+   * Send a prepared message
+   */
+  async sendPrepared(
+    connectedWallet: Wallet,
+    chainInfo: ChainInfo,
+    to: string,
+    mailId: string,
+    options?: {
+      priority?: boolean;
+      resolveSenderToName?: boolean;
+      gasOptions?: any;
+      computeOptions?: any;
+    }
+  ): Promise<MessageResult> {
+    if (chainInfo.chainType === ChainType.EVM) {
+      const evmClient = await this.getEVMClient();
+      const evmWallet = connectedWallet as EVMWallet;
+      const [account] = await evmWallet.walletClient.getAddresses();
+
+      const priority = options?.priority ?? false;
+      const resolveSenderToName = options?.resolveSenderToName ?? false;
+
+      const result = await evmClient.sendPrepared(
+        evmWallet,
+        chainInfo,
+        to,
+        mailId,
+        account, // payer
+        priority, // revenueShareToReceiver
+        resolveSenderToName,
+        options?.gasOptions
+      );
+
+      return {
+        transactionHash: result.hash,
+        chainType: ChainType.EVM,
+        fee: BigInt(priority ? '100000' : '10000'),
+        gasUsed: result.gasUsed,
+        isPriority: priority,
+        success: true
+      };
+    } else if (chainInfo.chainType === ChainType.SOLANA) {
+      const solanaClient = await this.getSolanaClient();
+      const solanaWallet = connectedWallet as SolanaWallet;
+      const priority = options?.priority ?? false;
+
+      const result = await solanaClient.sendPrepared(
+        solanaWallet,
+        chainInfo,
+        to,
+        mailId,
+        priority,
+        options?.computeOptions
+      );
+
+      return {
+        transactionHash: result.transactionHash,
+        chainType: ChainType.SOLANA,
+        fee: BigInt(priority ? '100000' : '10000'),
+        isPriority: priority,
+        success: true
+      };
+    } else {
+      throw new Error(`Unsupported chain type: ${chainInfo.chainType}`);
+    }
+  }
 
   /**
-   * Send a message using the appropriate chain implementation
-   * Note: For backward compatibility, 'to' defaults to sender's own address
+   * Send through webhook
    */
-  async sendMessage(
-    subject: string,
-    body: string,
-    priority: boolean = false,
-    resolveSenderToName: boolean = false,
-    to?: string
+  async sendThroughWebhook(
+    connectedWallet: Wallet,
+    chainInfo: ChainInfo,
+    to: string,
+    webhookId: string,
+    options?: {
+      priority?: boolean;
+      gasOptions?: any;
+      computeOptions?: any;
+    }
   ): Promise<MessageResult> {
-    // For backward compatibility, default to sending to self
-    const recipient = to || await this.getWalletAddressAsync();
+    if (chainInfo.chainType === ChainType.EVM) {
+      const evmClient = await this.getEVMClient();
+      const evmWallet = connectedWallet as EVMWallet;
+      const [account] = await evmWallet.walletClient.getAddresses();
+      const priority = options?.priority ?? false;
 
-    if (this.chainType === ChainType.EVM) {
-      return this.sendEVMMessage(recipient, subject, body, priority, resolveSenderToName);
+      const result = await evmClient.sendThroughWebhook(
+        to,
+        subject,
+        body,
+        webhookId,
+        account, // payer
+        priority,
+        evmWallet,
+        chainInfo,
+        options?.gasOptions
+      );
+
+      return {
+        transactionHash: result.hash,
+        chainType: ChainType.EVM,
+        fee: BigInt(priority ? '100000' : '10000'),
+        gasUsed: result.gasUsed,
+        isPriority: priority,
+        success: true
+      };
+    } else if (chainInfo.chainType === ChainType.SOLANA) {
+      const solanaClient = await this.getSolanaClient();
+      const solanaWallet = connectedWallet as SolanaWallet;
+      const priority = options?.priority ?? false;
+
+      const result = await solanaClient.sendThroughWebhook(
+        solanaWallet,
+        chainInfo,
+        to,
+        webhookId,
+        priority,
+        options?.computeOptions
+      );
+
+      return {
+        transactionHash: result.transactionHash,
+        chainType: ChainType.SOLANA,
+        fee: BigInt(priority ? '100000' : '10000'),
+        isPriority: priority,
+        success: true
+      };
     } else {
-      return this.sendSolanaMessage(recipient, subject, body, priority, resolveSenderToName);
+      throw new Error(`Unsupported chain type: ${chainInfo.chainType}`);
+    }
+  }
+
+  /**
+   * Delegate to another address
+   * @param delegate - Address to delegate to
+   * @param wallet - Wallet connection
+   * @param chainInfo - Chain information
+   * @returns Transaction result
+   */
+  async delegateTo(
+    connectedWallet: Wallet,
+    chainInfo: ChainInfo,
+    delegate: string,
+    options?: {
+      gasOptions?: any;
+      computeOptions?: any;
+    }
+  ): Promise<DelegationResult> {
+    if (chainInfo.chainType === ChainType.EVM) {
+      const evmClient = await this.getEVMClient();
+      const result = await evmClient.delegateTo(
+        delegate,
+        connectedWallet as EVMWallet,
+        chainInfo,
+        options?.gasOptions
+      );
+
+      return {
+        transactionHash: result.hash,
+        chainType: ChainType.EVM,
+        delegate,
+        success: true
+      };
+    } else if (chainInfo.chainType === ChainType.SOLANA) {
+      const solanaClient = await this.getSolanaClient();
+      const result = await solanaClient.delegateTo(
+        delegate,
+        connectedWallet as SolanaWallet,
+        chainInfo,
+        options?.computeOptions
+      );
+
+      return {
+        transactionHash: result.transactionHash,
+        chainType: ChainType.SOLANA,
+        delegate,
+        success: true
+      };
+    } else {
+      throw new Error(`Unsupported chain type: ${chainInfo.chainType}`);
+    }
+  }
+
+  /**
+   * Reject delegation
+   */
+  async rejectDelegation(
+    connectedWallet: Wallet,
+    chainInfo: ChainInfo,
+    delegatingAddress: string,
+    options?: {
+      gasOptions?: any;
+      computeOptions?: any;
+    }
+  ): Promise<UnifiedTransaction> {
+    if (chainInfo.chainType === ChainType.EVM) {
+      const evmClient = await this.getEVMClient();
+      const result = await evmClient.rejectDelegation(
+        connectedWallet as EVMWallet,
+        chainInfo,
+        delegatingAddress,
+        options?.gasOptions
+      );
+
+      return {
+        hash: result.hash,
+        chainType: ChainType.EVM
+      };
+    } else if (chainInfo.chainType === ChainType.SOLANA) {
+      const solanaClient = await this.getSolanaClient();
+      const result = await solanaClient.rejectDelegation(
+        connectedWallet as SolanaWallet,
+        chainInfo,
+        delegatingAddress,
+        options?.computeOptions
+      );
+
+      return {
+        hash: result.transactionHash,
+        chainType: ChainType.SOLANA
+      };
+    } else {
+      throw new Error(`Unsupported chain type: ${chainInfo.chainType}`);
+    }
+  }
+
+  /**
+   * Claim revenue share
+   * @param wallet - Wallet connection
+   * @param chainInfo - Chain information
+   * @returns Transaction result
+   */
+  async claimRevenue(
+    connectedWallet: Wallet,
+    chainInfo: ChainInfo,
+    options?: {
+      gasOptions?: any;
+      computeOptions?: any;
+    }
+  ): Promise<UnifiedTransaction> {
+    if (chainInfo.chainType === ChainType.EVM) {
+      const evmClient = await this.getEVMClient();
+      const result = await evmClient.claimRecipientShare(
+        connectedWallet as EVMWallet,
+        chainInfo,
+        options?.gasOptions
+      );
+
+      return {
+        hash: result.hash,
+        chainType: ChainType.EVM
+      };
+    } else if (chainInfo.chainType === ChainType.SOLANA) {
+      const solanaClient = await this.getSolanaClient();
+      const result = await solanaClient.claimRecipientShare(
+        connectedWallet as SolanaWallet,
+        chainInfo,
+        options?.computeOptions
+      );
+
+      return {
+        hash: result.transactionHash,
+        chainType: ChainType.SOLANA
+      };
+    } else {
+      throw new Error(`Unsupported chain type: ${chainInfo.chainType}`);
+    }
+  }
+
+  /**
+   * Claim owner share (owner only)
+   */
+  async claimOwnerShare(
+    connectedWallet: Wallet,
+    chainInfo: ChainInfo,
+    options?: {
+      gasOptions?: any;
+      computeOptions?: any;
+    }
+  ): Promise<UnifiedTransaction> {
+    if (chainInfo.chainType === ChainType.EVM) {
+      const evmClient = await this.getEVMClient();
+      const result = await evmClient.claimOwnerShare(
+        connectedWallet as EVMWallet,
+        chainInfo,
+        options?.gasOptions
+      );
+
+      return {
+        hash: result.hash,
+        chainType: ChainType.EVM
+      };
+    } else if (chainInfo.chainType === ChainType.SOLANA) {
+      const solanaClient = await this.getSolanaClient();
+      const result = await solanaClient.claimOwnerShare(
+        connectedWallet as SolanaWallet,
+        chainInfo,
+        options?.computeOptions
+      );
+
+      return {
+        hash: result.transactionHash,
+        chainType: ChainType.SOLANA
+      };
+    } else {
+      throw new Error(`Unsupported chain type: ${chainInfo.chainType}`);
+    }
+  }
+
+  /**
+   * Claim expired shares (owner only)
+   */
+  async claimExpiredShares(
+    connectedWallet: Wallet,
+    chainInfo: ChainInfo,
+    recipient: string,
+    options?: {
+      gasOptions?: any;
+      computeOptions?: any;
+    }
+  ): Promise<UnifiedTransaction> {
+    if (chainInfo.chainType === ChainType.EVM) {
+      const evmClient = await this.getEVMClient();
+      const result = await evmClient.claimExpiredShares(
+        recipient,
+        connectedWallet as EVMWallet,
+        chainInfo,
+        options?.gasOptions
+      );
+
+      return {
+        hash: result.hash,
+        chainType: ChainType.EVM
+      };
+    } else if (chainInfo.chainType === ChainType.SOLANA) {
+      const solanaClient = await this.getSolanaClient();
+      const result = await solanaClient.claimExpiredShares(
+        recipient,
+        connectedWallet as SolanaWallet,
+        chainInfo,
+        options?.computeOptions
+      );
+
+      return {
+        hash: result.transactionHash,
+        chainType: ChainType.SOLANA
+      };
+    } else {
+      throw new Error(`Unsupported chain type: ${chainInfo.chainType}`);
+    }
+  }
+
+  /**
+   * Set fees (owner only)
+   */
+  async setFees(
+    connectedWallet: Wallet,
+    chainInfo: ChainInfo,
+    sendFee: number | bigint,
+    delegationFee: number | bigint,
+    options?: {
+      gasOptions?: any;
+      computeOptions?: any;
+    }
+  ): Promise<UnifiedTransaction> {
+    if (chainInfo.chainType === ChainType.EVM) {
+      const evmClient = await this.getEVMClient();
+
+      // EVM client uses separate methods
+      await evmClient.setFee(
+        connectedWallet as EVMWallet,
+        chainInfo,
+        sendFee,
+        options?.gasOptions
+      );
+
+      const result2 = await evmClient.setDelegationFee(
+        connectedWallet as EVMWallet,
+        chainInfo,
+        delegationFee,
+        options?.gasOptions
+      );
+
+      return {
+        hash: result2.hash, // Return last transaction
+        chainType: ChainType.EVM
+      };
+    } else if (chainInfo.chainType === ChainType.SOLANA) {
+      const solanaClient = await this.getSolanaClient();
+      const result = await solanaClient.setFees(
+        connectedWallet as SolanaWallet,
+        chainInfo,
+        sendFee,
+        delegationFee,
+        options?.computeOptions
+      );
+
+      return {
+        hash: result.transactionHash,
+        chainType: ChainType.SOLANA
+      };
+    } else {
+      throw new Error(`Unsupported chain type: ${chainInfo.chainType}`);
+    }
+  }
+
+  /**
+   * Set custom fee percentage
+   */
+  async setCustomFeePercentage(
+    connectedWallet: Wallet,
+    chainInfo: ChainInfo,
+    target: string,
+    percentage: number,
+    options?: {
+      gasOptions?: any;
+      computeOptions?: any;
+    }
+  ): Promise<UnifiedTransaction> {
+    if (chainInfo.chainType === ChainType.EVM) {
+      const evmClient = await this.getEVMClient();
+      const result = await evmClient.setCustomFeePercentage(
+        connectedWallet as EVMWallet,
+        chainInfo,
+        target,
+        percentage,
+        options?.gasOptions
+      );
+
+      return {
+        hash: result.hash,
+        chainType: ChainType.EVM
+      };
+    } else if (chainInfo.chainType === ChainType.SOLANA) {
+      const solanaClient = await this.getSolanaClient();
+      const result = await solanaClient.setCustomFeePercentage(
+        connectedWallet as SolanaWallet,
+        chainInfo,
+        target,
+        percentage,
+        options?.computeOptions
+      );
+
+      return {
+        hash: result.transactionHash,
+        chainType: ChainType.SOLANA
+      };
+    } else {
+      throw new Error(`Unsupported chain type: ${chainInfo.chainType}`);
+    }
+  }
+
+  /**
+   * Clear custom fee percentage
+   */
+  async clearCustomFeePercentage(
+    connectedWallet: Wallet,
+    chainInfo: ChainInfo,
+    target: string,
+    options?: {
+      gasOptions?: any;
+      computeOptions?: any;
+    }
+  ): Promise<UnifiedTransaction> {
+    if (chainInfo.chainType === ChainType.EVM) {
+      const evmClient = await this.getEVMClient();
+      const result = await evmClient.clearCustomFeePercentage(
+        connectedWallet as EVMWallet,
+        chainInfo,
+        target,
+        options?.gasOptions
+      );
+
+      return {
+        hash: result.hash,
+        chainType: ChainType.EVM
+      };
+    } else if (chainInfo.chainType === ChainType.SOLANA) {
+      const solanaClient = await this.getSolanaClient();
+      const result = await solanaClient.clearCustomFeePercentage(
+        connectedWallet as SolanaWallet,
+        chainInfo,
+        target,
+        options?.computeOptions
+      );
+
+      return {
+        hash: result.transactionHash,
+        chainType: ChainType.SOLANA
+      };
+    } else {
+      throw new Error(`Unsupported chain type: ${chainInfo.chainType}`);
+    }
+  }
+
+  /**
+   * Pause the contract/program (owner only)
+   */
+  async pause(
+    connectedWallet: Wallet,
+    chainInfo: ChainInfo,
+    options?: {
+      gasOptions?: any;
+      computeOptions?: any;
+    }
+  ): Promise<UnifiedTransaction> {
+    if (chainInfo.chainType === ChainType.EVM) {
+      const evmClient = await this.getEVMClient();
+      const result = await evmClient.pause(
+        connectedWallet as EVMWallet,
+        chainInfo,
+        options?.gasOptions
+      );
+
+      return {
+        hash: result.hash,
+        chainType: ChainType.EVM
+      };
+    } else if (chainInfo.chainType === ChainType.SOLANA) {
+      const solanaClient = await this.getSolanaClient();
+      const result = await solanaClient.pause(
+        connectedWallet as SolanaWallet,
+        chainInfo,
+        options?.computeOptions
+      );
+
+      return {
+        hash: result.transactionHash,
+        chainType: ChainType.SOLANA
+      };
+    } else {
+      throw new Error(`Unsupported chain type: ${chainInfo.chainType}`);
+    }
+  }
+
+  /**
+   * Unpause the contract/program (owner only)
+   */
+  async unpause(
+    connectedWallet: Wallet,
+    chainInfo: ChainInfo,
+    options?: {
+      gasOptions?: any;
+      computeOptions?: any;
+    }
+  ): Promise<UnifiedTransaction> {
+    if (chainInfo.chainType === ChainType.EVM) {
+      const evmClient = await this.getEVMClient();
+      const result = await evmClient.unpause(
+        connectedWallet as EVMWallet,
+        chainInfo,
+        options?.gasOptions
+      );
+
+      return {
+        hash: result.hash,
+        chainType: ChainType.EVM
+      };
+    } else if (chainInfo.chainType === ChainType.SOLANA) {
+      const solanaClient = await this.getSolanaClient();
+      const result = await solanaClient.unpause(
+        connectedWallet as SolanaWallet,
+        chainInfo,
+        options?.computeOptions
+      );
+
+      return {
+        hash: result.transactionHash,
+        chainType: ChainType.SOLANA
+      };
+    } else {
+      throw new Error(`Unsupported chain type: ${chainInfo.chainType}`);
+    }
+  }
+
+  /**
+   * Emergency unpause (owner only)
+   */
+  async emergencyUnpause(
+    connectedWallet: Wallet,
+    chainInfo: ChainInfo,
+    options?: {
+      gasOptions?: any;
+      computeOptions?: any;
+    }
+  ): Promise<UnifiedTransaction> {
+    if (chainInfo.chainType === ChainType.EVM) {
+      const evmClient = await this.getEVMClient();
+      const result = await evmClient.emergencyUnpause(
+        connectedWallet as EVMWallet,
+        chainInfo,
+        options?.gasOptions
+      );
+
+      return {
+        hash: result.hash,
+        chainType: ChainType.EVM
+      };
+    } else if (chainInfo.chainType === ChainType.SOLANA) {
+      const solanaClient = await this.getSolanaClient();
+      const result = await solanaClient.emergencyUnpause(
+        connectedWallet as SolanaWallet,
+        chainInfo,
+        options?.computeOptions
+      );
+
+      return {
+        hash: result.transactionHash,
+        chainType: ChainType.SOLANA
+      };
+    } else {
+      throw new Error(`Unsupported chain type: ${chainInfo.chainType}`);
+    }
+  }
+
+  /**
+   * Distribute claimable funds when paused
+   * Note: EVM supports single recipient, Solana supports multiple
+   */
+  async distributeClaimableFunds(
+    connectedWallet: Wallet,
+    chainInfo: ChainInfo,
+    recipient: string | string[],
+    options?: {
+      gasOptions?: any;
+      computeOptions?: any;
+    }
+  ): Promise<UnifiedTransaction> {
+    if (chainInfo.chainType === ChainType.EVM) {
+      const evmClient = await this.getEVMClient();
+      // EVM only supports single recipient
+      const singleRecipient = Array.isArray(recipient) ? recipient[0] : recipient;
+      const result = await evmClient.distributeClaimableFunds(
+        connectedWallet as EVMWallet,
+        chainInfo,
+        singleRecipient,
+        options?.gasOptions
+      );
+
+      return {
+        hash: result.hash,
+        chainType: ChainType.EVM
+      };
+    } else if (chainInfo.chainType === ChainType.SOLANA) {
+      const solanaClient = await this.getSolanaClient();
+      // Solana supports multiple recipients
+      const recipients = Array.isArray(recipient) ? recipient : [recipient];
+      const result = await solanaClient.distributeClaimableFunds(
+        connectedWallet as SolanaWallet,
+        chainInfo,
+        recipients,
+        options?.computeOptions
+      );
+
+      return {
+        hash: result.transactionHash,
+        chainType: ChainType.SOLANA
+      };
+    } else {
+      throw new Error(`Unsupported chain type: ${chainInfo.chainType}`);
+    }
+  }
+
+  /**
+   * Set permission for a contract to use caller's USDC for sending messages
+   * Note: Only supported on EVM chains
+   */
+  async setPermission(
+    connectedWallet: Wallet,
+    chainInfo: ChainInfo,
+    contractAddress: string,
+    options?: {
+      gasOptions?: any;
+    }
+  ): Promise<UnifiedTransaction> {
+    if (chainInfo.chainType === ChainType.EVM) {
+      const evmClient = await this.getEVMClient();
+      const result = await evmClient.setPermission(
+        connectedWallet as EVMWallet,
+        chainInfo,
+        contractAddress,
+        options?.gasOptions
+      );
+
+      return {
+        hash: result.hash,
+        chainType: ChainType.EVM
+      };
+    } else if (chainInfo.chainType === ChainType.SOLANA) {
+      throw new Error('Permission system is not supported on Solana');
+    } else {
+      throw new Error(`Unsupported chain type: ${chainInfo.chainType}`);
+    }
+  }
+
+  /**
+   * Remove permission from a contract
+   * Note: Only supported on EVM chains
+   */
+  async removePermission(
+    connectedWallet: Wallet,
+    chainInfo: ChainInfo,
+    contractAddress: string,
+    options?: {
+      gasOptions?: any;
+    }
+  ): Promise<UnifiedTransaction> {
+    if (chainInfo.chainType === ChainType.EVM) {
+      const evmClient = await this.getEVMClient();
+      const result = await evmClient.removePermission(
+        connectedWallet as EVMWallet,
+        chainInfo,
+        contractAddress,
+        options?.gasOptions
+      );
+
+      return {
+        hash: result.hash,
+        chainType: ChainType.EVM
+      };
+    } else if (chainInfo.chainType === ChainType.SOLANA) {
+      throw new Error('Permission system is not supported on Solana');
+    } else {
+      throw new Error(`Unsupported chain type: ${chainInfo.chainType}`);
+    }
+  }
+
+  /**
+   * Check if permission exists for a contract/wallet pair
+   * Note: Only supported on EVM chains
+   */
+  async hasPermission(
+    chainInfo: ChainInfo,
+    contractAddress: string,
+    walletAddress: string,
+    publicClient?: PublicClient
+  ): Promise<boolean> {
+    if (chainInfo.chainType === ChainType.EVM) {
+      const evmClient = await this.getEVMClient();
+      return await evmClient.hasPermission(
+        chainInfo,
+        contractAddress,
+        walletAddress,
+        publicClient
+      );
+    } else if (chainInfo.chainType === ChainType.SOLANA) {
+      // Solana doesn't have permission system, always return false
+      return false;
+    } else {
+      throw new Error(`Unsupported chain type: ${chainInfo.chainType}`);
+    }
+  }
+
+  // ============= Read Methods =============
+
+  /**
+   * Get the send fee for messages
+   * @param chainInfo - Chain information with RPC endpoint
+   * @param publicClient - Optional public client for EVM (will create if not provided)
+   * @param connection - Optional connection for Solana (will create if not provided)
+   * @returns Fee amount in USDC micro-units
+   */
+  async getSendFee(
+    chainInfo: ChainInfo,
+    publicClient?: PublicClient,
+    connection?: Connection
+  ): Promise<bigint> {
+    if (chainInfo.chainType === ChainType.EVM) {
+      const evmClient = await this.getEVMClient();
+      return await evmClient.getSendFee(chainInfo, publicClient);
+    } else if (chainInfo.chainType === ChainType.SOLANA) {
+      const solanaClient = await this.getSolanaClient();
+      return await solanaClient.getSendFee(chainInfo, connection);
+    } else {
+      throw new Error(`Unsupported chain type: ${chainInfo.chainType}`);
+    }
+  }
+
+  /**
+   * Get delegation fee
+   */
+  async getDelegationFee(
+    chainInfo: ChainInfo,
+    publicClient?: PublicClient,
+    connection?: Connection
+  ): Promise<bigint> {
+    if (chainInfo.chainType === ChainType.EVM) {
+      const evmClient = await this.getEVMClient();
+      return await evmClient.getDelegationFee(chainInfo, publicClient);
+    } else if (chainInfo.chainType === ChainType.SOLANA) {
+      const solanaClient = await this.getSolanaClient();
+      return await solanaClient.getDelegationFee(chainInfo, connection);
+    } else {
+      throw new Error(`Unsupported chain type: ${chainInfo.chainType}`);
+    }
+  }
+
+  /**
+   * Get delegation for an address
+   * @param address - Address to check
+   * @param chainInfo - Chain information with RPC endpoint
+   * @param publicClient - Optional public client for EVM
+   * @param connection - Optional connection for Solana
+   * @returns Delegated address or null
+   */
+  async getDelegation(
+    address: string,
+    chainInfo: ChainInfo,
+    publicClient?: PublicClient,
+    connection?: Connection
+  ): Promise<string | null> {
+    if (chainInfo.chainType === ChainType.EVM) {
+      const evmClient = await this.getEVMClient();
+      const delegation = await evmClient.getDelegation(address, chainInfo, publicClient);
+      return delegation === '0x0000000000000000000000000000000000000000' ? null : delegation;
+    } else if (chainInfo.chainType === ChainType.SOLANA) {
+      const solanaClient = await this.getSolanaClient();
+      const delegation = await solanaClient.getDelegation(address, chainInfo, connection);
+      return delegation ? delegation.toBase58() : null;
+    } else {
+      throw new Error(`Unsupported chain type: ${chainInfo.chainType}`);
+    }
+  }
+
+  /**
+   * Get recipient claimable info
+   */
+  async getRecipientClaimable(
+    recipient: string,
+    chainInfo: ChainInfo,
+    publicClient?: PublicClient,
+    connection?: Connection
+  ): Promise<{ amount: bigint; expiresAt: bigint; isExpired: boolean } | null> {
+    if (chainInfo.chainType === ChainType.EVM) {
+      const evmClient = await this.getEVMClient();
+      return await evmClient.getRecipientClaimable(recipient, chainInfo, publicClient);
+    } else if (chainInfo.chainType === ChainType.SOLANA) {
+      const solanaClient = await this.getSolanaClient();
+      const info = await solanaClient.getRecipientClaimable(recipient, chainInfo, connection);
+      if (!info) return null;
+      return {
+        amount: BigInt(info.amount),
+        expiresAt: BigInt(info.expiresAt),
+        isExpired: info.isExpired
+      };
+    } else {
+      throw new Error(`Unsupported chain type: ${chainInfo.chainType}`);
+    }
+  }
+
+  /**
+   * Get owner claimable amount
+   */
+  async getOwnerClaimable(
+    chainInfo: ChainInfo,
+    publicClient?: PublicClient,
+    connection?: Connection
+  ): Promise<bigint> {
+    if (chainInfo.chainType === ChainType.EVM) {
+      const evmClient = await this.getEVMClient();
+      return await evmClient.getOwnerClaimable(chainInfo, publicClient);
+    } else if (chainInfo.chainType === ChainType.SOLANA) {
+      const solanaClient = await this.getSolanaClient();
+      const amount = await solanaClient.getOwnerClaimable(chainInfo, connection);
+      return BigInt(amount);
+    } else {
+      throw new Error(`Unsupported chain type: ${chainInfo.chainType}`);
+    }
+  }
+
+  /**
+   * Get custom fee percentage
+   */
+  async getCustomFeePercentage(
+    target: string,
+    chainInfo: ChainInfo,
+    publicClient?: PublicClient,
+    connection?: Connection
+  ): Promise<number> {
+    if (chainInfo.chainType === ChainType.EVM) {
+      const evmClient = await this.getEVMClient();
+      return await evmClient.getCustomFeePercentage(target, chainInfo, publicClient);
+    } else if (chainInfo.chainType === ChainType.SOLANA) {
+      const solanaClient = await this.getSolanaClient();
+      return await solanaClient.getCustomFeePercentage(target, chainInfo, connection);
+    } else {
+      throw new Error(`Unsupported chain type: ${chainInfo.chainType}`);
+    }
+  }
+
+  /**
+   * Check if contract/program is paused
+   */
+  async isPaused(
+    chainInfo: ChainInfo,
+    publicClient?: PublicClient,
+    connection?: Connection
+  ): Promise<boolean> {
+    if (chainInfo.chainType === ChainType.EVM) {
+      const evmClient = await this.getEVMClient();
+      return await evmClient.isPaused(chainInfo, publicClient);
+    } else if (chainInfo.chainType === ChainType.SOLANA) {
+      const solanaClient = await this.getSolanaClient();
+      return await solanaClient.isPaused(chainInfo, connection);
+    } else {
+      throw new Error(`Unsupported chain type: ${chainInfo.chainType}`);
+    }
+  }
+
+  /**
+   * Get contract/program owner
+   */
+  async getOwner(
+    chainInfo: ChainInfo,
+    publicClient?: PublicClient,
+    connection?: Connection
+  ): Promise<string> {
+    if (chainInfo.chainType === ChainType.EVM) {
+      const evmClient = await this.getEVMClient();
+      return await evmClient.getOwner(chainInfo, publicClient);
+    } else if (chainInfo.chainType === ChainType.SOLANA) {
+      const solanaClient = await this.getSolanaClient();
+      const owner = await solanaClient.getOwner(chainInfo, connection);
+      return owner.toBase58();
+    } else {
+      throw new Error(`Unsupported chain type: ${chainInfo.chainType}`);
     }
   }
 
@@ -197,1078 +1123,7 @@ export class OnchainMailerClient {
   async registerDomain(_domain: string): Promise<DomainResult> {
     throw new Error('Domain registration not yet implemented');
   }
-
-  /**
-   * Delegate to another address
-   */
-  async delegateTo(delegate: string): Promise<DelegationResult> {
-    if (this.chainType === ChainType.EVM) {
-      return this.delegateEVM(delegate);
-    } else {
-      return this.delegateSolana(delegate);
-    }
-  }
-
-  /**
-   * Claim revenue share
-   */
-  async claimRevenue(): Promise<UnifiedTransaction> {
-    if (this.chainType === ChainType.EVM) {
-      return this.claimEVMRevenue();
-    } else {
-      return this.claimSolanaRevenue();
-    }
-  }
-
-  // Performance optimization: cache module imports
-  private async getEVMModules() {
-    if (!OnchainMailerClient.evmModules) {
-      const evmModule = await import('../evm/index.js');
-      OnchainMailerClient.evmModules = {
-        MailerClient: evmModule.MailerClient
-      };
-    }
-    return OnchainMailerClient.evmModules;
-  }
-
-  private async getSolanaModules() {
-    if (!OnchainMailerClient.solanaModules) {
-      const [solanaModule, web3Module] = await Promise.all([
-        import('../solana/index.js'),
-        import('@solana/web3.js')
-      ]);
-      OnchainMailerClient.solanaModules = {
-        MailerClient: solanaModule.MailerClient,
-        PublicKey: web3Module.PublicKey,
-        Connection: web3Module.Connection
-      };
-    }
-    return OnchainMailerClient.solanaModules;
-  }
-
-  // EVM implementation methods
-  private async sendEVMMessage(
-    to: string,
-    subject: string,
-    body: string,
-    priority: boolean,
-    resolveSenderToName: boolean
-  ): Promise<MessageResult> {
-    if (!this.evmWalletClient || !this.evmPublicClient || !this.evmContractAddress) {
-      throw new Error('EVM client not properly initialized');
-    }
-
-    const { MailerClient } = await this.getEVMModules();
-    const client = new MailerClient(this.evmContractAddress, this.evmPublicClient);
-
-    // Validate message
-    if (!subject || subject.length > 200) {
-      throw new Error('Subject must be 1-200 characters');
-    }
-    if (!body || body.length > 10000) {
-      throw new Error('Body must be 1-10000 characters');
-    }
-
-    const [account] = await this.evmWalletClient.getAddresses();
-    const payer = account;
-
-    const result = await client.send(
-      to,
-      subject,
-      body,
-      payer,
-      priority,
-      resolveSenderToName,
-      this.evmWalletClient,
-      account
-    );
-
-    // Convert to MessageResult format
-    return {
-      transactionHash: result.hash,
-      chainType: ChainType.EVM,
-      fee: BigInt(priority ? '100000' : '10000'),
-      gasUsed: result.gasUsed,
-      isPriority: priority,
-      success: true
-    };
-  }
-
-  private async delegateEVM(delegate: string): Promise<DelegationResult> {
-    if (!this.evmWalletClient || !this.evmPublicClient || !this.evmContractAddress) {
-      throw new Error('EVM client not properly initialized');
-    }
-
-    const { MailerClient } = await this.getEVMModules();
-    const client = new MailerClient(this.evmContractAddress, this.evmPublicClient);
-
-    const [account] = await this.evmWalletClient.getAddresses();
-
-    const result = await client.delegateTo(
-      delegate,
-      this.evmWalletClient,
-      account
-    );
-
-    return {
-      transactionHash: result.hash,
-      chainType: ChainType.EVM,
-      delegate,
-      success: true
-    };
-  }
-
-  private async claimEVMRevenue(): Promise<UnifiedTransaction> {
-    if (!this.evmWalletClient || !this.evmPublicClient || !this.evmContractAddress) {
-      throw new Error('EVM client not properly initialized');
-    }
-
-    const { MailerClient } = await this.getEVMModules();
-    const client = new MailerClient(this.evmContractAddress, this.evmPublicClient);
-
-    const [account] = await this.evmWalletClient.getAddresses();
-
-    const result = await client.claimRecipientShare(
-      this.evmWalletClient,
-      account
-    );
-
-    return {
-      hash: result.hash,
-      chainType: ChainType.EVM,
-      blockNumber: result.blockNumber,
-      timestamp: Date.now()
-    };
-  }
-
-  // Solana implementation methods
-  private async sendSolanaMessage(
-    to: string,
-    subject: string,
-    body: string,
-    priority: boolean,
-    resolveSenderToName: boolean
-  ): Promise<MessageResult> {
-    if (!this.solanaWallet || !this.solanaConnection || !this.solanaProgramId || !this.solanaUsdcMint) {
-      throw new Error('Solana client not properly initialized');
-    }
-
-    const { MailerClient, PublicKey } = await this.getSolanaModules();
-
-    const programId = new PublicKey(this.solanaProgramId);
-    const usdcMint = new PublicKey(this.solanaUsdcMint);
-
-    const client = new MailerClient(
-      this.solanaConnection,
-      this.solanaWallet,
-      programId,
-      usdcMint
-    );
-
-    const result = await client.send(to, subject, body, priority, resolveSenderToName);
-
-    // Get current fees
-    const fees = await client.getFees();
-
-    return {
-      transactionHash: result.signature,
-      chainType: ChainType.SOLANA,
-      fee: priority ? fees.sendFee : fees.sendFee / 10,
-      isPriority: priority,
-      success: true
-    };
-  }
-
-  private async delegateSolana(delegate: string): Promise<DelegationResult> {
-    if (!this.solanaWallet || !this.solanaConnection || !this.solanaProgramId || !this.solanaUsdcMint) {
-      throw new Error('Solana client not properly initialized');
-    }
-
-    const { MailerClient, PublicKey } = await this.getSolanaModules();
-
-    const programId = new PublicKey(this.solanaProgramId);
-    const usdcMint = new PublicKey(this.solanaUsdcMint);
-
-    const client = new MailerClient(
-      this.solanaConnection,
-      this.solanaWallet,
-      programId,
-      usdcMint
-    );
-
-    const result = await client.delegateTo(delegate);
-
-    return {
-      transactionHash: result.signature,
-      chainType: ChainType.SOLANA,
-      delegate,
-      success: true
-    };
-  }
-
-  private async claimSolanaRevenue(): Promise<UnifiedTransaction> {
-    if (!this.solanaWallet || !this.solanaConnection || !this.solanaProgramId || !this.solanaUsdcMint) {
-      throw new Error('Solana client not properly initialized');
-    }
-
-    const { MailerClient, PublicKey } = await this.getSolanaModules();
-
-    const programId = new PublicKey(this.solanaProgramId);
-    const usdcMint = new PublicKey(this.solanaUsdcMint);
-
-    const client = new MailerClient(
-      this.solanaConnection,
-      this.solanaWallet,
-      programId,
-      usdcMint
-    );
-
-    const result = await client.claimRecipientShare();
-    const slot = await this.solanaConnection.getSlot();
-
-    return {
-      hash: result.signature,
-      chainType: ChainType.SOLANA,
-      slot,
-      timestamp: Date.now()
-    };
-  }
-
-  // Read methods
-  async getSendFee(): Promise<bigint> {
-    if (this.chainType === ChainType.EVM) {
-      return this.getEVMSendFee();
-    } else {
-      return this.getSolanaSendFee();
-    }
-  }
-
-  private async getEVMSendFee(): Promise<bigint> {
-    if (!this.evmPublicClient || !this.evmContractAddress) {
-      throw new Error('EVM client not properly initialized');
-    }
-
-    const { MailerClient } = await this.getEVMModules();
-    const client = new MailerClient(this.evmContractAddress, this.evmPublicClient);
-    return client.getSendFee();
-  }
-
-  private async getSolanaSendFee(): Promise<bigint> {
-    if (!this.solanaConnection || !this.solanaProgramId || !this.solanaUsdcMint) {
-      throw new Error('Solana client not properly initialized');
-    }
-
-    const { MailerClient, PublicKey } = await this.getSolanaModules();
-
-    const programId = new PublicKey(this.solanaProgramId);
-    const usdcMint = new PublicKey(this.solanaUsdcMint);
-
-    // Create a minimal wallet object for reading
-    const wallet = { publicKey: PublicKey.default, signTransaction: async (tx: any) => tx };
-
-    const client = new MailerClient(
-      this.solanaConnection,
-      wallet,
-      programId,
-      usdcMint
-    );
-
-    const fees = await client.getFees();
-    return BigInt(fees.sendFee);
-  }
-
-  // Additional read methods
-  async getClaimableAmount(address?: string): Promise<bigint> {
-    const targetAddress = address || await this.getWalletAddressAsync();
-    if (this.chainType === ChainType.EVM) {
-      return this.getEVMClaimableAmount(targetAddress);
-    } else {
-      return this.getSolanaClaimableAmount(targetAddress);
-    }
-  }
-
-  private async getEVMClaimableAmount(address: string): Promise<bigint> {
-    if (!this.evmPublicClient || !this.evmContractAddress) {
-      throw new Error('EVM client not properly initialized');
-    }
-
-    const { MailerClient } = await this.getEVMModules();
-    const client = new MailerClient(this.evmContractAddress, this.evmPublicClient);
-    const result = await client.getRecipientClaimable(address);
-    return result.amount;
-  }
-
-  private async getSolanaClaimableAmount(address: string): Promise<bigint> {
-    if (!this.solanaConnection || !this.solanaProgramId || !this.solanaUsdcMint) {
-      throw new Error('Solana client not properly initialized');
-    }
-
-    const { MailerClient, PublicKey } = await this.getSolanaModules();
-    const programId = new PublicKey(this.solanaProgramId);
-    const usdcMint = new PublicKey(this.solanaUsdcMint);
-    const wallet = { publicKey: PublicKey.default, signTransaction: async (tx: any) => tx };
-
-    const client = new MailerClient(this.solanaConnection, wallet, programId, usdcMint);
-    const recipientKey = new PublicKey(address);
-    const claimInfo = await client.getRecipientClaimable(recipientKey);
-
-    return claimInfo ? BigInt(claimInfo.amount) : 0n;
-  }
-
-  async getOwnerClaimable(): Promise<bigint> {
-    if (this.chainType === ChainType.EVM) {
-      return this.getEVMOwnerClaimable();
-    } else {
-      return this.getSolanaOwnerClaimable();
-    }
-  }
-
-  private async getEVMOwnerClaimable(): Promise<bigint> {
-    if (!this.evmPublicClient || !this.evmContractAddress) {
-      throw new Error('EVM client not properly initialized');
-    }
-
-    const { MailerClient } = await this.getEVMModules();
-    const client = new MailerClient(this.evmContractAddress, this.evmPublicClient);
-    return client.getOwnerClaimable();
-  }
-
-  private async getSolanaOwnerClaimable(): Promise<bigint> {
-    if (!this.solanaConnection || !this.solanaProgramId || !this.solanaUsdcMint) {
-      throw new Error('Solana client not properly initialized');
-    }
-
-    const { MailerClient, PublicKey } = await this.getSolanaModules();
-    const programId = new PublicKey(this.solanaProgramId);
-    const usdcMint = new PublicKey(this.solanaUsdcMint);
-    const wallet = { publicKey: PublicKey.default, signTransaction: async (tx: any) => tx };
-
-    const client = new MailerClient(this.solanaConnection, wallet, programId, usdcMint);
-    const amount = await client.getOwnerClaimable();
-    return BigInt(amount);
-  }
-
-  async getDelegation(address?: string): Promise<string | null> {
-    const targetAddress = address || await this.getWalletAddressAsync();
-    if (this.chainType === ChainType.EVM) {
-      return this.getEVMDelegation(targetAddress);
-    } else {
-      return this.getSolanaDelegation(targetAddress);
-    }
-  }
-
-  private async getEVMDelegation(_address: string): Promise<string | null> {
-    // Delegation read not implemented in EVM client yet
-    throw new Error('getDelegation not yet implemented for EVM');
-  }
-
-  private async getSolanaDelegation(address: string): Promise<string | null> {
-    if (!this.solanaConnection || !this.solanaProgramId || !this.solanaUsdcMint) {
-      throw new Error('Solana client not properly initialized');
-    }
-
-    const { MailerClient, PublicKey } = await this.getSolanaModules();
-    const programId = new PublicKey(this.solanaProgramId);
-    const usdcMint = new PublicKey(this.solanaUsdcMint);
-    const wallet = { publicKey: PublicKey.default, signTransaction: async (tx: any) => tx };
-
-    const client = new MailerClient(this.solanaConnection, wallet, programId, usdcMint);
-    const delegatorKey = new PublicKey(address);
-    const delegationInfo = await client.getDelegation(delegatorKey);
-
-    return delegationInfo?.delegate || null;
-  }
-
-  async getDelegationFee(): Promise<bigint> {
-    if (this.chainType === ChainType.EVM) {
-      return this.getEVMDelegationFee();
-    } else {
-      return this.getSolanaDelegationFee();
-    }
-  }
-
-  private async getEVMDelegationFee(): Promise<bigint> {
-    if (!this.evmPublicClient || !this.evmContractAddress) {
-      throw new Error('EVM client not properly initialized');
-    }
-
-    const { MailerClient } = await this.getEVMModules();
-    const client = new MailerClient(this.evmContractAddress, this.evmPublicClient);
-    return client.getDelegationFee();
-  }
-
-  private async getSolanaDelegationFee(): Promise<bigint> {
-    if (!this.solanaConnection || !this.solanaProgramId || !this.solanaUsdcMint) {
-      throw new Error('Solana client not properly initialized');
-    }
-
-    const { MailerClient, PublicKey } = await this.getSolanaModules();
-    const programId = new PublicKey(this.solanaProgramId);
-    const usdcMint = new PublicKey(this.solanaUsdcMint);
-    const wallet = { publicKey: PublicKey.default, signTransaction: async (tx: any) => tx };
-
-    const client = new MailerClient(this.solanaConnection, wallet, programId, usdcMint);
-    const fees = await client.getFees();
-    return BigInt(fees.delegationFee);
-  }
-
-  async isPaused(): Promise<boolean> {
-    if (this.chainType === ChainType.EVM) {
-      return this.isPausedEVM();
-    } else {
-      return this.isPausedSolana();
-    }
-  }
-
-  private async isPausedEVM(): Promise<boolean> {
-    if (!this.evmPublicClient || !this.evmContractAddress) {
-      throw new Error('EVM client not properly initialized');
-    }
-
-    const { MailerClient } = await this.getEVMModules();
-    const client = new MailerClient(this.evmContractAddress, this.evmPublicClient);
-    return client.isPaused();
-  }
-
-  private async isPausedSolana(): Promise<boolean> {
-    if (!this.solanaConnection || !this.solanaProgramId || !this.solanaUsdcMint) {
-      throw new Error('Solana client not properly initialized');
-    }
-
-    const { MailerClient, PublicKey } = await this.getSolanaModules();
-    const programId = new PublicKey(this.solanaProgramId);
-    const usdcMint = new PublicKey(this.solanaUsdcMint);
-    const wallet = { publicKey: PublicKey.default, signTransaction: async (tx: any) => tx };
-
-    const client = new MailerClient(this.solanaConnection, wallet, programId, usdcMint);
-    return client.isPaused();
-  }
-
-  // Write methods for contract management
-  async unpause(): Promise<UnifiedTransaction> {
-    if (this.chainType === ChainType.EVM) {
-      return this.unpauseEVM();
-    } else {
-      return this.unpauseSolana();
-    }
-  }
-
-  private async unpauseEVM(): Promise<UnifiedTransaction> {
-    if (!this.evmWalletClient || !this.evmPublicClient || !this.evmContractAddress) {
-      throw new Error('EVM client not properly initialized');
-    }
-
-    const { MailerClient } = await this.getEVMModules();
-    const client = new MailerClient(this.evmContractAddress, this.evmPublicClient);
-    const [account] = await this.evmWalletClient.getAddresses();
-
-    const result = await client.unpause(this.evmWalletClient, account);
-
-    return {
-      hash: result.hash,
-      chainType: ChainType.EVM,
-      blockNumber: result.blockNumber,
-      timestamp: Date.now()
-    };
-  }
-
-  private async unpauseSolana(): Promise<UnifiedTransaction> {
-    if (!this.solanaWallet || !this.solanaConnection || !this.solanaProgramId || !this.solanaUsdcMint) {
-      throw new Error('Solana client not properly initialized');
-    }
-
-    const { MailerClient, PublicKey } = await this.getSolanaModules();
-    const programId = new PublicKey(this.solanaProgramId);
-    const usdcMint = new PublicKey(this.solanaUsdcMint);
-
-    const client = new MailerClient(this.solanaConnection, this.solanaWallet, programId, usdcMint);
-    const result = await client.unpause();
-    const slot = await this.solanaConnection.getSlot();
-
-    return {
-      hash: result.signature,
-      chainType: ChainType.SOLANA,
-      slot,
-      timestamp: Date.now()
-    };
-  }
-
-  async emergencyUnpause(): Promise<UnifiedTransaction> {
-    if (this.chainType === ChainType.EVM) {
-      return this.emergencyUnpauseEVM();
-    } else {
-      return this.emergencyUnpauseSolana();
-    }
-  }
-
-  private async emergencyUnpauseEVM(): Promise<UnifiedTransaction> {
-    if (!this.evmWalletClient || !this.evmPublicClient || !this.evmContractAddress) {
-      throw new Error('EVM client not properly initialized');
-    }
-
-    const { MailerClient } = await this.getEVMModules();
-    const client = new MailerClient(this.evmContractAddress, this.evmPublicClient);
-    const [account] = await this.evmWalletClient.getAddresses();
-
-    const result = await client.emergencyUnpause(this.evmWalletClient, account);
-
-    return {
-      hash: result.hash,
-      chainType: ChainType.EVM,
-      blockNumber: result.blockNumber,
-      timestamp: Date.now()
-    };
-  }
-
-  private async emergencyUnpauseSolana(): Promise<UnifiedTransaction> {
-    if (!this.solanaWallet || !this.solanaConnection || !this.solanaProgramId || !this.solanaUsdcMint) {
-      throw new Error('Solana client not properly initialized');
-    }
-
-    const { MailerClient, PublicKey } = await this.getSolanaModules();
-    const programId = new PublicKey(this.solanaProgramId);
-    const usdcMint = new PublicKey(this.solanaUsdcMint);
-
-    const client = new MailerClient(this.solanaConnection, this.solanaWallet, programId, usdcMint);
-    const result = await client.emergencyUnpause();
-    const slot = await this.solanaConnection.getSlot();
-
-    return {
-      hash: result.signature,
-      chainType: ChainType.SOLANA,
-      slot,
-      timestamp: Date.now()
-    };
-  }
-
-  async distributeClaimableFunds(recipient: string): Promise<UnifiedTransaction> {
-    if (this.chainType === ChainType.EVM) {
-      return this.distributeClaimableFundsEVM(recipient);
-    } else {
-      return this.distributeClaimableFundsSolana(recipient);
-    }
-  }
-
-  private async distributeClaimableFundsEVM(recipient: string): Promise<UnifiedTransaction> {
-    if (!this.evmWalletClient || !this.evmPublicClient || !this.evmContractAddress) {
-      throw new Error('EVM client not properly initialized');
-    }
-
-    const { MailerClient } = await this.getEVMModules();
-    const client = new MailerClient(this.evmContractAddress, this.evmPublicClient);
-    const [account] = await this.evmWalletClient.getAddresses();
-
-    const result = await client.distributeClaimableFunds(recipient, this.evmWalletClient, account);
-
-    return {
-      hash: result.hash,
-      chainType: ChainType.EVM,
-      blockNumber: result.blockNumber,
-      timestamp: Date.now()
-    };
-  }
-
-  private async distributeClaimableFundsSolana(recipient: string): Promise<UnifiedTransaction> {
-    if (!this.solanaWallet || !this.solanaConnection || !this.solanaProgramId || !this.solanaUsdcMint) {
-      throw new Error('Solana client not properly initialized');
-    }
-
-    const { MailerClient, PublicKey } = await this.getSolanaModules();
-    const programId = new PublicKey(this.solanaProgramId);
-    const usdcMint = new PublicKey(this.solanaUsdcMint);
-
-    const client = new MailerClient(this.solanaConnection, this.solanaWallet, programId, usdcMint);
-    const result = await client.distributeClaimableFunds(recipient);
-    const slot = await this.solanaConnection.getSlot();
-
-    return {
-      hash: result.signature,
-      chainType: ChainType.SOLANA,
-      slot,
-      timestamp: Date.now()
-    };
-  }
-
-  // Additional methods for complete API compatibility
-  async sendPrepared(to: string, mailId: string, priority: boolean = false, resolveSenderToName: boolean = false): Promise<MessageResult> {
-    if (this.chainType === ChainType.EVM) {
-      return this.sendPreparedEVM(to, mailId, priority, resolveSenderToName);
-    } else {
-      return this.sendPreparedSolana(to, mailId, priority, resolveSenderToName);
-    }
-  }
-
-  private async sendPreparedEVM(to: string, mailId: string, priority: boolean, resolveSenderToName: boolean): Promise<MessageResult> {
-    if (!this.evmWalletClient || !this.evmPublicClient || !this.evmContractAddress) {
-      throw new Error('EVM client not properly initialized');
-    }
-
-    const { MailerClient } = await this.getEVMModules();
-    const client = new MailerClient(this.evmContractAddress, this.evmPublicClient);
-    const [account] = await this.evmWalletClient.getAddresses();
-    const payer = account;
-
-    const result = await client.sendPrepared(to, mailId, payer, priority, resolveSenderToName, this.evmWalletClient, account);
-
-    return {
-      transactionHash: result.hash,
-      chainType: ChainType.EVM,
-      fee: BigInt(priority ? '100000' : '10000'),
-      gasUsed: result.gasUsed,
-      isPriority: priority,
-      success: true
-    };
-  }
-
-  private async sendPreparedSolana(to: string, mailId: string, priority: boolean, resolveSenderToName: boolean): Promise<MessageResult> {
-    if (!this.solanaWallet || !this.solanaConnection || !this.solanaProgramId || !this.solanaUsdcMint) {
-      throw new Error('Solana client not properly initialized');
-    }
-
-    const { MailerClient, PublicKey } = await this.getSolanaModules();
-    const programId = new PublicKey(this.solanaProgramId);
-    const usdcMint = new PublicKey(this.solanaUsdcMint);
-    const recipientKey = new PublicKey(to);
-
-    const client = new MailerClient(this.solanaConnection, this.solanaWallet, programId, usdcMint);
-    const result = await client.sendPrepared(recipientKey, mailId, priority, resolveSenderToName);
-
-    const fees = await client.getFees();
-
-    return {
-      transactionHash: result.signature,
-      chainType: ChainType.SOLANA,
-      fee: priority ? fees.sendFee : fees.sendFee / 10,
-      isPriority: priority,
-      success: true
-    };
-  }
-
-  async sendToEmail(toEmail: string, subject: string, body: string): Promise<MessageResult> {
-    if (this.chainType === ChainType.EVM) {
-      return this.sendToEmailEVM(toEmail, subject, body);
-    } else {
-      return this.sendToEmailSolana(toEmail, subject, body);
-    }
-  }
-
-  private async sendToEmailEVM(toEmail: string, subject: string, body: string): Promise<MessageResult> {
-    if (!this.evmWalletClient || !this.evmPublicClient || !this.evmContractAddress) {
-      throw new Error('EVM client not properly initialized');
-    }
-
-    const { MailerClient } = await this.getEVMModules();
-    const client = new MailerClient(this.evmContractAddress, this.evmPublicClient);
-    const [account] = await this.evmWalletClient.getAddresses();
-    const payer = account;
-
-    const result = await client.sendToEmailAddress(toEmail, subject, body, payer, this.evmWalletClient, account);
-
-    return {
-      transactionHash: result.hash,
-      chainType: ChainType.EVM,
-      fee: BigInt('10000'), // 10% fee only
-      gasUsed: result.gasUsed,
-      isPriority: false,
-      success: true
-    };
-  }
-
-  private async sendToEmailSolana(toEmail: string, subject: string, body: string): Promise<MessageResult> {
-    if (!this.solanaWallet || !this.solanaConnection || !this.solanaProgramId || !this.solanaUsdcMint) {
-      throw new Error('Solana client not properly initialized');
-    }
-
-    const { MailerClient, PublicKey } = await this.getSolanaModules();
-    const programId = new PublicKey(this.solanaProgramId);
-    const usdcMint = new PublicKey(this.solanaUsdcMint);
-
-    const client = new MailerClient(this.solanaConnection, this.solanaWallet, programId, usdcMint);
-    const result = await client.sendToEmail(toEmail, subject, body);
-
-    const fees = await client.getFees();
-
-    return {
-      transactionHash: result.signature,
-      chainType: ChainType.SOLANA,
-      fee: fees.sendFee / 10, // 10% fee only
-      isPriority: false,
-      success: true
-    };
-  }
-
-  async sendPreparedToEmail(toEmail: string, mailId: string): Promise<MessageResult> {
-    if (this.chainType === ChainType.EVM) {
-      return this.sendPreparedToEmailEVM(toEmail, mailId);
-    } else {
-      return this.sendPreparedToEmailSolana(toEmail, mailId);
-    }
-  }
-
-  private async sendPreparedToEmailEVM(toEmail: string, mailId: string): Promise<MessageResult> {
-    if (!this.evmWalletClient || !this.evmPublicClient || !this.evmContractAddress) {
-      throw new Error('EVM client not properly initialized');
-    }
-
-    const { MailerClient } = await this.getEVMModules();
-    const client = new MailerClient(this.evmContractAddress, this.evmPublicClient);
-    const [account] = await this.evmWalletClient.getAddresses();
-    const payer = account;
-
-    const result = await client.sendPreparedToEmailAddress(toEmail, mailId, payer, this.evmWalletClient, account);
-
-    return {
-      transactionHash: result.hash,
-      chainType: ChainType.EVM,
-      fee: BigInt('10000'), // 10% fee only
-      gasUsed: result.gasUsed,
-      isPriority: false,
-      success: true
-    };
-  }
-
-  private async sendPreparedToEmailSolana(toEmail: string, mailId: string): Promise<MessageResult> {
-    if (!this.solanaWallet || !this.solanaConnection || !this.solanaProgramId || !this.solanaUsdcMint) {
-      throw new Error('Solana client not properly initialized');
-    }
-
-    const { MailerClient, PublicKey } = await this.getSolanaModules();
-    const programId = new PublicKey(this.solanaProgramId);
-    const usdcMint = new PublicKey(this.solanaUsdcMint);
-
-    const client = new MailerClient(this.solanaConnection, this.solanaWallet, programId, usdcMint);
-    const result = await client.sendPreparedToEmail(toEmail, mailId);
-
-    const fees = await client.getFees();
-
-    return {
-      transactionHash: result.signature,
-      chainType: ChainType.SOLANA,
-      fee: fees.sendFee / 10, // 10% fee only
-      isPriority: false,
-      success: true
-    };
-  }
-
-  async claimOwnerShare(): Promise<UnifiedTransaction> {
-    if (this.chainType === ChainType.EVM) {
-      return this.claimOwnerShareEVM();
-    } else {
-      return this.claimOwnerShareSolana();
-    }
-  }
-
-  private async claimOwnerShareEVM(): Promise<UnifiedTransaction> {
-    if (!this.evmWalletClient || !this.evmPublicClient || !this.evmContractAddress) {
-      throw new Error('EVM client not properly initialized');
-    }
-
-    const { MailerClient } = await this.getEVMModules();
-    const client = new MailerClient(this.evmContractAddress, this.evmPublicClient);
-    const [account] = await this.evmWalletClient.getAddresses();
-
-    const result = await client.claimOwnerShare(this.evmWalletClient, account);
-
-    return {
-      hash: result.hash,
-      chainType: ChainType.EVM,
-      blockNumber: result.blockNumber,
-      timestamp: Date.now()
-    };
-  }
-
-  private async claimOwnerShareSolana(): Promise<UnifiedTransaction> {
-    if (!this.solanaWallet || !this.solanaConnection || !this.solanaProgramId || !this.solanaUsdcMint) {
-      throw new Error('Solana client not properly initialized');
-    }
-
-    const { MailerClient, PublicKey } = await this.getSolanaModules();
-    const programId = new PublicKey(this.solanaProgramId);
-    const usdcMint = new PublicKey(this.solanaUsdcMint);
-
-    const client = new MailerClient(this.solanaConnection, this.solanaWallet, programId, usdcMint);
-    const result = await client.claimOwnerShare();
-    const slot = await this.solanaConnection.getSlot();
-
-    return {
-      hash: result.signature,
-      chainType: ChainType.SOLANA,
-      slot,
-      timestamp: Date.now()
-    };
-  }
-
-  async claimExpiredShares(recipient: string): Promise<UnifiedTransaction> {
-    if (this.chainType === ChainType.EVM) {
-      return this.claimExpiredSharesEVM(recipient);
-    } else {
-      return this.claimExpiredSharesSolana(recipient);
-    }
-  }
-
-  private async claimExpiredSharesEVM(recipient: string): Promise<UnifiedTransaction> {
-    if (!this.evmWalletClient || !this.evmPublicClient || !this.evmContractAddress) {
-      throw new Error('EVM client not properly initialized');
-    }
-
-    const { MailerClient } = await this.getEVMModules();
-    const client = new MailerClient(this.evmContractAddress, this.evmPublicClient);
-    const [account] = await this.evmWalletClient.getAddresses();
-
-    const result = await client.claimExpiredShares(recipient, this.evmWalletClient, account);
-
-    return {
-      hash: result.hash,
-      chainType: ChainType.EVM,
-      blockNumber: result.blockNumber,
-      timestamp: Date.now()
-    };
-  }
-
-  private async claimExpiredSharesSolana(recipient: string): Promise<UnifiedTransaction> {
-    if (!this.solanaWallet || !this.solanaConnection || !this.solanaProgramId || !this.solanaUsdcMint) {
-      throw new Error('Solana client not properly initialized');
-    }
-
-    const { MailerClient, PublicKey } = await this.getSolanaModules();
-    const programId = new PublicKey(this.solanaProgramId);
-    const usdcMint = new PublicKey(this.solanaUsdcMint);
-    const recipientKey = new PublicKey(recipient);
-
-    const client = new MailerClient(this.solanaConnection, this.solanaWallet, programId, usdcMint);
-    const result = await client.claimExpiredShares(recipientKey);
-    const slot = await this.solanaConnection.getSlot();
-
-    return {
-      hash: result.signature,
-      chainType: ChainType.SOLANA,
-      slot,
-      timestamp: Date.now()
-    };
-  }
-
-  async rejectDelegation(delegatorAddress: string): Promise<UnifiedTransaction> {
-    if (this.chainType === ChainType.EVM) {
-      return this.rejectDelegationEVM(delegatorAddress);
-    } else {
-      return this.rejectDelegationSolana(delegatorAddress);
-    }
-  }
-
-  private async rejectDelegationEVM(delegatorAddress: string): Promise<UnifiedTransaction> {
-    if (!this.evmWalletClient || !this.evmPublicClient || !this.evmContractAddress) {
-      throw new Error('EVM client not properly initialized');
-    }
-
-    const { MailerClient } = await this.getEVMModules();
-    const client = new MailerClient(this.evmContractAddress, this.evmPublicClient);
-    const [account] = await this.evmWalletClient.getAddresses();
-
-    const result = await client.rejectDelegation(delegatorAddress, this.evmWalletClient, account);
-
-    return {
-      hash: result.hash,
-      chainType: ChainType.EVM,
-      blockNumber: result.blockNumber,
-      timestamp: Date.now()
-    };
-  }
-
-  private async rejectDelegationSolana(delegatorAddress: string): Promise<UnifiedTransaction> {
-    if (!this.solanaWallet || !this.solanaConnection || !this.solanaProgramId || !this.solanaUsdcMint) {
-      throw new Error('Solana client not properly initialized');
-    }
-
-    const { MailerClient, PublicKey } = await this.getSolanaModules();
-    const programId = new PublicKey(this.solanaProgramId);
-    const usdcMint = new PublicKey(this.solanaUsdcMint);
-
-    const client = new MailerClient(this.solanaConnection, this.solanaWallet, programId, usdcMint);
-    const result = await client.rejectDelegation(delegatorAddress);
-    const slot = await this.solanaConnection.getSlot();
-
-    return {
-      hash: result.signature,
-      chainType: ChainType.SOLANA,
-      slot,
-      timestamp: Date.now()
-    };
-  }
-
-  async setFee(newFee: bigint): Promise<UnifiedTransaction> {
-    if (this.chainType === ChainType.EVM) {
-      return this.setFeeEVM(newFee);
-    } else {
-      return this.setFeeSolana(newFee);
-    }
-  }
-
-  private async setFeeEVM(newFee: bigint): Promise<UnifiedTransaction> {
-    if (!this.evmWalletClient || !this.evmPublicClient || !this.evmContractAddress) {
-      throw new Error('EVM client not properly initialized');
-    }
-
-    const { MailerClient } = await this.getEVMModules();
-    const client = new MailerClient(this.evmContractAddress, this.evmPublicClient);
-    const [account] = await this.evmWalletClient.getAddresses();
-
-    const result = await client.setFee(newFee, this.evmWalletClient, account);
-
-    return {
-      hash: result.hash,
-      chainType: ChainType.EVM,
-      blockNumber: result.blockNumber,
-      timestamp: Date.now()
-    };
-  }
-
-  private async setFeeSolana(newFee: bigint): Promise<UnifiedTransaction> {
-    if (!this.solanaWallet || !this.solanaConnection || !this.solanaProgramId || !this.solanaUsdcMint) {
-      throw new Error('Solana client not properly initialized');
-    }
-
-    const { MailerClient, PublicKey } = await this.getSolanaModules();
-    const programId = new PublicKey(this.solanaProgramId);
-    const usdcMint = new PublicKey(this.solanaUsdcMint);
-
-    const client = new MailerClient(this.solanaConnection, this.solanaWallet, programId, usdcMint);
-    const result = await client.setFee(newFee);
-    const slot = await this.solanaConnection.getSlot();
-
-    return {
-      hash: result.signature,
-      chainType: ChainType.SOLANA,
-      slot,
-      timestamp: Date.now()
-    };
-  }
-
-  async setDelegationFee(newFee: bigint): Promise<UnifiedTransaction> {
-    if (this.chainType === ChainType.EVM) {
-      return this.setDelegationFeeEVM(newFee);
-    } else {
-      return this.setDelegationFeeSolana(newFee);
-    }
-  }
-
-  private async setDelegationFeeEVM(newFee: bigint): Promise<UnifiedTransaction> {
-    if (!this.evmWalletClient || !this.evmPublicClient || !this.evmContractAddress) {
-      throw new Error('EVM client not properly initialized');
-    }
-
-    const { MailerClient } = await this.getEVMModules();
-    const client = new MailerClient(this.evmContractAddress, this.evmPublicClient);
-    const [account] = await this.evmWalletClient.getAddresses();
-
-    const result = await client.setDelegationFee(newFee, this.evmWalletClient, account);
-
-    return {
-      hash: result.hash,
-      chainType: ChainType.EVM,
-      blockNumber: result.blockNumber,
-      timestamp: Date.now()
-    };
-  }
-
-  private async setDelegationFeeSolana(newFee: bigint): Promise<UnifiedTransaction> {
-    if (!this.solanaWallet || !this.solanaConnection || !this.solanaProgramId || !this.solanaUsdcMint) {
-      throw new Error('Solana client not properly initialized');
-    }
-
-    const { MailerClient, PublicKey } = await this.getSolanaModules();
-    const programId = new PublicKey(this.solanaProgramId);
-    const usdcMint = new PublicKey(this.solanaUsdcMint);
-
-    const client = new MailerClient(this.solanaConnection, this.solanaWallet, programId, usdcMint);
-    const result = await client.setDelegationFee(newFee);
-    const slot = await this.solanaConnection.getSlot();
-
-    return {
-      hash: result.signature,
-      chainType: ChainType.SOLANA,
-      slot,
-      timestamp: Date.now()
-    };
-  }
-
-  async pause(): Promise<UnifiedTransaction> {
-    if (this.chainType === ChainType.EVM) {
-      return this.pauseEVM();
-    } else {
-      return this.pauseSolana();
-    }
-  }
-
-  private async pauseEVM(): Promise<UnifiedTransaction> {
-    if (!this.evmWalletClient || !this.evmPublicClient || !this.evmContractAddress) {
-      throw new Error('EVM client not properly initialized');
-    }
-
-    const { MailerClient } = await this.getEVMModules();
-    const client = new MailerClient(this.evmContractAddress, this.evmPublicClient);
-    const [account] = await this.evmWalletClient.getAddresses();
-
-    const result = await client.pause(this.evmWalletClient, account);
-
-    return {
-      hash: result.hash,
-      chainType: ChainType.EVM,
-      blockNumber: result.blockNumber,
-      timestamp: Date.now()
-    };
-  }
-
-  private async pauseSolana(): Promise<UnifiedTransaction> {
-    if (!this.solanaWallet || !this.solanaConnection || !this.solanaProgramId || !this.solanaUsdcMint) {
-      throw new Error('Solana client not properly initialized');
-    }
-
-    const { MailerClient, PublicKey } = await this.getSolanaModules();
-    const programId = new PublicKey(this.solanaProgramId);
-    const usdcMint = new PublicKey(this.solanaUsdcMint);
-
-    const client = new MailerClient(this.solanaConnection, this.solanaWallet, programId, usdcMint);
-    const result = await client.pause();
-    const slot = await this.solanaConnection.getSlot();
-
-    return {
-      hash: result.signature,
-      chainType: ChainType.SOLANA,
-      slot,
-      timestamp: Date.now()
-    };
-  }
-
-  // Utility methods
-  getChainType(): ChainType {
-    return this.chainType;
-  }
-
-  getWalletAddress(): string {
-    if (this.chainType === ChainType.EVM) {
-      // Try to get address from raw wallet for backward compatibility
-      // @ts-ignore
-      if (this._rawEvmWallet) {
-        // @ts-ignore
-        return this._rawEvmWallet.address || this._rawEvmWallet.selectedAddress || '';
-      }
-      return ''; // Caller should use getWalletAddressAsync() for accurate address
-    } else if (this.chainType === ChainType.SOLANA && this.solanaWallet) {
-      return this.solanaWallet.publicKey?.toString() || '';
-    }
-    return '';
-  }
-
-  /**
-   * Get wallet address asynchronously
-   */
-  async getWalletAddressAsync(): Promise<string> {
-    if (this.chainType === ChainType.EVM && this.evmWalletClient) {
-      const [address] = await this.evmWalletClient.getAddresses();
-      return address;
-    } else if (this.chainType === ChainType.SOLANA && this.solanaWallet) {
-      return this.solanaWallet.publicKey?.toString() || '';
-    }
-    throw new Error('Wallet not initialized');
-  }
 }
+
+// Export wallet types for convenience
+export type { EVMWallet, SolanaWallet, Wallet };

@@ -1602,5 +1602,347 @@ describe("Mailer", function () {
         ).to.be.rejectedWith("ContractIsPaused");
       });
     });
+
+    describe("Permission System", function () {
+      let contractAddr: any;
+
+      beforeEach(async function () {
+        const { addr2 } = this;
+        // Use addr2 as a mock contract address for testing
+        contractAddr = addr2.account.address;
+      });
+
+      describe("setPermission", function () {
+        it("Should allow wallet to grant permission to a contract", async function () {
+          const { mailer, addr1, publicClient } = this;
+          const hash = await mailer.write.setPermission([contractAddr], { account: addr1.account });
+          await publicClient.waitForTransactionReceipt({ hash });
+
+          const logs = await mailer.getEvents.PermissionGranted();
+          expect(logs.length).to.be.greaterThan(0);
+          const event = logs[logs.length - 1];
+          expect(event.args.contractAddress.toLowerCase()).to.equal(contractAddr.toLowerCase());
+          expect(event.args.wallet.toLowerCase()).to.equal(addr1.account.address.toLowerCase());
+
+          // Verify permission is stored
+          expect(await mailer.read.permissions([contractAddr, addr1.account.address])).to.be.true;
+        });
+
+        it("Should revert when trying to grant permission to zero address", async function () {
+          const { mailer, addr1 } = this;
+          await expect(
+            mailer.write.setPermission([zeroAddress], { account: addr1.account })
+          ).to.be.rejectedWith("InvalidAddress");
+        });
+
+        it("Should allow same wallet to grant permission to multiple contracts", async function () {
+          const { mailer, addr1, owner } = this;
+          const contract1 = contractAddr;
+          const contract2 = owner.account.address; // Using owner as another mock contract
+
+          await mailer.write.setPermission([contract1], { account: addr1.account });
+          await mailer.write.setPermission([contract2], { account: addr1.account });
+
+          expect(await mailer.read.permissions([contract1, addr1.account.address])).to.be.true;
+          expect(await mailer.read.permissions([contract2, addr1.account.address])).to.be.true;
+        });
+
+        it("Should allow multiple wallets to grant permission to same contract", async function () {
+          const { mailer, addr1, owner } = this;
+
+          await mailer.write.setPermission([contractAddr], { account: addr1.account });
+          await mailer.write.setPermission([contractAddr], { account: owner.account });
+
+          expect(await mailer.read.permissions([contractAddr, addr1.account.address])).to.be.true;
+          expect(await mailer.read.permissions([contractAddr, owner.account.address])).to.be.true;
+        });
+
+        it("Should revert when paused", async function () {
+          const { mailer, owner, addr1 } = this;
+          await mailer.write.pause([], { account: owner.account });
+
+          await expect(
+            mailer.write.setPermission([contractAddr], { account: addr1.account })
+          ).to.be.rejectedWith("ContractIsPaused");
+        });
+
+        it("Should allow granting permission when already granted", async function () {
+          const { mailer, addr1, publicClient } = this;
+          // Grant permission first time
+          await mailer.write.setPermission([contractAddr], { account: addr1.account });
+
+          // Grant permission again - should not revert
+          const hash = await mailer.write.setPermission([contractAddr], { account: addr1.account });
+          await publicClient.waitForTransactionReceipt({ hash });
+
+          const logs = await mailer.getEvents.PermissionGranted();
+          expect(logs.length).to.be.greaterThan(0);
+        });
+      });
+
+      describe("removePermission", function () {
+        beforeEach(async function () {
+          const { mailer, addr1 } = this;
+          // Grant permission first
+          await mailer.write.setPermission([contractAddr], { account: addr1.account });
+        });
+
+        it("Should allow wallet to revoke permission from a contract", async function () {
+          const { mailer, addr1, publicClient } = this;
+          const hash = await mailer.write.removePermission([contractAddr], { account: addr1.account });
+          await publicClient.waitForTransactionReceipt({ hash });
+
+          const logs = await mailer.getEvents.PermissionRevoked();
+          expect(logs.length).to.be.greaterThan(0);
+          const event = logs[logs.length - 1];
+          expect(event.args.contractAddress.toLowerCase()).to.equal(contractAddr.toLowerCase());
+          expect(event.args.wallet.toLowerCase()).to.equal(addr1.account.address.toLowerCase());
+
+          // Verify permission is removed
+          expect(await mailer.read.permissions([contractAddr, addr1.account.address])).to.be.false;
+        });
+
+        it("Should allow revoking permission even when not paused", async function () {
+          const { mailer, addr1 } = this;
+          // Note: removePermission does not have whenNotPaused modifier
+          expect(await mailer.read.permissions([contractAddr, addr1.account.address])).to.be.true;
+
+          await mailer.write.removePermission([contractAddr], { account: addr1.account });
+
+          expect(await mailer.read.permissions([contractAddr, addr1.account.address])).to.be.false;
+        });
+
+        it("Should allow revoking permission that doesn't exist", async function () {
+          const { mailer, owner } = this;
+          // owner never granted permission, but should be able to revoke
+          await mailer.write.removePermission([contractAddr], { account: owner.account });
+
+          expect(await mailer.read.permissions([contractAddr, owner.account.address])).to.be.false;
+        });
+
+        it("Should allow wallet to revoke and re-grant permission", async function () {
+          const { mailer, addr1 } = this;
+
+          // Revoke
+          await mailer.write.removePermission([contractAddr], { account: addr1.account });
+          expect(await mailer.read.permissions([contractAddr, addr1.account.address])).to.be.false;
+
+          // Re-grant
+          await mailer.write.setPermission([contractAddr], { account: addr1.account });
+          expect(await mailer.read.permissions([contractAddr, addr1.account.address])).to.be.true;
+        });
+      });
+    });
+
+    describe("Email Sending Functions", function () {
+      beforeEach(async function () {
+        const { mockUSDC, mailer, addr1 } = this;
+        // Give addr1 some USDC and approve contract
+        await mockUSDC.write.mint([addr1.account.address, parseUnits("10", 6)]);
+        await mockUSDC.write.approve([mailer.address, parseUnits("10", 6)], { account: addr1.account });
+      });
+
+      describe("sendToEmailAddress", function () {
+        it("Should emit MailSentToEmail event when USDC transfer succeeds", async function () {
+          const { mailer, addr1, publicClient } = this;
+          const hash = await mailer.write.sendToEmailAddress(["test@example.com", "Test Subject", "Test Body", addr1.account.address], { account: addr1.account });
+
+          await publicClient.waitForTransactionReceipt({ hash });
+          const logs = await mailer.getEvents.MailSentToEmail();
+
+          expect(logs.length).to.be.greaterThan(0);
+          const event = logs[logs.length - 1];
+          expect(event.args.from.toLowerCase()).to.equal(addr1.account.address.toLowerCase());
+          expect(event.args.toEmail).to.equal("test@example.com");
+          expect(event.args.subject).to.equal("Test Subject");
+          expect(event.args.body).to.equal("Test Body");
+        });
+
+        it("Should transfer correct USDC amount to contract", async function () {
+          const { mailer, mockUSDC, addr1 } = this;
+          const initialBalance = await mockUSDC.read.balanceOf([mailer.address]);
+
+          await mailer.write.sendToEmailAddress(["test@example.com", "Subject", "Body", addr1.account.address], { account: addr1.account });
+
+          const finalBalance = await mockUSDC.read.balanceOf([mailer.address]);
+          const fee = await mailer.read.sendFee();
+          const expectedOwnerFee = (fee * 10n) / 100n; // 10% of sendFee
+          expect(finalBalance - initialBalance).to.equal(expectedOwnerFee);
+        });
+
+        it("Should not emit event when USDC transfer fails (insufficient balance)", async function () {
+          const { mailer, addr2 } = this;
+          // addr2 has no USDC balance
+          await expect(
+            mailer.write.sendToEmailAddress(["test@example.com", "Subject", "Body", addr2.account.address], { account: addr2.account })
+          ).to.be.rejectedWith("InsufficientBalance");
+        });
+
+        it("Should not emit event when USDC transfer fails (insufficient allowance)", async function () {
+          const { mailer, mockUSDC, addr2 } = this;
+          // Give addr2 USDC but no allowance
+          await mockUSDC.write.mint([addr2.account.address, parseUnits("1", 6)]);
+
+          await expect(
+            mailer.write.sendToEmailAddress(["test@example.com", "Subject", "Body", addr2.account.address], { account: addr2.account })
+          ).to.be.rejectedWith("InsufficientAllowance");
+        });
+
+        it("Should work with empty strings", async function () {
+          const { mailer, addr1, publicClient } = this;
+          const hash = await mailer.write.sendToEmailAddress(["test@example.com", "", "", addr1.account.address], { account: addr1.account });
+
+          await publicClient.waitForTransactionReceipt({ hash });
+          const logs = await mailer.getEvents.MailSentToEmail();
+
+          expect(logs.length).to.be.greaterThan(0);
+        });
+
+        it("Should work with long strings", async function () {
+          const { mailer, addr1, publicClient } = this;
+          const longSubject = "A".repeat(1000);
+          const longBody = "B".repeat(5000);
+
+          const hash = await mailer.write.sendToEmailAddress(["test@example.com", longSubject, longBody, addr1.account.address], { account: addr1.account });
+
+          await publicClient.waitForTransactionReceipt({ hash });
+          const logs = await mailer.getEvents.MailSentToEmail();
+
+          expect(logs.length).to.be.greaterThan(0);
+        });
+
+        it("Should work with different email formats", async function () {
+          const { mailer, addr1, publicClient } = this;
+          const emails = [
+            "user@example.com",
+            "user.name+tag@example.co.uk",
+            "user_name@sub.example.org"
+          ];
+
+          for (const email of emails) {
+            const hash = await mailer.write.sendToEmailAddress([email, "Subject", "Body", addr1.account.address], { account: addr1.account });
+            await publicClient.waitForTransactionReceipt({ hash });
+          }
+
+          const logs = await mailer.getEvents.MailSentToEmail();
+          expect(logs.length).to.be.greaterThan(0);
+        });
+
+        it("Should revert when paused", async function () {
+          const { mailer, owner, addr1 } = this;
+          await mailer.write.pause([], { account: owner.account });
+
+          await expect(
+            mailer.write.sendToEmailAddress(["test@example.com", "Subject", "Body", addr1.account.address], { account: addr1.account })
+          ).to.be.rejectedWith("ContractIsPaused");
+        });
+      });
+
+      describe("sendPreparedToEmailAddress", function () {
+        it("Should emit PreparedMailSentToEmail event when USDC transfer succeeds", async function () {
+          const { mailer, addr1, publicClient } = this;
+          const hash = await mailer.write.sendPreparedToEmailAddress(["test@example.com", "mail-123", addr1.account.address], { account: addr1.account });
+
+          await publicClient.waitForTransactionReceipt({ hash });
+          const logs = await mailer.getEvents.PreparedMailSentToEmail();
+
+          expect(logs.length).to.be.greaterThan(0);
+          const event = logs[logs.length - 1];
+          expect(event.args.from.toLowerCase()).to.equal(addr1.account.address.toLowerCase());
+          expect(event.args.toEmail).to.equal("test@example.com");
+          expect(event.args.mailId).to.exist;
+        });
+
+        it("Should transfer correct USDC amount to contract", async function () {
+          const { mailer, mockUSDC, addr1 } = this;
+          const initialBalance = await mockUSDC.read.balanceOf([mailer.address]);
+
+          await mailer.write.sendPreparedToEmailAddress(["test@example.com", "mail-456", addr1.account.address], { account: addr1.account });
+
+          const finalBalance = await mockUSDC.read.balanceOf([mailer.address]);
+          const fee = await mailer.read.sendFee();
+          const expectedOwnerFee = (fee * 10n) / 100n; // 10% of sendFee
+          expect(finalBalance - initialBalance).to.equal(expectedOwnerFee);
+        });
+
+        it("Should not emit event when USDC transfer fails (insufficient balance)", async function () {
+          const { mailer, addr2 } = this;
+          // addr2 has no USDC balance
+          await expect(
+            mailer.write.sendPreparedToEmailAddress(["test@example.com", "mail-789", addr2.account.address], { account: addr2.account })
+          ).to.be.rejectedWith("InsufficientBalance");
+        });
+
+        it("Should not emit event when USDC transfer fails (insufficient allowance)", async function () {
+          const { mailer, mockUSDC, addr2 } = this;
+          // Give addr2 USDC but no allowance
+          await mockUSDC.write.mint([addr2.account.address, parseUnits("1", 6)]);
+
+          await expect(
+            mailer.write.sendPreparedToEmailAddress(["test@example.com", "mail-abc", addr2.account.address], { account: addr2.account })
+          ).to.be.rejectedWith("InsufficientAllowance");
+        });
+
+        it("Should work with empty mailId", async function () {
+          const { mailer, addr1, publicClient } = this;
+          const hash = await mailer.write.sendPreparedToEmailAddress(["test@example.com", "", addr1.account.address], { account: addr1.account });
+
+          await publicClient.waitForTransactionReceipt({ hash });
+          const logs = await mailer.getEvents.PreparedMailSentToEmail();
+
+          expect(logs.length).to.be.greaterThan(0);
+        });
+
+        it("Should work with long mailId", async function () {
+          const { mailer, addr1, publicClient } = this;
+          const longMailId = "long-mail-id-" + "x".repeat(1000);
+
+          const hash = await mailer.write.sendPreparedToEmailAddress(["test@example.com", longMailId, addr1.account.address], { account: addr1.account });
+
+          await publicClient.waitForTransactionReceipt({ hash });
+          const logs = await mailer.getEvents.PreparedMailSentToEmail();
+
+          expect(logs.length).to.be.greaterThan(0);
+        });
+
+        it("Should handle special characters in mailId", async function () {
+          const { mailer, addr1, publicClient } = this;
+          const specialMailId = "mail-123!@#$%^&*()_+-=[]{}|;:,.<>?";
+
+          const hash = await mailer.write.sendPreparedToEmailAddress(["test@example.com", specialMailId, addr1.account.address], { account: addr1.account });
+
+          await publicClient.waitForTransactionReceipt({ hash });
+          const logs = await mailer.getEvents.PreparedMailSentToEmail();
+
+          expect(logs.length).to.be.greaterThan(0);
+        });
+
+        it("Should work with different email formats", async function () {
+          const { mailer, addr1, publicClient } = this;
+          const emails = [
+            "user@example.com",
+            "user.name+tag@example.co.uk",
+            "user_name@sub.example.org"
+          ];
+
+          for (const email of emails) {
+            const hash = await mailer.write.sendPreparedToEmailAddress([email, `mail-${email}`, addr1.account.address], { account: addr1.account });
+            await publicClient.waitForTransactionReceipt({ hash });
+          }
+
+          const logs = await mailer.getEvents.PreparedMailSentToEmail();
+          expect(logs.length).to.be.greaterThan(0);
+        });
+
+        it("Should revert when paused", async function () {
+          const { mailer, owner, addr1 } = this;
+          await mailer.write.pause([], { account: owner.account });
+
+          await expect(
+            mailer.write.sendPreparedToEmailAddress(["test@example.com", "mail-123", addr1.account.address], { account: addr1.account })
+          ).to.be.rejectedWith("ContractIsPaused");
+        });
+      });
+    });
   });
 });

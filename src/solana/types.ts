@@ -6,6 +6,7 @@ export interface ClaimableInfo {
   timestamp: number;
   recipient: string;
   isExpired: boolean;
+  expiresAt?: number; // Optional for compatibility
 }
 
 export interface DelegationInfo {
@@ -22,8 +23,8 @@ export interface DeploymentConfig {
 }
 
 export interface MailerFees {
-  sendFee: number;
-  delegationFee: number;
+  sendFee: bigint;
+  delegationFee: bigint;
 }
 
 // Import from local utils instead of external dependency

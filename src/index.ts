@@ -3,14 +3,18 @@
 // Export unified client and utilities
 export * from './unified/index.js';
 
-// Export specific clients with explicit names to avoid conflicts
+// Export specific stateless clients with explicit names to avoid conflicts
 export {
-  MailerClient as EVMMailerClient
-} from './evm/mailer-client.js';
+  EVMMailerClient,
+  type EVMWallet,
+  type GasOptions
+} from './evm/evm-mailer-client.js';
 
 export {
-  MailerClient as SolanaMailerClient
-} from './solana/mailer-client.js';
+  SolanaMailerClient,
+  type SolanaWallet,
+  type ComputeUnitOptions
+} from './solana/solana-mailer-client.js';
 
 // Export utilities with explicit names
 export {

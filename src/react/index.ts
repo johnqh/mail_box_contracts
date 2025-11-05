@@ -32,9 +32,28 @@
  */
 
 // Context and Provider
-export { MailerProvider, useMailerClient, QueryClient, QueryClientProvider } from './context/MailerProvider';
+export { MailerProvider, useMailerClient, useMailerContext, QueryClient, QueryClientProvider } from './context/MailerProvider';
 
-// Query Hooks (Read Operations)
+// Grouped Query Hooks (Preferred - no context dependency)
+export {
+  useFees,
+  useClaimableAmounts,
+  useDelegationAndPermissions,
+  useContractState,
+  mailerQueryKeys,
+} from './hooks/useMailerQueries';
+
+// Grouped Mutation Hooks (Preferred - no context dependency)
+export {
+  useMessaging,
+  useClaims,
+  useDelegation,
+  usePermissions,
+  useContractControl,
+  useOwnerOperations,
+} from './hooks/useMailerMutations';
+
+// Legacy Individual Query Hooks (Deprecated - use grouped hooks above)
 export {
   useGetSendFee,
   useGetDelegationFee,
@@ -44,22 +63,21 @@ export {
   useIsPaused,
   useWalletAddress,
   useChainType,
-  mailerQueryKeys,
+  useHasPermission,
 } from './hooks/useMailerQueries';
 
-// Mutation Hooks (Write Operations)
+// Legacy Individual Mutation Hooks (Deprecated - use grouped hooks above)
 export {
   useSendMessage,
   useSendPrepared,
-  useSendToEmail,
-  useSendPreparedToEmail,
   useClaimRevenue,
   useClaimOwnerShare,
   useClaimExpiredShares,
   useDelegateTo,
   useRejectDelegation,
-  useSetFee,
-  useSetDelegationFee,
+  useSetFees,
+  useSetPermission,
+  useRemovePermission,
   usePause,
   useUnpause,
   useEmergencyUnpause,

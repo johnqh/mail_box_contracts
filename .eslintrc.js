@@ -26,6 +26,7 @@ module.exports = {
     'target/',
     'test-ledger/',
     'scripts/update-deployed.js',
+    'examples/',
   ],
   env: {
     node: true,

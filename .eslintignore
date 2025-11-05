@@ -1,0 +1,23 @@
+# Dependencies
+node_modules/
+
+# Build outputs
+dist/
+build/
+typechain-types/
+
+# Artifacts
+artifacts/
+cache/
+
+# Solana build
+target/
+programs/**/target/
+
+# Examples with JSX (TypeScript can't parse JSX without proper config)
+examples/stateless-client-usage.ts
+examples/stateless-usage.ts
+
+# Coverage
+coverage/
+.nyc_output/
