@@ -228,7 +228,7 @@
     "viem": "^2.38.4"
   },
   "dependencies": {
-    "@sudobility/configs": "^0.0.15",
+    "@sudobility/configs": "^0.0.16",
     "@sudobility/types": "^1.9.2"
   },
   "overrides": {

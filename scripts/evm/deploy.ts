@@ -1,6 +1,5 @@
 import hre from "hardhat";
 import { RpcHelpers } from "@sudobility/configs";
-import { ChainType } from "@sudobility/types";
 import { formatEther, formatUnits, getAddress } from "viem";
 const { network } = hre;
 
@@ -58,10 +57,8 @@ async function main() {
       process.exit(1);
     }
 
-    // Get all visible EVM chains (both mainnet and testnet)
-    const visibleChains = RpcHelpers.getVisibleChains(ChainType.EVM, true);
-
-    const chainInfo = visibleChains.find(c => c.chainId === chainId);
+    // Get chain info directly by chainId
+    const chainInfo = RpcHelpers.getChainInfoById(chainId);
 
     if (!chainInfo) {
       console.error(`❌ Unsupported chain ID: ${chainId} for network: ${networkName}`);
