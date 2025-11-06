@@ -115,8 +115,8 @@ export class OnchainMailerClient {
       priority?: boolean;
       to?: string;
       resolveSenderToName?: boolean;
-      gasOptions?: any; // Gas options for EVM
-      computeOptions?: any; // Compute options for Solana
+      gasOptions?: unknown; // Gas options for EVM
+      computeOptions?: unknown; // Compute options for Solana
     }
   ): Promise<MessageResult> {
     // Validate message
@@ -197,8 +197,8 @@ export class OnchainMailerClient {
     options?: {
       priority?: boolean;
       resolveSenderToName?: boolean;
-      gasOptions?: any;
-      computeOptions?: any;
+      gasOptions?: unknown;
+      computeOptions?: unknown;
     }
   ): Promise<MessageResult> {
     if (chainInfo.chainType === ChainType.EVM) {
@@ -264,8 +264,8 @@ export class OnchainMailerClient {
     webhookId: string,
     options?: {
       priority?: boolean;
-      gasOptions?: any;
-      computeOptions?: any;
+      gasOptions?: unknown;
+      computeOptions?: unknown;
     }
   ): Promise<MessageResult> {
     if (chainInfo.chainType === ChainType.EVM) {
@@ -332,8 +332,8 @@ export class OnchainMailerClient {
     chainInfo: ChainInfo,
     delegate: string,
     options?: {
-      gasOptions?: any;
-      computeOptions?: any;
+      gasOptions?: unknown;
+      computeOptions?: unknown;
     }
   ): Promise<DelegationResult> {
     if (chainInfo.chainType === ChainType.EVM) {
@@ -379,8 +379,8 @@ export class OnchainMailerClient {
     chainInfo: ChainInfo,
     delegatingAddress: string,
     options?: {
-      gasOptions?: any;
-      computeOptions?: any;
+      gasOptions?: unknown;
+      computeOptions?: unknown;
     }
   ): Promise<UnifiedTransaction> {
     if (chainInfo.chainType === ChainType.EVM) {
@@ -424,8 +424,8 @@ export class OnchainMailerClient {
     connectedWallet: Wallet,
     chainInfo: ChainInfo,
     options?: {
-      gasOptions?: any;
-      computeOptions?: any;
+      gasOptions?: unknown;
+      computeOptions?: unknown;
     }
   ): Promise<UnifiedTransaction> {
     if (chainInfo.chainType === ChainType.EVM) {
@@ -464,8 +464,8 @@ export class OnchainMailerClient {
     connectedWallet: Wallet,
     chainInfo: ChainInfo,
     options?: {
-      gasOptions?: any;
-      computeOptions?: any;
+      gasOptions?: unknown;
+      computeOptions?: unknown;
     }
   ): Promise<UnifiedTransaction> {
     if (chainInfo.chainType === ChainType.EVM) {
@@ -505,8 +505,8 @@ export class OnchainMailerClient {
     chainInfo: ChainInfo,
     recipient: string,
     options?: {
-      gasOptions?: any;
-      computeOptions?: any;
+      gasOptions?: unknown;
+      computeOptions?: unknown;
     }
   ): Promise<UnifiedTransaction> {
     if (chainInfo.chainType === ChainType.EVM) {
@@ -549,8 +549,8 @@ export class OnchainMailerClient {
     sendFee: number | bigint,
     delegationFee: number | bigint,
     options?: {
-      gasOptions?: any;
-      computeOptions?: any;
+      gasOptions?: unknown;
+      computeOptions?: unknown;
     }
   ): Promise<UnifiedTransaction> {
     if (chainInfo.chainType === ChainType.EVM) {
@@ -603,8 +603,8 @@ export class OnchainMailerClient {
     target: string,
     percentage: number,
     options?: {
-      gasOptions?: any;
-      computeOptions?: any;
+      gasOptions?: unknown;
+      computeOptions?: unknown;
     }
   ): Promise<UnifiedTransaction> {
     if (chainInfo.chainType === ChainType.EVM) {
@@ -648,8 +648,8 @@ export class OnchainMailerClient {
     chainInfo: ChainInfo,
     target: string,
     options?: {
-      gasOptions?: any;
-      computeOptions?: any;
+      gasOptions?: unknown;
+      computeOptions?: unknown;
     }
   ): Promise<UnifiedTransaction> {
     if (chainInfo.chainType === ChainType.EVM) {
@@ -690,8 +690,8 @@ export class OnchainMailerClient {
     connectedWallet: Wallet,
     chainInfo: ChainInfo,
     options?: {
-      gasOptions?: any;
-      computeOptions?: any;
+      gasOptions?: unknown;
+      computeOptions?: unknown;
     }
   ): Promise<UnifiedTransaction> {
     if (chainInfo.chainType === ChainType.EVM) {
@@ -730,8 +730,8 @@ export class OnchainMailerClient {
     connectedWallet: Wallet,
     chainInfo: ChainInfo,
     options?: {
-      gasOptions?: any;
-      computeOptions?: any;
+      gasOptions?: unknown;
+      computeOptions?: unknown;
     }
   ): Promise<UnifiedTransaction> {
     if (chainInfo.chainType === ChainType.EVM) {
@@ -770,8 +770,8 @@ export class OnchainMailerClient {
     connectedWallet: Wallet,
     chainInfo: ChainInfo,
     options?: {
-      gasOptions?: any;
-      computeOptions?: any;
+      gasOptions?: unknown;
+      computeOptions?: unknown;
     }
   ): Promise<UnifiedTransaction> {
     if (chainInfo.chainType === ChainType.EVM) {
@@ -812,8 +812,8 @@ export class OnchainMailerClient {
     chainInfo: ChainInfo,
     recipient: string | string[],
     options?: {
-      gasOptions?: any;
-      computeOptions?: any;
+      gasOptions?: unknown;
+      computeOptions?: unknown;
     }
   ): Promise<UnifiedTransaction> {
     if (chainInfo.chainType === ChainType.EVM) {
@@ -860,7 +860,7 @@ export class OnchainMailerClient {
     chainInfo: ChainInfo,
     contractAddress: string,
     options?: {
-      gasOptions?: any;
+      gasOptions?: unknown;
     }
   ): Promise<UnifiedTransaction> {
     if (chainInfo.chainType === ChainType.EVM) {
@@ -892,7 +892,7 @@ export class OnchainMailerClient {
     chainInfo: ChainInfo,
     contractAddress: string,
     options?: {
-      gasOptions?: any;
+      gasOptions?: unknown;
     }
   ): Promise<UnifiedTransaction> {
     if (chainInfo.chainType === ChainType.EVM) {
