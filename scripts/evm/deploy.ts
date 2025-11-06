@@ -1,4 +1,5 @@
 import hre from "hardhat";
+import "@nomicfoundation/hardhat-viem";
 import { RpcHelpers } from "@sudobility/configs";
 import { formatEther, formatUnits, getAddress } from "viem";
 const { network } = hre;
@@ -89,8 +90,8 @@ async function main() {
     const mailerAddress = mailer.address;
     console.log("✅ Mailer deployed to:", mailerAddress);
 
-    const sendFee = await mailer.read.sendFee();
-    const delegationFee = await mailer.read.delegationFee();
+    const sendFee = await mailer.read.sendFee() as bigint;
+    const delegationFee = await mailer.read.delegationFee() as bigint;
     console.log("   - Send fee:", formatUnits(sendFee, 6), "USDC");
     console.log("   - Delegation fee:", formatUnits(delegationFee, 6), "USDC");
 
