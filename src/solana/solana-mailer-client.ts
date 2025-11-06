@@ -105,22 +105,28 @@ enum InstructionType {
   Initialize = 0,
   Send = 1,
   SendPrepared = 2,
-  SendThroughWebhook = 3,
-  SendToEmail = 4,
-  SendPreparedToEmail = 5,
+  SendToEmail = 3,
+  SendPreparedToEmail = 4,
+  SendThroughWebhook = 5,
   ClaimRecipientShare = 6,
   ClaimOwnerShare = 7,
-  ClaimExpiredShares = 8,
-  SetFees = 9,
-  DelegateTo = 10,
-  RejectDelegation = 11,
+  SetFee = 8,
+  DelegateTo = 9,
+  RejectDelegation = 10,
+  SetDelegationFee = 11,
   SetCustomFeePercentage = 12,
   ClearCustomFeePercentage = 13,
   Pause = 14,
   Unpause = 15,
-  EmergencyUnpause = 16,
-  DistributeClaimableFunds = 17,
+  DistributeClaimableFunds = 16,
+  ClaimExpiredShares = 17,
+  EmergencyUnpause = 18,
 }
+
+const CLAIM_PDA_SEED = Buffer.from('claim');
+const DELEGATION_PDA_SEED = Buffer.from('delegation');
+const DISCOUNT_PDA_SEED = Buffer.from('discount');
+const CLAIM_PERIOD_SECONDS = 60 * 24 * 60 * 60;
 
 // Instruction data encoding functions
 function encodeInitialize(usdcMint: PublicKey): Buffer {
@@ -199,17 +205,12 @@ function encodeSendPrepared(
 
 function encodeSendThroughWebhook(
   to: PublicKey,
-  subject: string,
-  body: string,
   webhookId: string,
-  revenueShareToReceiver: boolean
+  revenueShareToReceiver: boolean,
+  resolveSenderToName: boolean = false
 ): Buffer {
-  const subjectBytes = Buffer.from(subject, 'utf8');
-  const bodyBytes = Buffer.from(body, 'utf8');
   const webhookIdBytes = Buffer.from(webhookId, 'utf8');
-  const data = Buffer.alloc(
-    1 + 32 + 4 + subjectBytes.length + 4 + bodyBytes.length + 4 + webhookIdBytes.length + 1
-  );
+  const data = Buffer.alloc(1 + 32 + 4 + webhookIdBytes.length + 1 + 1);
   let offset = 0;
 
   data.writeUInt8(InstructionType.SendThroughWebhook, offset);
@@ -218,48 +219,39 @@ function encodeSendThroughWebhook(
   to.toBuffer().copy(data, offset);
   offset += 32;
 
-  data.writeUInt32LE(subjectBytes.length, offset);
-  offset += 4;
-  subjectBytes.copy(data, offset);
-  offset += subjectBytes.length;
-
-  data.writeUInt32LE(bodyBytes.length, offset);
-  offset += 4;
-  bodyBytes.copy(data, offset);
-  offset += bodyBytes.length;
-
   data.writeUInt32LE(webhookIdBytes.length, offset);
   offset += 4;
   webhookIdBytes.copy(data, offset);
   offset += webhookIdBytes.length;
 
   data.writeUInt8(revenueShareToReceiver ? 1 : 0, offset);
+  offset += 1;
+
+  data.writeUInt8(resolveSenderToName ? 1 : 0, offset);
 
   return data;
 }
 
 function encodeSendToEmail(
-  emailHash: string,
+  toEmail: string,
   subject: string,
-  body: string,
-  payer: PublicKey,
-  revenueShareToReceiver: boolean
+  body: string
 ): Buffer {
-  const emailHashBytes = Buffer.from(emailHash, 'utf8');
+  const emailBytes = Buffer.from(toEmail, 'utf8');
   const subjectBytes = Buffer.from(subject, 'utf8');
   const bodyBytes = Buffer.from(body, 'utf8');
   const data = Buffer.alloc(
-    1 + 4 + emailHashBytes.length + 4 + subjectBytes.length + 4 + bodyBytes.length + 32 + 1
+    1 + 4 + emailBytes.length + 4 + subjectBytes.length + 4 + bodyBytes.length
   );
   let offset = 0;
 
   data.writeUInt8(InstructionType.SendToEmail, offset);
   offset += 1;
 
-  data.writeUInt32LE(emailHashBytes.length, offset);
+  data.writeUInt32LE(emailBytes.length, offset);
   offset += 4;
-  emailHashBytes.copy(data, offset);
-  offset += emailHashBytes.length;
+  emailBytes.copy(data, offset);
+  offset += emailBytes.length;
 
   data.writeUInt32LE(subjectBytes.length, offset);
   offset += 4;
@@ -271,53 +263,45 @@ function encodeSendToEmail(
   bodyBytes.copy(data, offset);
   offset += bodyBytes.length;
 
-  payer.toBuffer().copy(data, offset);
-  offset += 32;
-
-  data.writeUInt8(revenueShareToReceiver ? 1 : 0, offset);
-
   return data;
 }
 
 function encodeSendPreparedToEmail(
-  emailHash: string,
-  mailId: string,
-  payer: PublicKey,
-  revenueShareToReceiver: boolean
+  toEmail: string,
+  mailId: string
 ): Buffer {
-  const emailHashBytes = Buffer.from(emailHash, 'utf8');
+  const emailBytes = Buffer.from(toEmail, 'utf8');
   const mailIdBytes = Buffer.from(mailId, 'utf8');
-  const data = Buffer.alloc(
-    1 + 4 + emailHashBytes.length + 4 + mailIdBytes.length + 32 + 1
-  );
+  const data = Buffer.alloc(1 + 4 + emailBytes.length + 4 + mailIdBytes.length);
   let offset = 0;
 
   data.writeUInt8(InstructionType.SendPreparedToEmail, offset);
   offset += 1;
 
-  data.writeUInt32LE(emailHashBytes.length, offset);
+  data.writeUInt32LE(emailBytes.length, offset);
   offset += 4;
-  emailHashBytes.copy(data, offset);
-  offset += emailHashBytes.length;
+  emailBytes.copy(data, offset);
+  offset += emailBytes.length;
 
   data.writeUInt32LE(mailIdBytes.length, offset);
   offset += 4;
   mailIdBytes.copy(data, offset);
   offset += mailIdBytes.length;
 
-  payer.toBuffer().copy(data, offset);
-  offset += 32;
-
-  data.writeUInt8(revenueShareToReceiver ? 1 : 0, offset);
-
   return data;
 }
 
-function encodeSetFees(sendFee: bigint, delegationFee: bigint): Buffer {
-  const data = Buffer.alloc(1 + 8 + 8);
-  data.writeUInt8(InstructionType.SetFees, 0);
+function encodeSetFee(sendFee: bigint): Buffer {
+  const data = Buffer.alloc(1 + 8);
+  data.writeUInt8(InstructionType.SetFee, 0);
   data.writeBigUInt64LE(sendFee, 1);
-  data.writeBigUInt64LE(delegationFee, 9);
+  return data;
+}
+
+function encodeSetDelegationFee(delegationFee: bigint): Buffer {
+  const data = Buffer.alloc(1 + 8);
+  data.writeUInt8(InstructionType.SetDelegationFee, 0);
+  data.writeBigUInt64LE(delegationFee, 1);
   return data;
 }
 
@@ -331,10 +315,9 @@ function encodeDelegateTo(delegate: Optional<PublicKey>): Buffer {
   return data;
 }
 
-function encodeRejectDelegation(delegatingAddress: PublicKey): Buffer {
-  const data = Buffer.alloc(1 + 32);
+function encodeRejectDelegation(): Buffer {
+  const data = Buffer.alloc(1);
   data.writeUInt8(InstructionType.RejectDelegation, 0);
-  delegatingAddress.toBuffer().copy(data, 1);
   return data;
 }
 
@@ -363,22 +346,10 @@ function encodeClaimExpiredShares(recipient: PublicKey): Buffer {
   return data;
 }
 
-function encodeDistributeClaimableFunds(recipients: PublicKey[]): Buffer {
-  const recipientCount = recipients.length;
-  const data = Buffer.alloc(1 + 4 + recipientCount * 32);
-  let offset = 0;
-
-  data.writeUInt8(InstructionType.DistributeClaimableFunds, offset);
-  offset += 1;
-
-  data.writeUInt32LE(recipientCount, offset);
-  offset += 4;
-
-  for (const recipient of recipients) {
-    recipient.toBuffer().copy(data, offset);
-    offset += 32;
-  }
-
+function encodeDistributeClaimableFunds(recipient: PublicKey): Buffer {
+  const data = Buffer.alloc(1 + 32);
+  data.writeUInt8(InstructionType.DistributeClaimableFunds, 0);
+  recipient.toBuffer().copy(data, 1);
   return data;
 }
 
@@ -659,6 +630,7 @@ export class SolanaMailerClient {
     subject: string,
     body: string,
     revenueShareToReceiver: boolean,
+    resolveSenderToName: boolean = false,
     computeOptions?: ComputeUnitOptions
   ): Promise<TransactionResult> {
     const connection = await this.getOrCreateConnection(chainInfo, connectedWallet.connection);
@@ -671,7 +643,6 @@ export class SolanaMailerClient {
     const usdcMint = new PublicKey(chainInfo.usdcAddress);
     const toPubkey = typeof to === 'string' ? new PublicKey(to) : to;
 
-    // Get token accounts
     const senderTokenAccount = getAssociatedTokenAddressSync(
       usdcMint,
       connectedWallet.wallet.publicKey,
@@ -686,18 +657,17 @@ export class SolanaMailerClient {
       TOKEN_PROGRAM_ID
     );
 
-    const [recipientInfo] = PublicKey.findProgramAddressSync(
-      [Buffer.from('recipient_info'), toPubkey.toBuffer()],
+    const [recipientClaimPda] = PublicKey.findProgramAddressSync(
+      [CLAIM_PDA_SEED, toPubkey.toBuffer()],
       programId
     );
 
     const keys = [
       { pubkey: connectedWallet.wallet.publicKey, isSigner: true, isWritable: true },
-      { pubkey: toPubkey, isSigner: false, isWritable: false },
+      { pubkey: recipientClaimPda, isSigner: false, isWritable: true },
       { pubkey: mailerStatePda, isSigner: false, isWritable: true },
       { pubkey: senderTokenAccount, isSigner: false, isWritable: true },
       { pubkey: mailerTokenAccount, isSigner: false, isWritable: true },
-      { pubkey: recipientInfo, isSigner: false, isWritable: true },
       { pubkey: TOKEN_PROGRAM_ID, isSigner: false, isWritable: false },
       { pubkey: SystemProgram.programId, isSigner: false, isWritable: false },
     ];
@@ -705,7 +675,7 @@ export class SolanaMailerClient {
     const instruction = new TransactionInstruction({
       programId,
       keys,
-      data: encodeSend(toPubkey, subject, body, revenueShareToReceiver),
+      data: encodeSend(toPubkey, subject, body, revenueShareToReceiver, resolveSenderToName),
     });
 
     const transaction = new Transaction().add(instruction);
@@ -741,6 +711,7 @@ export class SolanaMailerClient {
     to: string | PublicKey,
     mailId: string,
     revenueShareToReceiver: boolean,
+    resolveSenderToName: boolean = false,
     computeOptions?: ComputeUnitOptions
   ): Promise<TransactionResult> {
     const connection = await this.getOrCreateConnection(chainInfo, connectedWallet.connection);
@@ -767,18 +738,17 @@ export class SolanaMailerClient {
       TOKEN_PROGRAM_ID
     );
 
-    const [recipientInfo] = PublicKey.findProgramAddressSync(
-      [Buffer.from('recipient_info'), toPubkey.toBuffer()],
+    const [recipientClaimPda] = PublicKey.findProgramAddressSync(
+      [CLAIM_PDA_SEED, toPubkey.toBuffer()],
       programId
     );
 
     const keys = [
       { pubkey: connectedWallet.wallet.publicKey, isSigner: true, isWritable: true },
-      { pubkey: toPubkey, isSigner: false, isWritable: false },
+      { pubkey: recipientClaimPda, isSigner: false, isWritable: true },
       { pubkey: mailerStatePda, isSigner: false, isWritable: true },
       { pubkey: senderTokenAccount, isSigner: false, isWritable: true },
       { pubkey: mailerTokenAccount, isSigner: false, isWritable: true },
-      { pubkey: recipientInfo, isSigner: false, isWritable: true },
       { pubkey: TOKEN_PROGRAM_ID, isSigner: false, isWritable: false },
       { pubkey: SystemProgram.programId, isSigner: false, isWritable: false },
     ];
@@ -786,7 +756,7 @@ export class SolanaMailerClient {
     const instruction = new TransactionInstruction({
       programId,
       keys,
-      data: encodeSendPrepared(toPubkey, mailId, revenueShareToReceiver),
+      data: encodeSendPrepared(toPubkey, mailId, revenueShareToReceiver, resolveSenderToName),
     });
 
     const transaction = new Transaction().add(instruction);
@@ -820,10 +790,9 @@ export class SolanaMailerClient {
     connectedWallet: SolanaWallet,
     chainInfo: ChainInfo,
     to: string | PublicKey,
-    subject: string,
-    body: string,
     webhookId: string,
     revenueShareToReceiver: boolean,
+    resolveSenderToName: boolean = false,
     computeOptions?: ComputeUnitOptions
   ): Promise<TransactionResult> {
     const connection = await this.getOrCreateConnection(chainInfo, connectedWallet.connection);
@@ -850,18 +819,17 @@ export class SolanaMailerClient {
       TOKEN_PROGRAM_ID
     );
 
-    const [recipientInfo] = PublicKey.findProgramAddressSync(
-      [Buffer.from('recipient_info'), toPubkey.toBuffer()],
+    const [recipientClaimPda] = PublicKey.findProgramAddressSync(
+      [CLAIM_PDA_SEED, toPubkey.toBuffer()],
       programId
     );
 
     const keys = [
       { pubkey: connectedWallet.wallet.publicKey, isSigner: true, isWritable: true },
-      { pubkey: toPubkey, isSigner: false, isWritable: false },
+      { pubkey: recipientClaimPda, isSigner: false, isWritable: true },
       { pubkey: mailerStatePda, isSigner: false, isWritable: true },
       { pubkey: senderTokenAccount, isSigner: false, isWritable: true },
       { pubkey: mailerTokenAccount, isSigner: false, isWritable: true },
-      { pubkey: recipientInfo, isSigner: false, isWritable: true },
       { pubkey: TOKEN_PROGRAM_ID, isSigner: false, isWritable: false },
       { pubkey: SystemProgram.programId, isSigner: false, isWritable: false },
     ];
@@ -869,7 +837,12 @@ export class SolanaMailerClient {
     const instruction = new TransactionInstruction({
       programId,
       keys,
-      data: encodeSendThroughWebhook(toPubkey, subject, body, webhookId, revenueShareToReceiver),
+      data: encodeSendThroughWebhook(
+        toPubkey,
+        webhookId,
+        revenueShareToReceiver,
+        resolveSenderToName
+      ),
     });
 
     const transaction = new Transaction().add(instruction);
@@ -902,8 +875,8 @@ export class SolanaMailerClient {
     emailHash: string,
     subject: string,
     body: string,
-    payer: string | PublicKey,
-    revenueShareToReceiver: boolean,
+    _payer: string | PublicKey,
+    _revenueShareToReceiver: boolean,
     connectedWallet: SolanaWallet,
     chainInfo: ChainInfo,
     computeOptions?: ComputeUnitOptions
@@ -916,7 +889,6 @@ export class SolanaMailerClient {
     }
 
     const usdcMint = new PublicKey(chainInfo.usdcAddress);
-    const payerPubkey = typeof payer === 'string' ? new PublicKey(payer) : payer;
 
     const senderTokenAccount = getAssociatedTokenAddressSync(
       usdcMint,
@@ -938,13 +910,12 @@ export class SolanaMailerClient {
       { pubkey: senderTokenAccount, isSigner: false, isWritable: true },
       { pubkey: mailerTokenAccount, isSigner: false, isWritable: true },
       { pubkey: TOKEN_PROGRAM_ID, isSigner: false, isWritable: false },
-      { pubkey: SystemProgram.programId, isSigner: false, isWritable: false },
     ];
 
     const instruction = new TransactionInstruction({
       programId,
       keys,
-      data: encodeSendToEmail(emailHash, subject, body, payerPubkey, revenueShareToReceiver),
+      data: encodeSendToEmail(emailHash, subject, body),
     });
 
     const transaction = new Transaction().add(instruction);
@@ -976,8 +947,8 @@ export class SolanaMailerClient {
   async sendPreparedToEmail(
     emailHash: string,
     mailId: string,
-    payer: string | PublicKey,
-    revenueShareToReceiver: boolean,
+    _payer: string | PublicKey,
+    _revenueShareToReceiver: boolean,
     connectedWallet: SolanaWallet,
     chainInfo: ChainInfo,
     computeOptions?: ComputeUnitOptions
@@ -990,7 +961,6 @@ export class SolanaMailerClient {
     }
 
     const usdcMint = new PublicKey(chainInfo.usdcAddress);
-    const payerPubkey = typeof payer === 'string' ? new PublicKey(payer) : payer;
 
     const senderTokenAccount = getAssociatedTokenAddressSync(
       usdcMint,
@@ -1012,13 +982,12 @@ export class SolanaMailerClient {
       { pubkey: senderTokenAccount, isSigner: false, isWritable: true },
       { pubkey: mailerTokenAccount, isSigner: false, isWritable: true },
       { pubkey: TOKEN_PROGRAM_ID, isSigner: false, isWritable: false },
-      { pubkey: SystemProgram.programId, isSigner: false, isWritable: false },
     ];
 
     const instruction = new TransactionInstruction({
       programId,
       keys,
-      data: encodeSendPreparedToEmail(emailHash, mailId, payerPubkey, revenueShareToReceiver),
+      data: encodeSendPreparedToEmail(emailHash, mailId),
     });
 
     const transaction = new Transaction().add(instruction);
@@ -1075,17 +1044,17 @@ export class SolanaMailerClient {
       TOKEN_PROGRAM_ID
     );
 
-    const [recipientInfo] = PublicKey.findProgramAddressSync(
-      [Buffer.from('recipient_info'), connectedWallet.wallet.publicKey.toBuffer()],
+    const [recipientClaimPda] = PublicKey.findProgramAddressSync(
+      [CLAIM_PDA_SEED, connectedWallet.wallet.publicKey.toBuffer()],
       programId
     );
 
     const keys = [
       { pubkey: connectedWallet.wallet.publicKey, isSigner: true, isWritable: true },
+      { pubkey: recipientClaimPda, isSigner: false, isWritable: true },
       { pubkey: mailerStatePda, isSigner: false, isWritable: true },
       { pubkey: recipientTokenAccount, isSigner: false, isWritable: true },
       { pubkey: mailerTokenAccount, isSigner: false, isWritable: true },
-      { pubkey: recipientInfo, isSigner: false, isWritable: true },
       { pubkey: TOKEN_PROGRAM_ID, isSigner: false, isWritable: false },
     ];
 
@@ -1176,15 +1145,15 @@ export class SolanaMailerClient {
 
     const recipientPubkey = typeof recipient === 'string' ? new PublicKey(recipient) : recipient;
 
-    const [recipientInfo] = PublicKey.findProgramAddressSync(
-      [Buffer.from('recipient_info'), recipientPubkey.toBuffer()],
+    const [recipientClaimPda] = PublicKey.findProgramAddressSync(
+      [CLAIM_PDA_SEED, recipientPubkey.toBuffer()],
       programId
     );
 
     const keys = [
       { pubkey: connectedWallet.wallet.publicKey, isSigner: true, isWritable: true },
       { pubkey: mailerStatePda, isSigner: false, isWritable: true },
-      { pubkey: recipientInfo, isSigner: false, isWritable: true },
+      { pubkey: recipientClaimPda, isSigner: false, isWritable: true },
     ];
 
     const instruction = new TransactionInstruction({
@@ -1240,17 +1209,17 @@ export class SolanaMailerClient {
       TOKEN_PROGRAM_ID
     );
 
-    const [delegatorInfo] = PublicKey.findProgramAddressSync(
-      [Buffer.from('delegator_info'), connectedWallet.wallet.publicKey.toBuffer()],
+    const [delegationPda] = PublicKey.findProgramAddressSync(
+      [DELEGATION_PDA_SEED, connectedWallet.wallet.publicKey.toBuffer()],
       programId
     );
 
     const keys = [
       { pubkey: connectedWallet.wallet.publicKey, isSigner: true, isWritable: true },
+      { pubkey: delegationPda, isSigner: false, isWritable: true },
       { pubkey: mailerStatePda, isSigner: false, isWritable: true },
       { pubkey: senderTokenAccount, isSigner: false, isWritable: true },
       { pubkey: mailerTokenAccount, isSigner: false, isWritable: true },
-      { pubkey: delegatorInfo, isSigner: false, isWritable: true },
       { pubkey: TOKEN_PROGRAM_ID, isSigner: false, isWritable: false },
       { pubkey: SystemProgram.programId, isSigner: false, isWritable: false },
     ];
@@ -1294,24 +1263,25 @@ export class SolanaMailerClient {
     computeOptions?: ComputeUnitOptions
   ): Promise<TransactionResult> {
     const connection = await this.getOrCreateConnection(chainInfo, connectedWallet.connection);
-    const { programId } = this.getProgramAddresses(chainInfo);
+    const { programId, mailerStatePda } = this.getProgramAddresses(chainInfo);
 
     const delegatorPubkey = typeof delegatingAddress === 'string' ? new PublicKey(delegatingAddress) : delegatingAddress;
 
-    const [delegatorInfo] = PublicKey.findProgramAddressSync(
-      [Buffer.from('delegator_info'), delegatorPubkey.toBuffer()],
+    const [delegationPda] = PublicKey.findProgramAddressSync(
+      [DELEGATION_PDA_SEED, delegatorPubkey.toBuffer()],
       programId
     );
 
     const keys = [
       { pubkey: connectedWallet.wallet.publicKey, isSigner: true, isWritable: false },
-      { pubkey: delegatorInfo, isSigner: false, isWritable: true },
+      { pubkey: delegationPda, isSigner: false, isWritable: true },
+      { pubkey: mailerStatePda, isSigner: false, isWritable: false },
     ];
 
     const instruction = new TransactionInstruction({
       programId,
       keys,
-      data: encodeRejectDelegation(delegatorPubkey),
+      data: encodeRejectDelegation(),
     });
 
     const transaction = new Transaction().add(instruction);
@@ -1338,18 +1308,27 @@ export class SolanaMailerClient {
     const connection = await this.getOrCreateConnection(chainInfo, connectedWallet.connection);
     const { programId, mailerStatePda } = this.getProgramAddresses(chainInfo);
 
-    const keys = [
-      { pubkey: connectedWallet.wallet.publicKey, isSigner: true, isWritable: false },
-      { pubkey: mailerStatePda, isSigner: false, isWritable: true },
-    ];
+    const ownerKey = connectedWallet.wallet.publicKey;
 
-    const instruction = new TransactionInstruction({
+    const setSendFeeIx = new TransactionInstruction({
       programId,
-      keys,
-      data: encodeSetFees(BigInt(sendFee), BigInt(delegationFee)),
+      keys: [
+        { pubkey: ownerKey, isSigner: true, isWritable: false },
+        { pubkey: mailerStatePda, isSigner: false, isWritable: true },
+      ],
+      data: encodeSetFee(BigInt(sendFee)),
     });
 
-    const transaction = new Transaction().add(instruction);
+    const setDelegationFeeIx = new TransactionInstruction({
+      programId,
+      keys: [
+        { pubkey: ownerKey, isSigner: true, isWritable: false },
+        { pubkey: mailerStatePda, isSigner: false, isWritable: true },
+      ],
+      data: encodeSetDelegationFee(BigInt(delegationFee)),
+    });
+
+    const transaction = new Transaction().add(setSendFeeIx, setDelegationFeeIx);
 
     return await this.sendTransaction(
       transaction,
@@ -1375,15 +1354,19 @@ export class SolanaMailerClient {
 
     const accountPubkey = typeof account === 'string' ? new PublicKey(account) : account;
 
-    const [customFeeInfo] = PublicKey.findProgramAddressSync(
-      [Buffer.from('custom_fee'), accountPubkey.toBuffer()],
+    const [discountPda] = PublicKey.findProgramAddressSync(
+      [DISCOUNT_PDA_SEED, accountPubkey.toBuffer()],
       programId
     );
 
+    const ownerKey = connectedWallet.wallet.publicKey;
+
     const keys = [
-      { pubkey: connectedWallet.wallet.publicKey, isSigner: true, isWritable: true },
+      { pubkey: ownerKey, isSigner: true, isWritable: false },
       { pubkey: mailerStatePda, isSigner: false, isWritable: false },
-      { pubkey: customFeeInfo, isSigner: false, isWritable: true },
+      { pubkey: discountPda, isSigner: false, isWritable: true },
+      { pubkey: accountPubkey, isSigner: false, isWritable: false },
+      { pubkey: ownerKey, isSigner: true, isWritable: true },
       { pubkey: SystemProgram.programId, isSigner: false, isWritable: false },
     ];
 
@@ -1418,15 +1401,15 @@ export class SolanaMailerClient {
 
     const accountPubkey = typeof account === 'string' ? new PublicKey(account) : account;
 
-    const [customFeeInfo] = PublicKey.findProgramAddressSync(
-      [Buffer.from('custom_fee'), accountPubkey.toBuffer()],
+    const [discountPda] = PublicKey.findProgramAddressSync(
+      [DISCOUNT_PDA_SEED, accountPubkey.toBuffer()],
       programId
     );
 
     const keys = [
       { pubkey: connectedWallet.wallet.publicKey, isSigner: true, isWritable: false },
       { pubkey: mailerStatePda, isSigner: false, isWritable: false },
-      { pubkey: customFeeInfo, isSigner: false, isWritable: true },
+      { pubkey: discountPda, isSigner: false, isWritable: true },
     ];
 
     const instruction = new TransactionInstruction({
@@ -1574,18 +1557,23 @@ export class SolanaMailerClient {
       TOKEN_PROGRAM_ID
     );
 
-    // Build keys array
-    const keys = [
-      { pubkey: connectedWallet.wallet.publicKey, isSigner: true, isWritable: false },
-      { pubkey: mailerStatePda, isSigner: false, isWritable: true },
-      { pubkey: mailerTokenAccount, isSigner: false, isWritable: true },
-      { pubkey: TOKEN_PROGRAM_ID, isSigner: false, isWritable: false },
-    ];
+    const transaction = new Transaction();
 
-    // Add recipient info and token accounts
+    const mailerTokenInfo = await connection.getAccountInfo(mailerTokenAccount);
+    if (!mailerTokenInfo) {
+      transaction.add(
+        createAssociatedTokenAccountInstruction(
+          connectedWallet.wallet.publicKey,
+          mailerTokenAccount,
+          mailerStatePda,
+          usdcMint
+        )
+      );
+    }
+
     for (const recipient of recipientPubkeys) {
-      const [recipientInfo] = PublicKey.findProgramAddressSync(
-        [Buffer.from('recipient_info'), recipient.toBuffer()],
+      const [recipientClaimPda] = PublicKey.findProgramAddressSync(
+        [CLAIM_PDA_SEED, recipient.toBuffer()],
         programId
       );
       const recipientTokenAccount = getAssociatedTokenAddressSync(
@@ -1594,17 +1582,34 @@ export class SolanaMailerClient {
         false,
         TOKEN_PROGRAM_ID
       );
-      keys.push({ pubkey: recipientInfo, isSigner: false, isWritable: true });
-      keys.push({ pubkey: recipientTokenAccount, isSigner: false, isWritable: true });
+
+      const recipientTokenInfo = await connection.getAccountInfo(recipientTokenAccount);
+      if (!recipientTokenInfo) {
+        transaction.add(
+          createAssociatedTokenAccountInstruction(
+            connectedWallet.wallet.publicKey,
+            recipientTokenAccount,
+            recipient,
+            usdcMint
+          )
+        );
+      }
+
+      transaction.add(
+        new TransactionInstruction({
+          programId,
+          keys: [
+            { pubkey: connectedWallet.wallet.publicKey, isSigner: true, isWritable: false },
+            { pubkey: mailerStatePda, isSigner: false, isWritable: true },
+            { pubkey: recipientClaimPda, isSigner: false, isWritable: true },
+            { pubkey: recipientTokenAccount, isSigner: false, isWritable: true },
+            { pubkey: mailerTokenAccount, isSigner: false, isWritable: true },
+            { pubkey: TOKEN_PROGRAM_ID, isSigner: false, isWritable: false },
+          ],
+          data: encodeDistributeClaimableFunds(recipient),
+        })
+      );
     }
-
-    const instruction = new TransactionInstruction({
-      programId,
-      keys,
-      data: encodeDistributeClaimableFunds(recipientPubkeys),
-    });
-
-    const transaction = new Transaction().add(instruction);
 
     return await this.sendTransaction(
       transaction,
@@ -1631,8 +1636,8 @@ export class SolanaMailerClient {
 
     // Parse the state data
     const data = accountInfo.data;
-    const sendFee = data.readBigUInt64LE(41); // After discriminator(8) + owner(32) + paused(1)
-    const delegationFee = data.readBigUInt64LE(49);
+    const sendFee = data.readBigUInt64LE(8 + 32 + 32); // After discriminator + owner + mint
+    const delegationFee = data.readBigUInt64LE(8 + 32 + 32 + 8);
 
     return {
       sendFee,
@@ -1669,29 +1674,28 @@ export class SolanaMailerClient {
 
     const recipientPubkey = typeof recipient === 'string' ? new PublicKey(recipient) : recipient;
 
-    const [recipientInfo] = PublicKey.findProgramAddressSync(
-      [Buffer.from('recipient_info'), recipientPubkey.toBuffer()],
+    const [recipientClaimPda] = PublicKey.findProgramAddressSync(
+      [CLAIM_PDA_SEED, recipientPubkey.toBuffer()],
       programId
     );
 
-    const accountInfo = await conn.getAccountInfo(recipientInfo);
+    const accountInfo = await conn.getAccountInfo(recipientClaimPda);
     if (!accountInfo || !accountInfo.data) {
       return null;
     }
 
     // Parse the recipient info data
     const data = accountInfo.data;
-    const amount = data.readBigUInt64LE(8); // After discriminator
-    const expiresAt = data.readBigInt64LE(16);
-
-    // Check if expired
+    const amount = data.readBigUInt64LE(8 + 32); // discriminator + recipient
+    const timestamp = Number(data.readBigInt64LE(8 + 32 + 8)); // after amount
+    const expiresAt = timestamp + CLAIM_PERIOD_SECONDS;
     const now = Math.floor(Date.now() / 1000);
-    const isExpired = Number(expiresAt) > 0 && Number(expiresAt) < now;
+    const isExpired = timestamp > 0 && now > expiresAt;
 
     return {
       amount: Number(amount),
-      timestamp: Number(expiresAt), // Using expiresAt as timestamp
-      expiresAt: Number(expiresAt),
+      timestamp,
+      expiresAt,
       recipient: recipient instanceof PublicKey ? recipient.toBase58() : recipient,
       isExpired,
     };
@@ -1711,7 +1715,7 @@ export class SolanaMailerClient {
 
     // Parse the state data
     const data = accountInfo.data;
-    const ownerClaimable = data.readBigUInt64LE(57); // After discriminator(8) + owner(32) + paused(1) + sendFee(8) + delegationFee(8)
+    const ownerClaimable = data.readBigUInt64LE(8 + 32 + 32 + 8 + 8); // After discriminator + owner + mint + sendFee + delegationFee
 
     return Number(ownerClaimable);
   }
@@ -1729,26 +1733,26 @@ export class SolanaMailerClient {
 
     const addressPubkey = typeof address === 'string' ? new PublicKey(address) : address;
 
-    const [delegatorInfo] = PublicKey.findProgramAddressSync(
-      [Buffer.from('delegator_info'), addressPubkey.toBuffer()],
+    const [delegationPda] = PublicKey.findProgramAddressSync(
+      [DELEGATION_PDA_SEED, addressPubkey.toBuffer()],
       programId
     );
 
-    const accountInfo = await conn.getAccountInfo(delegatorInfo);
+    const accountInfo = await conn.getAccountInfo(delegationPda);
     if (!accountInfo || !accountInfo.data) {
       return null;
     }
 
     // Parse the delegatingAddress info data
     const data = accountInfo.data;
-    const hasDelegate = data.readUInt8(8) === 1; // After discriminator
+    const hasDelegate = data.readUInt8(8 + 32) === 1; // After discriminator + delegator
 
     if (!hasDelegate) {
       return null;
     }
 
     // Read delegate pubkey
-    const delegateBytes = data.slice(9, 41); // 32 bytes for pubkey
+    const delegateBytes = data.slice(8 + 32 + 1, 8 + 32 + 1 + 32); // 32 bytes for pubkey
     return new PublicKey(delegateBytes);
   }
 
@@ -1765,21 +1769,21 @@ export class SolanaMailerClient {
 
     const accountPubkey = typeof account === 'string' ? new PublicKey(account) : account;
 
-    const [customFeeInfo] = PublicKey.findProgramAddressSync(
-      [Buffer.from('custom_fee'), accountPubkey.toBuffer()],
+    const [discountPda] = PublicKey.findProgramAddressSync(
+      [DISCOUNT_PDA_SEED, accountPubkey.toBuffer()],
       programId
     );
 
-    const accountInfo = await conn.getAccountInfo(customFeeInfo);
+    const accountInfo = await conn.getAccountInfo(discountPda);
     if (!accountInfo || !accountInfo.data) {
       return 100; // Default to 100% if no custom fee set
     }
 
     // Parse the custom fee data
     const data = accountInfo.data;
-    const percentage = data.readUInt8(8); // After discriminator
+    const discount = data.readUInt8(8 + 32); // After discriminator + account pubkey
 
-    return percentage;
+    return 100 - discount;
   }
 
   /**
@@ -1796,7 +1800,7 @@ export class SolanaMailerClient {
 
     // Parse the state data
     const data = accountInfo.data;
-    const paused = data.readUInt8(40); // After discriminator(8) + owner(32)
+    const paused = data.readUInt8(8 + 32 + 32 + 8 + 8 + 8); // After all state fields up to owner_claimable
 
     return paused === 1;
   }

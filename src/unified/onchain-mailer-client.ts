@@ -163,6 +163,7 @@ export class OnchainMailerClient {
 
       const to = options?.to || solanaWallet.wallet.publicKey.toBase58();
       const priority = options?.priority ?? false;
+      const resolveSenderToName = options?.resolveSenderToName ?? false;
 
       const result = await solanaClient.send(
         solanaWallet,
@@ -171,6 +172,7 @@ export class OnchainMailerClient {
         subject,
         body,
         priority, // revenueShareToReceiver
+        resolveSenderToName,
         options?.computeOptions
       );
 
@@ -232,6 +234,7 @@ export class OnchainMailerClient {
       const solanaClient = await this.getSolanaClient();
       const solanaWallet = connectedWallet as SolanaWallet;
       const priority = options?.priority ?? false;
+      const resolveSenderToName = options?.resolveSenderToName ?? false;
 
       const result = await solanaClient.sendPrepared(
         solanaWallet,
@@ -239,6 +242,7 @@ export class OnchainMailerClient {
         to,
         mailId,
         priority,
+        resolveSenderToName,
         options?.computeOptions
       );
 
@@ -264,6 +268,7 @@ export class OnchainMailerClient {
     webhookId: string,
     options?: {
       priority?: boolean;
+      resolveSenderToName?: boolean;
       gasOptions?: unknown;
       computeOptions?: unknown;
     }
@@ -275,14 +280,13 @@ export class OnchainMailerClient {
       const priority = options?.priority ?? false;
 
       const result = await evmClient.sendThroughWebhook(
+        evmWallet,
+        chainInfo,
         to,
-        subject,
-        body,
         webhookId,
         account, // payer
         priority,
-        evmWallet,
-        chainInfo,
+        options?.resolveSenderToName ?? false,
         options?.gasOptions
       );
 
@@ -305,6 +309,7 @@ export class OnchainMailerClient {
         to,
         webhookId,
         priority,
+        options?.resolveSenderToName ?? false,
         options?.computeOptions
       );
 
@@ -336,14 +341,31 @@ export class OnchainMailerClient {
       computeOptions?: unknown;
     }
   ): Promise<DelegationResult> {
+    console.log('=== OnchainMailerClient.delegateTo - Entry ===');
+    console.log('Parameter 1 - connectedWallet:', connectedWallet);
+    console.log('Parameter 2 - chainInfo:', chainInfo);
+    console.log('Parameter 3 - delegate:', delegate);
+    console.log('Parameter 4 - options:', options);
+    console.log('chainInfo.chainType:', chainInfo?.chainType);
+    console.log('chainInfo.name:', chainInfo?.name);
+    console.log('chainInfo.mailerAddress:', chainInfo?.mailerAddress);
+
     if (chainInfo.chainType === ChainType.EVM) {
       const evmClient = await this.getEVMClient();
+      console.log('=== OnchainMailerClient - Calling EVM client ===');
+      console.log('About to call evmClient.delegateTo with:');
+      console.log('  Param 1 - connectedWallet:', connectedWallet);
+      console.log('  Param 2 - chainInfo:', chainInfo);
+      console.log('  Param 3 - delegate:', delegate);
+      console.log('  Param 4 - gasOptions:', options?.gasOptions);
       const result = await evmClient.delegateTo(
-        delegate,
         connectedWallet as EVMWallet,
         chainInfo,
+        delegate,
         options?.gasOptions
       );
+      console.log('=== OnchainMailerClient - EVM client returned ===');
+      console.log('result:', result);
 
       return {
         transactionHash: result.hash,
@@ -354,9 +376,9 @@ export class OnchainMailerClient {
     } else if (chainInfo.chainType === ChainType.SOLANA) {
       const solanaClient = await this.getSolanaClient();
       const result = await solanaClient.delegateTo(
-        delegate,
         connectedWallet as SolanaWallet,
         chainInfo,
+        delegate,
         options?.computeOptions
       );
 
@@ -512,9 +534,9 @@ export class OnchainMailerClient {
     if (chainInfo.chainType === ChainType.EVM) {
       const evmClient = await this.getEVMClient();
       const result = await evmClient.claimExpiredShares(
-        recipient,
         connectedWallet as EVMWallet,
         chainInfo,
+        recipient,
         options?.gasOptions
       );
 
@@ -525,9 +547,9 @@ export class OnchainMailerClient {
     } else if (chainInfo.chainType === ChainType.SOLANA) {
       const solanaClient = await this.getSolanaClient();
       const result = await solanaClient.claimExpiredShares(
-        recipient,
         connectedWallet as SolanaWallet,
         chainInfo,
+        recipient,
         options?.computeOptions
       );
 
@@ -624,10 +646,10 @@ export class OnchainMailerClient {
     } else if (chainInfo.chainType === ChainType.SOLANA) {
       const solanaClient = await this.getSolanaClient();
       const result = await solanaClient.setCustomFeePercentage(
-        connectedWallet as SolanaWallet,
-        chainInfo,
         target,
         percentage,
+        connectedWallet as SolanaWallet,
+        chainInfo,
         options?.computeOptions
       );
 
@@ -668,9 +690,9 @@ export class OnchainMailerClient {
     } else if (chainInfo.chainType === ChainType.SOLANA) {
       const solanaClient = await this.getSolanaClient();
       const result = await solanaClient.clearCustomFeePercentage(
+        target,
         connectedWallet as SolanaWallet,
         chainInfo,
-        target,
         options?.computeOptions
       );
 
@@ -1000,9 +1022,8 @@ export class OnchainMailerClient {
     connection?: Connection
   ): Promise<string | null> {
     if (chainInfo.chainType === ChainType.EVM) {
-      const evmClient = await this.getEVMClient();
-      const delegation = await evmClient.getDelegation(address, chainInfo, publicClient);
-      return delegation === '0x0000000000000000000000000000000000000000' ? null : delegation;
+      // Delegation lookup is not supported on the EVM contract
+      return null;
     } else if (chainInfo.chainType === ChainType.SOLANA) {
       const solanaClient = await this.getSolanaClient();
       const delegation = await solanaClient.getDelegation(address, chainInfo, connection);

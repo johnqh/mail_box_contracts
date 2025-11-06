@@ -180,7 +180,7 @@ async send(
     if (this.isEvmRecipient(to)) {
         return this.evmClient.send(to, subject, body);
     } else {
-        return this.solanaClient.send(to, subject, body);
+        return this.solanaClient.send(to, subject, body, false, false);
     }
 }
 ```
