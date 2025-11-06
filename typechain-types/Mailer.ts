@@ -38,6 +38,7 @@ export interface MailerInterface extends Interface {
       | "delegationFee"
       | "distributeClaimableFunds"
       | "emergencyUnpause"
+      | "feePaused"
       | "getCustomFeePercentage"
       | "getDelegationFee"
       | "getFee"
@@ -61,6 +62,7 @@ export interface MailerInterface extends Interface {
       | "setCustomFeePercentage"
       | "setDelegationFee"
       | "setFee"
+      | "setFeePaused"
       | "setPermission"
       | "unpause"
       | "usdcToken"
@@ -75,6 +77,7 @@ export interface MailerInterface extends Interface {
       | "DelegationSet"
       | "EmergencyUnpaused"
       | "ExpiredSharesClaimed"
+      | "FeePauseToggled"
       | "FeeUpdated"
       | "FundsDistributed"
       | "MailSent"
@@ -137,6 +140,7 @@ export interface MailerInterface extends Interface {
     functionFragment: "emergencyUnpause",
     values?: undefined
   ): string;
+  encodeFunctionData(functionFragment: "feePaused", values?: undefined): string;
   encodeFunctionData(
     functionFragment: "getCustomFeePercentage",
     values: [AddressLike]
@@ -212,6 +216,10 @@ export interface MailerInterface extends Interface {
     values: [BigNumberish]
   ): string;
   encodeFunctionData(
+    functionFragment: "setFeePaused",
+    values: [boolean]
+  ): string;
+  encodeFunctionData(
     functionFragment: "setPermission",
     values: [AddressLike]
   ): string;
@@ -263,6 +271,7 @@ export interface MailerInterface extends Interface {
     functionFragment: "emergencyUnpause",
     data: BytesLike
   ): Result;
+  decodeFunctionResult(functionFragment: "feePaused", data: BytesLike): Result;
   decodeFunctionResult(
     functionFragment: "getCustomFeePercentage",
     data: BytesLike
@@ -331,6 +340,10 @@ export interface MailerInterface extends Interface {
     data: BytesLike
   ): Result;
   decodeFunctionResult(functionFragment: "setFee", data: BytesLike): Result;
+  decodeFunctionResult(
+    functionFragment: "setFeePaused",
+    data: BytesLike
+  ): Result;
   decodeFunctionResult(
     functionFragment: "setPermission",
     data: BytesLike
@@ -414,6 +427,18 @@ export namespace ExpiredSharesClaimedEvent {
   export interface OutputObject {
     recipient: string;
     amount: bigint;
+  }
+  export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
+  export type Filter = TypedDeferredTopicFilter<Event>;
+  export type Log = TypedEventLog<Event>;
+  export type LogDescription = TypedLogDescription<Event>;
+}
+
+export namespace FeePauseToggledEvent {
+  export type InputTuple = [enabled: boolean];
+  export type OutputTuple = [enabled: boolean];
+  export interface OutputObject {
+    enabled: boolean;
   }
   export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
   export type Filter = TypedDeferredTopicFilter<Event>;
@@ -729,6 +754,8 @@ export interface Mailer extends BaseContract {
 
   emergencyUnpause: TypedContractMethod<[], [void], "nonpayable">;
 
+  feePaused: TypedContractMethod<[], [boolean], "view">;
+
   getCustomFeePercentage: TypedContractMethod<
     [account: AddressLike],
     [bigint],
@@ -852,6 +879,12 @@ export interface Mailer extends BaseContract {
 
   setFee: TypedContractMethod<[usdcAmount: BigNumberish], [void], "nonpayable">;
 
+  setFeePaused: TypedContractMethod<
+    [_feePaused: boolean],
+    [void],
+    "nonpayable"
+  >;
+
   setPermission: TypedContractMethod<
     [contractAddress: AddressLike],
     [void],
@@ -902,6 +935,9 @@ export interface Mailer extends BaseContract {
   getFunction(
     nameOrSignature: "emergencyUnpause"
   ): TypedContractMethod<[], [void], "nonpayable">;
+  getFunction(
+    nameOrSignature: "feePaused"
+  ): TypedContractMethod<[], [boolean], "view">;
   getFunction(
     nameOrSignature: "getCustomFeePercentage"
   ): TypedContractMethod<[account: AddressLike], [bigint], "view">;
@@ -1037,6 +1073,9 @@ export interface Mailer extends BaseContract {
     nameOrSignature: "setFee"
   ): TypedContractMethod<[usdcAmount: BigNumberish], [void], "nonpayable">;
   getFunction(
+    nameOrSignature: "setFeePaused"
+  ): TypedContractMethod<[_feePaused: boolean], [void], "nonpayable">;
+  getFunction(
     nameOrSignature: "setPermission"
   ): TypedContractMethod<[contractAddress: AddressLike], [void], "nonpayable">;
   getFunction(
@@ -1094,6 +1133,13 @@ export interface Mailer extends BaseContract {
     ExpiredSharesClaimedEvent.InputTuple,
     ExpiredSharesClaimedEvent.OutputTuple,
     ExpiredSharesClaimedEvent.OutputObject
+  >;
+  getEvent(
+    key: "FeePauseToggled"
+  ): TypedContractEvent<
+    FeePauseToggledEvent.InputTuple,
+    FeePauseToggledEvent.OutputTuple,
+    FeePauseToggledEvent.OutputObject
   >;
   getEvent(
     key: "FeeUpdated"
@@ -1256,6 +1302,17 @@ export interface Mailer extends BaseContract {
       ExpiredSharesClaimedEvent.InputTuple,
       ExpiredSharesClaimedEvent.OutputTuple,
       ExpiredSharesClaimedEvent.OutputObject
+    >;
+
+    "FeePauseToggled(bool)": TypedContractEvent<
+      FeePauseToggledEvent.InputTuple,
+      FeePauseToggledEvent.OutputTuple,
+      FeePauseToggledEvent.OutputObject
+    >;
+    FeePauseToggled: TypedContractEvent<
+      FeePauseToggledEvent.InputTuple,
+      FeePauseToggledEvent.OutputTuple,
+      FeePauseToggledEvent.OutputObject
     >;
 
     "FeeUpdated(uint256,uint256)": TypedContractEvent<

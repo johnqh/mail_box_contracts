@@ -52,6 +52,9 @@ contract Mailer {
     /// @notice Contract pause state - when true, all functions are paused and funds are distributed
     bool public paused;
 
+    /// @notice Fee pause state - when true, fees are not charged in send functions
+    bool public feePaused;
+
     /// @notice Mapping of addresses to their custom fee discount (0-100)
     /// @dev 0 = no discount (full fee), 100 = full discount (free)
     ///      Internally stores discount instead of percentage for cleaner logic
@@ -125,6 +128,10 @@ contract Mailer {
     
     /// @notice Emitted when contract is emergency unpaused without fund distribution
     event EmergencyUnpaused();
+
+    /// @notice Emitted when fee collection is toggled
+    /// @param enabled True if fees are enabled, false if paused
+    event FeePauseToggled(bool enabled);
     
     /// @notice Emitted when funds are auto-distributed during pause
     /// @param recipient Address receiving funds
@@ -395,6 +402,9 @@ contract Mailer {
         if (msg.sender != payer && !permissions[msg.sender][payer]) {
             revert UnpermittedPayer();
         }
+
+        // Early return if fee collection is paused
+        if (feePaused) return;
 
         uint256 effectiveFee = _calculateFeeForAddress(payer, sendFee);
 
@@ -675,6 +685,14 @@ contract Mailer {
 
         paused = false;
         emit EmergencyUnpaused();
+    }
+
+    /// @notice Toggle fee collection on or off (owner only)
+    /// @dev When feePaused is true, send functions will not charge fees
+    /// @param _feePaused True to pause fee collection, false to enable
+    function setFeePaused(bool _feePaused) external onlyOwner {
+        feePaused = _feePaused;
+        emit FeePauseToggled(!_feePaused);
     }
 
     /// @notice Grant permission for a contract to send messages using caller's USDC balance
