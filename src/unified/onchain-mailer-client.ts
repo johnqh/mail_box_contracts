@@ -617,6 +617,49 @@ export class OnchainMailerClient {
   }
 
   /**
+   * Set fee paused state (owner only)
+   */
+  async setFeePaused(
+    connectedWallet: Wallet,
+    chainInfo: ChainInfo,
+    feePaused: boolean,
+    options?: {
+      gasOptions?: unknown;
+      computeOptions?: unknown;
+    }
+  ): Promise<UnifiedTransaction> {
+    if (chainInfo.chainType === ChainType.EVM) {
+      const evmClient = await this.getEVMClient();
+      const result = await evmClient.setFeePaused(
+        connectedWallet as EVMWallet,
+        chainInfo,
+        feePaused,
+        options?.gasOptions
+      );
+
+      return {
+        hash: result.hash,
+        chainType: ChainType.EVM
+      };
+    } else if (chainInfo.chainType === ChainType.SOLANA) {
+      const solanaClient = await this.getSolanaClient();
+      const result = await solanaClient.setFeePaused(
+        feePaused,
+        connectedWallet as SolanaWallet,
+        chainInfo,
+        options?.computeOptions
+      );
+
+      return {
+        hash: result.transactionHash,
+        chainType: ChainType.SOLANA
+      };
+    } else {
+      throw new Error(`Unsupported chain type: ${chainInfo.chainType}`);
+    }
+  }
+
+  /**
    * Set custom fee percentage
    */
   async setCustomFeePercentage(

@@ -121,6 +121,7 @@ enum InstructionType {
   DistributeClaimableFunds = 16,
   ClaimExpiredShares = 17,
   EmergencyUnpause = 18,
+  SetFeePaused = 19,
 }
 
 const CLAIM_PDA_SEED = Buffer.from('claim');
@@ -350,6 +351,13 @@ function encodeDistributeClaimableFunds(recipient: PublicKey): Buffer {
   const data = Buffer.alloc(1 + 32);
   data.writeUInt8(InstructionType.DistributeClaimableFunds, 0);
   recipient.toBuffer().copy(data, 1);
+  return data;
+}
+
+function encodeSetFeePaused(feePaused: boolean): Buffer {
+  const data = Buffer.alloc(1 + 1);
+  data.writeUInt8(InstructionType.SetFeePaused, 0);
+  data.writeUInt8(feePaused ? 1 : 0, 1);
   return data;
 }
 
@@ -1440,18 +1448,67 @@ export class SolanaMailerClient {
     const connection = await this.getOrCreateConnection(chainInfo, connectedWallet.connection);
     const { programId, mailerStatePda } = this.getProgramAddresses(chainInfo);
 
+    if (!chainInfo.usdcAddress) {
+      throw new Error(`No USDC mint configured for ${chainInfo.name}`);
+    }
+
+    const usdcMint = new PublicKey(chainInfo.usdcAddress);
+
+    const ownerTokenAccount = getAssociatedTokenAddressSync(
+      usdcMint,
+      connectedWallet.wallet.publicKey,
+      false,
+      TOKEN_PROGRAM_ID
+    );
+
+    const mailerTokenAccount = getAssociatedTokenAddressSync(
+      usdcMint,
+      mailerStatePda,
+      true,
+      TOKEN_PROGRAM_ID
+    );
+
+    const transaction = new Transaction();
+
+    const mailerTokenInfo = await connection.getAccountInfo(mailerTokenAccount);
+    if (!mailerTokenInfo) {
+      transaction.add(
+        createAssociatedTokenAccountInstruction(
+          connectedWallet.wallet.publicKey,
+          mailerTokenAccount,
+          mailerStatePda,
+          usdcMint
+        )
+      );
+    }
+
+    const ownerTokenInfo = await connection.getAccountInfo(ownerTokenAccount);
+    if (!ownerTokenInfo) {
+      transaction.add(
+        createAssociatedTokenAccountInstruction(
+          connectedWallet.wallet.publicKey,
+          ownerTokenAccount,
+          connectedWallet.wallet.publicKey,
+          usdcMint
+        )
+      );
+    }
+
     const keys = [
       { pubkey: connectedWallet.wallet.publicKey, isSigner: true, isWritable: false },
       { pubkey: mailerStatePda, isSigner: false, isWritable: true },
+      { pubkey: ownerTokenAccount, isSigner: false, isWritable: true },
+      { pubkey: mailerTokenAccount, isSigner: false, isWritable: true },
+      { pubkey: TOKEN_PROGRAM_ID, isSigner: false, isWritable: false },
     ];
 
-    const instruction = new TransactionInstruction({
-      programId,
-      keys,
-      data: Buffer.from([InstructionType.Pause]),
-    });
-
-    const transaction = new Transaction().add(instruction);
+    transaction.add(
+      new TransactionInstruction({
+        programId,
+        keys,
+        data: Buffer.from([InstructionType.Pause]),
+      })
+    );
 
     return await this.sendTransaction(
       transaction,
@@ -1515,6 +1572,40 @@ export class SolanaMailerClient {
       programId,
       keys,
       data: Buffer.from([InstructionType.EmergencyUnpause]),
+    });
+
+    const transaction = new Transaction().add(instruction);
+
+    return await this.sendTransaction(
+      transaction,
+      connectedWallet.wallet,
+      connection,
+      undefined,
+      computeOptions
+    );
+  }
+
+  /**
+   * Set fee paused state (owner only)
+   */
+  async setFeePaused(
+    feePaused: boolean,
+    connectedWallet: SolanaWallet,
+    chainInfo: ChainInfo,
+    computeOptions?: ComputeUnitOptions
+  ): Promise<TransactionResult> {
+    const connection = await this.getOrCreateConnection(chainInfo, connectedWallet.connection);
+    const { programId, mailerStatePda } = this.getProgramAddresses(chainInfo);
+
+    const keys = [
+      { pubkey: connectedWallet.wallet.publicKey, isSigner: true, isWritable: false },
+      { pubkey: mailerStatePda, isSigner: false, isWritable: true },
+    ];
+
+    const instruction = new TransactionInstruction({
+      programId,
+      keys,
+      data: encodeSetFeePaused(feePaused),
     });
 
     const transaction = new Transaction().add(instruction);

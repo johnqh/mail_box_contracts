@@ -231,8 +231,10 @@ contract Mailer {
         bool revenueShareToReceiver,
         bool resolveSenderToName
     ) external nonReentrant whenNotPaused {
-        _processFee(payer, to, revenueShareToReceiver);
-        emit MailSent(msg.sender, to, subject, body, revenueShareToReceiver, resolveSenderToName);
+        // Only emit event if fee payment succeeds (or no fee required)
+        if (_processFee(payer, to, revenueShareToReceiver)) {
+            emit MailSent(msg.sender, to, subject, body, revenueShareToReceiver, resolveSenderToName);
+        }
     }
     
     /**
@@ -254,8 +256,10 @@ contract Mailer {
         bool revenueShareToReceiver,
         bool resolveSenderToName
     ) external nonReentrant whenNotPaused {
-        _processFee(payer, to, revenueShareToReceiver);
-        emit PreparedMailSent(msg.sender, to, mailId, revenueShareToReceiver, resolveSenderToName);
+        // Only emit event if fee payment succeeds (or no fee required)
+        if (_processFee(payer, to, revenueShareToReceiver)) {
+            emit PreparedMailSent(msg.sender, to, mailId, revenueShareToReceiver, resolveSenderToName);
+        }
     }
 
     /**
@@ -281,8 +285,10 @@ contract Mailer {
         string calldata body,
         address payer
     ) external nonReentrant whenNotPaused {
-        _processFee(payer, address(0), false);
-        emit MailSentToEmail(msg.sender, toEmail, subject, body);
+        // Only emit event if fee payment succeeds (or no fee required)
+        if (_processFee(payer, address(0), false)) {
+            emit MailSentToEmail(msg.sender, toEmail, subject, body);
+        }
     }
 
     /**
@@ -300,8 +306,10 @@ contract Mailer {
         string calldata mailId,
         address payer
     ) external nonReentrant whenNotPaused {
-        _processFee(payer, address(0), false);
-        emit PreparedMailSentToEmail(msg.sender, toEmail, mailId);
+        // Only emit event if fee payment succeeds (or no fee required)
+        if (_processFee(payer, address(0), false)) {
+            emit PreparedMailSentToEmail(msg.sender, toEmail, mailId);
+        }
     }
 
     /**
@@ -323,8 +331,10 @@ contract Mailer {
         bool revenueShareToReceiver,
         bool resolveSenderToName
     ) external nonReentrant whenNotPaused {
-        _processFee(payer, to, revenueShareToReceiver);
-        emit WebhookMailSent(msg.sender, to, webhookId, revenueShareToReceiver, resolveSenderToName);
+        // Only emit event if fee payment succeeds (or no fee required)
+        if (_processFee(payer, to, revenueShareToReceiver)) {
+            emit WebhookMailSent(msg.sender, to, webhookId, revenueShareToReceiver, resolveSenderToName);
+        }
     }
 
     function setFee(uint256 usdcAmount) external onlyOwner whenNotPaused {
@@ -397,19 +407,19 @@ contract Mailer {
      * @param recipient Address that receives revenue share (or address(0) for email sends)
      * @param revenueShareToReceiver Whether to enable revenue sharing
      */
-    function _processFee(address payer, address recipient, bool revenueShareToReceiver) internal {
+    function _processFee(address payer, address recipient, bool revenueShareToReceiver) internal returns (bool) {
         // Check permission: if msg.sender is different from payer, payer must have authorized msg.sender
         if (msg.sender != payer && !permissions[msg.sender][payer]) {
             revert UnpermittedPayer();
         }
 
-        // Early return if fee collection is paused
-        if (feePaused) return;
+        // Early return if fee collection is paused (success - no fee required)
+        if (feePaused) return true;
 
         uint256 effectiveFee = _calculateFeeForAddress(payer, sendFee);
 
-        // Early return if no fee (saves gas on zero transfers and storage writes)
-        if (effectiveFee == 0) return;
+        // Early return if no fee (success - no fee required)
+        if (effectiveFee == 0) return true;
 
         // Calculate fee to charge
         uint256 feeToCharge;
@@ -419,8 +429,9 @@ contract Mailer {
         }
 
         // Transfer fee from payer to contract
+        // If transfer fails, return false instead of reverting
         if (!usdcToken.transferFrom(payer, address(this), feeToCharge)) {
-            revert FeePaymentRequired();
+            return false;
         }
 
         // Handle revenue sharing or direct owner payment
@@ -431,6 +442,8 @@ contract Mailer {
             // All fees go to owner (standard mode or email send)
             ownerClaimable += feeToCharge;
         }
+
+        return true;
     }
 
     /**
@@ -520,11 +533,12 @@ contract Mailer {
     }
     
     /// @notice Delegate mail handling to another address
-    /// @dev Charges delegation fee in USDC. Emits event for indexer tracking
+    /// @dev Charges delegation fee in USDC unless feePaused is true. Emits event for indexer tracking
     /// @param delegate Address to delegate to, or address(0) to clear
     function delegateTo(address delegate) external nonReentrant whenNotPaused {
         // If clearing delegation (setting to address(0)), no fee required
-        if (delegate != address(0)) {
+        // If feePaused is true, skip fee collection
+        if (delegate != address(0) && !feePaused) {
             uint256 fee = delegationFee;
             if (!usdcToken.transferFrom(msg.sender, address(this), fee)) {
                 revert FeePaymentRequired();

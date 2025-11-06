@@ -66,11 +66,12 @@ pub struct MailerState {
     pub delegation_fee: u64,
     pub owner_claimable: u64,
     pub paused: bool,
+    pub fee_paused: bool,
     pub bump: u8,
 }
 
 impl MailerState {
-    pub const LEN: usize = 32 + 32 + 8 + 8 + 8 + 1 + 1; // 90 bytes
+    pub const LEN: usize = 32 + 32 + 8 + 8 + 8 + 1 + 1 + 1; // 91 bytes
 }
 
 /// Recipient claim account
@@ -301,6 +302,12 @@ pub enum MailerInstruction {
     /// 0. `[signer]` Owner
     /// 1. `[writable]` Mailer state account (PDA)
     EmergencyUnpause,
+
+    /// Toggle fee collection on or off (owner only)
+    /// Accounts:
+    /// 0. `[signer]` Owner
+    /// 1. `[writable]` Mailer state account (PDA)
+    SetFeePaused { fee_paused: bool },
 }
 
 /// Custom program errors
@@ -435,6 +442,9 @@ pub fn process_instruction(
             process_claim_expired_shares(program_id, accounts, recipient)
         }
         MailerInstruction::EmergencyUnpause => process_emergency_unpause(program_id, accounts),
+        MailerInstruction::SetFeePaused { fee_paused } => {
+            process_set_fee_paused(program_id, accounts, fee_paused)
+        }
     }
 }
 
@@ -491,6 +501,7 @@ fn process_initialize(
         delegation_fee: DELEGATION_FEE,
         owner_claimable: 0,
         paused: false,
+        fee_paused: false,
         bump,
     };
 
@@ -538,9 +549,12 @@ fn process_send(
         return Err(MailerError::ContractPaused.into());
     }
 
-    // Calculate effective fee based on custom discount (if any)
-    let effective_fee =
-        calculate_fee_with_discount(program_id, sender.key, accounts, mailer_state.send_fee)?;
+    // Calculate effective fee based on custom discount (if any), or skip if fee_paused
+    let effective_fee = if mailer_state.fee_paused {
+        0 // Skip fee collection when fee_paused is true
+    } else {
+        calculate_fee_with_discount(program_id, sender.key, accounts, mailer_state.send_fee)?
+    };
 
     if revenue_share_to_receiver {
         // Priority mode: full fee with revenue sharing
@@ -592,8 +606,9 @@ fn process_send(
         }
 
         // Transfer effective fee (may be discounted)
+        // If transfer fails, silently fail without emitting event
         if effective_fee > 0 {
-            invoke(
+            let transfer_result = invoke(
                 &spl_token::instruction::transfer(
                     token_program.key,
                     sender_usdc.key,
@@ -608,10 +623,17 @@ fn process_send(
                     sender.clone(),
                     token_program.clone(),
                 ],
-            )?;
+            );
 
-            // Record revenue shares (only if fee > 0)
-            record_shares(recipient_claim, mailer_account, to, effective_fee)?;
+            // If transfer fails, return Ok without logging
+            if transfer_result.is_err() {
+                return Ok(());
+            }
+
+            // Record revenue shares (only if fee > 0 and transfer succeeded)
+            if record_shares(recipient_claim, mailer_account, to, effective_fee).is_err() {
+                return Ok(());
+            }
         }
 
         msg!("Priority mail sent from {} to {}: {} (revenue share enabled, resolve sender: {}, effective fee: {})", sender.key, to, subject, _resolve_sender_to_name, effective_fee);
@@ -620,8 +642,9 @@ fn process_send(
         let owner_fee = (effective_fee * 10) / 100; // 10% of effective fee
 
         // Transfer only owner fee (10%)
+        // If transfer fails, silently fail without emitting event
         if owner_fee > 0 {
-            invoke(
+            let transfer_result = invoke(
                 &spl_token::instruction::transfer(
                     token_program.key,
                     sender_usdc.key,
@@ -636,7 +659,12 @@ fn process_send(
                     sender.clone(),
                     token_program.clone(),
                 ],
-            )?;
+            );
+
+            // If transfer fails, return Ok without logging
+            if transfer_result.is_err() {
+                return Ok(());
+            }
         }
 
         // Update owner claimable
@@ -695,9 +723,12 @@ fn process_send_prepared(
         return Err(MailerError::ContractPaused.into());
     }
 
-    // Calculate effective fee based on custom discount (if any)
-    let effective_fee =
-        calculate_fee_with_discount(program_id, sender.key, accounts, mailer_state.send_fee)?;
+    // Calculate effective fee based on custom discount (if any), or skip if fee_paused
+    let effective_fee = if mailer_state.fee_paused {
+        0 // Skip fee collection when fee_paused is true
+    } else {
+        calculate_fee_with_discount(program_id, sender.key, accounts, mailer_state.send_fee)?
+    };
 
     if revenue_share_to_receiver {
         // Priority mode: full fee with revenue sharing
@@ -849,9 +880,12 @@ fn process_send_to_email(
         return Err(MailerError::ContractPaused.into());
     }
 
-    // Calculate effective fee based on custom discount (if any)
-    let effective_fee =
-        calculate_fee_with_discount(_program_id, sender.key, accounts, mailer_state.send_fee)?;
+    // Calculate effective fee based on custom discount (if any), or skip if fee_paused
+    let effective_fee = if mailer_state.fee_paused {
+        0 // Skip fee collection when fee_paused is true
+    } else {
+        calculate_fee_with_discount(_program_id, sender.key, accounts, mailer_state.send_fee)?
+    };
 
     // Calculate 10% owner fee (no revenue share since no wallet address)
     let owner_fee = (effective_fee * 10) / 100;
@@ -928,9 +962,12 @@ fn process_send_prepared_to_email(
         return Err(MailerError::ContractPaused.into());
     }
 
-    // Calculate effective fee based on custom discount (if any)
-    let effective_fee =
-        calculate_fee_with_discount(_program_id, sender.key, accounts, mailer_state.send_fee)?;
+    // Calculate effective fee based on custom discount (if any), or skip if fee_paused
+    let effective_fee = if mailer_state.fee_paused {
+        0 // Skip fee collection when fee_paused is true
+    } else {
+        calculate_fee_with_discount(_program_id, sender.key, accounts, mailer_state.send_fee)?
+    };
 
     // Calculate 10% owner fee (no revenue share since no wallet address)
     let owner_fee = (effective_fee * 10) / 100;
@@ -1011,9 +1048,12 @@ fn process_send_through_webhook(
         return Err(MailerError::ContractPaused.into());
     }
 
-    // Calculate effective fee based on custom discount (if any)
-    let effective_fee =
-        calculate_fee_with_discount(program_id, sender.key, accounts, mailer_state.send_fee)?;
+    // Calculate effective fee based on custom discount (if any), or skip if fee_paused
+    let effective_fee = if mailer_state.fee_paused {
+        0 // Skip fee collection when fee_paused is true
+    } else {
+        calculate_fee_with_discount(program_id, sender.key, accounts, mailer_state.send_fee)?
+    };
 
     if revenue_share_to_receiver {
         // Priority mode: full fee with revenue sharing
@@ -1379,9 +1419,9 @@ fn process_delegate_to(
         drop(delegation_data);
     }
 
-    // If setting delegation (not clearing), charge fee
+    // If setting delegation (not clearing), charge fee (unless fee_paused)
     if let Some(delegate_key) = delegate {
-        if delegate_key != Pubkey::default() {
+        if delegate_key != Pubkey::default() && !mailer_state.fee_paused {
             invoke(
                 &spl_token::instruction::transfer(
                     token_program.key,
@@ -2020,6 +2060,37 @@ fn process_emergency_unpause(_program_id: &Pubkey, accounts: &[AccountInfo]) -> 
         "Contract emergency unpaused by owner: {} - funds can be claimed manually",
         owner.key
     );
+    Ok(())
+}
+
+/// Set fee paused state (owner only)
+fn process_set_fee_paused(
+    _program_id: &Pubkey,
+    accounts: &[AccountInfo],
+    fee_paused: bool,
+) -> ProgramResult {
+    let account_iter = &mut accounts.iter();
+    let owner = next_account_info(account_iter)?;
+    let mailer_account = next_account_info(account_iter)?;
+
+    if !owner.is_signer {
+        return Err(ProgramError::MissingRequiredSignature);
+    }
+
+    assert_mailer_account(_program_id, mailer_account)?;
+
+    // Load and update mailer state
+    let mut mailer_data = mailer_account.try_borrow_mut_data()?;
+    let mut mailer_state: MailerState = BorshDeserialize::deserialize(&mut &mailer_data[8..])?;
+
+    if mailer_state.owner != *owner.key {
+        return Err(MailerError::OnlyOwner.into());
+    }
+
+    mailer_state.fee_paused = fee_paused;
+    mailer_state.serialize(&mut &mut mailer_data[8..])?;
+
+    msg!("Fee paused state set to: {}", fee_paused);
     Ok(())
 }
 

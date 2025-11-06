@@ -596,6 +596,48 @@ export class EVMMailerClient {
   }
 
   /**
+   * Set fee paused state (owner only)
+   */
+  async setFeePaused(
+    connectedWallet: EVMWallet,
+    chainInfo: ChainInfo,
+    feePaused: boolean,
+    gasOptions?: GasOptions
+  ): Promise<TransactionResult> {
+    if (!chainInfo.mailerAddress) {
+      throw new Error(`No mailer contract deployed on ${chainInfo.name}`);
+    }
+
+    await this.switchChainIfNeeded(connectedWallet.walletClient, chainInfo.chainId);
+    const publicClient = this.ensurePublicClient(connectedWallet.publicClient);
+    const [account] = await connectedWallet.walletClient.getAddresses();
+    const contractAddress = normalizeAddress(chainInfo.mailerAddress);
+
+    const gasLimit = await this.estimateGasWithBuffer(
+      () => publicClient.estimateContractGas({
+        address: contractAddress,
+        abi: MAILER_ABI,
+        functionName: 'setFeePaused',
+        args: [feePaused],
+        account,
+      }),
+      gasOptions
+    );
+
+    const hash = await connectedWallet.walletClient.writeContract({
+      address: contractAddress,
+      abi: MAILER_ABI,
+      functionName: 'setFeePaused',
+      args: [feePaused],
+      account,
+      chain: connectedWallet.walletClient.chain,
+      ...this.buildTxParams(gasLimit, gasOptions),
+    });
+
+    return { hash, estimatedGas: gasLimit, gasLimit };
+  }
+
+  /**
    * Get USDC token address
    */
   async getUsdcToken(chainInfo: ChainInfo, publicClient?: PublicClient): Promise<Address> {
