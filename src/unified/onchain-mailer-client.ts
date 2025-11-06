@@ -341,31 +341,14 @@ export class OnchainMailerClient {
       computeOptions?: unknown;
     }
   ): Promise<DelegationResult> {
-    console.log('=== OnchainMailerClient.delegateTo - Entry ===');
-    console.log('Parameter 1 - connectedWallet:', connectedWallet);
-    console.log('Parameter 2 - chainInfo:', chainInfo);
-    console.log('Parameter 3 - delegate:', delegate);
-    console.log('Parameter 4 - options:', options);
-    console.log('chainInfo.chainType:', chainInfo?.chainType);
-    console.log('chainInfo.name:', chainInfo?.name);
-    console.log('chainInfo.mailerAddress:', chainInfo?.mailerAddress);
-
     if (chainInfo.chainType === ChainType.EVM) {
       const evmClient = await this.getEVMClient();
-      console.log('=== OnchainMailerClient - Calling EVM client ===');
-      console.log('About to call evmClient.delegateTo with:');
-      console.log('  Param 1 - connectedWallet:', connectedWallet);
-      console.log('  Param 2 - chainInfo:', chainInfo);
-      console.log('  Param 3 - delegate:', delegate);
-      console.log('  Param 4 - gasOptions:', options?.gasOptions);
       const result = await evmClient.delegateTo(
         connectedWallet as EVMWallet,
         chainInfo,
         delegate,
         options?.gasOptions
       );
-      console.log('=== OnchainMailerClient - EVM client returned ===');
-      console.log('result:', result);
 
       return {
         transactionHash: result.hash,

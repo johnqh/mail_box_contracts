@@ -854,22 +854,8 @@ export class EVMMailerClient {
     delegate: Address | string | null,
     gasOptions?: GasOptions
   ): Promise<TransactionResult> {
-    console.log('=== EVMMailerClient.delegateTo - Entry ===');
-    console.log('Parameter 1 - connectedWallet:', connectedWallet);
-    console.log('Parameter 2 - chainInfo:', chainInfo);
-    console.log('Parameter 3 - delegate:', delegate);
-    console.log('Parameter 4 - gasOptions:', gasOptions);
-    console.log('chainInfo object:', JSON.stringify(chainInfo, null, 2));
-    console.log('chainInfo.name:', chainInfo?.name);
-    console.log('chainInfo.mailerAddress:', chainInfo?.mailerAddress);
-    console.log('typeof chainInfo:', typeof chainInfo);
-
     if (!chainInfo.mailerAddress) {
-      const errorMsg = `No mailer contract deployed on ${chainInfo.name}`;
-      console.error('=== EVMMailerClient.delegateTo - ERROR ===');
-      console.error('Error message:', errorMsg);
-      console.error('chainInfo was:', chainInfo);
-      throw new Error(errorMsg);
+      throw new Error(`No mailer contract deployed on ${chainInfo.name}`);
     }
 
     await this.switchChainIfNeeded(connectedWallet.walletClient, chainInfo.chainId);
