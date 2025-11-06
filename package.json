@@ -1,6 +1,6 @@
 {
   "name": "@sudobility/contracts",
-  "version": "1.14.2",
+  "version": "1.14.3",
   "type": "module",
   "main": "dist/unified/src/unified/index.js",
   "types": "dist/unified/src/unified/index.d.ts",
