@@ -1,6 +1,6 @@
 // Export TypeChain types for production contracts
-export { Mailer__factory } from "../../typechain-types/factories/Mailer__factory.js";
-export type { Mailer } from "../../typechain-types/Mailer.js";
+export { Mailer__factory } from "../../typechain-types/factories/Mailer__factory";
+export type { Mailer } from "../../typechain-types/Mailer";
 
 // Export stateless client and types
 export {
@@ -8,4 +8,4 @@ export {
   type EVMWallet,
   type GasOptions,
   type TransactionResult
-} from "./evm-mailer-client.js";
+} from "./evm-mailer-client";

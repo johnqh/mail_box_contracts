@@ -58,10 +58,8 @@ async function main() {
       process.exit(1);
     }
 
-    // Get both dev and prod EVM chains
-    const devChains = RpcHelpers.getVisibleChains(ChainType.EVM, true); // testnets
-    const prodChains = RpcHelpers.getVisibleChains(ChainType.EVM, false); // mainnets
-    const visibleChains = [...devChains, ...prodChains];
+    // Get all visible EVM chains (both mainnet and testnet)
+    const visibleChains = RpcHelpers.getVisibleChains(ChainType.EVM, true);
 
     const chainInfo = visibleChains.find(c => c.chainId === chainId);
 

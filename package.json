@@ -1,25 +1,21 @@
 {
   "name": "@sudobility/contracts",
-  "version": "1.13.1",
+  "version": "1.13.2",
   "type": "module",
-  "main": "dist/unified-esm/src/unified/index.js",
-  "module": "dist/unified-esm/src/unified/index.js",
-  "types": "dist/unified-esm/src/unified/index.d.ts",
+  "main": "dist/unified/src/unified/index.js",
+  "types": "dist/unified/src/unified/index.d.ts",
   "exports": {
     ".": {
-      "import": "./dist/unified-esm/src/unified/index.js",
-      "require": "./dist/unified/src/unified/index.js",
-      "types": "./dist/unified/src/unified/index.d.ts"
+      "types": "./dist/unified/src/unified/index.d.ts",
+      "default": "./dist/unified/src/unified/index.js"
     },
     "./evm": {
-      "import": "./dist/unified-esm/src/evm/index.js",
-      "require": "./dist/unified/src/evm/index.js",
-      "types": "./dist/unified/src/evm/index.d.ts"
+      "types": "./dist/unified/src/evm/index.d.ts",
+      "default": "./dist/unified/src/evm/index.js"
     },
     "./react": {
-      "import": "./dist/unified-esm/src/react/index.js",
-      "require": "./dist/unified/src/react/index.js",
-      "types": "./dist/unified/src/react/index.d.ts"
+      "types": "./dist/unified/src/react/index.d.ts",
+      "default": "./dist/unified/src/react/index.js"
     }
   },
   "peerDependencies": {
@@ -51,9 +47,7 @@
     "build:ci": "npm run build:unified",
     "build:evm": "npx hardhat compile && tsc --project tsconfig.evm.json",
     "build:solana": "cargo build --manifest-path programs/mailer/Cargo.toml && tsc --project tsconfig.solana.json",
-    "build:unified": "npm run build:unified:esm && npm run build:unified:cjs",
-    "build:unified:cjs": "tsc --project tsconfig.unified.cjs.json && node scripts/fix-cjs-imports.js",
-    "build:unified:esm": "tsc --project tsconfig.unified.esm.json && node scripts/fix-esm-imports.js",
+    "build:unified": "tsc --project tsconfig.unified.json",
     "test": "npm run test:evm && npm run test:solana && npm run test:unified:direct",
     "test:ci": "npm run build:unified && npm run test:unified:direct",
     "test:evm": "npx hardhat test test/evm/Mailer.test.ts",
@@ -234,8 +228,8 @@
     "viem": "^2.38.4"
   },
   "dependencies": {
-    "@sudobility/configs": "^0.0.6",
-    "@sudobility/types": "^1.8.33"
+    "@sudobility/configs": "^0.0.15",
+    "@sudobility/types": "^1.9.2"
   },
   "overrides": {
     "bigint-buffer": "^1.1.5",

@@ -1,5 +1,5 @@
 import { Optional } from '@sudobility/types';
-import { ChainConfig } from '../unified/types.js';
+import { ChainConfig } from '../unified/types';
 
 // Note: ChainConfig from '@sudobility/types' is imported but renamed to avoid conflict
 // RpcHelpers and ChainType imports removed as they don't exist in @sudobility/types yet

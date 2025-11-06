@@ -7,7 +7,7 @@
 
 import { PublicKey } from '@solana/web3.js';
 import { Optional } from '@sudobility/types';
-import { USDC_DECIMALS, CLAIM_PERIOD_DAYS } from '../utils/currency.js';
+import { USDC_DECIMALS, CLAIM_PERIOD_DAYS } from '../utils/currency';
 
 // ============================================================================
 // CORE MESSAGING TYPES

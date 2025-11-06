@@ -7,7 +7,7 @@ import {
   EstimateGasExecutionError,
 } from 'viem';
 import { ChainInfo } from '@sudobility/configs';
-import { Mailer__factory } from '../../typechain-types/factories/Mailer__factory.js';
+import { Mailer__factory } from '../../typechain-types/factories/Mailer__factory';
 
 const MAILER_ABI = Mailer__factory.abi;
 const MAILER_BYTECODE = Mailer__factory.bytecode as `0x${string}`;

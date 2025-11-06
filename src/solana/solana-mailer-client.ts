@@ -14,7 +14,7 @@ import {
 } from '@solana/spl-token';
 import { ChainInfo } from '@sudobility/configs';
 import { Optional } from '@sudobility/types';
-import { ClaimableInfo, MailerFees } from './types.js';
+import { ClaimableInfo, MailerFees } from './types';
 
 /**
  * Interface for wallet adapter pattern
@@ -432,7 +432,7 @@ export class SolanaMailerClient {
       rpcUrl = `https://rpc.ankr.com/${chainInfo.ankrNetwork}`;
     } else {
       // Default Solana endpoints
-      rpcUrl = chainInfo.isDev
+      rpcUrl = chainInfo.isTestNet
         ? 'https://api.devnet.solana.com'
         : 'https://api.mainnet-beta.solana.com';
     }

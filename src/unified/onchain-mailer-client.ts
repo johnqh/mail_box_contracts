@@ -4,10 +4,10 @@ import { ChainType } from '@sudobility/types';
 import { ChainInfo } from '@sudobility/configs';
 import type {
   EVMWallet,
-} from '../evm/evm-mailer-client.js';
+} from '../evm/evm-mailer-client';
 import type {
   SolanaWallet,
-} from '../solana/solana-mailer-client.js';
+} from '../solana/solana-mailer-client';
 
 import {
   MessageResult,
@@ -15,7 +15,7 @@ import {
   DelegationResult,
   UnifiedTransaction,
   Wallet
-} from './types.js';
+} from './types';
 
 /**
  * OnchainMailerClient - Stateless multi-chain messaging client

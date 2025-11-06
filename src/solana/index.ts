@@ -5,6 +5,6 @@ export {
   type Wallet,
   type ComputeUnitOptions,
   type TransactionResult
-} from './solana-mailer-client.js';
+} from './solana-mailer-client';
 
-export * from './types.js';
+export * from './types';
