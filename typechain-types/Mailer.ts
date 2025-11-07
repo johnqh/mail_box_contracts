@@ -27,8 +27,6 @@ export interface MailerInterface extends Interface {
   getFunction(
     nameOrSignature:
       | "CLAIM_PERIOD"
-      | "OWNER_SHARE"
-      | "RECIPIENT_SHARE"
       | "claimExpiredShares"
       | "claimOwnerShare"
       | "claimRecipientShare"
@@ -94,14 +92,6 @@ export interface MailerInterface extends Interface {
 
   encodeFunctionData(
     functionFragment: "CLAIM_PERIOD",
-    values?: undefined
-  ): string;
-  encodeFunctionData(
-    functionFragment: "OWNER_SHARE",
-    values?: undefined
-  ): string;
-  encodeFunctionData(
-    functionFragment: "RECIPIENT_SHARE",
     values?: undefined
   ): string;
   encodeFunctionData(
@@ -228,14 +218,6 @@ export interface MailerInterface extends Interface {
 
   decodeFunctionResult(
     functionFragment: "CLAIM_PERIOD",
-    data: BytesLike
-  ): Result;
-  decodeFunctionResult(
-    functionFragment: "OWNER_SHARE",
-    data: BytesLike
-  ): Result;
-  decodeFunctionResult(
-    functionFragment: "RECIPIENT_SHARE",
     data: BytesLike
   ): Result;
   decodeFunctionResult(
@@ -716,10 +698,6 @@ export interface Mailer extends BaseContract {
 
   CLAIM_PERIOD: TypedContractMethod<[], [bigint], "view">;
 
-  OWNER_SHARE: TypedContractMethod<[], [bigint], "view">;
-
-  RECIPIENT_SHARE: TypedContractMethod<[], [bigint], "view">;
-
   claimExpiredShares: TypedContractMethod<
     [recipient: AddressLike],
     [void],
@@ -901,12 +879,6 @@ export interface Mailer extends BaseContract {
 
   getFunction(
     nameOrSignature: "CLAIM_PERIOD"
-  ): TypedContractMethod<[], [bigint], "view">;
-  getFunction(
-    nameOrSignature: "OWNER_SHARE"
-  ): TypedContractMethod<[], [bigint], "view">;
-  getFunction(
-    nameOrSignature: "RECIPIENT_SHARE"
   ): TypedContractMethod<[], [bigint], "view">;
   getFunction(
     nameOrSignature: "claimExpiredShares"

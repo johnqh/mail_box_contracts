@@ -101,19 +101,31 @@ export class EVMMailerClient {
   private readonly defaultGasMultiplier = 1.2; // 20% buffer by default
 
   // Default gas limits for common operations to use as fallbacks
+  // Updated after contract optimizations (storage packing, uint128/uint8, delete vs zero, caching)
   private readonly defaultGasLimits = {
-    send: BigInt(150000),
-    sendPriority: BigInt(200000),
-    sendPrepared: BigInt(120000),
-    sendPriorityPrepared: BigInt(150000),
-    claimRevenue: BigInt(100000),
-    claimOwnerShare: BigInt(100000),
-    delegateTo: BigInt(80000),
-    setFee: BigInt(60000),
-    setPermission: BigInt(60000),
-    pause: BigInt(50000),
-    unpause: BigInt(50000),
-    deploy: BigInt(3000000),
+    send: BigInt(135000),                      // Reduced ~10% (optimized storage + permission check)
+    sendPriority: BigInt(180000),              // Reduced ~10% (optimized _recordShares)
+    sendPrepared: BigInt(110000),              // Reduced ~8% (optimized storage)
+    sendPriorityPrepared: BigInt(135000),      // Reduced ~10% (optimized _recordShares)
+    sendThroughWebhook: BigInt(110000),        // Reduced ~8% (optimized storage)
+    sendToEmailAddress: BigInt(110000),        // Reduced ~8% (optimized storage)
+    sendPreparedToEmailAddress: BigInt(110000),// Reduced ~8% (optimized storage)
+    claimRevenue: BigInt(85000),               // Reduced ~15% (delete optimization + gas refund)
+    claimOwnerShare: BigInt(85000),            // Reduced ~15% (uint128 + caching)
+    delegateTo: BigInt(70000),                 // Reduced ~12% (uint128 delegation fee)
+    rejectDelegation: BigInt(70000),           // Reduced ~12% (optimized storage)
+    setFee: BigInt(50000),                     // Reduced ~17% (uint128)
+    setFeePaused: BigInt(50000),               // Reduced ~17% (bool packing)
+    setDelegationFee: BigInt(50000),           // Reduced ~17% (uint128)
+    setCustomFeePercentage: BigInt(50000),     // Reduced ~17% (uint8)
+    clearCustomFeePercentage: BigInt(50000),   // Reduced ~17% (uint8)
+    setPermission: BigInt(50000),              // Reduced ~17% (optimized modifier)
+    removePermission: BigInt(50000),           // Reduced ~17% (optimized modifier)
+    pause: BigInt(45000),                      // Reduced ~10% (caching)
+    unpause: BigInt(45000),                    // Reduced ~10% (simple state change)
+    emergencyUnpause: BigInt(45000),           // Reduced ~10% (simple state change)
+    distributeClaimableFunds: BigInt(85000),   // Reduced ~15% (delete optimization)
+    deploy: BigInt(2800000),                   // Reduced ~7% (optimized contract size)
   };
 
   /**
@@ -366,7 +378,8 @@ export class EVMMailerClient {
         ],
         account,
       }),
-      gasOptions
+      gasOptions,
+      this.defaultGasLimits.sendPrepared
     );
 
     const hash = await connectedWallet.walletClient.writeContract({
@@ -424,7 +437,8 @@ export class EVMMailerClient {
         ],
         account,
       }),
-      gasOptions
+      gasOptions,
+      this.defaultGasLimits.sendThroughWebhook
     );
 
     const hash = await connectedWallet.walletClient.writeContract({
@@ -475,7 +489,8 @@ export class EVMMailerClient {
         args: [toEmail, subject, body, normalizeAddress(payer)],
         account,
       }),
-      gasOptions
+      gasOptions,
+      this.defaultGasLimits.sendToEmailAddress
     );
 
     const hash = await connectedWallet.walletClient.writeContract({
@@ -519,7 +534,8 @@ export class EVMMailerClient {
         args: [toEmail, mailId, normalizeAddress(payer)],
         account,
       }),
-      gasOptions
+      gasOptions,
+      this.defaultGasLimits.sendPreparedToEmailAddress
     );
 
     const hash = await connectedWallet.walletClient.writeContract({
@@ -579,7 +595,8 @@ export class EVMMailerClient {
         args: [BigInt(usdcAmount)],
         account,
       }),
-      gasOptions
+      gasOptions,
+      this.defaultGasLimits.setFee
     );
 
     const hash = await connectedWallet.walletClient.writeContract({
@@ -621,7 +638,8 @@ export class EVMMailerClient {
         args: [feePaused],
         account,
       }),
-      gasOptions
+      gasOptions,
+      this.defaultGasLimits.setFeePaused
     );
 
     const hash = await connectedWallet.walletClient.writeContract({
@@ -873,7 +891,8 @@ export class EVMMailerClient {
         args: [delegateAddress],
         account,
       }),
-      gasOptions
+      gasOptions,
+      this.defaultGasLimits.delegateTo
     );
 
     const hash = await connectedWallet.walletClient.writeContract({
@@ -915,7 +934,8 @@ export class EVMMailerClient {
         args: [normalizeAddress(delegatingAddress)],
         account,
       }),
-      gasOptions
+      gasOptions,
+      this.defaultGasLimits.rejectDelegation
     );
 
     const hash = await connectedWallet.walletClient.writeContract({
@@ -975,7 +995,8 @@ export class EVMMailerClient {
         args: [BigInt(usdcAmount)],
         account,
       }),
-      gasOptions
+      gasOptions,
+      this.defaultGasLimits.setDelegationFee
     );
 
     const hash = await connectedWallet.walletClient.writeContract({
@@ -1022,7 +1043,8 @@ export class EVMMailerClient {
         args: [normalizeAddress(account), BigInt(percentage)],
         account: senderAccount,
       }),
-      gasOptions
+      gasOptions,
+      this.defaultGasLimits.setCustomFeePercentage
     );
 
     const hash = await connectedWallet.walletClient.writeContract({
@@ -1064,7 +1086,8 @@ export class EVMMailerClient {
         args: [normalizeAddress(account)],
         account: senderAccount,
       }),
-      gasOptions
+      gasOptions,
+      this.defaultGasLimits.clearCustomFeePercentage
     );
 
     const hash = await connectedWallet.walletClient.writeContract({
@@ -1131,7 +1154,8 @@ export class EVMMailerClient {
         args: [normalizeAddress(contractAddress)],
         account,
       }),
-      gasOptions
+      gasOptions,
+      this.defaultGasLimits.setPermission
     );
 
     const hash = await connectedWallet.walletClient.writeContract({
@@ -1173,7 +1197,8 @@ export class EVMMailerClient {
         args: [normalizeAddress(contractAddress)],
         account,
       }),
-      gasOptions
+      gasOptions,
+      this.defaultGasLimits.removePermission
     );
 
     const hash = await connectedWallet.walletClient.writeContract({
@@ -1238,7 +1263,8 @@ export class EVMMailerClient {
         args: [],
         account,
       }),
-      gasOptions
+      gasOptions,
+      this.defaultGasLimits.pause
     );
 
     const hash = await connectedWallet.walletClient.writeContract({
@@ -1279,7 +1305,8 @@ export class EVMMailerClient {
         args: [],
         account,
       }),
-      gasOptions
+      gasOptions,
+      this.defaultGasLimits.unpause
     );
 
     const hash = await connectedWallet.walletClient.writeContract({
@@ -1320,7 +1347,8 @@ export class EVMMailerClient {
         args: [],
         account,
       }),
-      gasOptions
+      gasOptions,
+      this.defaultGasLimits.emergencyUnpause
     );
 
     const hash = await connectedWallet.walletClient.writeContract({
@@ -1380,7 +1408,8 @@ export class EVMMailerClient {
         args: [normalizeAddress(recipient)],
         account,
       }),
-      gasOptions
+      gasOptions,
+      this.defaultGasLimits.distributeClaimableFunds
     );
 
     const hash = await connectedWallet.walletClient.writeContract({

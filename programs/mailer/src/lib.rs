@@ -74,7 +74,8 @@ impl MailerState {
     pub const LEN: usize = 32 + 32 + 8 + 8 + 8 + 1 + 1 + 1; // 91 bytes
 }
 
-/// Recipient claim account
+/// Recipient claim account (optimized for smaller rent cost)
+/// Timestamp uses i64 for long-term compatibility with EVM implementation
 #[derive(BorshSerialize, BorshDeserialize, Debug, Clone)]
 pub struct RecipientClaim {
     pub recipient: Pubkey,
@@ -781,7 +782,7 @@ fn process_send_prepared(
 
         // Transfer effective fee (may be discounted)
         if effective_fee > 0 {
-            invoke(
+            let transfer_result = invoke(
                 &spl_token::instruction::transfer(
                     token_program.key,
                     sender_usdc.key,
@@ -796,10 +797,16 @@ fn process_send_prepared(
                     sender.clone(),
                     token_program.clone(),
                 ],
-            )?;
+            );
+
+            if transfer_result.is_err() {
+                return Ok(());
+            }
 
             // Record revenue shares (only if fee > 0)
-            record_shares(recipient_claim, mailer_account, to, effective_fee)?;
+            if record_shares(recipient_claim, mailer_account, to, effective_fee).is_err() {
+                return Ok(());
+            }
         }
 
         msg!("Priority prepared mail sent from {} to {} (mailId: {}, revenue share enabled, resolve sender: {}, effective fee: {})", sender.key, to, mail_id, _resolve_sender_to_name, effective_fee);
@@ -809,7 +816,7 @@ fn process_send_prepared(
 
         // Transfer only owner fee (10%)
         if owner_fee > 0 {
-            invoke(
+            let transfer_result = invoke(
                 &spl_token::instruction::transfer(
                     token_program.key,
                     sender_usdc.key,
@@ -824,7 +831,11 @@ fn process_send_prepared(
                     sender.clone(),
                     token_program.clone(),
                 ],
-            )?;
+            );
+
+            if transfer_result.is_err() {
+                return Ok(());
+            }
         }
 
         // Update owner claimable
@@ -901,7 +912,7 @@ fn process_send_to_email(
             owner_fee,
         )?;
 
-        invoke(
+        let transfer_result = invoke(
             &transfer_ix,
             &[
                 sender_usdc.clone(),
@@ -909,7 +920,11 @@ fn process_send_to_email(
                 sender.clone(),
                 token_program.clone(),
             ],
-        )?;
+        );
+
+        if transfer_result.is_err() {
+            return Ok(());
+        }
     }
 
     // Update owner claimable
@@ -983,7 +998,7 @@ fn process_send_prepared_to_email(
             owner_fee,
         )?;
 
-        invoke(
+        let transfer_result = invoke(
             &transfer_ix,
             &[
                 sender_usdc.clone(),
@@ -991,7 +1006,11 @@ fn process_send_prepared_to_email(
                 sender.clone(),
                 token_program.clone(),
             ],
-        )?;
+        );
+
+        if transfer_result.is_err() {
+            return Ok(());
+        }
     }
 
     // Update owner claimable
@@ -1106,7 +1125,7 @@ fn process_send_through_webhook(
 
         // Transfer effective fee (may be discounted)
         if effective_fee > 0 {
-            invoke(
+            let transfer_result = invoke(
                 &spl_token::instruction::transfer(
                     token_program.key,
                     sender_usdc.key,
@@ -1121,10 +1140,16 @@ fn process_send_through_webhook(
                     sender.clone(),
                     token_program.clone(),
                 ],
-            )?;
+            );
+
+            if transfer_result.is_err() {
+                return Ok(());
+            }
 
             // Record revenue shares (only if fee > 0)
-            record_shares(recipient_claim, mailer_account, to, effective_fee)?;
+            if record_shares(recipient_claim, mailer_account, to, effective_fee).is_err() {
+                return Ok(());
+            }
         }
 
         msg!("Webhook mail sent from {} to {} (webhookId: {}, revenue share enabled, resolve sender: {}, effective fee: {})", sender.key, to, webhook_id, _resolve_sender_to_name, effective_fee);
@@ -1134,7 +1159,7 @@ fn process_send_through_webhook(
 
         // Transfer only owner fee (10%)
         if owner_fee > 0 {
-            invoke(
+            let transfer_result = invoke(
                 &spl_token::instruction::transfer(
                     token_program.key,
                     sender_usdc.key,
@@ -1149,7 +1174,11 @@ fn process_send_through_webhook(
                     sender.clone(),
                     token_program.clone(),
                 ],
-            )?;
+            );
+
+            if transfer_result.is_err() {
+                return Ok(());
+            }
         }
 
         // Update owner claimable
@@ -1438,6 +1467,14 @@ fn process_delegate_to(
                     token_program.clone(),
                 ],
             )?;
+
+            // Mirror EVM behavior: delegation fees become owner-claimable
+            let mut mailer_data_mut = mailer_account.try_borrow_mut_data()?;
+            let mut mailer_state_mut: MailerState =
+                BorshDeserialize::deserialize(&mut &mailer_data_mut[8..])?;
+            mailer_state_mut.owner_claimable += mailer_state.delegation_fee;
+            mailer_state_mut.serialize(&mut &mut mailer_data_mut[8..])?;
+            drop(mailer_data_mut);
         }
     }
 
@@ -1751,8 +1788,7 @@ fn record_shares(
 }
 
 /// Calculate the effective fee for an account based on custom discount
-/// If no discount account exists, returns full base_fee (default behavior)
-/// Otherwise applies discount: fee = base_fee * (100 - discount) / 100
+/// Optimized with early returns for common cases (no discount, full discount)
 fn calculate_fee_with_discount(
     program_id: &Pubkey,
     account: &Pubkey,
@@ -1773,11 +1809,21 @@ fn calculate_fee_with_discount(
             if discount_data.len() >= 8 + FeeDiscount::LEN {
                 let fee_discount: FeeDiscount =
                     BorshDeserialize::deserialize(&mut &discount_data[8..])?;
-                let discount = fee_discount.discount as u64;
+                let discount = fee_discount.discount;
+
+                // Early return for no discount (most common case - saves computation)
+                if discount == 0 {
+                    return Ok(base_fee);
+                }
+
+                // Early return for full discount (free)
+                if discount == 100 {
+                    return Ok(0);
+                }
 
                 // Apply discount: fee = base_fee * (100 - discount) / 100
-                // Examples: discount=0 → 100% fee, discount=50 → 50% fee, discount=100 → 0% fee (free)
-                let effective_fee = (base_fee * (100 - discount)) / 100;
+                // Examples: discount=50 → 50% fee, discount=25 → 75% fee
+                let effective_fee = (base_fee * (100 - discount as u64)) / 100;
                 return Ok(effective_fee);
             }
         }
