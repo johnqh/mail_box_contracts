@@ -229,7 +229,7 @@
   },
   "dependencies": {
     "@sudobility/configs": "^0.0.17",
-    "@sudobility/types": "^1.9.2"
+    "@sudobility/types": "^1.9.3"
   },
   "overrides": {
     "bigint-buffer": "^1.1.5",
