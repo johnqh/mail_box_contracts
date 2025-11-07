@@ -131,7 +131,11 @@
       "WebFetch(domain:sepolia.etherscan.io)",
       "Bash(awk:*)",
       "Bash(sh -s -- -y)",
-      "Bash(bash:*)"
+      "Bash(bash:*)",
+      "Bash(echo:*)",
+      "Bash(jq:*)",
+      "Bash(printf:*)",
+      "Bash(CONTRACT_ADDRESS=0xb5f69709c8b1bf5413add7acba44c2d4b00728a8 npx hardhat run:*)"
     ],
     "deny": [],
     "defaultMode": "acceptEdits"

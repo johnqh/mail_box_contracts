@@ -665,6 +665,11 @@ export class SolanaMailerClient {
       TOKEN_PROGRAM_ID
     );
 
+    const [discountPda] = PublicKey.findProgramAddressSync(
+      [DISCOUNT_PDA_SEED, connectedWallet.wallet.publicKey.toBuffer()],
+      programId
+    );
+
     const [recipientClaimPda] = PublicKey.findProgramAddressSync(
       [CLAIM_PDA_SEED, toPubkey.toBuffer()],
       programId
@@ -678,6 +683,7 @@ export class SolanaMailerClient {
       { pubkey: mailerTokenAccount, isSigner: false, isWritable: true },
       { pubkey: TOKEN_PROGRAM_ID, isSigner: false, isWritable: false },
       { pubkey: SystemProgram.programId, isSigner: false, isWritable: false },
+      { pubkey: discountPda, isSigner: false, isWritable: false },
     ];
 
     const instruction = new TransactionInstruction({
@@ -746,6 +752,11 @@ export class SolanaMailerClient {
       TOKEN_PROGRAM_ID
     );
 
+    const [discountPda] = PublicKey.findProgramAddressSync(
+      [DISCOUNT_PDA_SEED, connectedWallet.wallet.publicKey.toBuffer()],
+      programId
+    );
+
     const [recipientClaimPda] = PublicKey.findProgramAddressSync(
       [CLAIM_PDA_SEED, toPubkey.toBuffer()],
       programId
@@ -759,6 +770,7 @@ export class SolanaMailerClient {
       { pubkey: mailerTokenAccount, isSigner: false, isWritable: true },
       { pubkey: TOKEN_PROGRAM_ID, isSigner: false, isWritable: false },
       { pubkey: SystemProgram.programId, isSigner: false, isWritable: false },
+      { pubkey: discountPda, isSigner: false, isWritable: false },
     ];
 
     const instruction = new TransactionInstruction({
@@ -827,6 +839,11 @@ export class SolanaMailerClient {
       TOKEN_PROGRAM_ID
     );
 
+    const [discountPda] = PublicKey.findProgramAddressSync(
+      [DISCOUNT_PDA_SEED, connectedWallet.wallet.publicKey.toBuffer()],
+      programId
+    );
+
     const [recipientClaimPda] = PublicKey.findProgramAddressSync(
       [CLAIM_PDA_SEED, toPubkey.toBuffer()],
       programId
@@ -840,6 +857,7 @@ export class SolanaMailerClient {
       { pubkey: mailerTokenAccount, isSigner: false, isWritable: true },
       { pubkey: TOKEN_PROGRAM_ID, isSigner: false, isWritable: false },
       { pubkey: SystemProgram.programId, isSigner: false, isWritable: false },
+      { pubkey: discountPda, isSigner: false, isWritable: false },
     ];
 
     const instruction = new TransactionInstruction({
@@ -912,12 +930,18 @@ export class SolanaMailerClient {
       TOKEN_PROGRAM_ID
     );
 
+    const [discountPda] = PublicKey.findProgramAddressSync(
+      [DISCOUNT_PDA_SEED, connectedWallet.wallet.publicKey.toBuffer()],
+      programId
+    );
+
     const keys = [
       { pubkey: connectedWallet.wallet.publicKey, isSigner: true, isWritable: true },
       { pubkey: mailerStatePda, isSigner: false, isWritable: true },
       { pubkey: senderTokenAccount, isSigner: false, isWritable: true },
       { pubkey: mailerTokenAccount, isSigner: false, isWritable: true },
       { pubkey: TOKEN_PROGRAM_ID, isSigner: false, isWritable: false },
+      { pubkey: discountPda, isSigner: false, isWritable: false },
     ];
 
     const instruction = new TransactionInstruction({
@@ -984,12 +1008,18 @@ export class SolanaMailerClient {
       TOKEN_PROGRAM_ID
     );
 
+    const [discountPda] = PublicKey.findProgramAddressSync(
+      [DISCOUNT_PDA_SEED, connectedWallet.wallet.publicKey.toBuffer()],
+      programId
+    );
+
     const keys = [
       { pubkey: connectedWallet.wallet.publicKey, isSigner: true, isWritable: true },
       { pubkey: mailerStatePda, isSigner: false, isWritable: true },
       { pubkey: senderTokenAccount, isSigner: false, isWritable: true },
       { pubkey: mailerTokenAccount, isSigner: false, isWritable: true },
       { pubkey: TOKEN_PROGRAM_ID, isSigner: false, isWritable: false },
+      { pubkey: discountPda, isSigner: false, isWritable: false },
     ];
 
     const instruction = new TransactionInstruction({
