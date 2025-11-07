@@ -484,10 +484,16 @@ export class SolanaMailerClient {
           if (simulation.value.err === null && simulation.value.unitsConsumed) {
             simulatedUnits = simulation.value.unitsConsumed;
             const multiplier = options.computeUnitMultiplier ?? this.defaultComputeUnitMultiplier;
-            computeUnitLimit = Math.min(
-              Math.ceil(simulatedUnits * multiplier),
-              1_400_000
-            );
+            let estimatedLimit = Math.ceil(simulatedUnits * multiplier);
+
+            // If we have a default and the estimate is suspiciously low, use the default
+            // This handles cases where simulation returns incorrect low values
+            if (defaultComputeUnits && estimatedLimit < defaultComputeUnits) {
+              console.warn(`Estimated compute units ${estimatedLimit} is below default ${defaultComputeUnits}, using default`);
+              estimatedLimit = defaultComputeUnits;
+            }
+
+            computeUnitLimit = Math.min(estimatedLimit, 1_400_000);
             break; // Success
           } else if (simulation.value.err) {
             throw new Error(`Simulation failed: ${JSON.stringify(simulation.value.err)}`);

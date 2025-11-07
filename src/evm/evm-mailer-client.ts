@@ -205,7 +205,14 @@ export class EVMMailerClient {
 
     // Apply multiplier for safety buffer
     const multiplier = gasOptions?.gasMultiplier ?? this.defaultGasMultiplier;
-    const gasWithBuffer = BigInt(Math.ceil(Number(estimatedGas!) * multiplier));
+    let gasWithBuffer = BigInt(Math.ceil(Number(estimatedGas!) * multiplier));
+
+    // If we have a fallback and the estimated gas is suspiciously low, use the fallback
+    // This handles cases where RPC returns incorrect low estimates (e.g., Sepolia returning 26,897)
+    if (fallbackGasLimit && gasWithBuffer < fallbackGasLimit) {
+      console.warn(`Estimated gas ${gasWithBuffer} is below fallback ${fallbackGasLimit}, using fallback`);
+      gasWithBuffer = fallbackGasLimit;
+    }
 
     // Apply max gas limit if specified
     if (gasOptions?.maxGasLimit) {
