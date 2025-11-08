@@ -326,6 +326,139 @@ export class OnchainMailerClient {
   }
 
   /**
+   * Send to email address
+   */
+  async sendToEmailAddress(
+    connectedWallet: Wallet,
+    chainInfo: ChainInfo,
+    toEmail: string,
+    subject: string,
+    body: string,
+    options?: {
+      gasOptions?: unknown;
+      computeOptions?: unknown;
+    }
+  ): Promise<MessageResult> {
+    // Validate message
+    if (!subject || subject.length > 200) {
+      throw new Error('Subject must be 1-200 characters');
+    }
+    if (!body || body.length > 10000) {
+      throw new Error('Body must be 1-10000 characters');
+    }
+
+    if (chainInfo.chainType === ChainType.EVM) {
+      const evmClient = await this.getEVMClient();
+      const evmWallet = connectedWallet as EVMWallet;
+      const [account] = await evmWallet.walletClient.getAddresses();
+
+      const result = await evmClient.sendToEmailAddress(
+        evmWallet,
+        chainInfo,
+        toEmail,
+        subject,
+        body,
+        account, // payer
+        options?.gasOptions
+      );
+
+      return {
+        transactionHash: result.hash,
+        chainType: ChainType.EVM,
+        fee: BigInt('10000'), // Email sends use standard fee
+        gasUsed: result.gasUsed,
+        isPriority: false,
+        success: true
+      };
+    } else if (chainInfo.chainType === ChainType.SOLANA) {
+      const solanaClient = await this.getSolanaClient();
+      const solanaWallet = connectedWallet as SolanaWallet;
+
+      const result = await solanaClient.sendToEmail(
+        toEmail,
+        subject,
+        body,
+        solanaWallet.wallet.publicKey.toBase58(), // payer
+        false, // revenueShareToReceiver - email sends don't share revenue
+        solanaWallet,
+        chainInfo,
+        options?.computeOptions
+      );
+
+      return {
+        transactionHash: result.transactionHash,
+        chainType: ChainType.SOLANA,
+        fee: BigInt('10000'),
+        isPriority: false,
+        success: true
+      };
+    } else {
+      throw new Error(`Unsupported chain type: ${chainInfo.chainType}`);
+    }
+  }
+
+  /**
+   * Send prepared to email address
+   */
+  async sendPreparedToEmailAddress(
+    connectedWallet: Wallet,
+    chainInfo: ChainInfo,
+    toEmail: string,
+    mailId: string,
+    options?: {
+      gasOptions?: unknown;
+      computeOptions?: unknown;
+    }
+  ): Promise<MessageResult> {
+    if (chainInfo.chainType === ChainType.EVM) {
+      const evmClient = await this.getEVMClient();
+      const evmWallet = connectedWallet as EVMWallet;
+      const [account] = await evmWallet.walletClient.getAddresses();
+
+      const result = await evmClient.sendPreparedToEmailAddress(
+        evmWallet,
+        chainInfo,
+        toEmail,
+        mailId,
+        account, // payer
+        options?.gasOptions
+      );
+
+      return {
+        transactionHash: result.hash,
+        chainType: ChainType.EVM,
+        fee: BigInt('10000'),
+        gasUsed: result.gasUsed,
+        isPriority: false,
+        success: true
+      };
+    } else if (chainInfo.chainType === ChainType.SOLANA) {
+      const solanaClient = await this.getSolanaClient();
+      const solanaWallet = connectedWallet as SolanaWallet;
+
+      const result = await solanaClient.sendPreparedToEmail(
+        toEmail,
+        mailId,
+        solanaWallet.wallet.publicKey.toBase58(), // payer
+        false, // revenueShareToReceiver
+        solanaWallet,
+        chainInfo,
+        options?.computeOptions
+      );
+
+      return {
+        transactionHash: result.transactionHash,
+        chainType: ChainType.SOLANA,
+        fee: BigInt('10000'),
+        isPriority: false,
+        success: true
+      };
+    } else {
+      throw new Error(`Unsupported chain type: ${chainInfo.chainType}`);
+    }
+  }
+
+  /**
    * Delegate to another address
    * @param delegate - Address to delegate to
    * @param wallet - Wallet connection
