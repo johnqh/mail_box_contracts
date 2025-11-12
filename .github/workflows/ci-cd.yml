@@ -22,5 +22,4 @@ jobs:
     uses: johnqh/workflows/.github/workflows/unified-cicd.yml@main
     with:
       npm-access: "restricted"
-    secrets:
-      NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+    secrets: inherit  # Pass all repository secrets
