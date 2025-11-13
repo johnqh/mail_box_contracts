@@ -10,34 +10,34 @@ pragma solidity ^0.8.24;
 contract MockUSDC {
     /// @notice Balance tracking for each address
     mapping(address => uint256) public balanceOf;
-    
+
     /// @notice Allowance tracking for delegated transfers
     mapping(address => mapping(address => uint256)) public allowance;
-    
+
     /// @notice Token name following ERC20 standard
     string public name = "Mock USDC";
-    
+
     /// @notice Token symbol following ERC20 standard
     string public symbol = "USDC";
-    
+
     /// @notice Token decimals matching real USDC (6 decimals)
     uint8 public decimals = 6;
-    
+
     /// @notice Total token supply (1M USDC with 6 decimals)
     uint256 public totalSupply = 1000000 * 10**6;
-    
+
     /// @notice Contract owner who can mint new tokens
     address public immutable owner;
-    
+
     /// @notice Thrown when non-owner attempts owner-only functions
     error OnlyOwner();
-    
+
     /// @notice Thrown when transfer amount exceeds sender's balance
     error InsufficientBalance();
-    
+
     /// @notice Thrown when transferFrom amount exceeds allowance
     error InsufficientAllowance();
-    
+
     /// @notice Restricts function access to contract owner only
     modifier onlyOwner() {
         if (msg.sender != owner) {
@@ -45,7 +45,7 @@ contract MockUSDC {
         }
         _;
     }
-    
+
     /// @notice Initializes the mock USDC token
     /// @dev Sets deployer as owner and gives them the initial supply
     constructor() {

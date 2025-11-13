@@ -85,9 +85,11 @@ npm run compile    # Compile contracts + generate TypeScript types
 npm test          # Run all tests (116 tests total)
 npm run build     # Build TypeScript files
 
-# Deployment Commands  
+# Deployment Commands
 npm run deploy:local           # Deploy to local Hardhat network (standard)
 npx hardhat node              # Start local blockchain
+npx hardhat run scripts/evm/deploy-upgradeable.ts --network sepolia  # Deploy upgradeable proxy
+PROXY_ADDRESS=0x... npx hardhat run scripts/evm/upgrade.ts --network sepolia  # Upgrade contract
 
 # Development Commands
 npm run clean          # Clean compiled artifacts
@@ -105,12 +107,19 @@ npm test -- --verbose            # Run tests with detailed output
 ### Mailer Contract (`contracts/Mailer.sol`)
 
 **Purpose**: Complete messaging system with delegation management and revenue sharing
+
+**Architecture**: Upgradeable UUPS proxy pattern
+- Proxy contract: User-facing address that never changes
+- Implementation: Logic contract, can be upgraded by owner
+- Storage: Lives in proxy, preserved across upgrades
+
 **Key Features**:
 - Two fee tiers: Priority (100% fee) and Standard (10% fee)
 - Revenue sharing: 90% to sender, 10% to owner
 - Delegation system with rejection capability
 - 60-day claim period for recipients
 - Messages can be sent to any address via "to" parameter
+- Upgradeable by owner only (UUPS pattern)
 
 **Core Functions**:
 - `sendPriority(address to, string subject, string body)` - Full fee, 90% revenue share

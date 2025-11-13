@@ -5,17 +5,18 @@ pragma solidity ^0.8.24;
  * @title Mailer
  * @notice Decentralized messaging system with delegation management, USDC fees and revenue sharing
  * @dev Two-tier messaging fee system + delegation management with rejection capability
+ *      Upgradable contract using UUPS proxy pattern
  * @author Mailer Team
  */
 
 import "./interfaces/IERC20.sol";
+import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
+import "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 
-contract Mailer {
+contract Mailer is Initializable, OwnableUpgradeable, UUPSUpgradeable {
     /// @notice USDC token contract for fee payments
-    IERC20 public immutable usdcToken;
-
-    /// @notice Contract owner with administrative privileges
-    address public immutable owner;
+    IERC20 public usdcToken;
 
     /// @notice Time limit for recipients to claim their revenue share (60 days)
     uint256 public constant CLAIM_PERIOD = 60 days;
@@ -27,10 +28,10 @@ contract Mailer {
     uint8 internal constant OWNER_SHARE = 10; // 10%
 
     /// @notice Base sending fee (0.1 USDC with 6 decimals) - packed with delegationFee
-    uint128 public sendFee = 100000;
+    uint128 public sendFee;
 
     /// @notice Fee required for delegation operations (10 USDC with 6 decimals) - packed with sendFee
-    uint128 public delegationFee = 10000000;
+    uint128 public delegationFee;
 
     /// @notice Total USDC amount claimable by contract owner - packed with status/bools
     uint128 public ownerClaimable;
@@ -130,8 +131,8 @@ contract Mailer {
     event EmergencyUnpaused();
 
     /// @notice Emitted when fee collection is toggled
-    /// @param enabled True if fees are enabled, false if paused
-    event FeePauseToggled(bool enabled);
+    /// @param feePaused True if fees are paused, false otherwise
+    event FeePauseToggled(bool feePaused);
     
     /// @notice Emitted when funds are auto-distributed during pause
     /// @param recipient Address receiving funds
@@ -166,13 +167,6 @@ contract Mailer {
     error InvalidPercentage();
     error UnpermittedPayer();
 
-    modifier onlyOwner() {
-        if (msg.sender != owner) {
-            revert OnlyOwner();
-        }
-        _;
-    }
-    
     modifier nonReentrant() {
         if (_status == 1) {
             revert ReentrancyGuard();
@@ -181,21 +175,42 @@ contract Mailer {
         _;
         _status = 0;
     }
-    
+
     modifier whenNotPaused() {
         if (paused) {
             revert ContractIsPaused();
         }
         _;
     }
-    
-    constructor(address _usdcToken, address _owner) {
+
+    /// @custom:oz-upgrades-unsafe-allow constructor
+    constructor() {
+        _disableInitializers();
+    }
+
+    /**
+     * @notice Initialize the contract (replaces constructor for upgradeable pattern)
+     * @param _usdcToken Address of the USDC token contract
+     * @param _owner Address of the contract owner
+     */
+    function initialize(address _usdcToken, address _owner) public initializer {
         if (_usdcToken == address(0) || _owner == address(0)) {
             revert InvalidAddress();
         }
+
+        __Ownable_init(_owner);
+        __UUPSUpgradeable_init();
+
         usdcToken = IERC20(_usdcToken);
-        owner = _owner;
+        sendFee = 100000; // 0.1 USDC with 6 decimals
+        delegationFee = 10000000; // 10 USDC with 6 decimals
     }
+
+    /**
+     * @notice Authorize contract upgrades (UUPS requirement)
+     * @dev Only owner can authorize upgrades
+     */
+    function _authorizeUpgrade(address newImplementation) internal override onlyOwner {}
     
     
     /**
@@ -338,6 +353,9 @@ contract Mailer {
     }
 
     function setFee(uint256 usdcAmount) external onlyOwner whenNotPaused {
+        if (usdcAmount > type(uint128).max) {
+            revert MathOverflow();
+        }
         uint128 oldFee = sendFee;
         sendFee = uint128(usdcAmount);
         emit FeeUpdated(oldFee, usdcAmount);
@@ -374,7 +392,7 @@ contract Mailer {
         recipientClaims[recipient].timestamp = uint64(block.timestamp);
 
         // Update owner's claimable amount
-        ownerClaimable += ownerAmount;
+        _increaseOwnerClaimable(ownerAmount);
 
         emit SharesRecorded(recipient, recipientAmount, ownerAmount);
     }
@@ -441,7 +459,7 @@ contract Mailer {
             _recordShares(recipient, effectiveFee);
         } else {
             // All fees go to owner (standard mode or email send)
-            ownerClaimable += uint128(feeToCharge);
+            _increaseOwnerClaimable(feeToCharge);
         }
 
         return true;
@@ -490,15 +508,15 @@ contract Mailer {
         if (ownerClaimable == 0) {
             revert NoClaimableAmount();
         }
-        
+
         uint256 amount = ownerClaimable;
         ownerClaimable = 0;
-        
-        bool success = usdcToken.transfer(owner, amount);
+
+        bool success = usdcToken.transfer(owner(), amount);
         if (!success) {
             revert TransferFailed();
         }
-        
+
         emit OwnerClaimed(amount);
     }
     
@@ -515,7 +533,7 @@ contract Mailer {
         uint256 amount = claim.amount;
         delete recipientClaims[recipient];
 
-        ownerClaimable += uint128(amount);
+        _increaseOwnerClaimable(amount);
 
         emit ExpiredSharesClaimed(recipient, amount);
     }
@@ -542,7 +560,7 @@ contract Mailer {
             if (!usdcToken.transferFrom(msg.sender, address(this), fee)) {
                 revert FeePaymentRequired();
             }
-            ownerClaimable += fee;
+            _increaseOwnerClaimable(fee);
         }
         emit DelegationSet(msg.sender, delegate);
     }
@@ -557,6 +575,9 @@ contract Mailer {
     /// @notice Update the delegation fee (owner only)
     /// @param usdcAmount New fee amount in USDC (6 decimals)
     function setDelegationFee(uint256 usdcAmount) external onlyOwner whenNotPaused {
+        if (usdcAmount > type(uint128).max) {
+            revert MathOverflow();
+        }
         uint128 oldFee = delegationFee;
         delegationFee = uint128(usdcAmount);
         emit DelegationFeeUpdated(oldFee, usdcAmount);
@@ -648,9 +669,9 @@ contract Mailer {
         if (_ownerClaimable > 0) {
             ownerClaimable = 0;
 
-            bool success = usdcToken.transfer(owner, _ownerClaimable);
+            bool success = usdcToken.transfer(owner(), _ownerClaimable);
             if (success) {
-                emit FundsDistributed(owner, _ownerClaimable);
+                emit FundsDistributed(owner(), _ownerClaimable);
             } else {
                 // If transfer fails, restore the balance
                 ownerClaimable = _ownerClaimable;
@@ -676,6 +697,7 @@ contract Mailer {
         }
 
         uint256 amount = claim.amount;
+        uint64 lastTimestamp = claim.timestamp;
         delete recipientClaims[recipient];
 
         bool success = usdcToken.transfer(recipient, amount);
@@ -684,7 +706,7 @@ contract Mailer {
         } else {
             // If transfer fails, restore the balance
             recipientClaims[recipient].amount = uint192(amount);
-            recipientClaims[recipient].timestamp = uint64(block.timestamp);
+            recipientClaims[recipient].timestamp = lastTimestamp;
         }
     }
     
@@ -715,7 +737,18 @@ contract Mailer {
     /// @param _feePaused True to pause fee collection, false to enable
     function setFeePaused(bool _feePaused) external onlyOwner {
         feePaused = _feePaused;
-        emit FeePauseToggled(!_feePaused);
+        emit FeePauseToggled(_feePaused);
+    }
+
+    function _increaseOwnerClaimable(uint256 amount) internal {
+        if (amount == 0) {
+            return;
+        }
+        uint256 newOwnerClaimable = uint256(ownerClaimable) + amount;
+        if (newOwnerClaimable > type(uint128).max) {
+            revert MathOverflow();
+        }
+        ownerClaimable = uint128(newOwnerClaimable);
     }
 
     /// @notice Grant permission for a contract to send messages using caller's USDC balance
@@ -779,4 +812,10 @@ contract Mailer {
     function isPaused() external view returns (bool) {
         return paused;
     }
+
+    /**
+     * @dev Reserved storage space to allow for layout changes in future upgrades
+     * @notice This gap reserves 50 storage slots for future state variables
+     */
+    uint256[50] private __gap;
 }

@@ -72,6 +72,19 @@ pub struct MailerState {
 
 impl MailerState {
     pub const LEN: usize = 32 + 32 + 8 + 8 + 8 + 1 + 1 + 1; // 91 bytes
+
+    pub fn increase_owner_claimable(&mut self, amount: u64) -> Result<(), ProgramError> {
+        if amount == 0 {
+            return Ok(());
+        }
+
+        self.owner_claimable = self
+            .owner_claimable
+            .checked_add(amount)
+            .ok_or(MailerError::MathOverflow)?;
+
+        Ok(())
+    }
 }
 
 /// Recipient claim account (optimized for smaller rent cost)
@@ -346,6 +359,8 @@ pub enum MailerError {
     ContractNotPaused,
     #[error("Invalid percentage (must be 0-100)")]
     InvalidPercentage,
+    #[error("Math overflow")]
+    MathOverflow,
 }
 
 impl From<MailerError> for ProgramError {
@@ -671,7 +686,7 @@ fn process_send(
         // Update owner claimable
         let mut mailer_data = mailer_account.try_borrow_mut_data()?;
         let mut mailer_state: MailerState = BorshDeserialize::deserialize(&mut &mailer_data[8..])?;
-        mailer_state.owner_claimable += owner_fee;
+        mailer_state.increase_owner_claimable(owner_fee)?;
         mailer_state.serialize(&mut &mut mailer_data[8..])?;
 
         msg!(
@@ -841,7 +856,7 @@ fn process_send_prepared(
         // Update owner claimable
         let mut mailer_data = mailer_account.try_borrow_mut_data()?;
         let mut mailer_state: MailerState = BorshDeserialize::deserialize(&mut &mailer_data[8..])?;
-        mailer_state.owner_claimable += owner_fee;
+        mailer_state.increase_owner_claimable(owner_fee)?;
         mailer_state.serialize(&mut &mut mailer_data[8..])?;
 
         msg!(
@@ -930,7 +945,7 @@ fn process_send_to_email(
     // Update owner claimable
     let mut mailer_data = mailer_account.try_borrow_mut_data()?;
     let mut mailer_state: MailerState = BorshDeserialize::deserialize(&mut &mailer_data[8..])?;
-    mailer_state.owner_claimable += owner_fee;
+    mailer_state.increase_owner_claimable(owner_fee)?;
     mailer_state.serialize(&mut &mut mailer_data[8..])?;
 
     msg!(
@@ -1016,7 +1031,7 @@ fn process_send_prepared_to_email(
     // Update owner claimable
     let mut mailer_data = mailer_account.try_borrow_mut_data()?;
     let mut mailer_state: MailerState = BorshDeserialize::deserialize(&mut &mailer_data[8..])?;
-    mailer_state.owner_claimable += owner_fee;
+    mailer_state.increase_owner_claimable(owner_fee)?;
     mailer_state.serialize(&mut &mut mailer_data[8..])?;
 
     msg!(
@@ -1184,7 +1199,7 @@ fn process_send_through_webhook(
         // Update owner claimable
         let mut mailer_data = mailer_account.try_borrow_mut_data()?;
         let mut mailer_state: MailerState = BorshDeserialize::deserialize(&mut &mailer_data[8..])?;
-        mailer_state.owner_claimable += owner_fee;
+        mailer_state.increase_owner_claimable(owner_fee)?;
         mailer_state.serialize(&mut &mut mailer_data[8..])?;
 
         msg!(
@@ -1472,7 +1487,7 @@ fn process_delegate_to(
             let mut mailer_data_mut = mailer_account.try_borrow_mut_data()?;
             let mut mailer_state_mut: MailerState =
                 BorshDeserialize::deserialize(&mut &mailer_data_mut[8..])?;
-            mailer_state_mut.owner_claimable += mailer_state.delegation_fee;
+            mailer_state_mut.increase_owner_claimable(mailer_state.delegation_fee)?;
             mailer_state_mut.serialize(&mut &mut mailer_data_mut[8..])?;
             drop(mailer_data_mut);
         }
@@ -1776,7 +1791,7 @@ fn record_shares(
     // Update owner's claimable amount
     let mut mailer_data = mailer_account.try_borrow_mut_data()?;
     let mut mailer_state: MailerState = BorshDeserialize::deserialize(&mut &mailer_data[8..])?;
-    mailer_state.owner_claimable += owner_amount;
+    mailer_state.increase_owner_claimable(owner_amount)?;
     mailer_state.serialize(&mut &mut mailer_data[8..])?;
 
     msg!(
@@ -2065,7 +2080,7 @@ fn process_claim_expired_shares(
     claim_state.serialize(&mut &mut claim_data[8..])?;
     drop(claim_data);
 
-    mailer_state.owner_claimable += amount;
+    mailer_state.increase_owner_claimable(amount)?;
     mailer_state.serialize(&mut &mut mailer_data[8..])?;
 
     msg!("Expired shares claimed for {}: {}", recipient, amount);

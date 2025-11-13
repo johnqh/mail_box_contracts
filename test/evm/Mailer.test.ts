@@ -1,17 +1,32 @@
 import { expect } from "chai";
 import hre from "hardhat";
-import { parseUnits, zeroAddress } from "viem";
+import { parseUnits, zeroAddress, getAddress } from "viem";
 
 describe("Mailer", function () {
   beforeEach(async function () {
     const [owner, addr1, addr2] = await hre.viem.getWalletClients();
     const publicClient = await hre.viem.getPublicClient();
 
-    // Deploy mock USDC
+    // Deploy mock USDC (non-upgradeable, test token only)
     const mockUSDC = await hre.viem.deployContract("MockUSDC");
 
-    // Deploy Mailer with mock USDC address
-    const mailer = await hre.viem.deployContract("Mailer", [mockUSDC.address, owner.account.address]);
+    // Deploy Mailer as upgradeable UUPS proxy using ethers
+    const { ethers, upgrades } = hre;
+    const Mailer = await ethers.getContractFactory("Mailer");
+
+    const mailerProxy = await upgrades.deployProxy(
+      Mailer,
+      [mockUSDC.address, owner.account.address],
+      {
+        kind: 'uups',
+        initializer: 'initialize'
+      }
+    );
+    await mailerProxy.waitForDeployment();
+    const mailerAddress = getAddress(await mailerProxy.getAddress());
+
+    // Get viem contract instance for the proxy
+    const mailer = await hre.viem.getContractAt("Mailer", mailerAddress);
 
     // Give addr1 some USDC and approve Mailer to spend
     await mockUSDC.write.mint([addr1.account.address, parseUnits("10", 6)], { account: owner.account });
@@ -185,7 +200,7 @@ describe("Mailer", function () {
         const { mailer, addr1 } = this;
         await expect(
           mailer.write.setFee([200000n], { account: addr1.account })
-        ).to.be.rejectedWith("OnlyOwner");
+        ).to.be.rejectedWith("OwnableUnauthorizedAccount");
       });
 
       it("Should allow setting fee to zero", async function () {
@@ -846,7 +861,7 @@ describe("Mailer", function () {
         const { mailer, addr1 } = this;
         await expect(
           mailer.write.claimOwnerShare([], { account: addr1.account })
-        ).to.be.rejectedWith("OnlyOwner");
+        ).to.be.rejectedWith("OwnableUnauthorizedAccount");
       });
     });
 
@@ -899,7 +914,7 @@ describe("Mailer", function () {
 
         await expect(
           mailer.write.claimExpiredShares([addr2.account.address], { account: addr1.account })
-        ).to.be.rejectedWith("OnlyOwner");
+        ).to.be.rejectedWith("OwnableUnauthorizedAccount");
       });
     });
 
@@ -1071,7 +1086,7 @@ describe("Mailer", function () {
           const { mailer, addr1 } = this;
           await expect(
             mailer.write.setDelegationFee([parseUnits("5", 6)], { account: addr1.account })
-          ).to.be.rejectedWith("OnlyOwner");
+          ).to.be.rejectedWith("OwnableUnauthorizedAccount");
         });
 
         it("Should return current delegation fee", async function () {
@@ -1139,7 +1154,7 @@ describe("Mailer", function () {
           const { mailer, addr1, addr2 } = this;
           await expect(
             mailer.write.setCustomFeePercentage([addr2.account.address, 50], { account: addr1.account })
-          ).to.be.rejectedWith("OnlyOwner");
+          ).to.be.rejectedWith("OwnableUnauthorizedAccount");
         });
 
         it("Should revert when percentage > 100", async function () {
@@ -1183,7 +1198,7 @@ describe("Mailer", function () {
           const { mailer, addr1 } = this;
           await expect(
             mailer.write.clearCustomFeePercentage([addr1.account.address], { account: addr1.account })
-          ).to.be.rejectedWith("OnlyOwner");
+          ).to.be.rejectedWith("OwnableUnauthorizedAccount");
         });
 
         it("Should revert when address is zero", async function () {
@@ -1407,7 +1422,7 @@ describe("Mailer", function () {
         const { mailer, addr1 } = this;
         await expect(
           mailer.write.pause([], { account: addr1.account })
-        ).to.be.rejectedWith("OnlyOwner");
+        ).to.be.rejectedWith("OwnableUnauthorizedAccount");
       });
 
       it("Should revert when trying to pause already paused contract", async function () {
@@ -1481,7 +1496,7 @@ describe("Mailer", function () {
 
         await expect(
           mailer.write.unpause([], { account: addr1.account })
-        ).to.be.rejectedWith("OnlyOwner");
+        ).to.be.rejectedWith("OwnableUnauthorizedAccount");
       });
 
       it("Should revert when trying to unpause non-paused contract", async function () {
@@ -1497,7 +1512,21 @@ describe("Mailer", function () {
 
         // Deploy fresh contracts for isolated test
         const testMockUSDC = await hre.viem.deployContract("MockUSDC");
-        const testMailer = await hre.viem.deployContract("Mailer", [testMockUSDC.address, testOwner.account.address]);
+
+        // Deploy Mailer as upgradeable UUPS proxy using ethers
+        const { ethers, upgrades } = hre;
+        const Mailer = await ethers.getContractFactory("Mailer");
+        const testMailerProxy = await upgrades.deployProxy(
+          Mailer,
+          [testMockUSDC.address, testOwner.account.address],
+          {
+            kind: 'uups',
+            initializer: 'initialize'
+          }
+        );
+        await testMailerProxy.waitForDeployment();
+        const testMailerAddress = getAddress(await testMailerProxy.getAddress());
+        const testMailer = await hre.viem.getContractAt("Mailer", testMailerAddress);
 
         const testPublicClient = await hre.viem.getPublicClient();
 
@@ -1586,7 +1615,7 @@ describe("Mailer", function () {
 
         await expect(
           mailer.write.emergencyUnpause([], { account: addr1.account })
-        ).to.be.rejectedWith("OnlyOwner");
+        ).to.be.rejectedWith("OwnableUnauthorizedAccount");
       });
 
       it("Should prevent fee changes when paused", async function () {

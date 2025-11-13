@@ -3,6 +3,7 @@ import "@nomicfoundation/hardhat-viem";
 import "@nomicfoundation/hardhat-verify";
 import "@nomicfoundation/hardhat-chai-matchers";
 import "@typechain/hardhat";
+import "@openzeppelin/hardhat-upgrades";
 import "hardhat-gas-reporter";
 import * as dotenv from "dotenv";
 import * as fs from "fs";

@@ -17,11 +17,12 @@ This messaging system enables decentralized communication with built-in economic
 
 - **🔗 Multi-Chain Support**: Works seamlessly on EVM chains (Ethereum, Polygon, etc.) and Solana
 - **🤖 Automatic Chain Detection**: Detects wallet type and routes to appropriate implementation
-- **👥 Delegation System**: Delegate message handling with rejection capability  
+- **👥 Delegation System**: Delegate message handling with rejection capability
 - **📧 Two-Tier Messaging**: Priority (revenue share) vs Standard (fee-only) tiers
 - **💰 Revenue Sharing**: 90% back to senders, 10% to platform
 - **⏰ Time-based Claims**: 60-day claim period for revenue shares
 - **🛡️ Type-Safe**: Full TypeScript support across all chains
+- **⬆️ Upgradeable**: UUPS proxy pattern (EVM) and native upgradeability (Solana)
 
 ## 📦 NPM Package Installation
 
@@ -334,6 +335,7 @@ This project is optimized for AI-assisted development with comprehensive documen
 - **Primary Guide**: [`CLAUDE.md`](./CLAUDE.md) - Main AI assistant documentation
 - **Quick Reference**: [`AI_ASSISTANT_QUICKSTART.md`](./AI_ASSISTANT_QUICKSTART.md) - Fast setup
 - **Development Patterns**: [`docs/AI_DEVELOPMENT_PATTERNS.md`](./docs/AI_DEVELOPMENT_PATTERNS.md) - Code examples
+- **Upgradeability Guide**: [`docs/UPGRADEABILITY.md`](./docs/UPGRADEABILITY.md) - Contract upgrade procedures
 - **Examples**: [`examples/`](./examples/) - Working code samples
 
 ## 🤝 Contributing
