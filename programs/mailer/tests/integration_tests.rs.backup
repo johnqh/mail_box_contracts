@@ -17,7 +17,7 @@ use spl_token::{
 use std::str::FromStr;
 
 // Import our program
-use mailer::{Delegation, FeeDiscount, MailerInstruction, MailerState, RecipientClaim};
+use mailer::{Delegation, MailerInstruction, MailerState, RecipientClaim};
 
 // Program ID for tests
 const PROGRAM_ID_STR: &str = "9FLkBDGpZBcR8LMsQ7MwwV6X9P4TDFgN3DeRh5qYyHJF";
@@ -4666,10 +4666,8 @@ async fn test_custom_fee_50_percent_with_revenue_sharing() {
         },
         vec![
             AccountMeta::new(payer.pubkey(), true),
-            AccountMeta::new(mailer_pda, false),
             AccountMeta::new(custom_fee_pda, false),
-            AccountMeta::new_readonly(payer.pubkey(), false),
-            AccountMeta::new(payer.pubkey(), true),
+            AccountMeta::new(mailer_pda, false),
             AccountMeta::new_readonly(system_program::id(), false),
         ],
     );
@@ -4700,7 +4698,6 @@ async fn test_custom_fee_50_percent_with_revenue_sharing() {
             AccountMeta::new(mailer_usdc, false),
             AccountMeta::new_readonly(spl_token::id(), false),
             AccountMeta::new_readonly(system_program::id(), false),
-            AccountMeta::new_readonly(custom_fee_pda, false), // Include fee discount PDA
         ],
     );
 
@@ -4758,10 +4755,8 @@ async fn test_clear_custom_fee_percentage() {
         },
         vec![
             AccountMeta::new(payer.pubkey(), true),
-            AccountMeta::new(mailer_pda, false),
             AccountMeta::new(custom_fee_pda, false),
-            AccountMeta::new_readonly(payer.pubkey(), false),
-            AccountMeta::new(payer.pubkey(), true),
+            AccountMeta::new(mailer_pda, false),
             AccountMeta::new_readonly(system_program::id(), false),
         ],
     );
@@ -4779,8 +4774,8 @@ async fn test_clear_custom_fee_percentage() {
         },
         vec![
             AccountMeta::new(payer.pubkey(), true),
-            AccountMeta::new(mailer_pda, false),
             AccountMeta::new(custom_fee_pda, false),
+            AccountMeta::new(mailer_pda, false),
         ],
     );
 
@@ -4788,10 +4783,9 @@ async fn test_clear_custom_fee_percentage() {
     transaction.sign(&[&payer], recent_blockhash);
     banks_client.process_transaction(transaction).await.unwrap();
 
-    // Verify percentage is cleared (discount set to 0)
-    let custom_fee_account = banks_client.get_account(custom_fee_pda).await.unwrap().unwrap();
-    let fee_discount: FeeDiscount = BorshDeserialize::deserialize(&mut &custom_fee_account.data[8..]).unwrap();
-    assert_eq!(fee_discount.discount, 0);
+    // Verify percentage is cleared (account should be closed)
+    let custom_fee_account = banks_client.get_account(custom_fee_pda).await.unwrap();
+    assert!(custom_fee_account.is_none());
 }
 
 #[tokio::test]
@@ -4837,10 +4831,8 @@ async fn test_sendPrepared_with_custom_fee_25_percent() {
         },
         vec![
             AccountMeta::new(payer.pubkey(), true),
-            AccountMeta::new(mailer_pda, false),
             AccountMeta::new(custom_fee_pda, false),
-            AccountMeta::new_readonly(payer.pubkey(), false),
-            AccountMeta::new(payer.pubkey(), true),
+            AccountMeta::new(mailer_pda, false),
             AccountMeta::new_readonly(system_program::id(), false),
         ],
     );
@@ -4870,7 +4862,6 @@ async fn test_sendPrepared_with_custom_fee_25_percent() {
             AccountMeta::new(mailer_usdc, false),
             AccountMeta::new_readonly(spl_token::id(), false),
             AccountMeta::new_readonly(system_program::id(), false),
-            AccountMeta::new_readonly(custom_fee_pda, false), // Include fee discount PDA
         ],
     );
 
@@ -4927,10 +4918,8 @@ async fn test_sendToEmail_with_custom_fee() {
         },
         vec![
             AccountMeta::new(payer.pubkey(), true),
-            AccountMeta::new(mailer_pda, false),
             AccountMeta::new(custom_fee_pda, false),
-            AccountMeta::new_readonly(payer.pubkey(), false),
-            AccountMeta::new(payer.pubkey(), true),
+            AccountMeta::new(mailer_pda, false),
             AccountMeta::new_readonly(system_program::id(), false),
         ],
     );
@@ -4954,7 +4943,6 @@ async fn test_sendToEmail_with_custom_fee() {
             AccountMeta::new(sender_usdc, false),
             AccountMeta::new(mailer_usdc, false),
             AccountMeta::new_readonly(spl_token::id(), false),
-            AccountMeta::new_readonly(custom_fee_pda, false), // Include fee discount PDA
         ],
     );
 
@@ -4962,10 +4950,10 @@ async fn test_sendToEmail_with_custom_fee() {
     transaction.sign(&[&payer], recent_blockhash);
     banks_client.process_transaction(transaction).await.unwrap();
 
-    // Verify owner claimable: 75% of 100,000 = 75,000, then 10% of that = 7,500
+    // Verify owner claimable: 75% of 100,000 = 75,000
     let mailer_account = banks_client.get_account(mailer_pda).await.unwrap().unwrap();
     let mailer_state: MailerState = BorshDeserialize::deserialize(&mut &mailer_account.data[8..]).unwrap();
-    assert_eq!(mailer_state.owner_claimable, 7_500);
+    assert_eq!(mailer_state.owner_claimable, 75_000);
 }
 
 #[tokio::test]
@@ -5011,10 +4999,8 @@ async fn test_sendPreparedToEmail_with_custom_fee() {
         },
         vec![
             AccountMeta::new(payer.pubkey(), true),
-            AccountMeta::new(mailer_pda, false),
             AccountMeta::new(custom_fee_pda, false),
-            AccountMeta::new_readonly(payer.pubkey(), false),
-            AccountMeta::new(payer.pubkey(), true),
+            AccountMeta::new(mailer_pda, false),
             AccountMeta::new_readonly(system_program::id(), false),
         ],
     );
@@ -5037,7 +5023,6 @@ async fn test_sendPreparedToEmail_with_custom_fee() {
             AccountMeta::new(sender_usdc, false),
             AccountMeta::new(mailer_usdc, false),
             AccountMeta::new_readonly(spl_token::id(), false),
-            AccountMeta::new_readonly(custom_fee_pda, false), // Include fee discount PDA
         ],
     );
 
@@ -5045,10 +5030,10 @@ async fn test_sendPreparedToEmail_with_custom_fee() {
     transaction.sign(&[&payer], recent_blockhash);
     banks_client.process_transaction(transaction).await.unwrap();
 
-    // Verify owner claimable: 10% of 100,000 = 10,000, then 10% of that = 1,000
+    // Verify owner claimable: 10% of 100,000 = 10,000
     let mailer_account = banks_client.get_account(mailer_pda).await.unwrap().unwrap();
     let mailer_state: MailerState = BorshDeserialize::deserialize(&mut &mailer_account.data[8..]).unwrap();
-    assert_eq!(mailer_state.owner_claimable, 1_000);
+    assert_eq!(mailer_state.owner_claimable, 10_000);
 }
 
 #[tokio::test]
@@ -5094,10 +5079,8 @@ async fn test_sendThroughWebhook_with_custom_fee() {
         },
         vec![
             AccountMeta::new(payer.pubkey(), true),
-            AccountMeta::new(mailer_pda, false),
             AccountMeta::new(custom_fee_pda, false),
-            AccountMeta::new_readonly(payer.pubkey(), false),
-            AccountMeta::new(payer.pubkey(), true),
+            AccountMeta::new(mailer_pda, false),
             AccountMeta::new_readonly(system_program::id(), false),
         ],
     );
@@ -5127,7 +5110,6 @@ async fn test_sendThroughWebhook_with_custom_fee() {
             AccountMeta::new(mailer_usdc, false),
             AccountMeta::new_readonly(spl_token::id(), false),
             AccountMeta::new_readonly(system_program::id(), false),
-            AccountMeta::new_readonly(custom_fee_pda, false), // Include fee discount PDA
         ],
     );
 
@@ -5139,250 +5121,4 @@ async fn test_sendThroughWebhook_with_custom_fee() {
     let mailer_account = banks_client.get_account(mailer_pda).await.unwrap().unwrap();
     let mailer_state: MailerState = BorshDeserialize::deserialize(&mut &mailer_account.data[8..]).unwrap();
     assert_eq!(mailer_state.owner_claimable, 2_000);
-}
-
-// ============================================================================
-// Additional SendToEmail Tests  
-// ============================================================================
-
-#[tokio::test]
-async fn test_send_to_email_transfers_correct_usdc_amount() {
-    let program_test = ProgramTest::new(
-        "mailer",
-        program_id(),
-        processor!(mailer::process_instruction),
-    );
-    let (mut banks_client, payer, recent_blockhash) = program_test.start().await;
-
-    let usdc_mint = create_usdc_mint(&mut banks_client, &payer, recent_blockhash).await;
-    let (mailer_pda, _) = get_mailer_pda();
-
-    let init_instruction = Instruction::new_with_borsh(
-        program_id(),
-        &MailerInstruction::Initialize { usdc_mint },
-        vec![
-            AccountMeta::new(payer.pubkey(), true),
-            AccountMeta::new(mailer_pda, false),
-            AccountMeta::new_readonly(system_program::id(), false),
-        ],
-    );
-
-    let mut transaction = Transaction::new_with_payer(&[init_instruction], Some(&payer.pubkey()));
-    transaction.sign(&[&payer], recent_blockhash);
-    banks_client.process_transaction(transaction).await.unwrap();
-
-    let sender_usdc = create_token_account(&mut banks_client, &payer, recent_blockhash, &usdc_mint, &payer.pubkey()).await;
-    let mailer_usdc = create_token_account(&mut banks_client, &payer, recent_blockhash, &usdc_mint, &mailer_pda).await;
-    mint_to(&mut banks_client, &payer, recent_blockhash, &usdc_mint, &sender_usdc, 10_000_000).await;
-
-    let initial_balance = {
-        let account_data = banks_client.get_account(mailer_usdc).await.unwrap().unwrap();
-        let token_account = TokenAccount::unpack(&account_data.data).unwrap();
-        token_account.amount
-    };
-
-    let recent_blockhash = banks_client.get_latest_blockhash().await.unwrap();
-    let send_instruction = Instruction::new_with_borsh(
-        program_id(),
-        &MailerInstruction::SendToEmail {
-            to_email: "test@example.com".to_string(),
-            subject: "Test".to_string(),
-            _body: "Body".to_string(),
-        },
-        vec![
-            AccountMeta::new(payer.pubkey(), true),
-            AccountMeta::new(mailer_pda, false),
-            AccountMeta::new(sender_usdc, false),
-            AccountMeta::new(mailer_usdc, false),
-            AccountMeta::new_readonly(spl_token::id(), false),
-        ],
-    );
-
-    let mut transaction = Transaction::new_with_payer(&[send_instruction], Some(&payer.pubkey()));
-    transaction.sign(&[&payer], recent_blockhash);
-    banks_client.process_transaction(transaction).await.unwrap();
-
-    // Verify correct USDC amount transferred (10% of 100,000 = 10,000)
-    let final_balance = {
-        let account_data = banks_client.get_account(mailer_usdc).await.unwrap().unwrap();
-        let token_account = TokenAccount::unpack(&account_data.data).unwrap();
-        token_account.amount
-    };
-
-    assert_eq!(final_balance - initial_balance, 10_000);
-}
-
-#[tokio::test]
-async fn test_send_to_email_with_insufficient_allowance() {
-    let program_test = ProgramTest::new(
-        "mailer",
-        program_id(),
-        processor!(mailer::process_instruction),
-    );
-    let (mut banks_client, payer, recent_blockhash) = program_test.start().await;
-
-    let usdc_mint = create_usdc_mint(&mut banks_client, &payer, recent_blockhash).await;
-    let (mailer_pda, _) = get_mailer_pda();
-
-    let init_instruction = Instruction::new_with_borsh(
-        program_id(),
-        &MailerInstruction::Initialize { usdc_mint },
-        vec![
-            AccountMeta::new(payer.pubkey(), true),
-            AccountMeta::new(mailer_pda, false),
-            AccountMeta::new_readonly(system_program::id(), false),
-        ],
-    );
-
-    let mut transaction = Transaction::new_with_payer(&[init_instruction], Some(&payer.pubkey()));
-    transaction.sign(&[&payer], recent_blockhash);
-    banks_client.process_transaction(transaction).await.unwrap();
-
-    let sender_usdc = create_token_account(&mut banks_client, &payer, recent_blockhash, &usdc_mint, &payer.pubkey()).await;
-    let mailer_usdc = create_token_account(&mut banks_client, &payer, recent_blockhash, &usdc_mint, &mailer_pda).await;
-    // Mint USDC but don't approve - Solana doesn't have approve concept same way, 
-    // but transfer will fail if source account doesn't have enough
-    
-    let recent_blockhash = banks_client.get_latest_blockhash().await.unwrap();
-    let send_instruction = Instruction::new_with_borsh(
-        program_id(),
-        &MailerInstruction::SendToEmail {
-            to_email: "test@example.com".to_string(),
-            subject: "Test".to_string(),
-            _body: "Body".to_string(),
-        },
-        vec![
-            AccountMeta::new(payer.pubkey(), true),
-            AccountMeta::new(mailer_pda, false),
-            AccountMeta::new(sender_usdc, false),
-            AccountMeta::new(mailer_usdc, false),
-            AccountMeta::new_readonly(spl_token::id(), false),
-        ],
-    );
-
-    let mut transaction = Transaction::new_with_payer(&[send_instruction], Some(&payer.pubkey()));
-    transaction.sign(&[&payer], recent_blockhash);
-    // Transaction should succeed (soft-fail) even with insufficient balance
-    banks_client.process_transaction(transaction).await.unwrap();
-}
-
-// ============================================================================
-// Additional SendPreparedToEmail Tests
-// ============================================================================
-
-#[tokio::test]
-async fn test_send_prepared_to_email_transfers_correct_usdc_amount() {
-    let program_test = ProgramTest::new(
-        "mailer",
-        program_id(),
-        processor!(mailer::process_instruction),
-    );
-    let (mut banks_client, payer, recent_blockhash) = program_test.start().await;
-
-    let usdc_mint = create_usdc_mint(&mut banks_client, &payer, recent_blockhash).await;
-    let (mailer_pda, _) = get_mailer_pda();
-
-    let init_instruction = Instruction::new_with_borsh(
-        program_id(),
-        &MailerInstruction::Initialize { usdc_mint },
-        vec![
-            AccountMeta::new(payer.pubkey(), true),
-            AccountMeta::new(mailer_pda, false),
-            AccountMeta::new_readonly(system_program::id(), false),
-        ],
-    );
-
-    let mut transaction = Transaction::new_with_payer(&[init_instruction], Some(&payer.pubkey()));
-    transaction.sign(&[&payer], recent_blockhash);
-    banks_client.process_transaction(transaction).await.unwrap();
-
-    let sender_usdc = create_token_account(&mut banks_client, &payer, recent_blockhash, &usdc_mint, &payer.pubkey()).await;
-    let mailer_usdc = create_token_account(&mut banks_client, &payer, recent_blockhash, &usdc_mint, &mailer_pda).await;
-    mint_to(&mut banks_client, &payer, recent_blockhash, &usdc_mint, &sender_usdc, 10_000_000).await;
-
-    let initial_balance = {
-        let account_data = banks_client.get_account(mailer_usdc).await.unwrap().unwrap();
-        let token_account = TokenAccount::unpack(&account_data.data).unwrap();
-        token_account.amount
-    };
-
-    let recent_blockhash = banks_client.get_latest_blockhash().await.unwrap();
-    let send_instruction = Instruction::new_with_borsh(
-        program_id(),
-        &MailerInstruction::SendPreparedToEmail {
-            to_email: "test@example.com".to_string(),
-            mail_id: "test123".to_string(),
-        },
-        vec![
-            AccountMeta::new(payer.pubkey(), true),
-            AccountMeta::new(mailer_pda, false),
-            AccountMeta::new(sender_usdc, false),
-            AccountMeta::new(mailer_usdc, false),
-            AccountMeta::new_readonly(spl_token::id(), false),
-        ],
-    );
-
-    let mut transaction = Transaction::new_with_payer(&[send_instruction], Some(&payer.pubkey()));
-    transaction.sign(&[&payer], recent_blockhash);
-    banks_client.process_transaction(transaction).await.unwrap();
-
-    // Verify correct USDC amount transferred (10% of 100,000 = 10,000)
-    let final_balance = {
-        let account_data = banks_client.get_account(mailer_usdc).await.unwrap().unwrap();
-        let token_account = TokenAccount::unpack(&account_data.data).unwrap();
-        token_account.amount
-    };
-
-    assert_eq!(final_balance - initial_balance, 10_000);
-}
-
-#[tokio::test]
-async fn test_send_prepared_to_email_with_insufficient_allowance() {
-    let program_test = ProgramTest::new(
-        "mailer",
-        program_id(),
-        processor!(mailer::process_instruction),
-    );
-    let (mut banks_client, payer, recent_blockhash) = program_test.start().await;
-
-    let usdc_mint = create_usdc_mint(&mut banks_client, &payer, recent_blockhash).await;
-    let (mailer_pda, _) = get_mailer_pda();
-
-    let init_instruction = Instruction::new_with_borsh(
-        program_id(),
-        &MailerInstruction::Initialize { usdc_mint },
-        vec![
-            AccountMeta::new(payer.pubkey(), true),
-            AccountMeta::new(mailer_pda, false),
-            AccountMeta::new_readonly(system_program::id(), false),
-        ],
-    );
-
-    let mut transaction = Transaction::new_with_payer(&[init_instruction], Some(&payer.pubkey()));
-    transaction.sign(&[&payer], recent_blockhash);
-    banks_client.process_transaction(transaction).await.unwrap();
-
-    let sender_usdc = create_token_account(&mut banks_client, &payer, recent_blockhash, &usdc_mint, &payer.pubkey()).await;
-    let mailer_usdc = create_token_account(&mut banks_client, &payer, recent_blockhash, &usdc_mint, &mailer_pda).await;
-    
-    let recent_blockhash = banks_client.get_latest_blockhash().await.unwrap();
-    let send_instruction = Instruction::new_with_borsh(
-        program_id(),
-        &MailerInstruction::SendPreparedToEmail {
-            to_email: "test@example.com".to_string(),
-            mail_id: "test123".to_string(),
-        },
-        vec![
-            AccountMeta::new(payer.pubkey(), true),
-            AccountMeta::new(mailer_pda, false),
-            AccountMeta::new(sender_usdc, false),
-            AccountMeta::new(mailer_usdc, false),
-            AccountMeta::new_readonly(spl_token::id(), false),
-        ],
-    );
-
-    let mut transaction = Transaction::new_with_payer(&[send_instruction], Some(&payer.pubkey()));
-    transaction.sign(&[&payer], recent_blockhash);
-    // Transaction should succeed (soft-fail) even with insufficient balance
-    banks_client.process_transaction(transaction).await.unwrap();
 }

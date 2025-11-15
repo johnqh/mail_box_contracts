@@ -86,7 +86,8 @@ contract Mailer is Initializable, OwnableUpgradeable, UUPSUpgradeable {
         string subject,
         string body,
         bool revenueShareToReceiver,
-        bool resolveSenderToName
+        bool resolveSenderToName,
+        bool feePaid
     );
 
     event PreparedMailSent(
@@ -94,20 +95,23 @@ contract Mailer is Initializable, OwnableUpgradeable, UUPSUpgradeable {
         address indexed to,
         string indexed mailId,
         bool revenueShareToReceiver,
-        bool resolveSenderToName
+        bool resolveSenderToName,
+        bool feePaid
     );
 
     event MailSentToEmail(
         address indexed from,
         string toEmail,
         string subject,
-        string body
+        string body,
+        bool feePaid
     );
 
     event PreparedMailSentToEmail(
         address indexed from,
         string toEmail,
-        string indexed mailId
+        string indexed mailId,
+        bool feePaid
     );
 
     event WebhookMailSent(
@@ -115,7 +119,8 @@ contract Mailer is Initializable, OwnableUpgradeable, UUPSUpgradeable {
         address indexed to,
         string indexed webhookId,
         bool revenueShareToReceiver,
-        bool resolveSenderToName
+        bool resolveSenderToName,
+        bool feePaid
     );
 
     event FeeUpdated(uint256 oldFee, uint256 newFee);
@@ -269,10 +274,10 @@ contract Mailer is Initializable, OwnableUpgradeable, UUPSUpgradeable {
         bool revenueShareToReceiver,
         bool resolveSenderToName
     ) external nonReentrant whenNotPaused {
-        // Only emit event if fee payment succeeds (or no fee required)
-        if (_processFee(payer, to, revenueShareToReceiver)) {
-            emit MailSent(msg.sender, to, subject, body, revenueShareToReceiver, resolveSenderToName);
-        }
+        // Process fee and capture whether it succeeded
+        bool feePaid = _processFee(payer, to, revenueShareToReceiver);
+        // Always emit event, with feePaid indicating success/failure
+        emit MailSent(msg.sender, to, subject, body, revenueShareToReceiver, resolveSenderToName, feePaid);
     }
     
     /**
@@ -296,10 +301,10 @@ contract Mailer is Initializable, OwnableUpgradeable, UUPSUpgradeable {
         bool revenueShareToReceiver,
         bool resolveSenderToName
     ) external nonReentrant whenNotPaused {
-        // Only emit event if fee payment succeeds (or no fee required)
-        if (_processFee(payer, to, revenueShareToReceiver)) {
-            emit PreparedMailSent(msg.sender, to, mailId, revenueShareToReceiver, resolveSenderToName);
-        }
+        // Process fee and capture whether it succeeded
+        bool feePaid = _processFee(payer, to, revenueShareToReceiver);
+        // Always emit event, with feePaid indicating success/failure
+        emit PreparedMailSent(msg.sender, to, mailId, revenueShareToReceiver, resolveSenderToName, feePaid);
     }
 
     /**
@@ -327,10 +332,10 @@ contract Mailer is Initializable, OwnableUpgradeable, UUPSUpgradeable {
         string calldata body,
         address payer
     ) external nonReentrant whenNotPaused {
-        // Only emit event if fee payment succeeds (or no fee required)
-        if (_processFee(payer, address(0), false)) {
-            emit MailSentToEmail(msg.sender, toEmail, subject, body);
-        }
+        // Process fee and capture whether it succeeded
+        bool feePaid = _processFee(payer, address(0), false);
+        // Always emit event, with feePaid indicating success/failure
+        emit MailSentToEmail(msg.sender, toEmail, subject, body, feePaid);
     }
 
     /**
@@ -350,10 +355,10 @@ contract Mailer is Initializable, OwnableUpgradeable, UUPSUpgradeable {
         string calldata mailId,
         address payer
     ) external nonReentrant whenNotPaused {
-        // Only emit event if fee payment succeeds (or no fee required)
-        if (_processFee(payer, address(0), false)) {
-            emit PreparedMailSentToEmail(msg.sender, toEmail, mailId);
-        }
+        // Process fee and capture whether it succeeded
+        bool feePaid = _processFee(payer, address(0), false);
+        // Always emit event, with feePaid indicating success/failure
+        emit PreparedMailSentToEmail(msg.sender, toEmail, mailId, feePaid);
     }
 
     /**
@@ -377,10 +382,10 @@ contract Mailer is Initializable, OwnableUpgradeable, UUPSUpgradeable {
         bool revenueShareToReceiver,
         bool resolveSenderToName
     ) external nonReentrant whenNotPaused {
-        // Only emit event if fee payment succeeds (or no fee required)
-        if (_processFee(payer, to, revenueShareToReceiver)) {
-            emit WebhookMailSent(msg.sender, to, webhookId, revenueShareToReceiver, resolveSenderToName);
-        }
+        // Process fee and capture whether it succeeded
+        bool feePaid = _processFee(payer, to, revenueShareToReceiver);
+        // Always emit event, with feePaid indicating success/failure
+        emit WebhookMailSent(msg.sender, to, webhookId, revenueShareToReceiver, resolveSenderToName, feePaid);
     }
 
     /**

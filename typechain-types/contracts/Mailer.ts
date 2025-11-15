@@ -527,7 +527,8 @@ export namespace MailSentEvent {
     subject: string,
     body: string,
     revenueShareToReceiver: boolean,
-    resolveSenderToName: boolean
+    resolveSenderToName: boolean,
+    feePaid: boolean
   ];
   export type OutputTuple = [
     from: string,
@@ -535,7 +536,8 @@ export namespace MailSentEvent {
     subject: string,
     body: string,
     revenueShareToReceiver: boolean,
-    resolveSenderToName: boolean
+    resolveSenderToName: boolean,
+    feePaid: boolean
   ];
   export interface OutputObject {
     from: string;
@@ -544,6 +546,7 @@ export namespace MailSentEvent {
     body: string;
     revenueShareToReceiver: boolean;
     resolveSenderToName: boolean;
+    feePaid: boolean;
   }
   export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
   export type Filter = TypedDeferredTopicFilter<Event>;
@@ -556,19 +559,22 @@ export namespace MailSentToEmailEvent {
     from: AddressLike,
     toEmail: string,
     subject: string,
-    body: string
+    body: string,
+    feePaid: boolean
   ];
   export type OutputTuple = [
     from: string,
     toEmail: string,
     subject: string,
-    body: string
+    body: string,
+    feePaid: boolean
   ];
   export interface OutputObject {
     from: string;
     toEmail: string;
     subject: string;
     body: string;
+    feePaid: boolean;
   }
   export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
   export type Filter = TypedDeferredTopicFilter<Event>;
@@ -633,14 +639,16 @@ export namespace PreparedMailSentEvent {
     to: AddressLike,
     mailId: string,
     revenueShareToReceiver: boolean,
-    resolveSenderToName: boolean
+    resolveSenderToName: boolean,
+    feePaid: boolean
   ];
   export type OutputTuple = [
     from: string,
     to: string,
     mailId: string,
     revenueShareToReceiver: boolean,
-    resolveSenderToName: boolean
+    resolveSenderToName: boolean,
+    feePaid: boolean
   ];
   export interface OutputObject {
     from: string;
@@ -648,6 +656,7 @@ export namespace PreparedMailSentEvent {
     mailId: string;
     revenueShareToReceiver: boolean;
     resolveSenderToName: boolean;
+    feePaid: boolean;
   }
   export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
   export type Filter = TypedDeferredTopicFilter<Event>;
@@ -656,12 +665,23 @@ export namespace PreparedMailSentEvent {
 }
 
 export namespace PreparedMailSentToEmailEvent {
-  export type InputTuple = [from: AddressLike, toEmail: string, mailId: string];
-  export type OutputTuple = [from: string, toEmail: string, mailId: string];
+  export type InputTuple = [
+    from: AddressLike,
+    toEmail: string,
+    mailId: string,
+    feePaid: boolean
+  ];
+  export type OutputTuple = [
+    from: string,
+    toEmail: string,
+    mailId: string,
+    feePaid: boolean
+  ];
   export interface OutputObject {
     from: string;
     toEmail: string;
     mailId: string;
+    feePaid: boolean;
   }
   export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
   export type Filter = TypedDeferredTopicFilter<Event>;
@@ -722,14 +742,16 @@ export namespace WebhookMailSentEvent {
     to: AddressLike,
     webhookId: string,
     revenueShareToReceiver: boolean,
-    resolveSenderToName: boolean
+    resolveSenderToName: boolean,
+    feePaid: boolean
   ];
   export type OutputTuple = [
     from: string,
     to: string,
     webhookId: string,
     revenueShareToReceiver: boolean,
-    resolveSenderToName: boolean
+    resolveSenderToName: boolean,
+    feePaid: boolean
   ];
   export interface OutputObject {
     from: string;
@@ -737,6 +759,7 @@ export namespace WebhookMailSentEvent {
     webhookId: string;
     revenueShareToReceiver: boolean;
     resolveSenderToName: boolean;
+    feePaid: boolean;
   }
   export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
   export type Filter = TypedDeferredTopicFilter<Event>;
@@ -1482,7 +1505,7 @@ export interface Mailer extends BaseContract {
       InitializedEvent.OutputObject
     >;
 
-    "MailSent(address,address,string,string,bool,bool)": TypedContractEvent<
+    "MailSent(address,address,string,string,bool,bool,bool)": TypedContractEvent<
       MailSentEvent.InputTuple,
       MailSentEvent.OutputTuple,
       MailSentEvent.OutputObject
@@ -1493,7 +1516,7 @@ export interface Mailer extends BaseContract {
       MailSentEvent.OutputObject
     >;
 
-    "MailSentToEmail(address,string,string,string)": TypedContractEvent<
+    "MailSentToEmail(address,string,string,string,bool)": TypedContractEvent<
       MailSentToEmailEvent.InputTuple,
       MailSentToEmailEvent.OutputTuple,
       MailSentToEmailEvent.OutputObject
@@ -1548,7 +1571,7 @@ export interface Mailer extends BaseContract {
       PermissionRevokedEvent.OutputObject
     >;
 
-    "PreparedMailSent(address,address,string,bool,bool)": TypedContractEvent<
+    "PreparedMailSent(address,address,string,bool,bool,bool)": TypedContractEvent<
       PreparedMailSentEvent.InputTuple,
       PreparedMailSentEvent.OutputTuple,
       PreparedMailSentEvent.OutputObject
@@ -1559,7 +1582,7 @@ export interface Mailer extends BaseContract {
       PreparedMailSentEvent.OutputObject
     >;
 
-    "PreparedMailSentToEmail(address,string,string)": TypedContractEvent<
+    "PreparedMailSentToEmail(address,string,string,bool)": TypedContractEvent<
       PreparedMailSentToEmailEvent.InputTuple,
       PreparedMailSentToEmailEvent.OutputTuple,
       PreparedMailSentToEmailEvent.OutputObject
@@ -1603,7 +1626,7 @@ export interface Mailer extends BaseContract {
       UpgradedEvent.OutputObject
     >;
 
-    "WebhookMailSent(address,address,string,bool,bool)": TypedContractEvent<
+    "WebhookMailSent(address,address,string,bool,bool,bool)": TypedContractEvent<
       WebhookMailSentEvent.InputTuple,
       WebhookMailSentEvent.OutputTuple,
       WebhookMailSentEvent.OutputObject
