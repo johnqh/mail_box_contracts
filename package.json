@@ -1,6 +1,6 @@
 {
   "name": "@sudobility/contracts",
-  "version": "1.17.2",
+  "version": "1.17.3",
   "type": "module",
   "main": "dist/unified/src/unified/index.js",
   "types": "dist/unified/src/unified/index.d.ts",
@@ -231,7 +231,7 @@
   },
   "dependencies": {
     "@sudobility/configs": "^0.0.22",
-    "@sudobility/types": "^1.9.7"
+    "@sudobility/types": "^1.9.10"
   },
   "overrides": {
     "bigint-buffer": "^1.1.5",

@@ -22,6 +22,9 @@ use mailer::{Delegation, MailerInstruction, MailerState, RecipientClaim};
 // Program ID for tests
 const PROGRAM_ID_STR: &str = "9FLkBDGpZBcR8LMsQ7MwwV6X9P4TDFgN3DeRh5qYyHJF";
 
+// PDA version byte (must match the program constant)
+const PDA_VERSION: u8 = 1;
+
 fn program_id() -> Pubkey {
     Pubkey::from_str(PROGRAM_ID_STR).unwrap()
 }
@@ -126,12 +129,12 @@ fn get_mailer_pda() -> (Pubkey, u8) {
 
 /// Test helper to get recipient claim PDA
 fn get_claim_pda(recipient: &Pubkey) -> (Pubkey, u8) {
-    Pubkey::find_program_address(&[b"claim", recipient.as_ref()], &program_id())
+    Pubkey::find_program_address(&[b"claim", &[PDA_VERSION], recipient.as_ref()], &program_id())
 }
 
 /// Test helper to get delegation PDA
 fn get_delegation_pda(delegator: &Pubkey) -> (Pubkey, u8) {
-    Pubkey::find_program_address(&[b"delegation", delegator.as_ref()], &program_id())
+    Pubkey::find_program_address(&[b"delegation", &[PDA_VERSION], delegator.as_ref()], &program_id())
 }
 
 #[tokio::test]

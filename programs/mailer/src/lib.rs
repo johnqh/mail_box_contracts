@@ -12,10 +12,11 @@
 //!
 //! ## Program Architecture
 //!
-//! The program uses Program Derived Addresses (PDAs) for:
-//! - Mailer state: `[b"mailer"]`
-//! - Recipient claims: `[b"claim", recipient.key()]`
-//! - Delegations: `[b"delegation", delegator.key()]`
+//! The program uses Program Derived Addresses (PDAs) with version byte for future-proofing:
+//! - Mailer state: `[b"mailer"]` (no version - global singleton)
+//! - Recipient claims: `[b"claim", &[1], recipient.key()]` (v1)
+//! - Delegations: `[b"delegation", &[1], delegator.key()]` (v1)
+//! - Fee discounts: `[b"discount", &[1], account.key()]` (v1)
 //!
 //! ## Fee Structure
 //!
@@ -53,6 +54,10 @@ const DELEGATION_FEE: u64 = 10_000_000;
 
 /// Claim period for revenue shares: 60 days in seconds
 const CLAIM_PERIOD: i64 = 60 * 24 * 60 * 60;
+
+/// PDA version byte for forward compatibility
+/// Allows future upgrades to use different PDA structures without collision
+const PDA_VERSION: u8 = 1;
 
 #[cfg(not(feature = "no-entrypoint"))]
 solana_program::entrypoint!(process_instruction);
@@ -138,6 +143,9 @@ pub enum MailerInstruction {
     Initialize { usdc_mint: Pubkey },
 
     /// Send message with optional revenue sharing
+    /// SOFT-FAIL BEHAVIOR: Does not revert on fee payment failure. No log message emitted if payment fails.
+    /// This design allows composability - calling programs won't fail if message sending fails.
+    /// Monitor program logs: if transaction succeeds but no log appears, message was dropped due to fee failure.
     /// Accounts:
     /// 0. `[signer]` Sender
     /// 1. `[writable]` Recipient claim account (PDA)
@@ -155,6 +163,7 @@ pub enum MailerInstruction {
     },
 
     /// Send prepared message with optional revenue sharing (references off-chain content via mailId)
+    /// SOFT-FAIL BEHAVIOR: Does not revert on fee payment failure. See Send instruction for details.
     /// Accounts:
     /// 0. `[signer]` Sender
     /// 1. `[writable]` Recipient claim account (PDA)
@@ -172,6 +181,7 @@ pub enum MailerInstruction {
 
     /// Send message to email address (no wallet address known)
     /// Charges only 10% owner fee since recipient wallet is unknown
+    /// SOFT-FAIL BEHAVIOR: Does not revert on fee payment failure. See Send instruction for details.
     /// Accounts:
     /// 0. `[signer]` Sender
     /// 1. `[]` Mailer state account (PDA)
@@ -186,6 +196,7 @@ pub enum MailerInstruction {
 
     /// Send prepared message to email address (no wallet address known)
     /// Charges only 10% owner fee since recipient wallet is unknown
+    /// SOFT-FAIL BEHAVIOR: Does not revert on fee payment failure. See Send instruction for details.
     /// Accounts:
     /// 0. `[signer]` Sender
     /// 1. `[]` Mailer state account (PDA)
@@ -195,6 +206,7 @@ pub enum MailerInstruction {
     SendPreparedToEmail { to_email: String, mail_id: String },
 
     /// Send message through webhook (referenced by webhookId)
+    /// SOFT-FAIL BEHAVIOR: Does not revert on fee payment failure. See Send instruction for details.
     /// Accounts:
     /// 0. `[signer]` Sender
     /// 1. `[writable]` Recipient claim account (PDA)
@@ -211,6 +223,9 @@ pub enum MailerInstruction {
     },
 
     /// Claim recipient share
+    /// TIMESTAMP DEPENDENCY: Uses Clock::get()?.unix_timestamp for expiration checks (60 days).
+    /// Validators can manipulate timestamps by ±30 seconds or more. Claims near the deadline
+    /// have a small risk of denial. Recommended: Claim well before the 60-day deadline.
     /// Accounts:
     /// 0. `[signer]` Recipient
     /// 1. `[writable]` Recipient claim account (PDA)
@@ -230,12 +245,19 @@ pub enum MailerInstruction {
     ClaimOwnerShare,
 
     /// Set send fee (owner only)
+    /// WARNING: Fee changes take effect IMMEDIATELY with no time delay or notification.
+    /// This allows quick response to market conditions but requires user trust.
+    /// - No maximum fee cap enforced
+    /// - Users with pending transactions may pay different fees than expected
+    /// - Monitor program logs for FeeUpdated events
     /// Accounts:
     /// 0. `[signer]` Owner
     /// 1. `[writable]` Mailer state account (PDA)
     SetFee { new_fee: u64 },
 
     /// Delegate to another address
+    /// WARNING: Delegation fee is NON-REFUNDABLE, even if the delegate rejects the delegation.
+    /// The fee is an anti-spam measure and goes to the contract owner regardless of delegation outcome.
     /// Accounts:
     /// 0. `[signer]` Delegator
     /// 1. `[writable]` Delegation account (PDA)
@@ -247,6 +269,8 @@ pub enum MailerInstruction {
     DelegateTo { delegate: Option<Pubkey> },
 
     /// Reject delegation
+    /// NOTE: Rejecting a delegation does NOT refund the delegation fee paid by the delegator.
+    /// The fee is an anti-spam measure and is non-refundable by design.
     /// Accounts:
     /// 0. `[signer]` Rejector
     /// 1. `[writable]` Delegation account (PDA)
@@ -254,6 +278,8 @@ pub enum MailerInstruction {
     RejectDelegation,
 
     /// Set delegation fee (owner only)
+    /// WARNING: Fee changes take effect IMMEDIATELY with no time delay.
+    /// See SetFee instruction for detailed implications of instant fee changes.
     /// Accounts:
     /// 0. `[signer]` Owner
     /// 1. `[writable]` Mailer state account (PDA)
@@ -577,7 +603,7 @@ fn process_send(
 
         // Create or load recipient claim account
         let (claim_pda, claim_bump) =
-            Pubkey::find_program_address(&[b"claim", to.as_ref()], program_id);
+            Pubkey::find_program_address(&[b"claim", &[PDA_VERSION], to.as_ref()], program_id);
 
         if recipient_claim.key != &claim_pda {
             return Err(MailerError::InvalidPDA.into());
@@ -602,8 +628,18 @@ fn process_send(
                     recipient_claim.clone(),
                     system_program.clone(),
                 ],
-                &[&[b"claim", to.as_ref(), &[claim_bump]]],
+                &[&[b"claim", &[PDA_VERSION], to.as_ref(), &[claim_bump]]],
             )?;
+
+            // Verify account is rent-exempt
+            let account_lamports = recipient_claim.lamports();
+            if !rent.is_exempt(account_lamports, space) {
+                msg!("ERROR: Recipient claim account not rent-exempt! {} lamports for {} bytes",
+                     account_lamports, space);
+                return Err(ProgramError::InsufficientFunds);
+            }
+            msg!("Created rent-exempt recipient claim account: {} lamports for {} bytes",
+                 account_lamports, space);
 
             // Initialize claim account
             let mut claim_data = recipient_claim.try_borrow_mut_data()?;
@@ -751,7 +787,7 @@ fn process_send_prepared(
 
         // Create or load recipient claim account
         let (claim_pda, claim_bump) =
-            Pubkey::find_program_address(&[b"claim", to.as_ref()], program_id);
+            Pubkey::find_program_address(&[b"claim", &[PDA_VERSION], to.as_ref()], program_id);
 
         if recipient_claim.key != &claim_pda {
             return Err(MailerError::InvalidPDA.into());
@@ -776,8 +812,18 @@ fn process_send_prepared(
                     recipient_claim.clone(),
                     system_program.clone(),
                 ],
-                &[&[b"claim", to.as_ref(), &[claim_bump]]],
+                &[&[b"claim", &[PDA_VERSION], to.as_ref(), &[claim_bump]]],
             )?;
+
+            // Verify account is rent-exempt
+            let account_lamports = recipient_claim.lamports();
+            if !rent.is_exempt(account_lamports, space) {
+                msg!("ERROR: Recipient claim account not rent-exempt! {} lamports for {} bytes",
+                     account_lamports, space);
+                return Err(ProgramError::InsufficientFunds);
+            }
+            msg!("Created rent-exempt recipient claim account: {} lamports for {} bytes",
+                 account_lamports, space);
 
             // Initialize claim account
             let mut claim_data = recipient_claim.try_borrow_mut_data()?;
@@ -1094,7 +1140,7 @@ fn process_send_through_webhook(
 
         // Create or load recipient claim account
         let (claim_pda, claim_bump) =
-            Pubkey::find_program_address(&[b"claim", to.as_ref()], program_id);
+            Pubkey::find_program_address(&[b"claim", &[PDA_VERSION], to.as_ref()], program_id);
 
         if recipient_claim.key != &claim_pda {
             return Err(MailerError::InvalidPDA.into());
@@ -1119,8 +1165,18 @@ fn process_send_through_webhook(
                     recipient_claim.clone(),
                     system_program.clone(),
                 ],
-                &[&[b"claim", to.as_ref(), &[claim_bump]]],
+                &[&[b"claim", &[PDA_VERSION], to.as_ref(), &[claim_bump]]],
             )?;
+
+            // Verify account is rent-exempt
+            let account_lamports = recipient_claim.lamports();
+            if !rent.is_exempt(account_lamports, space) {
+                msg!("ERROR: Recipient claim account not rent-exempt! {} lamports for {} bytes",
+                     account_lamports, space);
+                return Err(ProgramError::InsufficientFunds);
+            }
+            msg!("Created rent-exempt recipient claim account: {} lamports for {} bytes",
+                 account_lamports, space);
 
             // Initialize claim account
             let mut claim_data = recipient_claim.try_borrow_mut_data()?;
@@ -1231,7 +1287,7 @@ fn process_claim_recipient_share(_program_id: &Pubkey, accounts: &[AccountInfo])
 
     let (mailer_pda, _) = assert_mailer_account(_program_id, mailer_account)?;
     let (claim_pda, _) =
-        Pubkey::find_program_address(&[b"claim", recipient.key.as_ref()], _program_id);
+        Pubkey::find_program_address(&[b"claim", &[PDA_VERSION], recipient.key.as_ref()], _program_id);
     if recipient_claim.key != &claim_pda {
         return Err(MailerError::InvalidPDA.into());
     }
@@ -1420,7 +1476,7 @@ fn process_delegate_to(
 
     // Verify delegation account PDA
     let (delegation_pda, delegation_bump) =
-        Pubkey::find_program_address(&[b"delegation", delegator.key.as_ref()], program_id);
+        Pubkey::find_program_address(&[b"delegation", &[PDA_VERSION], delegator.key.as_ref()], program_id);
 
     if delegation_account.key != &delegation_pda {
         return Err(MailerError::InvalidPDA.into());
@@ -1445,8 +1501,18 @@ fn process_delegate_to(
                 delegation_account.clone(),
                 system_program.clone(),
             ],
-            &[&[b"delegation", delegator.key.as_ref(), &[delegation_bump]]],
+            &[&[b"delegation", &[PDA_VERSION], delegator.key.as_ref(), &[delegation_bump]]],
         )?;
+
+        // Verify account is rent-exempt
+        let account_lamports = delegation_account.lamports();
+        if !rent.is_exempt(account_lamports, space) {
+            msg!("ERROR: Delegation account not rent-exempt! {} lamports for {} bytes",
+                 account_lamports, space);
+            return Err(ProgramError::InsufficientFunds);
+        }
+        msg!("Created rent-exempt delegation account: {} lamports for {} bytes",
+             account_lamports, space);
 
         // Initialize delegation account
         let mut delegation_data = delegation_account.try_borrow_mut_data()?;
@@ -1622,7 +1688,7 @@ fn process_set_custom_fee_percentage(
 
     // Verify fee discount account PDA
     let (discount_pda, bump) =
-        Pubkey::find_program_address(&[b"discount", account.as_ref()], program_id);
+        Pubkey::find_program_address(&[b"discount", &[PDA_VERSION], account.as_ref()], program_id);
 
     if fee_discount_account.key != &discount_pda {
         return Err(MailerError::InvalidPDA.into());
@@ -1647,8 +1713,18 @@ fn process_set_custom_fee_percentage(
                 fee_discount_account.clone(),
                 system_program.clone(),
             ],
-            &[&[b"discount", account.as_ref(), &[bump]]],
+            &[&[b"discount", &[PDA_VERSION], account.as_ref(), &[bump]]],
         )?;
+
+        // Verify account is rent-exempt
+        let account_lamports = fee_discount_account.lamports();
+        if !rent.is_exempt(account_lamports, space) {
+            msg!("ERROR: Fee discount account not rent-exempt! {} lamports for {} bytes",
+                 account_lamports, space);
+            return Err(ProgramError::InsufficientFunds);
+        }
+        msg!("Created rent-exempt fee discount account: {} lamports for {} bytes",
+             account_lamports, space);
 
         // Initialize discount account
         let mut discount_data = fee_discount_account.try_borrow_mut_data()?;
@@ -1708,7 +1784,7 @@ fn process_clear_custom_fee_percentage(
 
     // Verify fee discount account PDA
     let (discount_pda, _) =
-        Pubkey::find_program_address(&[b"discount", account.as_ref()], program_id);
+        Pubkey::find_program_address(&[b"discount", &[PDA_VERSION], account.as_ref()], program_id);
 
     if fee_discount_account.key != &discount_pda {
         return Err(MailerError::InvalidPDA.into());
@@ -1812,7 +1888,7 @@ fn calculate_fee_with_discount(
 ) -> Result<u64, ProgramError> {
     // Try to find fee discount account
     let (discount_pda, _) =
-        Pubkey::find_program_address(&[b"discount", account.as_ref()], program_id);
+        Pubkey::find_program_address(&[b"discount", &[PDA_VERSION], account.as_ref()], program_id);
 
     // Check if any account in the accounts slice matches the discount PDA
     let discount_account = accounts.iter().find(|acc| acc.key == &discount_pda);
@@ -1890,6 +1966,10 @@ fn process_pause(_program_id: &Pubkey, accounts: &[AccountInfo]) -> ProgramResul
         assert_token_account(owner_usdc, owner.key, &mailer_state.usdc_mint)?;
         assert_token_account(mailer_usdc, &mailer_pda, &mailer_state.usdc_mint)?;
 
+        // Save updated state BEFORE external call (CEI pattern)
+        mailer_state.serialize(&mut &mut mailer_data[8..])?;
+        drop(mailer_data); // Release borrow before external call
+
         // Transfer USDC from mailer to owner
         invoke_signed(
             &spl_token::instruction::transfer(
@@ -1910,10 +1990,10 @@ fn process_pause(_program_id: &Pubkey, accounts: &[AccountInfo]) -> ProgramResul
         )?;
 
         msg!("Distributed owner funds during pause: {}", amount);
+    } else {
+        // Save updated state even if no distribution
+        mailer_state.serialize(&mut &mut mailer_data[8..])?;
     }
-
-    // Save updated state
-    mailer_state.serialize(&mut &mut mailer_data[8..])?;
 
     msg!("Contract paused by owner: {}", owner.key);
     Ok(())
@@ -1980,7 +2060,7 @@ fn process_distribute_claimable_funds(
     }
 
     // Verify recipient claim PDA
-    let (claim_pda, _) = Pubkey::find_program_address(&[b"claim", recipient.as_ref()], _program_id);
+    let (claim_pda, _) = Pubkey::find_program_address(&[b"claim", &[PDA_VERSION], recipient.as_ref()], _program_id);
     if recipient_claim_account.key != &claim_pda {
         return Err(MailerError::InvalidPDA.into());
     }
@@ -2002,6 +2082,10 @@ fn process_distribute_claimable_funds(
     assert_token_account(recipient_usdc, &recipient, &mailer_state.usdc_mint)?;
     assert_token_account(mailer_usdc, &mailer_pda, &mailer_state.usdc_mint)?;
 
+    // Save updated state BEFORE external call (CEI pattern)
+    claim_state.serialize(&mut &mut claim_data[8..])?;
+    drop(claim_data); // Release borrow before external call
+
     // Transfer USDC from mailer to recipient
     invoke_signed(
         &spl_token::instruction::transfer(
@@ -2020,8 +2104,6 @@ fn process_distribute_claimable_funds(
         ],
         &[&[b"mailer", &[mailer_state.bump]]],
     )?;
-
-    claim_state.serialize(&mut &mut claim_data[8..])?;
 
     msg!("Distributed claimable funds to {}: {}", recipient, amount);
     Ok(())
@@ -2053,7 +2135,7 @@ fn process_claim_expired_shares(
     }
 
     // Verify recipient claim PDA
-    let (claim_pda, _) = Pubkey::find_program_address(&[b"claim", recipient.as_ref()], program_id);
+    let (claim_pda, _) = Pubkey::find_program_address(&[b"claim", &[PDA_VERSION], recipient.as_ref()], program_id);
     if recipient_claim_account.key != &claim_pda {
         return Err(MailerError::InvalidPDA.into());
     }
