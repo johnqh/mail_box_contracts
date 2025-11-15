@@ -598,6 +598,9 @@ fn process_send(
         calculate_fee_with_discount(program_id, sender.key, accounts, mailer_state.send_fee)?
     };
 
+    // Track whether fee was paid successfully
+    let fee_paid: bool;
+
     if revenue_share_to_receiver {
         // Priority mode: full fee with revenue sharing
 
@@ -657,8 +660,7 @@ fn process_send(
             drop(claim_data);
         }
 
-        // Transfer effective fee (may be discounted)
-        // If transfer fails, silently fail without emitting event
+        // Transfer effective fee (may be discounted) and track success
         if effective_fee > 0 {
             let transfer_result = invoke(
                 &spl_token::instruction::transfer(
@@ -677,24 +679,28 @@ fn process_send(
                 ],
             );
 
-            // If transfer fails, return Ok without logging
+            // Check if transfer succeeded
             if transfer_result.is_err() {
-                return Ok(());
+                fee_paid = false;
+            } else {
+                // Record revenue shares (only if fee > 0 and transfer succeeded)
+                if record_shares(recipient_claim, mailer_account, to, effective_fee).is_err() {
+                    fee_paid = false;
+                } else {
+                    fee_paid = true;
+                }
             }
-
-            // Record revenue shares (only if fee > 0 and transfer succeeded)
-            if record_shares(recipient_claim, mailer_account, to, effective_fee).is_err() {
-                return Ok(());
-            }
+        } else {
+            fee_paid = true; // No fee required
         }
 
-        msg!("Priority mail sent from {} to {}: {} (revenue share enabled, resolve sender: {}, effective fee: {})", sender.key, to, subject, _resolve_sender_to_name, effective_fee);
+        // Always log the message with fee_paid status
+        msg!("Priority mail sent from {} to {}: {} (revenue share enabled, resolve sender: {}, effective fee: {}, fee paid: {})", sender.key, to, subject, _resolve_sender_to_name, effective_fee, fee_paid);
     } else {
         // Standard mode: 10% fee only, no revenue sharing
         let owner_fee = (effective_fee * 10) / 100; // 10% of effective fee
 
-        // Transfer only owner fee (10%)
-        // If transfer fails, silently fail without emitting event
+        // Transfer only owner fee (10%) and track success
         if owner_fee > 0 {
             let transfer_result = invoke(
                 &spl_token::instruction::transfer(
@@ -713,25 +719,33 @@ fn process_send(
                 ],
             );
 
-            // If transfer fails, return Ok without logging
+            // Check if transfer succeeded
             if transfer_result.is_err() {
-                return Ok(());
+                fee_paid = false;
+            } else {
+                fee_paid = true;
             }
+        } else {
+            fee_paid = true; // No fee required
         }
 
-        // Update owner claimable
-        let mut mailer_data = mailer_account.try_borrow_mut_data()?;
-        let mut mailer_state: MailerState = BorshDeserialize::deserialize(&mut &mailer_data[8..])?;
-        mailer_state.increase_owner_claimable(owner_fee)?;
-        mailer_state.serialize(&mut &mut mailer_data[8..])?;
+        // Update owner claimable only if fee was paid
+        if fee_paid && owner_fee > 0 {
+            let mut mailer_data = mailer_account.try_borrow_mut_data()?;
+            let mut mailer_state: MailerState = BorshDeserialize::deserialize(&mut &mailer_data[8..])?;
+            mailer_state.increase_owner_claimable(owner_fee)?;
+            mailer_state.serialize(&mut &mut mailer_data[8..])?;
+        }
 
+        // Always log the message with fee_paid status
         msg!(
-            "Standard mail sent from {} to {}: {} (resolve sender: {}, effective fee: {})",
+            "Standard mail sent from {} to {}: {} (resolve sender: {}, effective fee: {}, fee paid: {})",
             sender.key,
             to,
             subject,
             _resolve_sender_to_name,
-            effective_fee
+            effective_fee,
+            fee_paid
         );
     }
 
@@ -782,6 +796,9 @@ fn process_send_prepared(
         calculate_fee_with_discount(program_id, sender.key, accounts, mailer_state.send_fee)?
     };
 
+    // Track whether fee was paid successfully
+    let fee_paid: bool;
+
     if revenue_share_to_receiver {
         // Priority mode: full fee with revenue sharing
 
@@ -841,7 +858,7 @@ fn process_send_prepared(
             drop(claim_data);
         }
 
-        // Transfer effective fee (may be discounted)
+        // Transfer effective fee (may be discounted) and track success
         if effective_fee > 0 {
             let transfer_result = invoke(
                 &spl_token::instruction::transfer(
@@ -860,22 +877,28 @@ fn process_send_prepared(
                 ],
             );
 
+            // Check if transfer succeeded
             if transfer_result.is_err() {
-                return Ok(());
+                fee_paid = false;
+            } else {
+                // Record revenue shares (only if fee > 0 and transfer succeeded)
+                if record_shares(recipient_claim, mailer_account, to, effective_fee).is_err() {
+                    fee_paid = false;
+                } else {
+                    fee_paid = true;
+                }
             }
-
-            // Record revenue shares (only if fee > 0)
-            if record_shares(recipient_claim, mailer_account, to, effective_fee).is_err() {
-                return Ok(());
-            }
+        } else {
+            fee_paid = true; // No fee required
         }
 
-        msg!("Priority prepared mail sent from {} to {} (mailId: {}, revenue share enabled, resolve sender: {}, effective fee: {})", sender.key, to, mail_id, _resolve_sender_to_name, effective_fee);
+        // Always log the message with fee_paid status
+        msg!("Priority prepared mail sent from {} to {} (mailId: {}, revenue share enabled, resolve sender: {}, effective fee: {}, fee paid: {})", sender.key, to, mail_id, _resolve_sender_to_name, effective_fee, fee_paid);
     } else {
         // Standard mode: 10% fee only, no revenue sharing
         let owner_fee = (effective_fee * 10) / 100; // 10% of effective fee
 
-        // Transfer only owner fee (10%)
+        // Transfer only owner fee (10%) and track success
         if owner_fee > 0 {
             let transfer_result = invoke(
                 &spl_token::instruction::transfer(
@@ -894,24 +917,33 @@ fn process_send_prepared(
                 ],
             );
 
+            // Check if transfer succeeded
             if transfer_result.is_err() {
-                return Ok(());
+                fee_paid = false;
+            } else {
+                fee_paid = true;
             }
+        } else {
+            fee_paid = true; // No fee required
         }
 
-        // Update owner claimable
-        let mut mailer_data = mailer_account.try_borrow_mut_data()?;
-        let mut mailer_state: MailerState = BorshDeserialize::deserialize(&mut &mailer_data[8..])?;
-        mailer_state.increase_owner_claimable(owner_fee)?;
-        mailer_state.serialize(&mut &mut mailer_data[8..])?;
+        // Update owner claimable only if fee was paid
+        if fee_paid && owner_fee > 0 {
+            let mut mailer_data = mailer_account.try_borrow_mut_data()?;
+            let mut mailer_state: MailerState = BorshDeserialize::deserialize(&mut &mailer_data[8..])?;
+            mailer_state.increase_owner_claimable(owner_fee)?;
+            mailer_state.serialize(&mut &mut mailer_data[8..])?;
+        }
 
+        // Always log the message with fee_paid status
         msg!(
-            "Standard prepared mail sent from {} to {} (mailId: {}, resolve sender: {}, effective fee: {})",
+            "Standard prepared mail sent from {} to {} (mailId: {}, resolve sender: {}, effective fee: {}, fee paid: {})",
             sender.key,
             to,
             mail_id,
             _resolve_sender_to_name,
-            effective_fee
+            effective_fee,
+            fee_paid
         );
     }
 
@@ -962,7 +994,10 @@ fn process_send_to_email(
     // Calculate 10% owner fee (no revenue share since no wallet address)
     let owner_fee = (effective_fee * 10) / 100;
 
-    // Transfer fee from sender to mailer
+    // Track whether fee was paid successfully
+    let fee_paid: bool;
+
+    // Transfer fee from sender to mailer and track success
     if owner_fee > 0 {
         let transfer_ix = spl_token::instruction::transfer(
             token_program.key,
@@ -983,23 +1018,32 @@ fn process_send_to_email(
             ],
         );
 
+        // Check if transfer succeeded
         if transfer_result.is_err() {
-            return Ok(());
+            fee_paid = false;
+        } else {
+            fee_paid = true;
         }
+    } else {
+        fee_paid = true; // No fee required
     }
 
-    // Update owner claimable
-    let mut mailer_data = mailer_account.try_borrow_mut_data()?;
-    let mut mailer_state: MailerState = BorshDeserialize::deserialize(&mut &mailer_data[8..])?;
-    mailer_state.increase_owner_claimable(owner_fee)?;
-    mailer_state.serialize(&mut &mut mailer_data[8..])?;
+    // Update owner claimable only if fee was paid
+    if fee_paid && owner_fee > 0 {
+        let mut mailer_data = mailer_account.try_borrow_mut_data()?;
+        let mut mailer_state: MailerState = BorshDeserialize::deserialize(&mut &mailer_data[8..])?;
+        mailer_state.increase_owner_claimable(owner_fee)?;
+        mailer_state.serialize(&mut &mut mailer_data[8..])?;
+    }
 
+    // Always log the message with fee_paid status
     msg!(
-        "Mail sent from {} to email {}: {} (effective fee: {})",
+        "Mail sent from {} to email {}: {} (effective fee: {}, fee paid: {})",
         sender.key,
         to_email,
         subject,
-        effective_fee
+        effective_fee,
+        fee_paid
     );
 
     Ok(())
@@ -1048,7 +1092,10 @@ fn process_send_prepared_to_email(
     // Calculate 10% owner fee (no revenue share since no wallet address)
     let owner_fee = (effective_fee * 10) / 100;
 
-    // Transfer fee from sender to mailer
+    // Track whether fee was paid successfully
+    let fee_paid: bool;
+
+    // Transfer fee from sender to mailer and track success
     if owner_fee > 0 {
         let transfer_ix = spl_token::instruction::transfer(
             token_program.key,
@@ -1069,23 +1116,32 @@ fn process_send_prepared_to_email(
             ],
         );
 
+        // Check if transfer succeeded
         if transfer_result.is_err() {
-            return Ok(());
+            fee_paid = false;
+        } else {
+            fee_paid = true;
         }
+    } else {
+        fee_paid = true; // No fee required
     }
 
-    // Update owner claimable
-    let mut mailer_data = mailer_account.try_borrow_mut_data()?;
-    let mut mailer_state: MailerState = BorshDeserialize::deserialize(&mut &mailer_data[8..])?;
-    mailer_state.increase_owner_claimable(owner_fee)?;
-    mailer_state.serialize(&mut &mut mailer_data[8..])?;
+    // Update owner claimable only if fee was paid
+    if fee_paid && owner_fee > 0 {
+        let mut mailer_data = mailer_account.try_borrow_mut_data()?;
+        let mut mailer_state: MailerState = BorshDeserialize::deserialize(&mut &mailer_data[8..])?;
+        mailer_state.increase_owner_claimable(owner_fee)?;
+        mailer_state.serialize(&mut &mut mailer_data[8..])?;
+    }
 
+    // Always log the message with fee_paid status
     msg!(
-        "Prepared mail sent from {} to email {} (mailId: {}, effective fee: {})",
+        "Prepared mail sent from {} to email {} (mailId: {}, effective fee: {}, fee paid: {})",
         sender.key,
         to_email,
         mail_id,
-        effective_fee
+        effective_fee,
+        fee_paid
     );
 
     Ok(())
@@ -1134,6 +1190,9 @@ fn process_send_through_webhook(
     } else {
         calculate_fee_with_discount(program_id, sender.key, accounts, mailer_state.send_fee)?
     };
+
+    // Track whether fee was paid successfully
+    let fee_paid: bool;
 
     if revenue_share_to_receiver {
         // Priority mode: full fee with revenue sharing
@@ -1194,7 +1253,7 @@ fn process_send_through_webhook(
             drop(claim_data);
         }
 
-        // Transfer effective fee (may be discounted)
+        // Transfer effective fee (may be discounted) and track success
         if effective_fee > 0 {
             let transfer_result = invoke(
                 &spl_token::instruction::transfer(
@@ -1213,22 +1272,28 @@ fn process_send_through_webhook(
                 ],
             );
 
+            // Check if transfer succeeded
             if transfer_result.is_err() {
-                return Ok(());
+                fee_paid = false;
+            } else {
+                // Record revenue shares (only if fee > 0 and transfer succeeded)
+                if record_shares(recipient_claim, mailer_account, to, effective_fee).is_err() {
+                    fee_paid = false;
+                } else {
+                    fee_paid = true;
+                }
             }
-
-            // Record revenue shares (only if fee > 0)
-            if record_shares(recipient_claim, mailer_account, to, effective_fee).is_err() {
-                return Ok(());
-            }
+        } else {
+            fee_paid = true; // No fee required
         }
 
-        msg!("Webhook mail sent from {} to {} (webhookId: {}, revenue share enabled, resolve sender: {}, effective fee: {})", sender.key, to, webhook_id, _resolve_sender_to_name, effective_fee);
+        // Always log the message with fee_paid status
+        msg!("Webhook mail sent from {} to {} (webhookId: {}, revenue share enabled, resolve sender: {}, effective fee: {}, fee paid: {})", sender.key, to, webhook_id, _resolve_sender_to_name, effective_fee, fee_paid);
     } else {
         // Standard mode: 10% fee only, no revenue sharing
         let owner_fee = (effective_fee * 10) / 100; // 10% of effective fee
 
-        // Transfer only owner fee (10%)
+        // Transfer only owner fee (10%) and track success
         if owner_fee > 0 {
             let transfer_result = invoke(
                 &spl_token::instruction::transfer(
@@ -1247,24 +1312,33 @@ fn process_send_through_webhook(
                 ],
             );
 
+            // Check if transfer succeeded
             if transfer_result.is_err() {
-                return Ok(());
+                fee_paid = false;
+            } else {
+                fee_paid = true;
             }
+        } else {
+            fee_paid = true; // No fee required
         }
 
-        // Update owner claimable
-        let mut mailer_data = mailer_account.try_borrow_mut_data()?;
-        let mut mailer_state: MailerState = BorshDeserialize::deserialize(&mut &mailer_data[8..])?;
-        mailer_state.increase_owner_claimable(owner_fee)?;
-        mailer_state.serialize(&mut &mut mailer_data[8..])?;
+        // Update owner claimable only if fee was paid
+        if fee_paid && owner_fee > 0 {
+            let mut mailer_data = mailer_account.try_borrow_mut_data()?;
+            let mut mailer_state: MailerState = BorshDeserialize::deserialize(&mut &mailer_data[8..])?;
+            mailer_state.increase_owner_claimable(owner_fee)?;
+            mailer_state.serialize(&mut &mut mailer_data[8..])?;
+        }
 
+        // Always log the message with fee_paid status
         msg!(
-            "Webhook mail sent from {} to {} (webhookId: {}, resolve sender: {}, effective fee: {})",
+            "Webhook mail sent from {} to {} (webhookId: {}, resolve sender: {}, effective fee: {}, fee paid: {})",
             sender.key,
             to,
             webhook_id,
             _resolve_sender_to_name,
-            effective_fee
+            effective_fee,
+            fee_paid
         );
     }
 
