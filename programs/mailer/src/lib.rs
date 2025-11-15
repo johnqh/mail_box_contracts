@@ -247,9 +247,10 @@ pub enum MailerInstruction {
     /// Set send fee (owner only)
     /// WARNING: Fee changes take effect IMMEDIATELY with no time delay or notification.
     /// This allows quick response to market conditions but requires user trust.
-    /// - No maximum fee cap enforced
-    /// - Users with pending transactions may pay different fees than expected
-    /// - Monitor program logs for FeeUpdated events
+    ///   - No maximum fee cap enforced
+    ///   - Users with pending transactions may pay different fees than expected
+    ///   - Monitor program logs for FeeUpdated events
+    ///
     /// Accounts:
     /// 0. `[signer]` Owner
     /// 1. `[writable]` Mailer state account (PDA)
@@ -684,11 +685,7 @@ fn process_send(
                 fee_paid = false;
             } else {
                 // Record revenue shares (only if fee > 0 and transfer succeeded)
-                if record_shares(recipient_claim, mailer_account, to, effective_fee).is_err() {
-                    fee_paid = false;
-                } else {
-                    fee_paid = true;
-                }
+                fee_paid = record_shares(recipient_claim, mailer_account, to, effective_fee).is_ok();
             }
         } else {
             fee_paid = true; // No fee required
@@ -720,11 +717,7 @@ fn process_send(
             );
 
             // Check if transfer succeeded
-            if transfer_result.is_err() {
-                fee_paid = false;
-            } else {
-                fee_paid = true;
-            }
+            fee_paid = transfer_result.is_ok();
         } else {
             fee_paid = true; // No fee required
         }
@@ -882,11 +875,7 @@ fn process_send_prepared(
                 fee_paid = false;
             } else {
                 // Record revenue shares (only if fee > 0 and transfer succeeded)
-                if record_shares(recipient_claim, mailer_account, to, effective_fee).is_err() {
-                    fee_paid = false;
-                } else {
-                    fee_paid = true;
-                }
+                fee_paid = record_shares(recipient_claim, mailer_account, to, effective_fee).is_ok();
             }
         } else {
             fee_paid = true; // No fee required
@@ -918,11 +907,7 @@ fn process_send_prepared(
             );
 
             // Check if transfer succeeded
-            if transfer_result.is_err() {
-                fee_paid = false;
-            } else {
-                fee_paid = true;
-            }
+            fee_paid = transfer_result.is_ok();
         } else {
             fee_paid = true; // No fee required
         }
@@ -994,11 +979,8 @@ fn process_send_to_email(
     // Calculate 10% owner fee (no revenue share since no wallet address)
     let owner_fee = (effective_fee * 10) / 100;
 
-    // Track whether fee was paid successfully
-    let fee_paid: bool;
-
     // Transfer fee from sender to mailer and track success
-    if owner_fee > 0 {
+    let fee_paid: bool = if owner_fee > 0 {
         let transfer_ix = spl_token::instruction::transfer(
             token_program.key,
             sender_usdc.key,
@@ -1019,14 +1001,10 @@ fn process_send_to_email(
         );
 
         // Check if transfer succeeded
-        if transfer_result.is_err() {
-            fee_paid = false;
-        } else {
-            fee_paid = true;
-        }
+        transfer_result.is_ok()
     } else {
-        fee_paid = true; // No fee required
-    }
+        true // No fee required
+    };
 
     // Update owner claimable only if fee was paid
     if fee_paid && owner_fee > 0 {
@@ -1092,11 +1070,8 @@ fn process_send_prepared_to_email(
     // Calculate 10% owner fee (no revenue share since no wallet address)
     let owner_fee = (effective_fee * 10) / 100;
 
-    // Track whether fee was paid successfully
-    let fee_paid: bool;
-
     // Transfer fee from sender to mailer and track success
-    if owner_fee > 0 {
+    let fee_paid: bool = if owner_fee > 0 {
         let transfer_ix = spl_token::instruction::transfer(
             token_program.key,
             sender_usdc.key,
@@ -1117,14 +1092,10 @@ fn process_send_prepared_to_email(
         );
 
         // Check if transfer succeeded
-        if transfer_result.is_err() {
-            fee_paid = false;
-        } else {
-            fee_paid = true;
-        }
+        transfer_result.is_ok()
     } else {
-        fee_paid = true; // No fee required
-    }
+        true // No fee required
+    };
 
     // Update owner claimable only if fee was paid
     if fee_paid && owner_fee > 0 {
@@ -1277,11 +1248,7 @@ fn process_send_through_webhook(
                 fee_paid = false;
             } else {
                 // Record revenue shares (only if fee > 0 and transfer succeeded)
-                if record_shares(recipient_claim, mailer_account, to, effective_fee).is_err() {
-                    fee_paid = false;
-                } else {
-                    fee_paid = true;
-                }
+                fee_paid = record_shares(recipient_claim, mailer_account, to, effective_fee).is_ok();
             }
         } else {
             fee_paid = true; // No fee required
@@ -1313,11 +1280,7 @@ fn process_send_through_webhook(
             );
 
             // Check if transfer succeeded
-            if transfer_result.is_err() {
-                fee_paid = false;
-            } else {
-                fee_paid = true;
-            }
+            fee_paid = transfer_result.is_ok();
         } else {
             fee_paid = true; // No fee required
         }

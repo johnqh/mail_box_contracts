@@ -514,8 +514,8 @@ contract Mailer is Initializable, OwnableUpgradeable, UUPSUpgradeable {
         }
 
         // Transfer fee from payer to contract
-        // If transfer fails, return false instead of reverting
-        if (!usdcToken.transferFrom(payer, address(this), feeToCharge)) {
+        // If transfer fails (including ERC20 reverts), return false instead of bubbling up
+        if (!_safeTransferFrom(payer, feeToCharge)) {
             return false;
         }
 
@@ -529,6 +529,24 @@ contract Mailer is Initializable, OwnableUpgradeable, UUPSUpgradeable {
         }
 
         return true;
+    }
+
+    /**
+     * @notice Attempt to transfer USDC from payer to this contract without propagating reverts
+     * @param payer Address that should pay the fee
+     * @param amount Amount of USDC to transfer
+     * @return success True if transfer succeeded, false if transferFrom reverted or returned false
+     */
+    function _safeTransferFrom(address payer, uint256 amount) internal returns (bool) {
+        if (amount == 0) {
+            return true;
+        }
+
+        try usdcToken.transferFrom(payer, address(this), amount) returns (bool success) {
+            return success;
+        } catch {
+            return false;
+        }
     }
 
     /**

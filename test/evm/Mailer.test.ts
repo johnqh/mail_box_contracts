@@ -77,22 +77,36 @@ describe("Mailer", function () {
       expect(event.args.to.toLowerCase()).to.equal(addr2.account.address.toLowerCase());
     });
 
-    it("Should not emit event when USDC transfer fails (insufficient balance)", async function () {
-      const { mailer, addr1, addr2 } = this;
-      // addr2 has no USDC balance
-      await expect(
-        mailer.write.send([addr1.account.address, "Test Subject", "Test Body", addr2.account .address, true, false], { account: addr2.account  })
-      ).to.be.rejectedWith("InsufficientBalance");
+    it("Should emit event with feePaid=false when USDC transfer fails (insufficient balance)", async function () {
+      const { mailer, addr1, addr2, publicClient } = this;
+      const ownerBefore = await mailer.read.getOwnerClaimable();
+
+      const hash = await mailer.write.send([addr2.account.address, "Test Subject", "Test Body", addr2.account .address, true, false], { account: addr2.account  });
+      await publicClient.waitForTransactionReceipt({ hash });
+
+      const logs = await mailer.getEvents.MailSent();
+      const event = logs[logs.length - 1];
+      expect(event.args.feePaid).to.be.false;
+
+      const ownerAfter = await mailer.read.getOwnerClaimable();
+      expect(ownerAfter).to.equal(ownerBefore);
     });
 
-    it("Should not emit event when USDC transfer fails (insufficient allowance)", async function () {
-      const { mailer, mockUSDC, addr1, addr2 } = this;
-      // Give addr2 USDC but no allowance
+    it("Should emit event with feePaid=false when USDC transfer fails (insufficient allowance)", async function () {
+      const { mailer, mockUSDC, addr1, addr2, publicClient } = this;
+      // Give addr2 USDC but do not approve Mailer
       await mockUSDC.write.mint([addr2.account.address, parseUnits("1", 6)]);
 
-      await expect(
-        mailer.write.send([addr1.account.address, "Test Subject", "Test Body", addr2.account .address, true, false], { account: addr2.account  })
-      ).to.be.rejectedWith("InsufficientAllowance");
+      const ownerBefore = await mailer.read.getOwnerClaimable();
+      const hash = await mailer.write.send([addr1.account.address, "Test Subject", "Test Body", addr2.account .address, true, false], { account: addr2.account  });
+      await publicClient.waitForTransactionReceipt({ hash });
+
+      const logs = await mailer.getEvents.MailSent();
+      const event = logs[logs.length - 1];
+      expect(event.args.feePaid).to.be.false;
+
+      const ownerAfter = await mailer.read.getOwnerClaimable();
+      expect(ownerAfter).to.equal(ownerBefore);
     });
 
     it("Should transfer correct USDC amount to contract", async function () {
@@ -122,22 +136,35 @@ describe("Mailer", function () {
       expect(event.args.mailId).to.exist;
     });
 
-    it("Should not emit event when USDC transfer fails (insufficient balance)", async function () {
-      const { mailer, addr1, addr2 } = this;
-      // addr2 has no USDC balance
-      await expect(
-        mailer.write.sendPrepared([addr1.account.address, "mail-456", addr2.account .address, true, false], { account: addr2.account  })
-      ).to.be.rejectedWith("InsufficientBalance");
+    it("Should emit event with feePaid=false when USDC transfer fails (insufficient balance)", async function () {
+      const { mailer, addr1, addr2, publicClient } = this;
+      const ownerBefore = await mailer.read.getOwnerClaimable();
+      const hash = await mailer.write.sendPrepared([addr1.account.address, "mail-456", addr2.account .address, true, false], { account: addr2.account  });
+      await publicClient.waitForTransactionReceipt({ hash });
+
+      const logs = await mailer.getEvents.PreparedMailSent();
+      const event = logs[logs.length - 1];
+      expect(event.args.feePaid).to.be.false;
+
+      const ownerAfter = await mailer.read.getOwnerClaimable();
+      expect(ownerAfter).to.equal(ownerBefore);
     });
 
-    it("Should not emit event when USDC transfer fails (insufficient allowance)", async function () {
-      const { mailer, mockUSDC, addr1, addr2 } = this;
+    it("Should emit event with feePaid=false when USDC transfer fails (insufficient allowance)", async function () {
+      const { mailer, mockUSDC, addr1, addr2, publicClient } = this;
       // Give addr2 USDC but no allowance
       await mockUSDC.write.mint([addr2.account.address, parseUnits("1", 6)]);
 
-      await expect(
-        mailer.write.sendPrepared([addr1.account.address, "mail-789", addr2.account .address, true, false], { account: addr2.account  })
-      ).to.be.rejectedWith("InsufficientAllowance");
+      const ownerBefore = await mailer.read.getOwnerClaimable();
+      const hash = await mailer.write.sendPrepared([addr1.account.address, "mail-789", addr2.account .address, true, false], { account: addr2.account  });
+      await publicClient.waitForTransactionReceipt({ hash });
+
+      const logs = await mailer.getEvents.PreparedMailSent();
+      const event = logs[logs.length - 1];
+      expect(event.args.feePaid).to.be.false;
+
+      const ownerAfter = await mailer.read.getOwnerClaimable();
+      expect(ownerAfter).to.equal(ownerBefore);
     });
 
     it("Should transfer correct USDC amount to contract", async function () {
@@ -277,15 +304,22 @@ describe("Mailer", function () {
         expect(finalBalance - initialBalance).to.equal(50000n); // Updated fee
       });
 
-      it("Should fail when user has insufficient balance for new fee", async function () {
-        const { mailer, owner, addr1, addr2 } = this;
+      it("Should emit feePaid=false when user has insufficient balance for new fee", async function () {
+        const { mailer, owner, addr1, addr2, publicClient } = this;
         // Set a very high fee
         await mailer.write.setFee([parseUnits("20", 6)], { account: owner.account }); // 20 USDC
 
         // addr1 only has 10 USDC, should fail
-        await expect(
-          mailer.write.send([addr2.account.address, "Test", "Body", addr1.account .address, true, false], { account: addr1.account  })
-        ).to.be.rejectedWith("InsufficientBalance");
+        const ownerBefore = await mailer.read.getOwnerClaimable();
+        const hash = await mailer.write.send([addr2.account.address, "Test", "Body", addr1.account .address, true, false], { account: addr1.account  });
+        await publicClient.waitForTransactionReceipt({ hash });
+
+        const logs = await mailer.getEvents.MailSent();
+        const event = logs[logs.length - 1];
+        expect(event.args.feePaid).to.be.false;
+
+        const ownerAfter = await mailer.read.getOwnerClaimable();
+        expect(ownerAfter).to.equal(ownerBefore);
       });
 
       it("Should work with zero fee", async function () {
@@ -343,22 +377,41 @@ describe("Mailer", function () {
       expect(event.args.to.toLowerCase()).to.equal(addr1.account.address.toLowerCase());
     });
 
-    it("Should not emit event when sender has no USDC balance", async function () {
-      const { mailer, owner, addr1 } = this;
-      // owner has USDC but no allowance, so it fails on allowance check
-      await expect(
-        mailer.write.send([addr1.account.address, "No Balance", "Should Fail", owner.account .address, false, false], { account: owner.account  })
-      ).to.be.rejectedWith("InsufficientAllowance");
+    it("Should emit feePaid=false when sender has no USDC balance", async function () {
+      const { mailer, mockUSDC, addr1, addr2, owner, publicClient } = this;
+      // Drain addr2's balance
+      await mockUSDC.write.transfer([owner.account.address, parseUnits("10", 6)], { account: addr2.account });
+      const ownerBefore = await mailer.read.getOwnerClaimable();
+
+      const hash = await mailer.write.send([addr1.account.address, "No Balance", "Should Fail", addr2.account .address, false, false], { account: addr2.account  });
+      await publicClient.waitForTransactionReceipt({ hash });
+
+      const logs = await mailer.getEvents.MailSent();
+      const event = logs[logs.length - 1];
+      expect(event.args.feePaid).to.be.false;
+
+      const ownerAfter = await mailer.read.getOwnerClaimable();
+      expect(ownerAfter).to.equal(ownerBefore);
     });
 
-    it("Should not emit event when sender has no USDC allowance", async function () {
-      const { mailer, mockUSDC, owner, addr1 } = this;
-      // Give addr3 USDC but no allowance
-      await mockUSDC.write.mint([owner.account.address, parseUnits("1", 6)]);
+    it("Should emit feePaid=false when sender has no USDC allowance", async function () {
+      const { mailer, mockUSDC, addr1, addr2, publicClient } = this;
+      // Revoke allowance
+      await mockUSDC.write.approve([mailer.address, 0n], { account: addr2.account });
 
-      await expect(
-        mailer.write.send([addr1.account.address, "No Allowance", "Should Fail", owner.account .address, false, false], { account: owner.account  })
-      ).to.be.rejectedWith("InsufficientAllowance");
+      const ownerBefore = await mailer.read.getOwnerClaimable();
+      const hash = await mailer.write.send([addr1.account.address, "No Allowance", "Should Fail", addr2.account .address, false, false], { account: addr2.account  });
+      await publicClient.waitForTransactionReceipt({ hash });
+
+      const logs = await mailer.getEvents.MailSent();
+      const event = logs[logs.length - 1];
+      expect(event.args.feePaid).to.be.false;
+
+      const ownerAfter = await mailer.read.getOwnerClaimable();
+      expect(ownerAfter).to.equal(ownerBefore);
+
+      // Restore allowance for later tests
+      await mockUSDC.write.approve([mailer.address, parseUnits("10", 6)], { account: addr2.account });
     });
 
     it("Should transfer 10% of sendFee to contract for owner", async function () {
@@ -425,22 +478,38 @@ describe("Mailer", function () {
       expect(event.args.mailId).to.exist;
     });
 
-    it("Should not emit event when sender has no USDC balance", async function () {
-      const { mailer, owner, addr1 } = this;
-      // owner has USDC but no allowance, so it fails on allowance check
-      await expect(
-        mailer.write.sendPrepared([addr1.account.address, "no-balance-mail", owner.account .address, false, false], { account: owner.account  })
-      ).to.be.rejectedWith("InsufficientAllowance");
+    it("Should emit feePaid=false when sender has no USDC balance", async function () {
+      const { mailer, mockUSDC, addr1, addr2, owner, publicClient } = this;
+      await mockUSDC.write.transfer([owner.account.address, parseUnits("10", 6)], { account: addr2.account });
+      const ownerBefore = await mailer.read.getOwnerClaimable();
+
+      const hash = await mailer.write.sendPrepared([addr1.account.address, "no-balance-mail", addr2.account .address, false, false], { account: addr2.account  });
+      await publicClient.waitForTransactionReceipt({ hash });
+
+      const logs = await mailer.getEvents.PreparedMailSent();
+      const event = logs[logs.length - 1];
+      expect(event.args.feePaid).to.be.false;
+
+      const ownerAfter = await mailer.read.getOwnerClaimable();
+      expect(ownerAfter).to.equal(ownerBefore);
     });
 
-    it("Should not emit event when sender has no USDC allowance", async function () {
-      const { mailer, mockUSDC, owner, addr1 } = this;
-      // Give addr3 USDC but no allowance
-      await mockUSDC.write.mint([owner.account.address, parseUnits("1", 6)]);
+    it("Should emit feePaid=false when sender has no USDC allowance", async function () {
+      const { mailer, mockUSDC, addr1, addr2, publicClient } = this;
+      await mockUSDC.write.approve([mailer.address, 0n], { account: addr2.account });
 
-      await expect(
-        mailer.write.sendPrepared([addr1.account.address, "no-allowance-mail", owner.account .address, false, false], { account: owner.account  })
-      ).to.be.rejectedWith("InsufficientAllowance");
+      const ownerBefore = await mailer.read.getOwnerClaimable();
+      const hash = await mailer.write.sendPrepared([addr1.account.address, "no-allowance-mail", addr2.account .address, false, false], { account: addr2.account  });
+      await publicClient.waitForTransactionReceipt({ hash });
+
+      const logs = await mailer.getEvents.PreparedMailSent();
+      const event = logs[logs.length - 1];
+      expect(event.args.feePaid).to.be.false;
+
+      const ownerAfter = await mailer.read.getOwnerClaimable();
+      expect(ownerAfter).to.equal(ownerBefore);
+
+      await mockUSDC.write.approve([mailer.address, parseUnits("10", 6)], { account: addr2.account });
     });
 
     it("Should transfer 10% of sendFee to contract for owner", async function () {
@@ -517,22 +586,36 @@ describe("Mailer", function () {
       expect(event.args.webhookId).to.exist;
     });
 
-    it("Should not emit event when USDC transfer fails (insufficient balance)", async function () {
-      const { mailer, addr1, addr2 } = this;
-      // addr2 has no USDC balance
-      await expect(
-        mailer.write.sendThroughWebhook([addr1.account.address, "webhook-456", addr2.account .address, true, false], { account: addr2.account  })
-      ).to.be.rejectedWith("InsufficientBalance");
+    it("Should emit feePaid=false when USDC transfer fails (insufficient balance)", async function () {
+      const { mailer, addr1, addr2, publicClient } = this;
+      const ownerBefore = await mailer.read.getOwnerClaimable();
+
+      const hash = await mailer.write.sendThroughWebhook([addr1.account.address, "webhook-456", addr2.account .address, true, false], { account: addr2.account  });
+      await publicClient.waitForTransactionReceipt({ hash });
+
+      const logs = await mailer.getEvents.WebhookMailSent();
+      const event = logs[logs.length - 1];
+      expect(event.args.feePaid).to.be.false;
+
+      const ownerAfter = await mailer.read.getOwnerClaimable();
+      expect(ownerAfter).to.equal(ownerBefore);
     });
 
-    it("Should not emit event when USDC transfer fails (insufficient allowance)", async function () {
-      const { mailer, mockUSDC, addr1, addr2 } = this;
+    it("Should emit feePaid=false when USDC transfer fails (insufficient allowance)", async function () {
+      const { mailer, mockUSDC, addr1, addr2, publicClient } = this;
       // Give addr2 USDC but no allowance
       await mockUSDC.write.mint([addr2.account.address, parseUnits("1", 6)]);
 
-      await expect(
-        mailer.write.sendThroughWebhook([addr1.account.address, "webhook-789", addr2.account .address, true, false], { account: addr2.account  })
-      ).to.be.rejectedWith("InsufficientAllowance");
+      const ownerBefore = await mailer.read.getOwnerClaimable();
+      const hash = await mailer.write.sendThroughWebhook([addr1.account.address, "webhook-789", addr2.account .address, true, false], { account: addr2.account  });
+      await publicClient.waitForTransactionReceipt({ hash });
+
+      const logs = await mailer.getEvents.WebhookMailSent();
+      const event = logs[logs.length - 1];
+      expect(event.args.feePaid).to.be.false;
+
+      const ownerAfter = await mailer.read.getOwnerClaimable();
+      expect(ownerAfter).to.equal(ownerBefore);
     });
 
     it("Should transfer correct USDC amount to contract", async function () {
@@ -599,22 +682,38 @@ describe("Mailer", function () {
       expect(event.args.webhookId).to.exist;
     });
 
-    it("Should not emit event when sender has no USDC balance", async function () {
-      const { mailer, owner, addr1 } = this;
-      // owner has USDC but no allowance, so it fails on allowance check
-      await expect(
-        mailer.write.sendThroughWebhook([addr1.account.address, "no-balance-webhook", owner.account .address, false, false], { account: owner.account  })
-      ).to.be.rejectedWith("InsufficientAllowance");
+    it("Should emit feePaid=false when sender has no USDC balance", async function () {
+      const { mailer, mockUSDC, addr1, addr2, owner, publicClient } = this;
+      await mockUSDC.write.transfer([owner.account.address, parseUnits("10", 6)], { account: addr2.account });
+      const ownerBefore = await mailer.read.getOwnerClaimable();
+
+      const hash = await mailer.write.sendThroughWebhook([addr1.account.address, "no-balance-webhook", addr2.account .address, false, false], { account: addr2.account  });
+      await publicClient.waitForTransactionReceipt({ hash });
+
+      const logs = await mailer.getEvents.WebhookMailSent();
+      const event = logs[logs.length - 1];
+      expect(event.args.feePaid).to.be.false;
+
+      const ownerAfter = await mailer.read.getOwnerClaimable();
+      expect(ownerAfter).to.equal(ownerBefore);
     });
 
-    it("Should not emit event when sender has no USDC allowance", async function () {
-      const { mailer, mockUSDC, owner, addr1 } = this;
-      // Give addr3 USDC but no allowance
-      await mockUSDC.write.mint([owner.account.address, parseUnits("1", 6)]);
+    it("Should emit feePaid=false when sender has no USDC allowance", async function () {
+      const { mailer, mockUSDC, addr1, addr2, publicClient } = this;
+      await mockUSDC.write.approve([mailer.address, 0n], { account: addr2.account });
 
-      await expect(
-        mailer.write.sendThroughWebhook([addr1.account.address, "no-allowance-webhook", owner.account .address, false, false], { account: owner.account  })
-      ).to.be.rejectedWith("InsufficientAllowance");
+      const ownerBefore = await mailer.read.getOwnerClaimable();
+      const hash = await mailer.write.sendThroughWebhook([addr1.account.address, "no-allowance-webhook", addr2.account .address, false, false], { account: addr2.account  });
+      await publicClient.waitForTransactionReceipt({ hash });
+
+      const logs = await mailer.getEvents.WebhookMailSent();
+      const event = logs[logs.length - 1];
+      expect(event.args.feePaid).to.be.false;
+
+      const ownerAfter = await mailer.read.getOwnerClaimable();
+      expect(ownerAfter).to.equal(ownerBefore);
+
+      await mockUSDC.write.approve([mailer.address, parseUnits("10", 6)], { account: addr2.account });
     });
 
     it("Should transfer 10% of sendFee to contract for owner", async function () {
@@ -1799,22 +1898,36 @@ describe("Mailer", function () {
           expect(finalBalance - initialBalance).to.equal(expectedOwnerFee);
         });
 
-        it("Should not emit event when USDC transfer fails (insufficient balance)", async function () {
-          const { mailer, addr2 } = this;
-          // addr2 has no USDC balance
-          await expect(
-            mailer.write.sendToEmailAddress(["test@example.com", "Subject", "Body", addr2.account.address], { account: addr2.account })
-          ).to.be.rejectedWith("InsufficientBalance");
+        it("Should emit feePaid=false when USDC transfer fails (insufficient balance)", async function () {
+          const { mailer, addr2, publicClient } = this;
+          const ownerBefore = await mailer.read.getOwnerClaimable();
+
+          const hash = await mailer.write.sendToEmailAddress(["test@example.com", "Subject", "Body", addr2.account.address], { account: addr2.account });
+          await publicClient.waitForTransactionReceipt({ hash });
+
+          const logs = await mailer.getEvents.MailSentToEmail();
+          const event = logs[logs.length - 1];
+          expect(event.args.feePaid).to.be.false;
+
+          const ownerAfter = await mailer.read.getOwnerClaimable();
+          expect(ownerAfter).to.equal(ownerBefore);
         });
 
-        it("Should not emit event when USDC transfer fails (insufficient allowance)", async function () {
-          const { mailer, mockUSDC, addr2 } = this;
+        it("Should emit feePaid=false when USDC transfer fails (insufficient allowance)", async function () {
+          const { mailer, mockUSDC, addr2, publicClient } = this;
           // Give addr2 USDC but no allowance
           await mockUSDC.write.mint([addr2.account.address, parseUnits("1", 6)]);
 
-          await expect(
-            mailer.write.sendToEmailAddress(["test@example.com", "Subject", "Body", addr2.account.address], { account: addr2.account })
-          ).to.be.rejectedWith("InsufficientAllowance");
+          const ownerBefore = await mailer.read.getOwnerClaimable();
+          const hash = await mailer.write.sendToEmailAddress(["test@example.com", "Subject", "Body", addr2.account.address], { account: addr2.account });
+          await publicClient.waitForTransactionReceipt({ hash });
+
+          const logs = await mailer.getEvents.MailSentToEmail();
+          const event = logs[logs.length - 1];
+          expect(event.args.feePaid).to.be.false;
+
+          const ownerAfter = await mailer.read.getOwnerClaimable();
+          expect(ownerAfter).to.equal(ownerBefore);
         });
 
         it("Should work with empty strings", async function () {
@@ -1894,22 +2007,36 @@ describe("Mailer", function () {
           expect(finalBalance - initialBalance).to.equal(expectedOwnerFee);
         });
 
-        it("Should not emit event when USDC transfer fails (insufficient balance)", async function () {
-          const { mailer, addr2 } = this;
-          // addr2 has no USDC balance
-          await expect(
-            mailer.write.sendPreparedToEmailAddress(["test@example.com", "mail-789", addr2.account.address], { account: addr2.account })
-          ).to.be.rejectedWith("InsufficientBalance");
+        it("Should emit feePaid=false when USDC transfer fails (insufficient balance)", async function () {
+          const { mailer, addr2, publicClient } = this;
+          const ownerBefore = await mailer.read.getOwnerClaimable();
+
+          const hash = await mailer.write.sendPreparedToEmailAddress(["test@example.com", "mail-789", addr2.account.address], { account: addr2.account });
+          await publicClient.waitForTransactionReceipt({ hash });
+
+          const logs = await mailer.getEvents.PreparedMailSentToEmail();
+          const event = logs[logs.length - 1];
+          expect(event.args.feePaid).to.be.false;
+
+          const ownerAfter = await mailer.read.getOwnerClaimable();
+          expect(ownerAfter).to.equal(ownerBefore);
         });
 
-        it("Should not emit event when USDC transfer fails (insufficient allowance)", async function () {
-          const { mailer, mockUSDC, addr2 } = this;
+        it("Should emit feePaid=false when USDC transfer fails (insufficient allowance)", async function () {
+          const { mailer, mockUSDC, addr2, publicClient } = this;
           // Give addr2 USDC but no allowance
           await mockUSDC.write.mint([addr2.account.address, parseUnits("1", 6)]);
 
-          await expect(
-            mailer.write.sendPreparedToEmailAddress(["test@example.com", "mail-abc", addr2.account.address], { account: addr2.account })
-          ).to.be.rejectedWith("InsufficientAllowance");
+          const ownerBefore = await mailer.read.getOwnerClaimable();
+          const hash = await mailer.write.sendPreparedToEmailAddress(["test@example.com", "mail-abc", addr2.account.address], { account: addr2.account });
+          await publicClient.waitForTransactionReceipt({ hash });
+
+          const logs = await mailer.getEvents.PreparedMailSentToEmail();
+          const event = logs[logs.length - 1];
+          expect(event.args.feePaid).to.be.false;
+
+          const ownerAfter = await mailer.read.getOwnerClaimable();
+          expect(ownerAfter).to.equal(ownerBefore);
         });
 
         it("Should work with empty mailId", async function () {
