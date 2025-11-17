@@ -5,6 +5,7 @@
 ## 🎯 Quick Reference
 
 ### Essential Commands (Always Use These)
+
 ```bash
 # After ANY contract changes
 npm run compile
@@ -24,6 +25,7 @@ npm run ai:workflow run full-build
 ### 1. Contract Modification Pattern
 
 **✅ CORRECT Workflow:**
+
 ```bash
 # 1. Make contract changes (EVM + Solana)
 # Edit contracts/Mailer.sol
@@ -44,6 +46,7 @@ npm test
 ```
 
 **❌ WRONG - Missing Steps:**
+
 ```bash
 # Edit contract
 # Run tests directly ← ERROR: Skip compilation
@@ -78,6 +81,7 @@ function sendBulk(
 ```
 
 **Follow-up Steps:**
+
 1. Run `npm run compile` (generates TypeScript types)
 2. Add corresponding Solana function in `programs/mailer/src/lib.rs`
 3. Update TypeScript client in `src/evm/mailer-client.ts`
@@ -87,6 +91,7 @@ function sendBulk(
 ### 3. Testing Patterns
 
 **Standard Test Structure:**
+
 ```typescript
 describe("New Feature", function () {
   let mailer: Mailer;
@@ -129,6 +134,7 @@ describe("New Feature", function () {
 ```
 
 **Key Testing Patterns:**
+
 - Always fund accounts with MockUSDC before testing
 - Test both success and failure scenarios  
 - Verify event emissions with exact parameters
@@ -140,6 +146,7 @@ describe("New Feature", function () {
 **When adding features, maintain consistency:**
 
 **EVM (Solidity):**
+
 ```solidity
 function send(
     address to,
@@ -152,6 +159,7 @@ function send(
 ```
 
 **Solana (Rust):**
+
 ```rust
 pub fn send(
     ctx: Context<SendMessage>,
@@ -171,6 +179,7 @@ pub fn send(
 ```
 
 **TypeScript Client:**
+
 ```typescript
 async send(
     to: string | PublicKey,
@@ -190,6 +199,7 @@ async send(
 ### Test Categories
 
 **1. Unit Tests (Individual Functions)**
+
 ```typescript
 describe("Fee Calculation", function () {
   it("Should calculate standard fee correctly", async function () {
@@ -201,6 +211,7 @@ describe("Fee Calculation", function () {
 ```
 
 **2. Integration Tests (Full Workflows)**
+
 ```typescript  
 describe("Message Sending Workflow", function () {
   it("Should complete full send -> claim workflow", async function () {
@@ -222,6 +233,7 @@ describe("Message Sending Workflow", function () {
 ```
 
 **3. Error Condition Tests**
+
 ```typescript
 describe("Error Handling", function () {
   it("Should reject insufficient balance", async function () {
@@ -241,6 +253,7 @@ describe("Error Handling", function () {
 
 **Problem:** TypeScript errors about missing contract types
 **Solution:**
+
 ```bash
 npm run compile  # Regenerate types
 npm run build    # Rebuild TypeScript
@@ -248,6 +261,7 @@ npm run build    # Rebuild TypeScript
 
 **Problem:** Anchor build fails
 **Solution:**
+
 ```bash
 anchor --version  # Check version compatibility
 anchor build --verbose  # Get detailed error info
@@ -257,6 +271,7 @@ anchor build --verbose  # Get detailed error info
 
 **Problem:** "Contract function doesn't exist"
 **Solution:**
+
 ```bash
 npm run compile  # Regenerate contract types
 rm -rf artifacts cache  # Clean rebuild
@@ -265,6 +280,7 @@ npm run compile
 
 **Problem:** "Insufficient funds" errors
 **Solution:**
+
 ```typescript
 // Always fund and approve before testing
 await mockUSDC.mint(testAddress, ethers.parseUnits("1000", 6));
@@ -307,10 +323,10 @@ npm run ai:workflow run test-all --dry-run
 
 ## 📋 Code Quality Checklist
 
-### Before Committing Code:
+### Before Committing Code
 
 - [ ] Contracts compile successfully: `npm run compile`
-- [ ] All tests pass: `npm test` 
+- [ ] All tests pass: `npm test`
 - [ ] TypeScript builds cleanly: `npm run build`
 - [ ] Code follows existing patterns
 - [ ] Documentation updated for new features
@@ -318,7 +334,7 @@ npm run ai:workflow run test-all --dry-run
 - [ ] Error handling implemented
 - [ ] Events emitted for state changes
 
-### Code Review Checklist:
+### Code Review Checklist
 
 - [ ] Function signatures match across chains
 - [ ] Fee calculations are precise
@@ -332,12 +348,14 @@ npm run ai:workflow run test-all --dry-run
 ### Efficient Development
 
 1. **Use incremental compilation:**
+
    ```bash
    npx hardhat compile  # Only EVM
    anchor build         # Only Solana
    ```
 
 2. **Run specific test suites:**
+
    ```bash
    npm run test:evm     # Only EVM tests
    npm run test:solana  # Only Solana tests  
@@ -345,6 +363,7 @@ npm run ai:workflow run test-all --dry-run
    ```
 
 3. **Use watch mode during development:**
+
    ```bash
    npx hardhat watch compilation  # Auto-compile on changes
    npm run test:evm -- --watch    # Auto-test on changes
@@ -404,7 +423,8 @@ console.log(`Send took ${Date.now() - start}ms`);
 
 ## 💡 AI Assistant Notes
 
-### Key Reminders:
+### Key Reminders
+
 - **ALWAYS** run `npm run compile` after contract changes
 - **NEVER** skip testing before committing
 - **MAINTAIN** consistency between EVM and Solana implementations  
@@ -412,7 +432,8 @@ console.log(`Send took ${Date.now() - start}ms`);
 - **FOLLOW** existing patterns and naming conventions
 - **DOCUMENT** all new functions with comprehensive comments
 
-### Quick Commands Reference:
+### Quick Commands Reference
+
 - `npm run compile` - Compile contracts & generate types
 - `npm test` - Run all tests (88+ tests)
 - `npm run ai:workflow status` - Check project health

@@ -513,6 +513,7 @@ const result: TransactionResult = await client.sendMessage(
 The package automatically serves the appropriate module format:
 
 ### Package.json Configuration
+
 ```json
 {
   "main": "dist/unified/src/unified/index.js",
@@ -529,6 +530,7 @@ The package automatically serves the appropriate module format:
 ```
 
 ### Environment Detection
+
 - **Node.js with `require()`** → Gets CommonJS build
 - **Node.js with `import`** → Gets ESM build
 - **Webpack/Vite bundlers** → Gets ESM build (enables tree-shaking)
@@ -648,6 +650,7 @@ export class MultiChainMailer {
 ### Common Issues
 
 #### Module Resolution Errors
+
 ```bash
 # Error: Cannot find module '@johnqh/mail_box_contracts'
 npm install @johnqh/mail_box_contracts
@@ -659,6 +662,7 @@ npm install
 ```
 
 #### TypeScript Import Errors
+
 ```typescript
 // Use type-only imports for types
 import type { ChainType, NetworkConfig } from '@johnqh/mail_box_contracts';
@@ -666,6 +670,7 @@ import { OnchainMailerClient } from '@johnqh/mail_box_contracts';
 ```
 
 #### ESM/CommonJS Mixed Usage
+
 ```javascript
 // Don't mix require and import in the same file
 // ❌ Don't do this
@@ -679,6 +684,7 @@ import { OnchainMailerClient, ChainType } from '@johnqh/mail_box_contracts';
 ### Environment-Specific Issues
 
 #### React Native Metro Bundler
+
 ```javascript
 // metro.config.js - if you encounter resolution issues
 module.exports = {
@@ -691,6 +697,7 @@ module.exports = {
 ```
 
 #### Webpack Bundle Size
+
 ```javascript
 // webpack.config.js - ensure tree shaking works
 module.exports = {

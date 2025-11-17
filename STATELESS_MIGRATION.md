@@ -7,24 +7,29 @@ The OnchainMailerClient and its underlying EVM and Solana clients have been succ
 ## What Was Changed
 
 ### 1. Removed Stateful Clients
+
 - **Deleted**: `src/evm/mailer-client.ts` (stateful EVM client)
 - **Deleted**: `src/solana/mailer-client.ts` (stateful Solana client)
 
 ### 2. Created Stateless Clients
+
 - **Created**: `src/evm/mailer-client-stateless.ts` - Stateless EVM client
 - **Created**: `src/solana/mailer-client-stateless.ts` - Stateless Solana client
 
 ### 3. Updated OnchainMailerClient
+
 - **Modified**: `src/unified/onchain-mailer-client.ts` - Now uses stateless EVM and Solana clients
 - No wallet or chain information stored in constructor
 - All methods now require wallet and ChainInfo parameters
 
 ### 4. Updated Exports
+
 - **Modified**: `src/evm/index.ts` - Only exports stateless client
 - **Modified**: `src/solana/index.ts` - Only exports stateless client
 - **Modified**: `src/index.ts` - Updated to export stateless clients
 
 ### 5. Fixed Contract Interface Issues
+
 - Fixed `sendThroughWebhook` parameters to match contract
 - Fixed `sendToEmailAddress` to include payer parameter
 - Fixed `sendPreparedToEmailAddress` to include payer parameter
@@ -35,6 +40,7 @@ The OnchainMailerClient and its underlying EVM and Solana clients have been succ
 - Fixed `hasPermission` to use `permissions` contract function
 
 ### 6. Fixed Type Issues
+
 - Updated `MailerFees` interface to use `bigint` instead of `number`
 - Added optional `expiresAt` property to `ClaimableInfo` interface
 - Fixed return values for recipient claimable info
@@ -91,12 +97,14 @@ const result = await client.sendMessage(
 ## Build Status
 
 ✅ **Core TypeScript builds successfully**:
+
 - `npm run build:evm` - ✅ Successful
 - `npm run build:solana` - ✅ Successful
 
 ## Next Steps (Not Implemented)
 
 The React components (`src/react/`) still use the old stateful client API and would need to be updated:
+
 1. Update `MailerProvider` to use stateless client
 2. Update `useMailerMutations` hook to pass wallet and chainInfo to all client calls
 3. Update `useMailerQueries` hook to pass wallet and chainInfo to all client calls
@@ -109,12 +117,14 @@ These React components are out of scope for the current stateless migration but 
 For users migrating from the stateful to stateless client:
 
 ### Before (Stateful)
+
 ```typescript
 const client = new OnchainMailerClient(wallet, chainInfo);
 await client.sendMessage('Hello', 'Body', { to: '0x...' });
 ```
 
 ### After (Stateless)
+
 ```typescript
 const client = new OnchainMailerClient();
 await client.sendMessage('Hello', 'Body', wallet, chainInfo, { to: '0x...' });

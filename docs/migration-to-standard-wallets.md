@@ -3,18 +3,21 @@
 ## Overview
 
 This guide helps you migrate from the old `UnifiedWallet` abstraction to using standard wallet libraries:
+
 - **EVM**: wagmi's `WalletClient` and `PublicClient`
 - **Solana**: `@solana/wallet-adapter` interface
 
 ## Why This Change?
 
 The `UnifiedWallet` interface attempted to normalize incompatible wallet systems, which:
+
 - Created unnecessary abstraction layers
 - Fought against ecosystem standards
 - Made the code harder to maintain
 - Confused developers familiar with standard libraries
 
 The new approach:
+
 - Uses standard wagmi for EVM chains
 - Uses standard wallet-adapter for Solana
 - Provides better type safety
@@ -38,6 +41,7 @@ npm uninstall @custom/unified-wallet
 ### 2. EVM Migration
 
 #### Old Approach (UnifiedWallet)
+
 ```typescript
 import { OnchainMailerClient } from '@johnqh/mail_box_contracts';
 
@@ -57,6 +61,7 @@ const client = new OnchainMailerClient(unifiedWallet, config);
 ```
 
 #### New Approach (wagmi)
+
 ```typescript
 import { createWalletClient, createPublicClient, http } from 'viem';
 import { mainnet } from 'viem/chains';
@@ -84,6 +89,7 @@ const client = OnchainMailerClient.forEVM(
 ### 3. Solana Migration
 
 #### Old Approach (UnifiedWallet)
+
 ```typescript
 import { OnchainMailerClient } from '@johnqh/mail_box_contracts';
 
@@ -99,6 +105,7 @@ const client = new OnchainMailerClient(unifiedWallet, config);
 ```
 
 #### New Approach (wallet-adapter)
+
 ```typescript
 import { Connection } from '@solana/web3.js';
 import { useWallet } from '@solana/wallet-adapter-react';
@@ -119,6 +126,7 @@ const client = OnchainMailerClient.forSolana(
 ### 4. React Integration Migration
 
 #### Old Approach
+
 ```typescript
 import { MailerProvider } from '@johnqh/mail_box_contracts/react';
 
@@ -135,6 +143,7 @@ function App() {
 ```
 
 #### New Approach - EVM with wagmi
+
 ```typescript
 import { WagmiConfig, createConfig } from 'wagmi';
 import { createPublicClient, http } from 'viem';
@@ -174,6 +183,7 @@ function YourComponent() {
 ```
 
 #### New Approach - Solana with wallet-adapter
+
 ```typescript
 import { WalletProvider } from '@solana/wallet-adapter-react';
 import { PhantomWalletAdapter } from '@solana/wallet-adapter-wallets';
@@ -211,11 +221,13 @@ function YourComponent() {
 #### Getting Wallet Address
 
 Old:
+
 ```typescript
 const address = client.getWalletAddress(); // Synchronous
 ```
 
 New:
+
 ```typescript
 const address = await client.getWalletAddressAsync(); // Async for EVM
 ```
@@ -223,11 +235,13 @@ const address = await client.getWalletAddressAsync(); // Async for EVM
 #### Client Creation
 
 Old:
+
 ```typescript
 new OnchainMailerClient(wallet, config); // Generic constructor
 ```
 
 New:
+
 ```typescript
 // Specific factory methods
 OnchainMailerClient.forEVM(walletClient, publicClient, mailer, usdc);
@@ -276,12 +290,14 @@ const address = await client.getWalletAddressAsync();
 ## Example Projects
 
 See the following examples for complete implementations:
+
 - [wagmi-integration.ts](../examples/wagmi-integration.ts) - EVM with wagmi
 - [wallet-adapter-integration.ts](../examples/wallet-adapter-integration.ts) - Solana with wallet-adapter
 
 ## Need Help?
 
 If you encounter issues during migration:
+
 1. Check the [examples](../examples/) directory
 2. Review the [API documentation](./api-reference.md)
 3. Open an issue on [GitHub](https://github.com/johnqh/mail_box_contracts/issues)

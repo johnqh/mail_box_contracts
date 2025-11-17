@@ -38,36 +38,43 @@ node dist/examples/basic-usage.js
 Comprehensive examples covering all major functionality:
 
 **1. Contract Deployment**
+
 - Deploy MockUSDC for testing
 - Deploy Mailer contract (includes delegation functionality)
 - Initialize MailerClient instance
 
 **2. Account Setup**
+
 - Fund accounts with test USDC
 - Approve contract spending
 - Check balances
 
 **3. Domain Management**
+
 - Register new domains
 - Extend existing domains
 - Check registration fees
 
 **4. Delegation System**
+
 - Delegate email handling to another address
 - Reject unwanted delegations
 - Clear existing delegations
 
 **5. Messaging System**
+
 - Send priority messages (with revenue sharing)
 - Send standard messages (fee-only)
 - Use prepared message IDs
 
 **6. Revenue Claiming**
+
 - Claim 90% revenue share from priority messages
 - Owner claims accumulated fees
 - Handle expired claims
 
 **7. Advanced Patterns**
+
 - Event listening for real-time updates
 - Error handling best practices
 - Batch operations
@@ -257,6 +264,7 @@ USDC balance after claim: 899.09 USDC
 5. **Monitor Events**: Set up event listeners to build reactive applications
 
 For more detailed technical information, see:
+
 - [`../CLAUDE.md`](../CLAUDE.md) - AI assistant development guide
 - [`../AI_DEVELOPMENT_GUIDE.md`](../AI_DEVELOPMENT_GUIDE.md) - Comprehensive development patterns
 - [`../README.md`](../README.md) - Project overview and setup instructions

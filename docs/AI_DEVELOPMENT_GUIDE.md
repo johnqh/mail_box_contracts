@@ -5,11 +5,13 @@ This comprehensive guide provides AI assistants with everything needed to effect
 ## 🎯 Project Overview for AI
 
 **Mailer Contracts** is a production-ready multi-chain decentralized messaging system supporting:
+
 - **EVM Chains**: Ethereum, Polygon, Arbitrum, Optimism, Base, etc.
 - **Solana**: Mainnet, Devnet, Testnet, Localnet
 - **Unified API**: Single client interface with automatic chain detection
 
 ### Core Architecture
+
 ```
 mail_box_contracts/
 ├── contracts/              # Solidity smart contracts (EVM)
@@ -27,6 +29,7 @@ mail_box_contracts/
 ## 🚀 Quick Start for AI Development
 
 ### Essential Commands
+
 ```bash
 # Build everything (contracts + clients)
 npm run compile    # EVM contracts + TypeScript types
@@ -43,6 +46,7 @@ npm run deploy:unified      # Multi-chain deployment
 ```
 
 ### Key Files to Understand First
+
 1. `src/unified/onchain-mailer-client.ts` - Main unified client
 2. `src/unified/wallet-detector.ts` - Automatic chain detection
 3. `examples/unified-usage.ts` - Complete usage patterns
@@ -53,6 +57,7 @@ npm run deploy:unified      # Multi-chain deployment
 ### 1. Adding New Chain Support
 
 **Pattern**: Follow the EVM/Solana structure
+
 ```typescript
 // 1. Create new chain directory: src/[chain]/
 // 2. Implement client interfaces matching unified/types.ts
@@ -64,6 +69,7 @@ npm run deploy:unified      # Multi-chain deployment
 ### 2. Multi-Chain Client Development
 
 **Unified Client Extension**:
+
 ```typescript
 class OnchainMailerClient {
   async newMethod(param: string): Promise<Result> {
@@ -78,6 +84,7 @@ class OnchainMailerClient {
 ```
 
 **Error Handling Pattern**:
+
 ```typescript
 try {
   const result = await client.someOperation();
@@ -97,6 +104,7 @@ try {
 ### 3. Testing Patterns
 
 **EVM Test Structure**:
+
 ```typescript
 describe('NewFeature', () => {
   let contract: NewContract;
@@ -121,6 +129,7 @@ describe('NewFeature', () => {
 ```
 
 **Unified Client Test Pattern**:
+
 ```typescript
 describe('UnifiedClient - NewFeature', () => {
   it('should route to appropriate chain implementation', async () => {
@@ -138,6 +147,7 @@ describe('UnifiedClient - NewFeature', () => {
 ### Adding New EVM Functionality
 
 1. **Contract Development**:
+
    ```bash
    # Edit contracts/Contract.sol
    npm run compile
@@ -145,6 +155,7 @@ describe('UnifiedClient - NewFeature', () => {
    ```
 
 2. **Client Integration**:
+
    ```typescript
    // Update src/evm/client.ts
    async newMethod(): Promise<Result> {
@@ -153,6 +164,7 @@ describe('UnifiedClient - NewFeature', () => {
    ```
 
 3. **Unified Integration**:
+
    ```typescript
    // Update src/unified/mailbox-client.ts
    async newMethod(): Promise<Result> {
@@ -165,17 +177,20 @@ describe('UnifiedClient - NewFeature', () => {
 ### Adding New Solana Functionality
 
 1. **Program Development**:
+
    ```rust
    // Edit programs/program_name/src/lib.rs
    // Add instruction handlers
    ```
 
 2. **Build & Generate Types**:
+
    ```bash
    npm run build:solana  # Builds programs + generates types
    ```
 
 3. **Client Integration**:
+
    ```typescript
    // Update src/solana/client.ts
    async newMethod(): Promise<Result> {
@@ -187,6 +202,7 @@ describe('UnifiedClient - NewFeature', () => {
 ## 📚 Code Examples & Snippets
 
 ### Dynamic Import Pattern
+
 ```typescript
 // Always use dynamic imports for chain-specific code
 private async getEVMModules() {
@@ -198,6 +214,7 @@ private async getEVMModules() {
 ```
 
 ### Configuration Pattern
+
 ```typescript
 // Chain configurations should be extensible
 interface ChainConfig {
@@ -215,6 +232,7 @@ interface ChainConfig {
 ```
 
 ### Timeout Protection Pattern
+
 ```typescript
 // Always add timeouts to network calls
 const result = await Promise.race([
@@ -230,6 +248,7 @@ const result = await Promise.race([
 ### Common Issues & Solutions
 
 1. **TypeScript Compilation Errors**:
+
    ```bash
    # Always recompile after contract changes
    npm run compile
@@ -237,6 +256,7 @@ const result = await Promise.race([
    ```
 
 2. **Test Failures**:
+
    ```bash
    # Run specific test suites
    npm run test:evm
@@ -244,6 +264,7 @@ const result = await Promise.race([
    ```
 
 3. **Chain Detection Issues**:
+
    ```typescript
    // Debug wallet detection
    console.log('Wallet properties:', Object.keys(wallet));
@@ -253,6 +274,7 @@ const result = await Promise.race([
 ## 🚨 Security Best Practices
 
 1. **Input Validation**:
+
    ```typescript
    // Always validate addresses
    if (this.chainType === 'evm' && !ethers.isAddress(address)) {
@@ -261,6 +283,7 @@ const result = await Promise.race([
    ```
 
 2. **Amount Validation**:
+
    ```typescript
    // Validate amounts and prevent overflows
    if (amount <= 0 || amount > Number.MAX_SAFE_INTEGER) {
@@ -269,6 +292,7 @@ const result = await Promise.race([
    ```
 
 3. **Transaction Verification**:
+
    ```typescript
    // Always verify transactions completed
    const receipt = await tx.wait();
@@ -280,6 +304,7 @@ const result = await Promise.race([
 ## 📖 Documentation Standards
 
 ### Function Documentation
+
 ```typescript
 /**
  * @description Clear description of what the function does
@@ -301,6 +326,7 @@ async method(param1: string): Promise<Result> {
 ## 🎯 AI-Specific Guidelines
 
 ### Dynamic Imports Best Practices
+
 ```typescript
 // ✅ Good: Dynamic imports for chain-specific heavy modules
 const evmModules = await import('../evm');
@@ -312,6 +338,7 @@ import { SolanaClient } from '../solana/client';
 ```
 
 ### Error Message Patterns
+
 ```typescript
 // ✅ Good: Specific, actionable error messages
 throw new Error('Insufficient USDC balance. Required: 0.1 USDC, Available: 0.05 USDC');
@@ -323,7 +350,9 @@ throw new Error('Transaction failed');
 ## 🔄 Maintenance Workflows
 
 ### Regular Maintenance Tasks
+
 1. **Dependency Updates**:
+
    ```bash
    npm audit        # Check for vulnerabilities
    npm update       # Update dependencies
@@ -331,12 +360,14 @@ throw new Error('Transaction failed');
    ```
 
 2. **Type Generation**:
+
    ```bash
    # After contract changes
    npm run compile  # Regenerates TypeScript types
    ```
 
 ### Pre-Deployment Checklist
+
 - [ ] All tests passing (`npm test`)
 - [ ] TypeScript builds without errors (`npm run build`)
 - [ ] Examples work with new changes
@@ -346,6 +377,7 @@ throw new Error('Transaction failed');
 ## 🎉 Success Metrics
 
 The AI development environment is working well when:
+
 - ✅ New features can be added following established patterns
 - ✅ Tests provide clear feedback on breaking changes
 - ✅ Documentation enables self-service development

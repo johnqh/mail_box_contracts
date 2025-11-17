@@ -1,11 +1,13 @@
 # Testing Patterns for Mailer Multi-Chain System
 
 ## 🎯 Overview
+
 Comprehensive testing patterns for the multi-chain messaging system covering EVM contracts, Solana programs, and unified client functionality.
 
 ## 🧪 EVM Testing Patterns
 
 ### Basic Test Setup
+
 ```typescript
 describe('EVM Feature', () => {
   let contract: Mailer;
@@ -32,6 +34,7 @@ describe('EVM Feature', () => {
 ```
 
 ### Event Testing Pattern
+
 ```typescript
 it('Should emit correct events', async () => {
   await expect(contract.connect(addr1).sendPriority("Subject", "Body"))
@@ -41,6 +44,7 @@ it('Should emit correct events', async () => {
 ```
 
 ### Fee Calculation Testing
+
 ```typescript
 it('Should transfer correct fee amounts', async () => {
   const initialBalance = await mockUSDC.balanceOf(contract.address);
@@ -55,6 +59,7 @@ it('Should transfer correct fee amounts', async () => {
 ```
 
 ### Revenue Sharing Testing
+
 ```typescript
 it('Should handle revenue sharing correctly', async () => {
   // Send priority message
@@ -70,6 +75,7 @@ it('Should handle revenue sharing correctly', async () => {
 ```
 
 ### Time-based Testing
+
 ```typescript
 it('Should handle claim expiration', async () => {
   await contract.connect(addr1).sendPriority("Subject", "Body");
@@ -86,6 +92,7 @@ it('Should handle claim expiration', async () => {
 ## 🦀 Solana Testing Patterns (Conceptual)
 
 ### Basic Program Test Setup
+
 ```typescript
 describe('Solana Program', () => {
   let program: Program<MailService>;
@@ -101,6 +108,7 @@ describe('Solana Program', () => {
 ```
 
 ### Account Initialization Test
+
 ```typescript
 it('Should initialize mailer account', async () => {
   const [mailerPda] = PublicKey.findProgramAddressSync(
@@ -124,6 +132,7 @@ it('Should initialize mailer account', async () => {
 ## 🔗 Unified Client Testing Patterns
 
 ### Chain Detection Testing
+
 ```typescript
 describe('WalletDetector', () => {
   it('should detect EVM wallet correctly', () => {
@@ -146,6 +155,7 @@ describe('WalletDetector', () => {
 ```
 
 ### Unified Client Routing Tests
+
 ```typescript
 describe('OnchainMailerClient', () => {
   it('should route to EVM implementation', async () => {
@@ -177,6 +187,7 @@ describe('OnchainMailerClient', () => {
 ```
 
 ### Address Validation Testing
+
 ```typescript
 describe('Address Validation', () => {
   it('should validate EVM addresses correctly', () => {
@@ -198,6 +209,7 @@ describe('Address Validation', () => {
 ```
 
 ### Error Handling Testing
+
 ```typescript
 describe('Error Handling', () => {
   it('should handle insufficient balance gracefully', async () => {
@@ -233,6 +245,7 @@ describe('Error Handling', () => {
 ## 🎨 Test Utilities and Helpers
 
 ### Mock Wallet Factory
+
 ```typescript
 export const createMockEVMWallet = (address?: string) => ({
   address: address || '0x1234567890123456789012345678901234567890',
@@ -247,6 +260,7 @@ export const createMockSolanaWallet = () => {
 ```
 
 ### Test Configuration Factory
+
 ```typescript
 export const createTestConfig = (overrides?: Partial<ChainConfig>): ChainConfig => ({
   evm: {
@@ -272,6 +286,7 @@ export const createTestConfig = (overrides?: Partial<ChainConfig>): ChainConfig 
 ```
 
 ### Assertion Helpers
+
 ```typescript
 export const expectUSDCTransfer = async (
   token: MockUSDC,
@@ -296,6 +311,7 @@ export const expectUSDCTransfer = async (
 ## 📊 Test Coverage Guidelines
 
 ### Required Test Categories
+
 1. **Happy Path Tests**: Normal successful operations
 2. **Error Cases**: Invalid inputs, insufficient funds, network errors
 3. **Edge Cases**: Boundary conditions, zero amounts, address validation
@@ -304,6 +320,7 @@ export const expectUSDCTransfer = async (
 6. **Performance Tests**: Timeout handling, large data processing
 
 ### Test Organization
+
 ```
 test/
 ├── evm/                    # EVM-specific tests
@@ -320,6 +337,7 @@ test/
 ```
 
 ### Success Criteria
+
 - **EVM Tests**: 105+ tests passing (comprehensive contract coverage)
 - **Unified Tests**: 30+ tests passing (cross-chain functionality)
 - **Integration Tests**: All deployment and verification scripts working

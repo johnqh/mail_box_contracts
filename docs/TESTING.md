@@ -171,6 +171,7 @@ it("Should allow owner to update registration fee", async function () {
 **Covers**: All four message types with various scenarios
 
 #### Priority Message Tests
+
 ```typescript
 it("Should emit MailSent event when USDC transfer succeeds", async function () {
   await expect(
@@ -190,6 +191,7 @@ it("Should transfer correct USDC amount to contract", async function () {
 ```
 
 #### Standard Message Tests
+
 ```typescript
 it("Should transfer 10% of sendFee to contract for owner", async function () {
   const initialBalance = await mockUSDC.balanceOf(await mailer.getAddress());
@@ -213,6 +215,7 @@ it("Should transfer 10% of sendFee to contract for owner", async function () {
 **Covers**: Share recording, claims, expiration, and view functions
 
 #### Share Recording
+
 ```typescript
 it("Should record 90% for recipient and 10% for owner on sendPriority", async function () {
   const fee = await mailer.sendFee(); // 100000 (0.1 USDC)
@@ -233,6 +236,7 @@ it("Should record 90% for recipient and 10% for owner on sendPriority", async fu
 ```
 
 #### Claim Management
+
 ```typescript
 it("Should allow recipient to claim their share", async function () {
   // Send a message to create claimable amount
@@ -254,6 +258,7 @@ it("Should allow recipient to claim their share", async function () {
 ```
 
 #### Time-based Testing
+
 ```typescript
 it("Should handle expired claims correctly", async function () {
   await mailer.connect(addr1).sendPriority("Test", "Body");
@@ -405,6 +410,7 @@ it("Should complete full operation", async function () {
 ## Running Tests
 
 ### Full Test Suite
+
 ```bash
 npm test                    # Run all 81 tests
 npm test -- --grep "MailService"  # Run only MailService tests
@@ -412,11 +418,13 @@ npm test -- --grep "Mailer"       # Run only Mailer tests
 ```
 
 ### Test with Coverage
+
 ```bash
 npx hardhat coverage        # Generate coverage report
 ```
 
 ### Continuous Testing
+
 ```bash
 npx hardhat test --watch    # Run tests on file changes
 ```

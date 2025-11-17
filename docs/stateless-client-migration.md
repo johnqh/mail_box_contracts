@@ -15,6 +15,7 @@ The OnchainMailerClient has been refactored to follow a stateless pattern where 
 ## API Changes
 
 ### Old Pattern (v1/v2)
+
 ```typescript
 // Wallet passed to constructor
 const client = new OnchainMailerClient(wallet, config);
@@ -24,6 +25,7 @@ const result = await client.sendMessage(subject, body, priority);
 ```
 
 ### New Pattern (v3)
+
 ```typescript
 // Only configuration in constructor
 const client = new OnchainMailerClient({
@@ -45,6 +47,7 @@ const result = await client.sendMessage(
 ### EVM Migration
 
 #### Before
+
 ```typescript
 import { OnchainMailerClient } from '@sudobility/contracts';
 
@@ -67,6 +70,7 @@ const delegation = await client.delegateTo('0xDelegate');
 ```
 
 #### After
+
 ```typescript
 import { OnchainMailerClient } from '@sudobility/contracts';
 
@@ -96,6 +100,7 @@ const delegation = await client.delegateTo(
 ### Solana Migration
 
 #### Before
+
 ```typescript
 import { OnchainMailerClient } from '@sudobility/contracts';
 
@@ -118,6 +123,7 @@ const claim = await client.claimRevenue();
 ```
 
 #### After
+
 ```typescript
 import { OnchainMailerClient } from '@sudobility/contracts';
 
@@ -144,6 +150,7 @@ const claim = await client.claimRevenue({ wallet, connection });
 ## React Integration
 
 ### Before
+
 ```typescript
 function useMailerClient() {
   const wallet = useWallet();
@@ -165,6 +172,7 @@ function useMailerClient() {
 ```
 
 ### After
+
 ```typescript
 // Create a single client instance (can be global)
 const mailerClient = new OnchainMailerClient({
@@ -237,6 +245,7 @@ const fee2 = await client.getSendFee();
 ## Type Definitions
 
 ### EVM Wallet
+
 ```typescript
 interface EVMWallet {
   walletClient: WalletClient;
@@ -245,6 +254,7 @@ interface EVMWallet {
 ```
 
 ### Solana Wallet
+
 ```typescript
 interface SolanaWallet {
   wallet: WalletAdapter;
@@ -283,6 +293,7 @@ class LegacyMailerClient {
 ## Summary
 
 The new stateless pattern provides:
+
 - Better flexibility for multi-wallet scenarios
 - Cleaner separation of concerns
 - Standard Web3 patterns

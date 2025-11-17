@@ -17,6 +17,7 @@ cp .env.example .env
 ### 2. Fund Your Deployer Account
 
 Ensure your deployer account has native tokens for gas fees on your target network:
+
 - **Ethereum**: ETH
 - **Polygon**: MATIC  
 - **Arbitrum/Optimism/Base**: ETH
@@ -48,11 +49,13 @@ npm run verify:base             # Verify on BaseScan
 ## 🌐 Supported Networks
 
 ### Ethereum Networks
+
 - **Mainnet**: `npm run deploy:mainnet`
-- **Sepolia**: `npm run deploy:sepolia` 
+- **Sepolia**: `npm run deploy:sepolia`
 - **Goerli**: `npm run deploy:goerli`
 
 ### Layer 2 & Scaling Solutions
+
 - **Polygon**: `npm run deploy:polygon` / `npm run deploy:mumbai`
 - **Optimism**: `npm run deploy:optimism` / `npm run deploy:optimism-goerli`
 - **Arbitrum**: `npm run deploy:arbitrum` / `npm run deploy:arbitrum-sepolia`
@@ -63,6 +66,7 @@ npm run verify:base             # Verify on BaseScan
 - **Mantle**: `npm run deploy:mantle` / `npm run deploy:mantle-testnet`
 
 ### Alternative L1s & Sidechains
+
 - **Avalanche**: `npm run deploy:avalanche` / `npm run deploy:fuji`
 - **BSC**: `npm run deploy:bsc` / `npm run deploy:bsc-testnet`
 - **Fantom**: `npm run deploy:fantom` / `npm run deploy:fantom-testnet`
@@ -71,6 +75,7 @@ npm run verify:base             # Verify on BaseScan
 - **Celo**: `npm run deploy:celo` / `npm run deploy:alfajores`
 
 ### Local Development
+
 - **Hardhat**: `npm run deploy:local`
 - **Localhost**: `npm run deploy:localhost`
 
@@ -127,6 +132,7 @@ The deployment script automatically uses the correct USDC token address for each
 ### Deployment Outputs
 
 After deployment, you'll see:
+
 ```
 🎉 DEPLOYMENT COMPLETED SUCCESSFULLY!
 ==================================================
@@ -141,6 +147,7 @@ MailService: 0x5678...efgh
 ### Deployment Records
 
 Deployment info is automatically saved to `deployments/<network>.json`:
+
 ```json
 {
   "network": "polygon",
@@ -165,11 +172,12 @@ Deployment info is automatically saved to `deployments/<network>.json`:
 ### Block Explorer APIs
 
 Get free API keys from:
-- **Etherscan**: https://etherscan.io/apis
-- **PolygonScan**: https://polygonscan.com/apis  
-- **Arbiscan**: https://arbiscan.io/apis
-- **BaseScan**: https://basescan.org/apis
-- **SnowTrace** (Avalanche): https://snowtrace.io/apis
+
+- **Etherscan**: <https://etherscan.io/apis>
+- **PolygonScan**: <https://polygonscan.com/apis>  
+- **Arbiscan**: <https://arbiscan.io/apis>
+- **BaseScan**: <https://basescan.org/apis>
+- **SnowTrace** (Avalanche): <https://snowtrace.io/apis>
 
 ### Verification Commands
 
@@ -185,6 +193,7 @@ npm run verify:base
 ### Manual Verification
 
 If automated verification fails:
+
 ```bash
 npx hardhat verify --network polygon 0x1234...abcd "0x2791Bca1f2de4661ED88A30C99A7a9449Aa84174" "0xOwnerAddress"
 ```
@@ -194,6 +203,7 @@ npx hardhat verify --network polygon 0x1234...abcd "0x2791Bca1f2de4661ED88A30C99
 ### Custom RPC URLs
 
 Override default RPC URLs via environment variables:
+
 ```bash
 POLYGON_RPC_URL=https://your-custom-rpc.com npm run deploy:polygon
 ```
@@ -201,6 +211,7 @@ POLYGON_RPC_URL=https://your-custom-rpc.com npm run deploy:polygon
 ### Custom Gas Settings
 
 Set custom gas prices in your network config or via environment:
+
 ```bash
 GAS_PRICE_POLYGON=30000000000 npm run deploy:polygon
 ```
@@ -208,6 +219,7 @@ GAS_PRICE_POLYGON=30000000000 npm run deploy:polygon
 ### Deploy to Custom Networks
 
 Add new networks to `hardhat.config.ts`:
+
 ```typescript
 networks: {
   myCustomNetwork: {
@@ -248,20 +260,25 @@ Approximate deployment costs (varies by network congestion):
 ### Common Issues
 
 **"Insufficient funds for gas"**
+
 - Fund your deployer account with native tokens
 
 **"Invalid API key"**
+
 - Check your block explorer API key in `.env`
 
 **"Network connection error"**  
+
 - Verify your RPC URL is correct and accessible
 
 **"Contract already exists"**
+
 - Previous deployment succeeded; check `deployments/` folder
 
 ### Debug Mode
 
 Enable verbose logging:
+
 ```bash
 DEBUG=* npm run deploy:sepolia
 ```
@@ -269,6 +286,7 @@ DEBUG=* npm run deploy:sepolia
 ### Support
 
 For deployment issues:
+
 1. Check network status pages
 2. Verify account balances  
 3. Test with testnets first

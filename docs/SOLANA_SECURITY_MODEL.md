@@ -31,10 +31,12 @@ function transferFrom(address from, address to, uint256 amount) {
 ### EVM Security Properties
 
 ✅ **Protections:**
+
 - Can't spend tokens without approval
 - Approval limits maximum spend
 
 ❌ **Vulnerabilities:**
+
 - **Forgotten approvals**: Unlimited approvals left on compromised contracts
 - **Frontrunning attacks**: Changing approval amount can be exploited
 - **Implicit permissions**: Approvals sit dormant until used
@@ -122,6 +124,7 @@ invoke_signed(
 ### Scenario 1: User Sends Message
 
 **EVM:**
+
 ```javascript
 // Step 1: User approves (one time)
 await usdc.approve(mailer, ethers.MaxUint256);  // Unlimited approval!
@@ -134,6 +137,7 @@ await mailer.send(to, subject, body);
 ```
 
 **Solana:**
+
 ```javascript
 // Send message (no prior approval needed)
 await program.methods
@@ -155,6 +159,7 @@ await program.methods
 ### Scenario 2: Smart Contract Sends Message
 
 **EVM (needs permission system):**
+
 ```solidity
 // Wallet must pre-approve + set permission
 usdc.approve(mailer, 1000 * 10**6);  // Risky!
@@ -168,6 +173,7 @@ contract.sendMessage(...);
 ```
 
 **Solana (no permission system needed):**
+
 ```rust
 // Contract has its own token account with funds
 let contract_usdc = PDA_token_account;
@@ -230,11 +236,13 @@ program.methods
 ## Key Insight: Account Ownership Model
 
 ### EVM
+
 - **Your tokens** = entry in token contract's mapping
 - **Security** = trust the contract to check approvals
 - **Spending** = contract pulls from your balance (if approved)
 
 ### Solana
+
 - **Your tokens** = you own a token account on-chain
 - **Security** = you must sign to authorize any transfer out
 - **Spending** = explicit transaction you sign with accounts listed
@@ -242,6 +250,7 @@ program.methods
 ## Practical Example: Mailer Usage
 
 ### EVM - User Flow
+
 ```javascript
 // One-time setup (risky!)
 await usdc.approve(mailer, MAX_UINT);  // ⚠️ Unlimited approval
@@ -256,6 +265,7 @@ for (let i = 0; i < 100; i++) {
 ```
 
 ### Solana - User Flow
+
 ```javascript
 // No setup needed!
 
@@ -286,10 +296,12 @@ for (let i = 0; i < 100; i++) {
 ## The Trade-off
 
 ### EVM Advantage
+
 - **Convenience**: Approve once, use many times
 - **Gas Efficiency**: One approval for multiple operations
 
 ### Solana Advantage
+
 - **Security**: Must sign each transaction explicitly
 - **Transparency**: Always clear what's happening
 - **No Lingering Risk**: No forgotten approvals to exploit
@@ -309,10 +321,12 @@ The EVM permission system in our Mailer contract is a **workaround for EVM's lim
 ## For Users
 
 **EVM:** "I approved this contract once. It can spend my tokens until I revoke."
+
 - ⚠️ Must track and revoke old approvals
 - ⚠️ Risk from compromised contracts you approved years ago
 
 **Solana:** "I'm signing this specific transaction right now with these exact accounts."
+
 - ✅ No tracking needed
 - ✅ No risk from past interactions
 - ✅ Clear what you're authorizing

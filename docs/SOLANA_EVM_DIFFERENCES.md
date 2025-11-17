@@ -33,6 +33,7 @@ function _getPayer(address sender) internal view returns (address);
 ```
 
 **Why it's needed in EVM:**
+
 1. ERC20 tokens use `transferFrom(from, to, amount)` pattern
 2. Requires prior `approve(spender, amount)` call
 3. Smart contracts typically cannot call `approve()` on behalf of users
@@ -43,6 +44,7 @@ function _getPayer(address sender) internal view returns (address);
    - The wallet automatically pays all fees when the contract calls send functions
 
 **Example EVM Flow:**
+
 ```solidity
 // One-time setup by wallet
 usdc.approve(mailer, 1000 * 10**6);  // Approve large amount
@@ -57,6 +59,7 @@ contract.send(recipient, subject, body);  // Wallet pays!
 The Solana implementation **does NOT have a permission system** - and doesn't need one!
 
 **Why it's not needed in Solana:**
+
 1. Solana uses **Program Derived Addresses (PDAs)** instead of approvals
 2. Token transfers work differently - no `transferFrom` pattern
 3. Programs specify token accounts directly in instructions
@@ -64,6 +67,7 @@ The Solana implementation **does NOT have a permission system** - and doesn't ne
 5. No "approval" concept - the caller's token account is passed directly
 
 **Solana Flow (No Permission System Needed):**
+
 ```rust
 // Contract has its own USDC token account (PDA)
 let contract_usdc_account = PDA::derive(...);
@@ -83,6 +87,7 @@ invoke(
 ```
 
 In Solana, a smart contract simply:
+
 1. Has its own token account (PDA)
 2. Holds USDC in that account
 3. Directly transfers from its account to Mailer
@@ -91,6 +96,7 @@ In Solana, a smart contract simply:
 ## Token Transfer Architecture
 
 ### EVM (Approval Pattern)
+
 ```
 User Wallet
     ↓ approve(mailer, amount)
@@ -100,6 +106,7 @@ Transfer executed
 ```
 
 ### Solana (Direct Account Pattern)
+
 ```
 Sender Token Account (passed as instruction account)
     ↓ transfer instruction
@@ -111,12 +118,14 @@ Transfer executed
 ## Account Model Differences
 
 ### EVM
+
 - **Single address per entity** (wallet or contract)
 - Balances stored in token contract's mapping
 - `balanceOf[address]` lookup
 - Contracts interact via function calls
 
 ### Solana
+
 - **Multiple accounts per entity**
 - Each token held in separate token account
 - Token accounts are PDAs owned by programs
@@ -127,13 +136,16 @@ Transfer executed
 Both implementations support custom fee discounts, but stored differently:
 
 ### EVM
+
 ```solidity
 mapping(address => uint256) public customFeeDiscount;
 ```
+
 - Single mapping in contract storage
 - Direct address lookup
 
 ### Solana
+
 ```rust
 pub struct FeeDiscount {
     pub account: Pubkey,
@@ -141,6 +153,7 @@ pub struct FeeDiscount {
     pub bump: u8,
 }
 ```
+
 - Separate PDA account per discount
 - Account derived from `[b"discount", account.as_ref()]`
 - Requires passing discount account in instruction
@@ -174,6 +187,7 @@ Both contracts achieve the same functionality - allowing entities (wallets or co
 When using either contract:
 
 **EVM (with contracts):**
+
 ```javascript
 // Wallet setup
 await usdc.approve(mailer, largeAmount);
@@ -185,6 +199,7 @@ await contract.sendMessage(to, subject, body);
 ```
 
 **Solana (with contracts):**
+
 ```javascript
 // Contract setup
 const contractUSDC = await getOrCreateTokenAccount(

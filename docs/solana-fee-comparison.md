@@ -1,6 +1,7 @@
 # Solana vs EVM Fee Models - Key Differences
 
 ## EVM (Ethereum) Gas Model
+
 - **Variable Gas Price**: Changes based on network congestion
 - **Gas Estimation**: Required to prevent transaction failures
 - **Gas Units**: Pay for computational steps
@@ -8,6 +9,7 @@
 - **Risk**: Transaction fails if insufficient gas provided
 
 ## Solana Fee Model
+
 - **Fixed Base Fee**: ~5,000 lamports (0.000005 SOL) per signature
 - **Compute Units**: Default 200k units, max 1.4M units
 - **Priority Fees**: Optional, helps with faster inclusion
@@ -27,6 +29,7 @@
 ## What Solana Needs Instead of "Gas Estimation"
 
 ### 1. **Compute Unit Optimization**
+
 ```typescript
 // Set compute unit budget based on transaction complexity
 transaction.add(
@@ -37,6 +40,7 @@ transaction.add(
 ```
 
 ### 2. **Priority Fees (for faster inclusion)**
+
 ```typescript
 // Add priority fee during congestion
 transaction.add(
@@ -47,6 +51,7 @@ transaction.add(
 ```
 
 ### 3. **Transaction Simulation**
+
 ```typescript
 // Simulate to get actual compute units used
 const simulation = await connection.simulateTransaction(transaction);
@@ -63,6 +68,7 @@ const unitsUsed = simulation.value.unitsConsumed;
 ## Implementation Recommendation
 
 Yes, we should add compute unit optimization to the Solana client for:
+
 - **Complex operations** (multiple instructions)
 - **High-priority transactions** (time-sensitive operations)
 - **Network congestion handling**

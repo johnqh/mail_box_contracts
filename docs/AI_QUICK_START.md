@@ -21,6 +21,7 @@ npm run ai:check
 ## 📋 AI-Optimized Workflow Commands
 
 ### Primary Development Commands
+
 | Command | Purpose | When to Use |
 |---------|---------|-------------|
 | `npm run ai:build` | Complete build workflow | After cloning, major changes |
@@ -29,6 +30,7 @@ npm run ai:check
 | `npm run ai:status` | Project health check | Troubleshooting |
 
 ### Chain-Specific Commands
+
 | Command | Purpose | Technology |
 |---------|---------|------------|
 | `npm run compile:evm` | EVM contracts | Solidity + Hardhat |
@@ -40,6 +42,7 @@ npm run ai:check
 ## 🏗️ Project Architecture
 
 ### Multi-Chain Structure
+
 ```
 contracts/          # EVM (Ethereum-compatible) 
 ├── MailService.sol # Delegation management
@@ -64,6 +67,7 @@ test/               # Comprehensive test suites
 ## 🔧 Critical AI Development Rules
 
 ### 1. Always Compile After Contract Changes
+
 ```bash
 # After modifying .sol or .rs files
 npm run compile
@@ -73,6 +77,7 @@ npm run compile
 ```
 
 ### 2. Test-Driven Development
+
 ```bash
 # Run existing tests first
 npm test
@@ -82,6 +87,7 @@ npm test
 ```
 
 ### 3. Multi-Chain Considerations
+
 - **EVM contracts**: Solidity with 6-decimal USDC
 - **Solana programs**: Rust with SPL tokens  
 - **Unified client**: TypeScript with chain detection
@@ -89,6 +95,7 @@ npm test
 ## 🧪 Testing Patterns
 
 ### EVM Testing (105+ tests)
+
 ```typescript
 // Fund test accounts with MockUSDC
 await mockUSDC.mint(addr1.address, ethers.parseUnits("100", 6));
@@ -101,6 +108,7 @@ await expect(contract.delegateTo(delegate))
 ```
 
 ### Solana Testing
+
 ```bash
 # Build programs first
 anchor build
@@ -112,12 +120,14 @@ anchor test --skip-local-validator
 ## 📦 Dependencies & Environment
 
 ### Required Tools
+
 - **Node.js**: 18+ with npm
 - **Rust**: 1.75.0 (Solana compatible)
 - **Anchor**: 0.28.0 (Solana framework)
 - **Hardhat**: EVM development environment
 
 ### Environment Setup
+
 ```bash
 # Check if tools are available
 node --version    # Should be 18+
@@ -128,6 +138,7 @@ anchor --version  # Should be 0.28.0
 ## 🎯 Common AI Tasks
 
 ### Adding New Contract Function
+
 1. Modify contract (.sol or .rs)
 2. Run `npm run compile`
 3. Update TypeScript clients
@@ -136,12 +147,14 @@ anchor --version  # Should be 0.28.0
 6. Update documentation
 
 ### Debugging Issues
+
 1. Check `npm run ai:status`
 2. Review compilation errors
 3. Check test failures
 4. Verify environment setup
 
 ### Cross-Chain Feature Development
+
 1. Implement in both EVM and Solana
 2. Update unified client interface
 3. Add tests for both chains
@@ -150,17 +163,20 @@ anchor --version  # Should be 0.28.0
 ## 🔍 Key Files for AI Reference
 
 ### Documentation
+
 - `CLAUDE.md` - Primary AI assistant guide
 - `.ai-config.json` - Project metadata
 - `README.md` - User documentation
 
 ### Configuration  
+
 - `package.json` - NPM scripts and dependencies
 - `hardhat.config.ts` - EVM configuration
 - `Anchor.toml` - Solana configuration
 - `.vscode/` - Editor optimizations
 
 ### Code Examples
+
 - `examples/` - Working usage examples
 - `test/` - Comprehensive test patterns
 - `src/` - Client implementation examples

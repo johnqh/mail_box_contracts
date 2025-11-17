@@ -7,12 +7,13 @@ This document outlines known security vulnerabilities and their risk assessment 
 ### High Severity Vulnerabilities (as of 2025-09-02)
 
 #### 1. bigint-buffer Buffer Overflow (GHSA-3gc7-fjrx-p6mg)
+
 - **Severity**: High (CVSS 7.7)
 - **Affected Package**: `bigint-buffer` (dependency of `@solana/spl-token` via `@solana/buffer-layout-utils`)
 - **Impact**: Potential application crash via buffer overflow in `toBigIntLE()` function
 - **Status**: Cannot be fixed without breaking changes
 - **Fix Available**: Downgrade to `@solana/spl-token@0.1.8` (breaking change)
-- **Risk Assessment**: 
+- **Risk Assessment**:
   - **Production Risk**: MINIMAL - Affects only Solana token operations during development/testing
   - **Development Risk**: LOW - Function rarely called in normal development workflows
 - **Mitigation Strategies**:
@@ -22,6 +23,7 @@ This document outlines known security vulnerabilities and their risk assessment 
   - Vulnerability does not affect deployed smart contracts or production runtime
 
 #### 2. cookie Out of Bounds Characters (GHSA-pxg6-pf52-xh8x)
+
 - **Severity**: High
 - **Affected Package**: `cookie` (dependency of Hardhat via @sentry/node)
 - **Impact**: Accepts cookie data with out of bounds characters
@@ -31,7 +33,8 @@ This document outlines known security vulnerabilities and their risk assessment 
   - **Development Risk**: LOW - Limited exposure in development environment
 
 #### 3. tmp Symbolic Link Vulnerability (GHSA-52f5-9888-hmc6)
-- **Severity**: High 
+
+- **Severity**: High
 - **Affected Package**: `tmp` (dependency of `solc`)
 - **Impact**: Arbitrary file/directory write via symbolic link manipulation
 - **Status**: No fix available
@@ -40,6 +43,7 @@ This document outlines known security vulnerabilities and their risk assessment 
   - **Development Risk**: MEDIUM - Could affect local development security
 
 ### Low Severity Vulnerabilities
+
 - **Count**: 15 low severity vulnerabilities
 - **Primary Sources**: Development dependencies (Hardhat ecosystem, build tools)
 - **Risk Assessment**: Minimal impact on production security
@@ -49,6 +53,7 @@ This document outlines known security vulnerabilities and their risk assessment 
 ## Comprehensive Security Analysis
 
 ### Current Threat Landscape
+
 - **Total Vulnerabilities**: 18 (3 high, 15 low)
 - **Production-Affecting**: 0 vulnerabilities
 - **Development-Only**: 18 vulnerabilities
@@ -56,11 +61,13 @@ This document outlines known security vulnerabilities and their risk assessment 
 - **Requiring Breaking Changes**: 3 high-severity vulnerabilities
 
 ### Root Cause Analysis
+
 1. **Solana Ecosystem Dependencies**: The `bigint-buffer` vulnerability stems from outdated dependencies in the Solana SPL Token library
 2. **Development Tooling**: Cookie and tmp vulnerabilities come from Hardhat and related build tools
 3. **Dependency Chain Depth**: High-severity vulnerabilities are nested deep in dependency chains, making fixes complex
 
 ### Risk-Based Prioritization
+
 1. **IMMEDIATE (P0)**: None - no production security risks identified
 2. **HIGH (P1)**: Monitor Solana ecosystem updates for compatible security fixes
 3. **MEDIUM (P2)**: Consider containerization for development environments
@@ -69,11 +76,13 @@ This document outlines known security vulnerabilities and their risk assessment 
 ## Security Recommendations
 
 ### For Production Deployments
+
 1. **Smart Contracts**: No vulnerabilities affect deployed smart contracts
 2. **Client Libraries**: Monitor @solana/spl-token updates for bigint-buffer fixes
 3. **Runtime Security**: Current vulnerabilities do not affect production runtime
 
 ### For Development Environment
+
 1. **Isolation**: Run development tools in isolated environments
 2. **Updates**: Regularly check for security updates to development dependencies
 3. **Monitoring**: Monitor GitHub Advisory Database for new vulnerabilities
@@ -81,12 +90,13 @@ This document outlines known security vulnerabilities and their risk assessment 
 5. **Pre-commit Validation**: Use the security audit script to ensure CI compatibility
 
 ### For CI/CD Pipeline
+
 1. **Dependency Scanning**: Current security scan configured with moderate-level filtering
 2. **Audit Frequency**: Run `npm audit --audit-level moderate` on every build
 3. **Breaking Changes**: Security vulnerabilities requiring breaking changes are documented and monitored
 4. **Acceptable Risk**: CI allows high-severity development-only vulnerabilities with documented justification
 5. **Monitoring Strategy**: Automated alerts for new production-affecting vulnerabilities
-6. **CI Security Policy**: 
+6. **CI Security Policy**:
    - **PASS**: ≤3 high/critical vulnerabilities (current documented level)
    - **WARN**: 4-5 high/critical vulnerabilities (minor increase, manual review needed)
    - **FAIL**: >5 high/critical vulnerabilities (significant increase, requires immediate attention)
@@ -103,6 +113,7 @@ This document outlines known security vulnerabilities and their risk assessment 
 ## Contact
 
 For security concerns, please:
+
 1. Review this security advisory
 2. Check the project's issue tracker
 3. Contact maintainers for critical security issues

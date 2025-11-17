@@ -24,12 +24,14 @@ graph TB
 ```
 
 **Core Responsibilities**:
+
 - Domain name registration and lifecycle management
 - Delegation relationship management
 - Fee collection and management
 - Access control for administrative functions
 
 **Storage Design**:
+
 ```solidity
 mapping(address => address) public delegations;  // delegator => delegate
 uint256 public registrationFee;                  // 100 USDC default
@@ -37,6 +39,7 @@ uint256 public delegationFee;                    // 10 USDC default
 ```
 
 **Event-Driven Architecture**:
+
 - All domain operations emit events for off-chain indexing
 - Unified `DelegationSet` event for both setting and clearing
 - Fee update events for transparency
@@ -56,12 +59,14 @@ graph TB
 ```
 
 **Core Responsibilities**:
+
 - Message sending with fee collection
 - Revenue sharing calculations
 - Claim period management
 - Fee tier differentiation
 
 **Storage Design**:
+
 ```solidity
 struct ClaimableAmount {
     uint256 amount;     // USDC amount claimable
@@ -103,21 +108,25 @@ uint256 public ownerClaimable;
 ## Design Patterns
 
 ### Factory Pattern
+
 - TypeChain-generated factories for contract deployment
 - Standardized deployment and connection patterns
 - Type-safe contract instantiation
 
 ### Event Sourcing
+
 - All state changes emit events
 - Off-chain indexing for complex queries
 - Immutable audit trail
 
 ### Revenue Sharing Pattern
+
 - Delayed claim mechanism with expiration
 - Accumulating claims for efficiency
 - Time-based access control
 
 ### Delegation Pattern
+
 - Bidirectional control (set/reject)
 - Clear permission model
 - Fee-based spam prevention
@@ -125,6 +134,7 @@ uint256 public ownerClaimable;
 ## Security Architecture
 
 ### Access Control
+
 ```solidity
 modifier onlyOwner() {
     if (msg.sender != owner) revert OnlyOwner();
@@ -133,11 +143,13 @@ modifier onlyOwner() {
 ```
 
 ### Economic Security
+
 - Fee-based spam prevention
 - USDC transfer validation
 - Time-locked claims with expiration
 
 ### Input Validation
+
 - Non-empty domain validation
 - Address validation for delegations
 - Overflow protection with Solidity 0.8+
@@ -145,6 +157,7 @@ modifier onlyOwner() {
 ## Data Flow Diagrams
 
 ### Domain Registration Flow
+
 ```
 User → [Approve USDC] → MailService
 MailService → [Transfer USDC] → Contract
@@ -152,6 +165,7 @@ MailService → [Emit Event] → Off-chain Indexer
 ```
 
 ### Message Sending Flow (Priority)
+
 ```
 User → [Approve USDC] → Mailer
 Mailer → [Transfer USDC] → Contract
@@ -161,6 +175,7 @@ User → [Claim Revenue] → USDC Transfer
 ```
 
 ### Delegation Flow
+
 ```
 Delegator → [Pay Fee] → MailService
 MailService → [Set Mapping] → Storage
@@ -171,16 +186,19 @@ Delegate → [Reject] → Clear Mapping
 ## Gas Optimization Strategies
 
 ### Storage Optimization
+
 - Packed structs for efficient storage
 - Immutable variables for constants
 - Minimal state variable updates
 
 ### Function Optimization
+
 - External over public for interfaces
 - Calldata for read-only parameters
 - Batch operations where possible
 
 ### Event Optimization
+
 - Indexed parameters for filtering
 - Minimal event data
 - Off-chain computation preferences
@@ -188,6 +206,7 @@ Delegate → [Reject] → Clear Mapping
 ## Integration Patterns
 
 ### Frontend Integration
+
 ```typescript
 // Type-safe contract interactions
 const mailService = MailService__factory.connect(address, signer);
@@ -200,6 +219,7 @@ mailerClient.getContract().on("DelegationSet", (delegator, delegate, event) => {
 ```
 
 ### Testing Patterns
+
 ```typescript
 // Standard test setup
 await mockUSDC.mint(user.address, ethers.parseUnits("100", 6));
@@ -214,11 +234,13 @@ await expect(contract.function(...args))
 ## Upgrade Considerations
 
 ### Current Limitations
+
 - Immutable contracts (no upgrade mechanism)
 - Fixed fee percentages
 - Static claim periods
 
 ### Future Upgrade Paths
+
 - Proxy pattern implementation
 - Governance-controlled parameters
 - Modular contract architecture
@@ -226,6 +248,7 @@ await expect(contract.function(...args))
 ## Network Considerations
 
 ### Gas Costs (Estimated)
+
 - Domain Registration: ~80k gas
 - Delegation: ~60k gas
 - Priority Message: ~90k gas
@@ -233,6 +256,7 @@ await expect(contract.function(...args))
 - Claim Revenue: ~45k gas
 
 ### Multi-chain Deployment
+
 - Hardhat configuration supports multiple networks
 - USDC availability consideration
 - Gas cost variations across chains
@@ -240,6 +264,7 @@ await expect(contract.function(...args))
 ## Monitoring and Analytics
 
 ### Key Metrics
+
 - Total domains registered
 - Active delegations
 - Message volume by tier
@@ -247,6 +272,7 @@ await expect(contract.function(...args))
 - Claim vs expiration rates
 
 ### Event Indexing
+
 ```javascript
 // Example event indexing structure
 {
@@ -266,6 +292,7 @@ await expect(contract.function(...args))
 ## Deployment Architecture
 
 ### Local Development
+
 ```
 Hardhat Network (chainId 1337)
 ├── MailService Contract
@@ -275,6 +302,7 @@ Hardhat Network (chainId 1337)
 ```
 
 ### Production Deployment
+
 ```
 Target Network
 ├── MailService (Proxy Pattern)

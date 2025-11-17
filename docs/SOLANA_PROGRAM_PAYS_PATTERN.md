@@ -3,6 +3,7 @@
 ## The Requirement
 
 **Scenario:** You want program owner to pay Mailer fees for all users
+
 - Users shouldn't need USDC
 - Users just interact with your program
 - Your program (as owner) pays all Mailer fees
@@ -306,6 +307,7 @@ await program.methods
 ## Key Differences
 
 ### EVM Approach
+
 ```
 Owner Wallet (holds USDC)
     ↓ approve + setPermission
@@ -315,12 +317,14 @@ UserContract triggers spend from owner wallet
 ```
 
 **Requires:**
+
 - ❌ Unlimited approval (risky!)
 - ❌ Permission mapping system
 - ❌ Complex security model
 - ⚠️ Owner wallet always at risk
 
 ### Solana Approach
+
 ```
 Owner Wallet (holds USDC)
     ↓ transfer to treasury
@@ -330,6 +334,7 @@ UserProgram uses treasury funds
 ```
 
 **Requires:**
+
 - ✅ One-time transfer to treasury
 - ✅ No permission system needed
 - ✅ Simple ownership model
@@ -338,22 +343,27 @@ UserProgram uses treasury funds
 ## Why Solana's Approach Is Better
 
 ### 1. **Clear Fund Ownership**
+
 - EVM: Owner wallet holds funds, contract pulls via permissions
 - Solana: Treasury PDA holds funds, program controls directly
 
 ### 2. **No Approval Risk**
+
 - EVM: Requires unlimited approval on owner wallet (huge risk!)
 - Solana: Funds moved to treasury once, no approvals
 
 ### 3. **Simpler Security Model**
+
 - EVM: Need permission mapping, approval tracking, revocation logic
 - Solana: PDA owns funds, program controls via seeds
 
 ### 4. **Better Accounting**
+
 - EVM: Owner's personal wallet mixed with program funds
 - Solana: Clear separation - treasury is dedicated program account
 
 ### 5. **Gas/Fee Transparency**
+
 - EVM: Hidden in permission lookup
 - Solana: Explicit in transaction (treasuryUsdc account listed)
 
@@ -399,6 +409,7 @@ pub fn send_dao_notification(
 ```
 
 **DAO Setup:**
+
 1. Initialize DAO with treasury PDA
 2. Deposit USDC to treasury (from DAO votes/fundraising)
 3. Members call DAO program to send notifications
@@ -420,6 +431,7 @@ pub fn send_dao_notification(
 ## Code Comparison Side-by-Side
 
 ### EVM: Permission System (Complex)
+
 ```solidity
 // Mailer contract needs:
 mapping(address => address) public permissions;
@@ -446,6 +458,7 @@ function send(...) external {
 ```
 
 ### Solana: Treasury PDA (Simple)
+
 ```rust
 // UserProgram just needs:
 let treasury_seeds = &[b"treasury", &[bump]];
@@ -467,18 +480,21 @@ mailer::cpi::send(cpi_ctx, ...)?;  // Transfer from treasury directly
 **For "Program owner pays for users" pattern:**
 
 **EVM needs:**
+
 1. Owner approves unlimited USDC to Mailer (risky!)
 2. Permission mapping system in Mailer contract
 3. Complex permission grant/revoke logic
 4. Owner's personal wallet holds and risks funds
 
 **Solana needs:**
+
 1. Create treasury PDA
 2. Transfer USDC to treasury (one time or ongoing)
 3. Sign CPIs with PDA seeds
 4. Dedicated treasury account (clean separation)
 
 **Result:** Solana achieves the same functionality with:
+
 - ✅ No approval risk
 - ✅ No permission system
 - ✅ Simpler code

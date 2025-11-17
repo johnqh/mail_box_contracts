@@ -9,13 +9,16 @@ This is a production-ready multi-chain decentralized messaging system with USDC 
 ### Core Components
 
 #### EVM Implementation
+
 1. **Mailer.sol** - Complete messaging system with delegation management and revenue sharing
 2. **MockUSDC.sol** - Test token for development
 
 #### Solana Implementation
+
 1. **mailer** - Complete messaging program with delegation management and revenue sharing
 
 #### Unified Client
+
 1. **OnchainMailerClient** - Single interface for all chains
 2. **WalletDetector** - Automatic chain detection
 3. **Dynamic imports** - Chain-specific module loading
@@ -109,11 +112,13 @@ npm test -- --verbose            # Run tests with detailed output
 **Purpose**: Complete messaging system with delegation management and revenue sharing
 
 **Architecture**: Upgradeable UUPS proxy pattern
+
 - Proxy contract: User-facing address that never changes
 - Implementation: Logic contract, can be upgraded by owner
 - Storage: Lives in proxy, preserved across upgrades
 
 **Key Features**:
+
 - Two fee tiers: Priority (100% fee) and Standard (10% fee)
 - Revenue sharing: 90% to sender, 10% to owner
 - Delegation system with rejection capability
@@ -122,6 +127,7 @@ npm test -- --verbose            # Run tests with detailed output
 - Upgradeable by owner only (UUPS pattern)
 
 **Core Functions**:
+
 - `sendPriority(address to, string subject, string body)` - Full fee, 90% revenue share
 - `sendPriorityPrepared(address to, string mailId)` - Full fee, pre-prepared message
 - `send(address to, string subject, string body)` - 10% fee only
@@ -133,11 +139,13 @@ npm test -- --verbose            # Run tests with detailed output
 - `claimExpiredShares(address)` - Owner reclaims expired shares
 
 **Revenue Model**:
+
 - **Priority functions**: Sender pays full fee, gets 90% back as claimable
 - **Standard functions**: Sender pays 10% fee only
 - Messages are sent to specified recipient address via "to" parameter
 
 **Storage**:
+
 - `mapping(address => ClaimableAmount) recipientClaims` - 90% revenue shares
 - `uint256 ownerClaimable` - Accumulated owner fees
 - `uint256 sendFee` - 0.1 USDC default
@@ -149,6 +157,7 @@ npm test -- --verbose            # Run tests with detailed output
 **Test Categories**:
 
 ### EVM Tests (75 tests)
+
 - Contract setup and configuration
 - Message sending (all 4 variants: send, sendPrepared, sendPriority, sendPriorityPrepared)
 - Fee management and updates
@@ -159,6 +168,7 @@ npm test -- --verbose            # Run tests with detailed output
 - Edge cases and security
 
 ### Unified Client Tests (41 tests)
+
 - Multi-chain client initialization
 - Wallet detection and validation
 - Cross-chain message routing
@@ -166,6 +176,7 @@ npm test -- --verbose            # Run tests with detailed output
 - Error handling and edge cases
 
 **Key Test Patterns**:
+
 - MockUSDC for testing USDC interactions
 - Comprehensive fee calculation verification
 - Event emission testing
@@ -184,6 +195,7 @@ npm test -- --verbose            # Run tests with detailed output
 ### Common Development Patterns
 
 **Testing New Features**:
+
 ```typescript
 // Fund test accounts with USDC
 await mockUSDC.mint(addr1.address, ethers.parseUnits("100", 6));
@@ -196,6 +208,7 @@ await expect(contract.connect(addr1).functionName(...args))
 ```
 
 **Fee Calculations**:
+
 ```typescript
 // Standard pattern for fee testing
 const initialBalance = await mockUSDC.balanceOf(contractAddress);
@@ -207,18 +220,21 @@ expect(finalBalance - initialBalance).to.equal(expectedFee);
 ### Important Notes for AI Assistants
 
 **Security Considerations**:
+
 - All functions use `msg.sender` for authentication
 - USDC transfers must succeed for operations to proceed
 - Revenue shares have time-based expiration (60 days)
 - Owner functions protected by `onlyOwner` modifier
 
 **Common Pitfalls**:
+
 - Don't forget to fund test accounts with USDC + approvals
 - Remember address(0) represents cleared delegation
 - Mailer now sends messages to specified recipient (not just sender)
 - Fee amounts are in 6-decimal USDC format
 
 **File Structure**:
+
 - `contracts/` - Solidity source code
 - `test/` - Comprehensive test suites
 - `typechain-types/` - Auto-generated, don't edit manually
@@ -239,7 +255,7 @@ expect(finalBalance - initialBalance).to.equal(expectedFee);
 
 ## 📚 AI-Friendly Documentation Structure
 
-### Comprehensive Documentation Files:
+### Comprehensive Documentation Files
 
 1. **README.md** - Main project documentation with:
    - Quick start guide
@@ -275,7 +291,7 @@ expect(finalBalance - initialBalance).to.equal(expectedFee);
    - Return type descriptions
    - Example code snippets
 
-### Key AI Integration Points:
+### Key AI Integration Points
 
 **Smart Contract Comments**: Every function, event, and error is documented with NatSpec
 **TypeScript Client**: Full JSDoc with usage examples and parameter descriptions
@@ -285,7 +301,8 @@ expect(finalBalance - initialBalance).to.equal(expectedFee);
 
 ## 🤖 Enhanced AI Assistant Instructions
 
-### Critical Development Workflow:
+### Critical Development Workflow
+
 1. **Always run `npm run compile` after contract changes** - Regenerates TypeScript types
 2. **Run `npm test` to verify changes don't break existing functionality** - 116 comprehensive tests
 3. **Follow existing test patterns** documented in AI_DEVELOPMENT_GUIDE.md
@@ -295,15 +312,17 @@ expect(finalBalance - initialBalance).to.equal(expectedFee);
 7. **Consider fee calculations and revenue sharing implications** - Core business logic
 8. **Test edge cases like insufficient balances and permissions** - Security critical
 
-### AI-Specific Guidance:
+### AI-Specific Guidance
 
 **Code Generation Patterns**:
+
 - Reference `examples/unified-usage.ts` for working patterns
 - Use existing client methods as templates for new functionality
 - Follow the established error handling patterns
 - Maintain consistency with existing naming conventions
 
 **Testing Patterns**:
+
 - Fund test accounts with MockUSDC before testing
 - Approve contract spending before operations
 - Test both success and failure scenarios
@@ -311,18 +330,21 @@ expect(finalBalance - initialBalance).to.equal(expectedFee);
 - Use time manipulation for claim expiration testing
 
 **Documentation Standards**:
+
 - Add NatSpec comments to all new Solidity functions
 - Include JSDoc comments for all TypeScript methods
 - Provide usage examples in complex functions
 - Document error conditions and their causes
 
 **Security Considerations**:
+
 - Always use reentrancy protection on external functions
 - Validate all external inputs
 - Use custom errors instead of require statements
 - Test authorization and access control thoroughly
 
-### Quick Reference Files for AI:
+### Quick Reference Files for AI
+
 - `docs/AI_QUICK_START.md` - **START HERE** - Essential commands and workflows
 - `docs/ai-development-patterns.md` - **PRIMARY REFERENCE** - Comprehensive AI patterns guide  
 - `.ai-config.json` - Project configuration and metadata for AI assistants (UPDATED)
@@ -335,10 +357,12 @@ expect(finalBalance - initialBalance).to.equal(expectedFee);
 - `src/mailer-client.ts` - Full API reference with examples
 - `test/` directory - Comprehensive test patterns
 
-### Project Philosophy:
+### Project Philosophy
+
 This project emphasizes **security, comprehensive testing, AI-friendly documentation, and clear separation of concerns** between domain management and messaging functionality. All code should be self-documenting with extensive examples and clear usage patterns.
 
-### Common AI Development Scenarios:
+### Common AI Development Scenarios
+
 1. **Adding new contract functions** - Follow MailService/Mailer patterns
 2. **Extending client library** - Use existing client methods as templates
 3. **Writing tests** - Reference existing comprehensive test suites

@@ -67,6 +67,7 @@ const client = new MailerClient(config.evm.contracts.mailer, publicClient);
 ```
 
 **Benefits:**
+
 - ✅ Single source of truth (Chain enum + API keys)
 - ✅ No hardcoded RPC URLs or addresses
 - ✅ Easy to switch between networks
@@ -183,6 +184,7 @@ mail_box_contracts/
 ## 🚀 Quick Start
 
 ### Prerequisites
+
 - Node.js 16+
 - npm or yarn
 
@@ -209,12 +211,14 @@ npm run deploy:local
 **Purpose**: Domain registration and delegation management
 
 **Key Functions**:
+
 - `delegateTo(address)` - Delegate email handling (10 USDC fee)
 - `rejectDelegation(address)` - Reject unwanted delegations
 - `registerDomain(string, bool)` - Register domains (100 USDC fee)
 - `setRegistrationFee(uint256)` - Owner fee management
 
 **Fees**:
+
 - Domain Registration: 100 USDC
 - Delegation: 10 USDC
 
@@ -223,6 +227,7 @@ npm run deploy:local
 **Purpose**: Message sending with revenue sharing
 
 **Message Types**:
+
 - **Priority Messages**: Full fee (0.1 USDC) + 90% revenue share
   - `sendPriority(subject, body)`
   - `sendPriorityPrepared(mailId)`
@@ -231,6 +236,7 @@ npm run deploy:local
   - `sendPrepared(mailId)`
 
 **Revenue Model**:
+
 - Senders pay fees to send messages to themselves
 - Priority senders get 90% back as claimable revenue
 - 60-day claim period for revenue shares
@@ -250,6 +256,7 @@ npm test
 ```
 
 ### Test Highlights
+
 - Fee calculation verification
 - Event emission testing
 - Revenue sharing mechanics
@@ -281,12 +288,14 @@ npm run clean        # Clean artifacts
 ## 📊 Architecture
 
 ### Revenue Sharing Flow
+
 1. **Priority Message**: User pays 0.1 USDC
 2. **Revenue Split**: 90% claimable by sender, 10% to owner
 3. **Claim Period**: 60 days to claim revenue share
 4. **Expiration**: Unclaimed shares go to contract owner
 
 ### Delegation System
+
 1. **Delegate**: Pay 10 USDC to delegate email handling
 2. **Reject**: Delegates can reject unwanted delegations
 3. **Clear**: Set delegate to address(0) to clear
@@ -318,12 +327,14 @@ await client.claimRevenue();
 This project is optimized for AI-assisted development with comprehensive documentation, patterns, and tooling:
 
 ### Quick Start for AI Assistants
+
 1. **Read**: [`AI_ASSISTANT_QUICKSTART.md`](./AI_ASSISTANT_QUICKSTART.md) - Essential guide for AI development
 2. **Reference**: [`CLAUDE.md`](./CLAUDE.md) - Comprehensive AI assistant documentation
 3. **Patterns**: [`docs/AI_DEVELOPMENT_PATTERNS.md`](./docs/AI_DEVELOPMENT_PATTERNS.md) - Development patterns and examples
 4. **Config**: [`.ai-config.json`](./.ai-config.json) - AI tool configuration
 
 ### AI Development Features
+
 - **🔧 AI Commands**: `npm run ai:dev` for AI-optimized development workflows
 - **📊 Test Coverage**: 116 tests with detailed patterns for AI reference
 - **📝 Rich Documentation**: Comprehensive JSDoc comments and inline examples
@@ -332,6 +343,7 @@ This project is optimized for AI-assisted development with comprehensive documen
 - **🔍 Project Status**: `npm run ai:status` for health check
 
 ### Documentation Structure
+
 - **Primary Guide**: [`CLAUDE.md`](./CLAUDE.md) - Main AI assistant documentation
 - **Quick Reference**: [`AI_ASSISTANT_QUICKSTART.md`](./AI_ASSISTANT_QUICKSTART.md) - Fast setup
 - **Development Patterns**: [`docs/AI_DEVELOPMENT_PATTERNS.md`](./docs/AI_DEVELOPMENT_PATTERNS.md) - Code examples

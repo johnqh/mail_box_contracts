@@ -6,7 +6,7 @@ This document outlines the complete development workflow for the Mailer smart co
 
 ### Prerequisites
 
-- **Node.js** 16+ 
+- **Node.js** 16+
 - **npm** or **yarn**
 - **Git**
 - **VS Code** (recommended) with Solidity extension
@@ -48,6 +48,7 @@ npm run deploy:local  # Terminal 2 - Deploy contracts
 ### Environment Files
 
 Create `.env.local` for local development:
+
 ```env
 # Local development
 PRIVATE_KEY=0x...
@@ -82,6 +83,7 @@ git push origin feature/new-feature
 ### 2. Contract Development Best Practices
 
 #### File Structure
+
 ```
 contracts/
 ├── MailService.sol     # Domain & delegation
@@ -421,9 +423,11 @@ contract Example {
 }
 ```
 
-# Use checklists for procedures
+## Use checklists for procedures
+
 - [ ] Step 1
 - [ ] Step 2
+
 ```
 
 ## Collaboration Guidelines

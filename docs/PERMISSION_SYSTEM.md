@@ -7,6 +7,7 @@ The Mailer contract now supports a **permission system** that allows smart contr
 ## The Problem
 
 When a smart contract calls Mailer functions:
+
 - `msg.sender` = smart contract address
 - Mailer tries to `transferFrom(smartContract, ...)`
 - **Issue**: Smart contracts typically cannot call `usdc.approve(mailer, amount)`
@@ -15,6 +16,7 @@ When a smart contract calls Mailer functions:
 ## The Solution: Permission Mapping
 
 The permission system allows a wallet to:
+
 1. Grant permission for a contract to send messages
 2. The wallet pays all fees automatically
 3. The contract never needs to handle USDC approvals
@@ -96,24 +98,28 @@ mailer.clearPermission(mySmartContractAddress);
 ## Example Use Cases
 
 ### 1. DAO Notification System
+
 ```solidity
 // DAO treasury wallet approves + grants permission
 // DAO contract sends notifications without managing tokens
 ```
 
 ### 2. Automated Trading Bot
+
 ```solidity
 // User wallet approves + grants permission
 // Bot contract sends trade alerts without token management
 ```
 
 ### 3. Subscription Service
+
 ```solidity
 // Service wallet approves + grants permission
 // Subscription contract sends renewal notifications
 ```
 
 ### 4. Multi-Signature Wallet
+
 ```solidity
 // Multisig wallet approves + grants permission
 // Multisig can send messages without complex token logic
@@ -130,14 +136,17 @@ function setPermission(address contractAddress) external whenNotPaused
 Grants permission for a contract to send messages using caller's USDC balance. If permission already exists for a different wallet, automatically revokes the old permission first.
 
 **Parameters:**
+
 - `contractAddress`: The contract to grant permission to
 
 **Requirements:**
+
 - `contractAddress` must not be `address(0)`
 - Caller must have approved Mailer to spend their USDC
 - Contract must not be paused
 
 **Events:**
+
 - `PermissionRevoked(address indexed contractAddress, address indexed wallet)` - If there was a previous wallet
 - `PermissionGranted(address indexed contractAddress, address indexed wallet)` - Always emitted
 
@@ -150,12 +159,15 @@ function clearPermission(address contractAddress) external
 Revokes permission from a contract.
 
 **Parameters:**
+
 - `contractAddress`: The contract to revoke permission from
 
 **Requirements:**
+
 - Caller must be the wallet that granted permission
 
 **Events:**
+
 - `PermissionRevoked(address indexed contractAddress, address indexed wallet)`
 
 ### permissions (View)
@@ -167,6 +179,7 @@ function permissions(address contractAddress) external view returns (address)
 Returns the wallet address that pays fees for a given contract.
 
 **Returns:**
+
 - `address`: The wallet address, or `address(0)` if no permission set
 
 ## Complete Example
@@ -212,6 +225,7 @@ contract NotificationBot {
 If you were using the old system where contracts needed to manage tokens:
 
 **Before:**
+
 ```solidity
 // Contract needed to:
 usdc.approve(mailer, amount);  // Complex!
@@ -219,6 +233,7 @@ mailer.send(...);
 ```
 
 **After:**
+
 ```solidity
 // Wallet does setup once:
 usdc.approve(mailer, largeAmount);

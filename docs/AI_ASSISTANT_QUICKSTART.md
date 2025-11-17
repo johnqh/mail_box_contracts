@@ -20,17 +20,20 @@ npm run build     # Check TypeScript compilation
 ## 📋 AI Development Checklist
 
 ### Before Starting Any Task
-- [ ] Read this file and `CLAUDE.md` 
+
+- [ ] Read this file and `CLAUDE.md`
 - [ ] Check `git status` and `npm test`
 - [ ] Understand the specific requirements
 
 ### While Coding  
+
 - [ ] Follow existing patterns in similar files
 - [ ] Add comprehensive JSDoc comments
 - [ ] Handle errors with specific messages
 - [ ] Consider both EVM and Solana compatibility
 
 ### After Coding
+
 - [ ] Run `npm run compile` (if contracts changed)
 - [ ] Run `npm test` (ensure all 116+ tests pass)
 - [ ] Run `npm run build` (check TypeScript)
@@ -54,6 +57,7 @@ npm run build     # Check TypeScript compilation
 **IMPORTANT**: The project recently underwent simplification - **MailerClient and MailServiceClient have been REMOVED**.
 
 ### **Current Client Architecture (Updated 2024)**
+
 ```
 ✅ EVM: MailerClient only (handles messaging + delegation)
 ✅ Solana: MailerClient only (handles messaging + delegation)  
@@ -63,6 +67,7 @@ npm run build     # Check TypeScript compilation
 ```
 
 ### **What This Means for AI Development**
+
 - ✅ **Use MailerClient** for all EVM and Solana operations
 - ✅ **Use OnchainMailerClient** for multi-chain applications
 - ❌ **Don't reference MailerClient or MailServiceClient** - they no longer exist
@@ -94,6 +99,7 @@ mail_box_contracts/
 ## 🔧 Most Common Development Scenarios
 
 ### 1. Contract Function Addition
+
 ```bash
 # 1. Edit contracts/Mailer.sol or contracts/MailService.sol
 # 2. Compile to regenerate TypeScript types
@@ -109,6 +115,7 @@ npm test
 ```
 
 ### 2. Bug Fix Workflow
+
 ```bash
 # 1. Identify failing test
 npm test -- --grep "specific test"
@@ -124,6 +131,7 @@ npm test
 ```
 
 ### 3. Client Library Enhancement
+
 ```bash
 # 1. Edit files in src/ directory
 # 2. Run type checking
@@ -150,6 +158,7 @@ npm run test:unified:direct
 ## 💡 Code Patterns to Follow
 
 ### Solidity Patterns
+
 ```solidity
 // ✅ Use custom errors (gas efficient)
 error InsufficientFunds(uint256 required, uint256 available);
@@ -171,6 +180,7 @@ function sendMessage(string memory subject, string memory body) external {
 ```
 
 ### TypeScript Patterns
+
 ```typescript
 // ✅ Comprehensive JSDoc with examples
 /**
@@ -198,6 +208,7 @@ async sendMessage(subject: string, body: string, priority: boolean = false): Pro
 ```
 
 ### Test Patterns
+
 ```typescript
 // ✅ Comprehensive test structure
 describe("Contract Function", () => {
@@ -223,18 +234,21 @@ describe("Contract Function", () => {
 ## 📚 Essential Files for AI Context
 
 ### Must-Read Documentation
+
 1. **`CLAUDE.md`** - Main AI assistant guide
 2. **`docs/AI_DEVELOPMENT_PATTERNS.md`** - Comprehensive patterns
 3. **`README.md`** - Project overview and API
 4. **`.ai-config.json`** - AI tool configuration
 
 ### Key Code Files  
+
 1. **`src/unified/onchain-mailer-client.ts`** - Main unified client
 2. **`src/unified/types.ts`** - TypeScript interfaces
 3. **`contracts/Mailer.sol`** - Core EVM contract
 4. **`test/evm/Mailer.test.ts`** - Comprehensive test patterns
 
 ### Working Examples
+
 1. **`examples/basic-usage.ts`** - Complete usage examples
 2. **`examples/unified-usage.ts`** - Cross-chain examples
 

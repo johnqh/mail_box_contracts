@@ -29,7 +29,7 @@ These packages are in `dependencies` but **should be removed or moved**:
 | `axios` | ❌ NOT used in `src/` code | **REMOVE** - No HTTP calls in runtime code |
 | `dotenv` | ❌ Only in hardhat.config (dev) | **MOVE to devDependencies** |
 
-###  devDependencies (Development & Testing)
+### devDependencies (Development & Testing)
 
 Current devDependencies analysis:
 
@@ -98,10 +98,12 @@ The React integration peer dependencies are correctly configured.
 ### Bundle Size Impact
 
 **Before cleanup:**
+
 - Runtime dependencies: 9 packages
 - Includes unused: axios, @coral-xyz/borsh, @coral-xyz/anchor-cli, @types/axios
 
 **After cleanup:**
+
 - Runtime dependencies: 5 packages
 - Only essential: @solana/web3.js, @solana/spl-token, @sudobility/types, viem, dotenv (moved to dev)
 
@@ -110,12 +112,14 @@ The React integration peer dependencies are correctly configured.
 ### User Impact
 
 **NPM Package Users:**
+
 - ✅ Faster `npm install` (fewer runtime deps to download)
 - ✅ Smaller node_modules in production
 - ✅ No breaking changes (unused packages being removed)
 - ✅ React integration remains optional via peer dependencies
 
 **Development:**
+
 - ✅ No impact on development workflow
 - ✅ All dev tools remain available
 - ✅ Tests continue to work
@@ -192,12 +196,14 @@ cp package.json package.json.backup
 ### Step 2: Update package.json
 
 Remove from `dependencies`:
+
 - `@coral-xyz/anchor-cli`
 - `@coral-xyz/borsh`
 - `@types/axios`
 - `axios`
 
 Move from `dependencies` to `devDependencies`:
+
 - `dotenv`
 
 ### Step 3: Clean Install

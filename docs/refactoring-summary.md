@@ -3,6 +3,7 @@
 ## What Was Changed
 
 ### 1. Removed UnifiedWallet Abstraction
+
 - **Removed**: Custom `UnifiedWallet` interface that tried to normalize EVM and Solana wallets
 - **Replaced with**: Standard wallet libraries
   - EVM: wagmi's `WalletClient` and `PublicClient` from viem
@@ -11,12 +12,14 @@
 ### 2. New Client Architecture
 
 #### Old Approach
+
 ```typescript
 // Single constructor trying to handle all wallet types
 new OnchainMailerClient(anyWallet, config)
 ```
 
 #### New Approach
+
 ```typescript
 // Specific factory methods for each chain
 OnchainMailerClient.forEVM(walletClient, publicClient, mailerAddress, usdcAddress)
@@ -26,11 +29,13 @@ OnchainMailerClient.forSolana(wallet, connection, programId, usdcMint)
 ### 3. Files Modified
 
 #### Core Changes
+
 - `src/unified/types.ts` - Removed UnifiedWallet, added standard wallet types
 - `src/unified/onchain-mailer-client-v2.ts` - New refactored client implementation
 - `src/unified/index.ts` - Updated exports
 
 #### New Documentation
+
 - `examples/wagmi-integration.ts` - EVM example using wagmi
 - `examples/wallet-adapter-integration.ts` - Solana example using wallet-adapter
 - `docs/migration-to-standard-wallets.md` - Complete migration guide
@@ -39,26 +44,31 @@ OnchainMailerClient.forSolana(wallet, connection, programId, usdcMint)
 ## Benefits of Refactoring
 
 ### 1. **Better Developer Experience**
+
 - Uses familiar wagmi and wallet-adapter APIs
 - No need to learn custom abstractions
 - Better IDE support and autocompletion
 
 ### 2. **Type Safety**
+
 - Full TypeScript support from standard libraries
 - No more `any` types for wallet objects
 - Compile-time checking for wallet methods
 
 ### 3. **Ecosystem Integration**
+
 - Works with all wagmi hooks and utilities
 - Compatible with wallet-adapter providers
 - Can leverage community tools and plugins
 
 ### 4. **Maintainability**
+
 - Less custom code to maintain
 - Updates come from well-maintained libraries
 - Clear separation between EVM and Solana logic
 
 ### 5. **Performance**
+
 - No unnecessary abstraction layers
 - Direct use of optimized library code
 - Better tree-shaking potential
@@ -66,6 +76,7 @@ OnchainMailerClient.forSolana(wallet, connection, programId, usdcMint)
 ## Migration Path
 
 ### For EVM Projects
+
 ```typescript
 // Before
 const client = new OnchainMailerClient(wallet, { evm: {...} });
@@ -84,6 +95,7 @@ const client = OnchainMailerClient.forEVM(
 ```
 
 ### For Solana Projects
+
 ```typescript
 // Before
 const client = new OnchainMailerClient(wallet, { solana: {...} });
@@ -109,6 +121,7 @@ A deprecated `fromConfig()` method is provided for temporary backward compatibil
 ## Testing Results
 
 ✅ All 165 tests passing
+
 - EVM tests: 75 passing
 - Solana tests: 49 passing
 - Unified tests: 41 passing
@@ -125,10 +138,12 @@ A deprecated `fromConfig()` method is provided for temporary backward compatibil
 ### Why This Approach?
 
 The original `UnifiedWallet` tried to create a common interface for fundamentally different wallet systems:
+
 - EVM wallets use hex addresses and sign Ethereum transactions
 - Solana wallets use base58 public keys and sign Solana transactions
 
 Trying to normalize these created:
+
 - Complex type gymnastics
 - Runtime errors from mismatched expectations
 - Confusion about which methods were available
@@ -137,6 +152,7 @@ Trying to normalize these created:
 ### The New Philosophy
 
 Instead of fighting the ecosystem, embrace it:
+
 - Use wagmi for EVM (the de facto standard)
 - Use wallet-adapter for Solana (the official standard)
 - Provide chain-specific factory methods

@@ -20,6 +20,7 @@ The **Mailer** contract is deployed as a UUPS upgradeable proxy:
 - **Storage**: Lives in the proxy, preserved across upgrades
 
 **Key Features**:
+
 - ✅ Gas efficient (upgrade logic in implementation)
 - ✅ Owner-controlled upgrades only
 - ✅ Storage layout validation by OpenZeppelin plugin
@@ -38,6 +39,7 @@ npx hardhat run scripts/evm/deploy-upgradeable.ts --network localhost
 ```
 
 This will:
+
 1. Deploy the implementation contract
 2. Deploy the proxy contract
 3. Initialize the proxy with USDC address and owner
@@ -56,6 +58,7 @@ npx hardhat run scripts/evm/upgrade.ts --network sepolia
 ```
 
 The script will:
+
 1. Verify you're the owner
 2. Deploy the new implementation
 3. Upgrade the proxy to point to new implementation
@@ -74,6 +77,7 @@ The OpenZeppelin upgrades plugin performs automatic validation:
 ### Important Considerations
 
 **DO**:
+
 - ✅ Test upgrades thoroughly on testnet first
 - ✅ Verify storage layout compatibility
 - ✅ Keep the same variable order in new versions
@@ -81,6 +85,7 @@ The OpenZeppelin upgrades plugin performs automatic validation:
 - ✅ Use the storage gap (`__gap`) for future flexibility
 
 **DON'T**:
+
 - ❌ Remove or reorder existing state variables
 - ❌ Change variable types
 - ❌ Use `selfdestruct` in implementation
@@ -197,6 +202,7 @@ solana program deploy \
 ### Upgrade Safety
 
 **DO**:
+
 - ✅ Test on devnet first
 - ✅ Verify account structures are compatible
 - ✅ Keep upgrade authority secure (hardware wallet recommended)
@@ -204,6 +210,7 @@ solana program deploy \
 - ✅ Back up program binary before upgrading
 
 **DON'T**:
+
 - ❌ Change account discriminators
 - ❌ Modify existing account structures (add fields at end only)
 - ❌ Lose the upgrade authority keypair
@@ -347,6 +354,7 @@ Track upgrades in `deployments/<network>-upgradeable.json`:
 ## Support
 
 For upgrade assistance:
+
 - Review `/docs/AI_DEVELOPMENT_GUIDE.md` for development patterns
 - Check `/examples/` for working code examples
 - See `/test/` for comprehensive test patterns

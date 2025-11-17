@@ -15,6 +15,7 @@ The Mailer project is optimized for AI assistance through:
 ## 🚀 AI-Optimized Commands
 
 ### Essential Daily Commands
+
 ```bash
 # Project health check (run first)
 npm run ai:status
@@ -33,6 +34,7 @@ npm run ai:dev
 ```
 
 ### Advanced AI Commands
+
 ```bash
 # Test all examples compile
 npm run ai:examples
@@ -50,6 +52,7 @@ npm run ai:workflow
 ## 🧠 AI Development Patterns
 
 ### Pattern 1: Contract Modification Workflow
+
 ```bash
 # Standard workflow for smart contract changes
 1. Analyze existing contract in contracts/Mailer.sol
@@ -63,6 +66,7 @@ npm run ai:workflow
 ```
 
 ### Pattern 2: Multi-Chain Feature Development
+
 ```bash
 # Adding features across both chains
 1. Implement in contracts/Mailer.sol (EVM)
@@ -75,6 +79,7 @@ npm run ai:workflow
 ```
 
 ### Pattern 3: Client Library Enhancement
+
 ```typescript
 // Follow this pattern when adding methods to MailerClient
 
@@ -102,6 +107,7 @@ async newMethod(param1: Type1, param2: Type2): Promise<ReturnType> {
 ```
 
 ### Pattern 4: Comprehensive Testing
+
 ```typescript
 // Follow this testing pattern for all new features
 
@@ -154,6 +160,7 @@ describe("New Feature", function () {
 ## 🔧 Configuration Optimization
 
 ### TypeScript Configuration for AI
+
 ```json
 // tsconfig.json optimized for AI development
 {
@@ -167,6 +174,7 @@ describe("New Feature", function () {
 ```
 
 ### ESLint Rules for AI-Friendly Code
+
 ```json
 // .eslintrc.js rules that help AI understanding
 {
@@ -183,6 +191,7 @@ describe("New Feature", function () {
 ## 🎮 AI Testing Strategies
 
 ### 1. Test-Driven Development with AI
+
 ```bash
 # AI-optimized TDD workflow
 1. Write failing test describing expected behavior
@@ -195,6 +204,7 @@ describe("New Feature", function () {
 ```
 
 ### 2. Comprehensive Coverage Patterns
+
 ```typescript
 // Test categories to always include:
 
@@ -225,6 +235,7 @@ it("Should update contract state correctly", async function () {
 ```
 
 ### 3. Multi-Chain Test Coordination
+
 ```bash
 # Ensure feature works across all chains
 npm run test:evm     # Test EVM implementation  
@@ -236,6 +247,7 @@ npm run ai:examples  # Test examples compile
 ## 📚 AI Knowledge Base
 
 ### Key Files for AI Understanding
+
 ```bash
 # Primary documentation (read these first)
 CLAUDE.md                    # Comprehensive AI guide
@@ -265,6 +277,7 @@ examples/unified-usage.ts  # Multi-chain example
 ```
 
 ### Architecture Quick Reference
+
 ```typescript
 // Current architecture (post-simplification)
 ✅ MailerClient (EVM)        - Handles messaging + delegation
@@ -284,6 +297,7 @@ await mailerClient.claimRecipientShare(walletClient, account);
 ## 🚨 AI Pitfall Prevention
 
 ### Common Mistakes to Avoid
+
 ```bash
 ❌ Modifying contracts without running npm run compile
 ❌ Using removed classes (MailerClient, MailServiceClient)  
@@ -304,6 +318,7 @@ await mailerClient.claimRecipientShare(walletClient, account);
 ```
 
 ### Debugging Patterns
+
 ```bash
 # When things go wrong, check these in order:
 1. npm run compile  # Ensure types are up to date
@@ -319,6 +334,7 @@ await mailerClient.claimRecipientShare(walletClient, account);
 ## 🎉 AI Success Metrics
 
 ### Definition of Done for AI Tasks
+
 - [ ] All 124+ tests pass (`npm test`)
 - [ ] TypeScript compiles without errors (`npm run build`)
 - [ ] ESLint passes without warnings (`npm run ai:check`)
@@ -330,6 +346,7 @@ await mailerClient.claimRecipientShare(walletClient, account);
 - [ ] Test coverage includes edge cases
 
 ### Quality Indicators
+
 ```bash
 ✅ npm run ai:status shows clean git status
 ✅ npm run ai:test shows 124+ tests passing  

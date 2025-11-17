@@ -37,15 +37,18 @@ interface TransactionResult {
 ### Updated Method Signatures
 
 All write methods now:
+
 1. Accept an optional `gasOptions` parameter
 2. Return `TransactionResult` instead of just `Hash`
 
 Example before:
+
 ```typescript
 async send(...): Promise<Hash>
 ```
 
 Example after:
+
 ```typescript
 async send(..., gasOptions?: GasOptions): Promise<TransactionResult>
 ```
@@ -55,6 +58,7 @@ async send(..., gasOptions?: GasOptions): Promise<TransactionResult>
 All write operations have been updated with gas estimation:
 
 **Message Sending**
+
 - `send()`
 - `sendPrepared()`
 - `sendThroughWebhook()`
@@ -62,31 +66,37 @@ All write operations have been updated with gas estimation:
 - `sendPreparedToEmailAddress()`
 
 **Claims Management**
+
 - `claimRecipientShare()`
 - `claimOwnerShare()`
 - `claimExpiredShares()`
 
 **Delegation**
+
 - `delegateTo()`
 - `rejectDelegation()`
 
 **Configuration**
+
 - `setFee()`
 - `setDelegationFee()`
 - `setCustomFeePercentage()`
 - `clearCustomFeePercentage()`
 
 **Permissions**
+
 - `setPermission()`
 - `removePermission()`
 
 **Contract Control**
+
 - `pause()`
 - `unpause()`
 - `emergencyUnpause()`
 - `distributeClaimableFunds()`
 
 **Deployment**
+
 - `MailerClient.deploy()` - Returns `{ client, result }` with gas details
 
 ## Usage Examples
@@ -192,6 +202,7 @@ const hash = result.hash;  // Extract hash if needed
 ### Recommended Updates
 
 1. **Update return type handling**:
+
 ```typescript
 // Before
 const txHash = await mailerClient.send(...);
@@ -200,13 +211,15 @@ const txHash = await mailerClient.send(...);
 const { hash, gasLimit } = await mailerClient.send(...);
 ```
 
-2. **Add gas monitoring**:
+1. **Add gas monitoring**:
+
 ```typescript
 const result = await mailerClient.send(...);
 console.log(`Estimated: ${result.estimatedGas}, Used: ${result.gasLimit}`);
 ```
 
-3. **Handle gas estimation failures**:
+1. **Handle gas estimation failures**:
+
 ```typescript
 try {
   const result = await mailerClient.send(...);
@@ -225,6 +238,7 @@ try {
 2. **Increase buffer for complex operations** - Use 1.5x or higher for deployment or batch operations
 
 3. **Set max limits for user transactions** - Protect users from excessive gas costs:
+
 ```typescript
 const userGasOptions = {
   gasMultiplier: 1.2,
@@ -232,14 +246,16 @@ const userGasOptions = {
 };
 ```
 
-4. **Monitor gas usage** - Log estimated vs actual gas for optimization:
+1. **Monitor gas usage** - Log estimated vs actual gas for optimization:
+
 ```typescript
 const result = await mailerClient.send(...);
 const efficiency = Number(result.estimatedGas) / Number(result.gasLimit);
 console.log(`Gas efficiency: ${(efficiency * 100).toFixed(1)}%`);
 ```
 
-5. **Handle network congestion** - Adjust fees during high traffic:
+1. **Handle network congestion** - Adjust fees during high traffic:
+
 ```typescript
 const gasPrice = await publicClient.getGasPrice();
 const isPeakTime = gasPrice > parseUnits('100', 9);
@@ -253,6 +269,7 @@ const gasOptions = {
 ## Deployment Specifics
 
 Contract deployment uses higher defaults due to complexity:
+
 - Default multiplier: 1.5x (vs 1.2x for regular calls)
 - Base estimation: 3M gas
 - Returns both client instance and transaction result
@@ -271,16 +288,19 @@ const { client, result } = await MailerClient.deploy(
 ## Troubleshooting
 
 **"Gas estimation failed"**
+
 - Contract call would revert (check requirements)
 - Insufficient balance for operation
 - Contract is paused
 
 **Transaction runs out of gas**
+
 - Increase `gasMultiplier` (try 1.5 or 2.0)
 - Check for state changes during estimation
 - Consider using fixed `gasLimit`
 
 **Gas costs too high**
+
 - Set `maxGasLimit` to cap costs
 - Review operation necessity
 - Batch operations when possible
@@ -288,6 +308,7 @@ const { client, result } = await MailerClient.deploy(
 ## Technical Details
 
 The implementation:
+
 1. Estimates gas using `publicClient.estimateContractGas()`
 2. Applies the multiplier for safety buffer
 3. Respects max limits if configured
@@ -295,6 +316,7 @@ The implementation:
 5. Returns both estimated and actual values
 
 Default multipliers:
+
 - Regular operations: 1.2x (20% buffer)
 - Contract deployment: 1.5x (50% buffer)
 - User configurable: 1.0x - 10.0x range
@@ -302,6 +324,7 @@ Default multipliers:
 ## Summary
 
 Gas estimation is now integrated throughout the EVM Mailer client, providing:
+
 - Safer transactions with automatic estimation
 - Flexible configuration for different scenarios
 - Better cost control with max limits

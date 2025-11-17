@@ -19,6 +19,7 @@ This directory contains specialized resources designed to optimize AI-assisted d
 ## 🎯 Purpose
 
 These resources are specifically designed for AI assistants to:
+
 - **Understand the project quickly** with concise context
 - **Follow established patterns** for consistent code quality
 - **Find solutions fast** with ready-to-use code snippets
@@ -28,21 +29,27 @@ These resources are specifically designed for AI assistants to:
 ## 🚀 Quick Start for AI
 
 ### 1. Read Project Context First
+
 Start with `context/project-summary.md` to understand:
+
 - What the project does (multi-chain messaging)
 - How it works (automatic chain detection)
 - Current status (production-ready)
 - Key files and their purposes
 
 ### 2. Use Quick Reference for Commands
+
 `QUICK_REFERENCE.md` provides:
+
 - Essential commands (`npm run compile`, `npm test`, etc.)
 - File locations and purposes
 - Common debugging solutions
 - Critical patterns to follow
 
 ### 3. Copy Patterns from Snippets
+
 `snippets/common-patterns.ts` contains:
+
 - Unified client usage examples
 - Dynamic import patterns
 - Error handling templates
@@ -50,7 +57,9 @@ Start with `context/project-summary.md` to understand:
 - Testing setups
 
 ### 4. Follow Testing Patterns
+
 `patterns/testing-patterns.md` shows:
+
 - How to structure tests for each chain
 - Mock setup patterns
 - Assertion patterns
@@ -59,6 +68,7 @@ Start with `context/project-summary.md` to understand:
 ## 🧠 Key Concepts for AI Understanding
 
 ### Automatic Chain Detection
+
 ```typescript
 // The system automatically detects wallet type and routes accordingly
 const client = new OnchainMailerClient(anyWallet, config);
@@ -66,6 +76,7 @@ const client = new OnchainMailerClient(anyWallet, config);
 ```
 
 ### Dynamic Module Loading
+
 ```typescript
 // Chain-specific code is loaded only when needed
 // EVM modules loaded only for EVM wallets
@@ -73,6 +84,7 @@ const client = new OnchainMailerClient(anyWallet, config);
 ```
 
 ### Unified API Surface
+
 ```typescript
 // Same methods work on all chains - implementation differs internally
 await client.sendMessage(subject, body, priority);  // Works on EVM and Solana
@@ -83,12 +95,14 @@ await client.claimRevenue();  // Chain-specific implementation
 ## 🛠️ Development Workflow for AI
 
 ### When Making Changes
+
 1. **Understand the change scope** (single chain vs multi-chain vs unified API)
 2. **Follow the appropriate pattern** from snippets/
 3. **Test thoroughly** using patterns from patterns/
 4. **Update documentation** if API changes
 
 ### Critical Commands to Remember
+
 ```bash
 npm run compile    # Always run after contract changes (regenerates types)
 npm run build      # Build all TypeScript (EVM + Solana + Unified)
@@ -96,6 +110,7 @@ npm test          # Run all tests (105 EVM + unified client tests)
 ```
 
 ### Error Patterns to Watch For
+
 - **TypeScript errors after contract changes** → Run `npm run compile`
 - **Import path issues** → Use relative imports consistently
 - **Wallet detection failures** → Check wallet properties and detection logic
@@ -103,7 +118,8 @@ npm test          # Run all tests (105 EVM + unified client tests)
 
 ## 📊 Success Metrics
 
-### The AI development environment is working when:
+### The AI development environment is working when
+
 - ✅ New features can be added following established patterns
 - ✅ Tests provide clear feedback on breaking changes
 - ✅ Documentation enables self-service development
@@ -111,6 +127,7 @@ npm test          # Run all tests (105 EVM + unified client tests)
 - ✅ Examples demonstrate real-world usage patterns
 
 ### Performance Indicators
+
 - Code follows established patterns (no reinventing wheels)
 - Error handling is comprehensive and specific
 - Tests cover both success and failure scenarios
@@ -119,6 +136,7 @@ npm test          # Run all tests (105 EVM + unified client tests)
 ## 🎯 AI-Specific Guidelines
 
 ### What to Always Do
+
 - ✅ Use dynamic imports for chain-specific code
 - ✅ Add timeout protection to network operations
 - ✅ Validate addresses before operations
@@ -127,6 +145,7 @@ npm test          # Run all tests (105 EVM + unified client tests)
 - ✅ Follow existing naming conventions
 
 ### What to Avoid
+
 - ❌ Static imports of heavy chain-specific modules
 - ❌ Generic error messages without context
 - ❌ Operations without proper validation
@@ -134,6 +153,7 @@ npm test          # Run all tests (105 EVM + unified client tests)
 - ❌ Breaking existing API patterns
 
 ### Code Quality Checklist
+
 - [ ] Follows established patterns from snippets/
 - [ ] Has appropriate error handling
 - [ ] Includes timeout protection for network ops
@@ -145,14 +165,18 @@ npm test          # Run all tests (105 EVM + unified client tests)
 ## 🔄 Maintenance
 
 ### Keep Resources Updated
+
 When the codebase evolves:
+
 1. Update `context/project-summary.md` with new capabilities
 2. Add new patterns to `snippets/common-patterns.ts`
 3. Update `QUICK_REFERENCE.md` with new commands/files
 4. Expand `patterns/testing-patterns.md` with new test scenarios
 
 ### Resource Feedback Loop
+
 These AI resources should evolve based on:
+
 - Common questions from AI development sessions
 - Patterns that emerge from successful implementations
 - Issues that arise repeatedly

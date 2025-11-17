@@ -31,6 +31,7 @@ npm run deploy:unified   # Deploy to both EVM and Solana (specify networks)
 ## 🧠 Core Concepts
 
 ### Automatic Chain Detection
+
 ```typescript
 // Wallet goes in → Chain type detected automatically
 const client = new OnchainMailerClient(anyWallet, config);
@@ -38,6 +39,7 @@ console.log(client.getChainType()); // 'evm' | 'solana'
 ```
 
 ### Dynamic Module Loading
+
 ```typescript
 // Chain-specific code loaded only when needed
 const evmModules = await import('../evm');  // Only loads for EVM wallets
@@ -45,6 +47,7 @@ const solanaModules = await import('../solana');  // Only loads for Solana walle
 ```
 
 ### Unified API Pattern
+
 ```typescript
 // Same methods work on all chains
 await client.sendMessage(subject, body, priority);  // Routes automatically
@@ -57,6 +60,7 @@ await client.claimRevenue();  // Chain-specific implementation
 ### Adding New Feature Across All Chains
 
 1. **Design Interface** (`src/unified/types.ts`)
+
 ```typescript
 interface NewFeatureResult {
   transactionHash: string;
@@ -65,7 +69,8 @@ interface NewFeatureResult {
 }
 ```
 
-2. **Implement Per Chain**
+1. **Implement Per Chain**
+
 ```typescript
 // EVM: src/evm/client.ts
 async newEVMFeature(): Promise<NewFeatureResult> { /* ... */ }
@@ -74,7 +79,8 @@ async newEVMFeature(): Promise<NewFeatureResult> { /* ... */ }
 async newSolanaFeature(): Promise<NewFeatureResult> { /* ... */ }
 ```
 
-3. **Add to Unified Client** (`src/unified/mailbox-client.ts`)
+1. **Add to Unified Client** (`src/unified/mailbox-client.ts`)
+
 ```typescript
 async newFeature(): Promise<NewFeatureResult> {
   return this.chainType === 'evm' ? 
@@ -82,7 +88,8 @@ async newFeature(): Promise<NewFeatureResult> {
 }
 ```
 
-4. **Add Tests** (`test/unified/`)
+1. **Add Tests** (`test/unified/`)
+
 ```typescript
 it('should work on both chains', async () => {
   const evmResult = await evmClient.newFeature();
@@ -111,6 +118,7 @@ it('should work on both chains', async () => {
 ## 🔍 Debugging Quick Fixes
 
 ### TypeScript Compilation Errors
+
 ```bash
 # Always recompile after contract changes
 npm run compile
@@ -118,6 +126,7 @@ npm run build
 ```
 
 ### Test Failures
+
 ```bash
 # Run specific test suites to isolate issues
 npm run test:evm        # Focus on EVM tests
@@ -125,6 +134,7 @@ npm run test:unified    # Focus on unified client tests
 ```
 
 ### Import Path Issues
+
 ```typescript
 // Use relative imports consistently
 import { Client } from '../evm/client';          // ✅ Good
@@ -132,6 +142,7 @@ import { Client } from '@/evm/client';           // ❌ Avoid absolute paths
 ```
 
 ### Wallet Detection Issues
+
 ```typescript
 // Debug wallet detection
 console.log('Wallet keys:', Object.keys(wallet));
@@ -143,6 +154,7 @@ console.log('Detected:', WalletDetector.detectWalletType(wallet));
 ## 🚨 Critical Patterns for AI
 
 ### Error Handling Pattern
+
 ```typescript
 // ALWAYS use this pattern
 try {
@@ -158,6 +170,7 @@ try {
 ```
 
 ### Timeout Protection Pattern
+
 ```typescript
 // ALWAYS add timeouts to network operations
 const result = await Promise.race([
@@ -169,6 +182,7 @@ const result = await Promise.race([
 ```
 
 ### Address Validation Pattern
+
 ```typescript
 // ALWAYS validate addresses before operations
 const chainType = WalletDetector.detectChainFromAddress(address);
@@ -178,6 +192,7 @@ if (chainType !== this.chainType) {
 ```
 
 ### Dynamic Import Caching Pattern
+
 ```typescript
 // ALWAYS cache dynamic imports for performance
 private static moduleCache: any = null;
@@ -193,6 +208,7 @@ private async getModules() {
 ## 📊 Success Metrics
 
 ### When Everything is Working
+
 - ✅ `npm run compile` completes without errors
 - ✅ `npm run build` builds all TypeScript successfully  
 - ✅ `npm run test:evm` shows 105/105 tests passing
@@ -201,6 +217,7 @@ private async getModules() {
 - ✅ Same API works on all supported chains
 
 ### Performance Indicators
+
 - Module loading time < 1 second
 - Network operations timeout after 10 seconds
 - Error messages are specific and actionable

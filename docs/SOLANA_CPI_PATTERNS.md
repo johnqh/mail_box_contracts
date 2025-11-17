@@ -3,6 +3,7 @@
 ## The Question
 
 **Scenario:**
+
 1. User signs transaction to UserProgram
 2. UserProgram calls Mailer
 3. Mailer needs to transfer USDC to pay fee
@@ -103,12 +104,14 @@ pub struct SendNotification<'info> {
 ### Why This Works
 
 **Solana's signer propagation rule:**
+
 - If account X is a signer in the outer transaction
 - And you pass X through a CPI
 - X **remains a signer** in the CPI context
 - All programs in the chain can validate X's signature
 
 **This is fundamentally different from EVM!** In EVM:
+
 - User signs transaction to Contract A
 - Contract A calls Contract B
 - Contract B's `msg.sender` is Contract A (not user!)
@@ -224,6 +227,7 @@ pub fn send_notification(ctx: Context<SendNotification>, recipient: Pubkey) -> R
 ### Use Case
 
 This pattern is useful when:
+
 - Program pools funds from multiple users
 - Program charges subscription fees to its account
 - Program wants to abstract away gas/fee payments from users
@@ -286,6 +290,7 @@ pub fn send(ctx: Context<Send>, ...) -> Result<()> {
 **The key difference:**
 
 **EVM:**
+
 - `msg.sender` changes at each call level
 - User → ContractA: msg.sender = User
 - ContractA → ContractB: msg.sender = ContractA ❌
@@ -293,6 +298,7 @@ pub fn send(ctx: Context<Send>, ...) -> Result<()> {
 - Need permission system as workaround
 
 **Solana:**
+
 - `is_signer` status propagates through CPIs
 - User signs transaction
 - Program makes CPI
@@ -302,6 +308,7 @@ pub fn send(ctx: Context<Send>, ...) -> Result<()> {
 ## Security Implications
 
 ### Pattern 1 (User Pays)
+
 ✅ User explicitly signs transaction
 ✅ User sees their USDC account in transaction
 ✅ Transaction shows exact fee amount
@@ -309,6 +316,7 @@ pub fn send(ctx: Context<Send>, ...) -> Result<()> {
 ✅ One signature authorizes entire flow
 
 ### Pattern 2 (Program Pays)
+
 ✅ Program controls its own funds
 ✅ Clear separation (program USDC vs user USDC)
 ✅ Program can implement its own access control

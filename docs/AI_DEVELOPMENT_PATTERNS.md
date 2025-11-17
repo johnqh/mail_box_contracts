@@ -5,6 +5,7 @@ This guide provides comprehensive patterns and examples for AI assistants workin
 ## 🤖 Quick Start for AI Assistants
 
 ### Essential Commands (Always Run These)
+
 ```bash
 # After any contract changes
 npm run compile
@@ -21,6 +22,7 @@ npx eslint src/ test/ --ext .ts,.js
 ```
 
 ### Project Status Check
+
 ```bash
 # Get comprehensive project status
 npm run ai:status
@@ -34,6 +36,7 @@ git status && npm test
 ### 1. Contract Modification Pattern
 
 **When modifying Solidity contracts:**
+
 ```bash
 # 1. Edit contract files in contracts/
 # 2. Always compile after changes
@@ -47,6 +50,7 @@ npm test -- --grep "ContractName"
 ```
 
 **When modifying Solana programs:**
+
 ```bash
 # 1. Edit program files in programs/
 # 2. Build with anchor
@@ -59,6 +63,7 @@ npm run test:solana
 ### 2. Client Library Development Pattern
 
 **TypeScript Client Changes:**
+
 ```typescript
 // 1. Modify files in src/
 // 2. Update types if needed in src/types/
@@ -73,6 +78,7 @@ npm run test:unified:direct
 ### 3. Testing Patterns
 
 **Comprehensive Test Strategy:**
+
 ```javascript
 // Always test both success and failure cases
 describe("Contract Function", () => {

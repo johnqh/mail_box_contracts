@@ -18,6 +18,7 @@ await client.sendMessage('Subject', 'Body', { priority: true });
 ```
 
 ### Limitations
+
 1. **Single wallet per instance**: Each client is tied to one wallet
 2. **State management complexity**: Client holds wallet state
 3. **React hook issues**: Wallet changes require new client instances
@@ -45,6 +46,7 @@ await client.sendMessage(
 ### Benefits
 
 #### 1. Multiple Wallet Support
+
 ```typescript
 // Same client, different wallets
 await client.sendMessage('From Alice', 'Message', aliceWallet);
@@ -52,10 +54,12 @@ await client.sendMessage('From Bob', 'Message', bobWallet);
 ```
 
 #### 2. Clean Separation of Concerns
+
 - Client handles: Contract interaction logic, method implementations, validation
 - Wallet handles: Signing, account management, connection state
 
 #### 3. React Integration
+
 ```typescript
 // Single global client instance
 const mailerClient = new OnchainMailerClient(config);
@@ -72,6 +76,7 @@ function SendButton() {
 ```
 
 #### 4. Testing Simplification
+
 ```typescript
 // Easy to test with different wallets
 const mockWallet1 = createMockWallet('0xAlice');
@@ -82,6 +87,7 @@ await client.sendMessage('Test', 'Body', mockWallet2);
 ```
 
 #### 5. Thread Safety
+
 - Client is stateless and immutable
 - Can be safely shared across components/threads
 - No race conditions from wallet state changes
@@ -155,16 +161,19 @@ function isSolanaWallet(wallet: Wallet): wallet is SolanaWallet {
 ## Migration Strategy
 
 ### Phase 1: Parallel Implementation
+
 - Create new methods with wallet parameters
 - Keep existing constructor-based methods for compatibility
 - Mark old methods as deprecated
 
 ### Phase 2: Documentation & Examples
+
 - Update all documentation to use new pattern
 - Provide migration guides
 - Update example applications
 
 ### Phase 3: Removal
+
 - Remove deprecated methods in major version bump
 - Provide automated migration tool if needed
 
@@ -249,12 +258,14 @@ async function smartSend(message: string, preferredChain?: 'evm' | 'solana') {
 ## Performance Considerations
 
 ### Advantages
+
 - No wallet state management overhead
 - Client can be cached/memoized safely
 - Reduced memory usage (one client for all wallets)
 - Better garbage collection (wallets released after use)
 
 ### Caching Strategy
+
 ```typescript
 // Global singleton pattern
 let clientInstance: OnchainMailerClient;
@@ -279,6 +290,7 @@ export function getMailerClient(): OnchainMailerClient {
 ### Similar Patterns
 
 #### Ethers.js v6
+
 ```typescript
 // Contract instance without signer
 const contract = new Contract(address, abi, provider);
@@ -287,6 +299,7 @@ await contract.connect(signer).transfer(to, amount);
 ```
 
 #### Wagmi Actions
+
 ```typescript
 // Actions take config as parameter
 await sendTransaction(config, {
@@ -296,6 +309,7 @@ await sendTransaction(config, {
 ```
 
 #### Solana Web3.js
+
 ```typescript
 // Transaction built separately from signing
 const transaction = new Transaction().add(instruction);

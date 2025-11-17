@@ -1,11 +1,13 @@
 # Fee Optimization Implementation Summary
 
 ## Overview
+
 Both EVM and Solana clients have been enhanced with fee optimization features appropriate to their respective blockchain architectures.
 
 ## EVM Gas Estimation (✅ Implemented)
 
 ### What Was Added
+
 - **Automatic Gas Estimation**: All 22 write methods now estimate gas before execution
 - **Configurable Buffer**: Default 20% buffer via `gasMultiplier`
 - **Manual Override**: Option to use fixed gas limits
@@ -13,6 +15,7 @@ Both EVM and Solana clients have been enhanced with fee optimization features ap
 - **Protection**: Maximum gas limit caps to prevent excessive costs
 
 ### Key Features
+
 ```typescript
 interface GasOptions {
   gasMultiplier?: number;       // Buffer multiplier (default: 1.2)
@@ -24,6 +27,7 @@ interface GasOptions {
 ```
 
 ### Usage Example
+
 ```typescript
 const result = await mailerClient.send(
   to, subject, body, payer, false, false,
@@ -35,12 +39,14 @@ const result = await mailerClient.send(
 ## Solana Compute Unit Optimization (✅ Implemented)
 
 ### What Was Added
+
 - **Compute Unit Limits**: Configure transaction compute budgets
 - **Priority Fees**: Speed up transaction inclusion during congestion
 - **Auto-Optimization**: Simulate transactions to determine optimal units
 - **Flexible Configuration**: Skip, fixed, or automatic modes
 
 ### Key Features
+
 ```typescript
 interface ComputeUnitOptions {
   computeUnitLimit?: number;      // Compute unit limit (max: 1.4M)
@@ -52,6 +58,7 @@ interface ComputeUnitOptions {
 ```
 
 ### Usage Example
+
 ```typescript
 const result = await client.send(
   recipient, subject, body, false, false,
@@ -78,12 +85,14 @@ const result = await client.send(
 ## Benefits
 
 ### For EVM
+
 - **Prevents Out-of-Gas Failures**: Automatic estimation with buffer
 - **Cost Control**: Max gas limits prevent excessive spending
 - **Network Adaptability**: EIP-1559 support for congestion handling
 - **Better UX**: Transactions less likely to fail
 
 ### For Solana
+
 - **Prevents Compute Limit Failures**: Set appropriate budgets
 - **Faster Inclusion**: Priority fees during high demand
 - **Cost Optimization**: Know exact compute units needed
@@ -92,7 +101,9 @@ const result = await client.send(
 ## Implementation Status
 
 ### EVM Client (`src/evm/mailer-client.ts`)
+
 ✅ **22 methods updated** with gas estimation:
+
 - All send methods (5)
 - Claims management (3)
 - Delegation operations (2)
@@ -102,7 +113,9 @@ const result = await client.send(
 - Deployment (1)
 
 ### Solana Client (`src/solana/mailer-client.ts`)
+
 ✅ **Core methods enhanced** with compute unit support:
+
 - send() - Primary message sending
 - initialize() - Contract initialization
 - Claims and delegation methods
@@ -112,6 +125,7 @@ const result = await client.send(
 ## Documentation & Examples
 
 ### Created Files
+
 1. `docs/gas-estimation-guide.md` - Comprehensive EVM gas guide
 2. `docs/solana-fee-comparison.md` - Solana vs EVM fee models
 3. `examples/gas-estimation-demo.ts` - EVM usage examples
@@ -120,6 +134,7 @@ const result = await client.send(
 ## Best Practices
 
 ### EVM
+
 ```typescript
 // Production recommendation
 const gasOptions = {
@@ -131,6 +146,7 @@ const gasOptions = {
 ```
 
 ### Solana
+
 ```typescript
 // Production recommendation
 const computeOptions = {
@@ -143,6 +159,7 @@ const computeOptions = {
 ## Backward Compatibility
 
 Both implementations maintain **100% backward compatibility**:
+
 - All parameters are optional
 - Existing code continues to work
 - Enhanced functionality is opt-in
@@ -151,6 +168,7 @@ Both implementations maintain **100% backward compatibility**:
 ## Migration Path
 
 ### For EVM Users
+
 ```typescript
 // Old code (still works)
 const hash = await client.send(...);
@@ -161,6 +179,7 @@ const hash = result.hash;
 ```
 
 ### For Solana Users
+
 ```typescript
 // Old code (still works)
 const signature = await client.send(...);
@@ -173,6 +192,7 @@ const signature = result.signature;
 ## Summary
 
 Both blockchain clients now have appropriate fee optimization:
+
 - **EVM**: Gas estimation prevents failures and controls costs
 - **Solana**: Compute unit optimization ensures reliability and speed
 - **Common**: 20% default buffer, auto-optimization options, full backward compatibility
