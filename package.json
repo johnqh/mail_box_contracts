@@ -188,6 +188,7 @@
     "dist/",
     "typechain-types/",
     "artifacts/contracts/",
+    "contracts/",
     "target/idl/",
     "target/types/",
     "programs/",

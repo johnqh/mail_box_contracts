@@ -54,9 +54,17 @@ declare module "hardhat/types/runtime" {
       signerOrOptions?: ethers.Signer | FactoryOptions
     ): Promise<Contracts.Errors__factory>;
     getContractFactory(
+      name: "MailerIntegrationExample",
+      signerOrOptions?: ethers.Signer | FactoryOptions
+    ): Promise<Contracts.MailerIntegrationExample__factory>;
+    getContractFactory(
       name: "IERC20",
       signerOrOptions?: ethers.Signer | FactoryOptions
     ): Promise<Contracts.IERC20__factory>;
+    getContractFactory(
+      name: "IMailer",
+      signerOrOptions?: ethers.Signer | FactoryOptions
+    ): Promise<Contracts.IMailer__factory>;
     getContractFactory(
       name: "Mailer",
       signerOrOptions?: ethers.Signer | FactoryOptions
@@ -117,10 +125,20 @@ declare module "hardhat/types/runtime" {
       signer?: ethers.Signer
     ): Promise<Contracts.Errors>;
     getContractAt(
+      name: "MailerIntegrationExample",
+      address: string | ethers.Addressable,
+      signer?: ethers.Signer
+    ): Promise<Contracts.MailerIntegrationExample>;
+    getContractAt(
       name: "IERC20",
       address: string | ethers.Addressable,
       signer?: ethers.Signer
     ): Promise<Contracts.IERC20>;
+    getContractAt(
+      name: "IMailer",
+      address: string | ethers.Addressable,
+      signer?: ethers.Signer
+    ): Promise<Contracts.IMailer>;
     getContractAt(
       name: "Mailer",
       address: string | ethers.Addressable,
@@ -173,9 +191,17 @@ declare module "hardhat/types/runtime" {
       signerOrOptions?: ethers.Signer | DeployContractOptions
     ): Promise<Contracts.Errors>;
     deployContract(
+      name: "MailerIntegrationExample",
+      signerOrOptions?: ethers.Signer | DeployContractOptions
+    ): Promise<Contracts.MailerIntegrationExample>;
+    deployContract(
       name: "IERC20",
       signerOrOptions?: ethers.Signer | DeployContractOptions
     ): Promise<Contracts.IERC20>;
+    deployContract(
+      name: "IMailer",
+      signerOrOptions?: ethers.Signer | DeployContractOptions
+    ): Promise<Contracts.IMailer>;
     deployContract(
       name: "Mailer",
       signerOrOptions?: ethers.Signer | DeployContractOptions
@@ -236,10 +262,20 @@ declare module "hardhat/types/runtime" {
       signerOrOptions?: ethers.Signer | DeployContractOptions
     ): Promise<Contracts.Errors>;
     deployContract(
+      name: "MailerIntegrationExample",
+      args: any[],
+      signerOrOptions?: ethers.Signer | DeployContractOptions
+    ): Promise<Contracts.MailerIntegrationExample>;
+    deployContract(
       name: "IERC20",
       args: any[],
       signerOrOptions?: ethers.Signer | DeployContractOptions
     ): Promise<Contracts.IERC20>;
+    deployContract(
+      name: "IMailer",
+      args: any[],
+      signerOrOptions?: ethers.Signer | DeployContractOptions
+    ): Promise<Contracts.IMailer>;
     deployContract(
       name: "Mailer",
       args: any[],

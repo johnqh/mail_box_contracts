@@ -59,6 +59,10 @@ const CLAIM_PERIOD: i64 = 60 * 24 * 60 * 60;
 /// Allows future upgrades to use different PDA structures without collision
 const PDA_VERSION: u8 = 1;
 
+// CPI module for cross-program invocations
+#[cfg(feature = "cpi")]
+pub mod cpi;
+
 #[cfg(not(feature = "no-entrypoint"))]
 solana_program::entrypoint!(process_instruction);
 

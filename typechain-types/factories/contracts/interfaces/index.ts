@@ -2,3 +2,4 @@
 /* tslint:disable */
 /* eslint-disable */
 export { IERC20__factory } from "./IERC20__factory";
+export { IMailer__factory } from "./IMailer__factory";
