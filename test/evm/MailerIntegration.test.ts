@@ -4,7 +4,7 @@ import { parseUnits } from "viem";
 
 describe("MailerIntegrationExample", function () {
   it("Should compile and deploy successfully", async function () {
-    const [owner, user1, user2] = await hre.viem.getWalletClients();
+    const [owner] = await hre.viem.getWalletClients();
 
     // Deploy mock USDC
     const mockUSDC = await hre.viem.deployContract("MockUSDC");

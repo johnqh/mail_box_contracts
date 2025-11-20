@@ -82,11 +82,12 @@ Implementation + Proxy:    2,810,000 gas
 | **200 gwei** | $1,280.00 | $125.00 | **$1,405.00** | ⚠️ Avoid! |
 
 **Calculation Basis:**
+
 - Gas required: 2,810,000
 - ETH price: $2,500
 - Formula: (gas × gwei × $2,500) / 1,000,000,000
 
-**Recommendation:** Deploy at 20 gwei or lower. Monitor https://etherscan.io/gastracker
+**Recommendation:** Deploy at 20 gwei or lower. Monitor <https://etherscan.io/gastracker>
 
 ---
 
@@ -102,17 +103,20 @@ Implementation + Proxy:    2,810,000 gas
 **Calculation Details:**
 
 **Polygon:**
+
 - Gas price: 30 gwei (in MATIC)
 - Gas multiplier: 0.001 (L2 efficiency)
 - MATIC price: $0.50
 - Result: Effectively rounds to $0.00
 
 **Base/Optimism:**
+
 - Effective gas: 0.01 gwei
 - Uses ETH at $2,500
 - Extremely cheap due to L2 batching
 
 **Arbitrum:**
+
 - Effective gas: 0.05 gwei
 - Slightly higher but still very cheap
 
@@ -124,9 +128,9 @@ All testnets are **100% FREE** - use faucets for test tokens:
 
 | Network | Faucet | Notes |
 |---------|--------|-------|
-| **Sepolia** | https://sepoliafaucet.com | Ethereum testnet |
-| **Mumbai** | https://faucet.polygon.technology | Polygon testnet |
-| **Base Sepolia** | https://www.coinbase.com/faucets/base-ethereum-sepolia-faucet | Base testnet |
+| **Sepolia** | <https://sepoliafaucet.com> | Ethereum testnet |
+| **Mumbai** | <https://faucet.polygon.technology> | Polygon testnet |
+| **Base Sepolia** | <https://www.coinbase.com/faucets/base-ethereum-sepolia-faucet> | Base testnet |
 
 ---
 
@@ -185,7 +189,7 @@ SOL Required:            1.0599 SOL
 | **$250** | $265.00 | Moderate bull |
 | **$300** | $318.00 | Bull market |
 
-**Current SOL Price Check:** https://www.coingecko.com/en/coins/solana
+**Current SOL Price Check:** <https://www.coingecko.com/en/coins/solana>
 
 ---
 
@@ -226,11 +230,13 @@ solana balance --url devnet
 ## Phase 1: Testing (FREE)
 
 1. **Deploy to Polygon Mumbai** (testnet) - FREE
+
    ```bash
    npx hardhat run scripts/evm/deploy-upgradeable.ts --network polygonMumbai
    ```
 
 2. **Deploy to Solana Devnet** - FREE
+
    ```bash
    solana program deploy target/deploy/mailer.so --url devnet
    ```
@@ -242,11 +248,13 @@ solana balance --url devnet
 ## Phase 2: Production Launch ($212)
 
 1. **Deploy to Polygon Mainnet** - $0
+
    ```bash
    npx hardhat run scripts/evm/deploy-upgradeable.ts --network polygon
    ```
 
 2. **Deploy to Solana Mainnet** - $212
+
    ```bash
    solana program deploy target/deploy/mailer.so --url mainnet-beta
    ```
@@ -260,6 +268,7 @@ solana balance --url devnet
 Only if you need Ethereum presence:
 
 **Best Case (Weekend 20 gwei):** $140
+
 ```bash
 # Monitor gas: https://etherscan.io/gastracker
 # Wait for gas < 20 gwei (weekend mornings UTC)
@@ -461,5 +470,6 @@ solana program deploy target/deploy/mailer.so --url mainnet-beta
 **Last Updated:** 2025-01-20
 
 **For latest gas prices:**
-- Ethereum: https://etherscan.io/gastracker
-- SOL Price: https://www.coingecko.com/en/coins/solana
+
+- Ethereum: <https://etherscan.io/gastracker>
+- SOL Price: <https://www.coingecko.com/en/coins/solana>

@@ -7,6 +7,7 @@ Quick reference for deploying contracts with minimal cost.
 ## ✅ Already Optimized
 
 ### EVM (Mailer.sol)
+
 - [x] Compiler optimization (`runs: 1`, `viaIR: true`)
 - [x] Storage packing (2 slots, optimized structs)
 - [x] Custom errors instead of revert strings
@@ -17,6 +18,7 @@ Quick reference for deploying contracts with minimal cost.
 **Current bytecode:** 24.5 KB (99.9% of 24KB max limit)
 
 ### Solana (mailer program)
+
 - [x] Cargo profile optimization added (`opt-level = "z"`)
 - [x] Account structures optimized (91 bytes for MailerState)
 - [x] Manual discriminators (efficient)
@@ -26,9 +28,10 @@ Quick reference for deploying contracts with minimal cost.
 
 ## 🎯 Deployment Recommendations
 
-### For EVM:
+### For EVM
 
 #### Option 1: L2 Deployment (RECOMMENDED)
+
 ```bash
 # Deploy to Polygon (cheapest)
 npx hardhat run scripts/evm/deploy-upgradeable.ts --network polygon
@@ -42,6 +45,7 @@ npx hardhat run scripts/evm/deploy-upgradeable.ts --network base
 **Savings vs Ethereum mainnet: 95%+ ($400-1,650)**
 
 #### Option 2: Ethereum Mainnet (If Needed)
+
 ```bash
 # 1. Monitor gas prices
 # Visit: https://etherscan.io/gastracker
@@ -57,9 +61,10 @@ npx hardhat run scripts/evm/deploy-upgradeable.ts --network mainnet
 
 ---
 
-### For Solana:
+### For Solana
 
 #### Step 1: Test on Devnet (FREE)
+
 ```bash
 # Get devnet SOL from faucet
 solana airdrop 2
@@ -73,6 +78,7 @@ solana program deploy target/deploy/mailer.so --url devnet
 ```
 
 #### Step 2: Deploy to Mainnet
+
 ```bash
 # Build optimized binary
 cd programs/mailer
@@ -107,7 +113,8 @@ solana program deploy target/deploy/mailer.so --url mainnet-beta
 
 ## 🔍 Pre-Deployment Checks
 
-### EVM Checklist:
+### EVM Checklist
+
 ```bash
 # 1. Compile with optimizations
 npm run compile
@@ -128,7 +135,8 @@ npm test
 # Use L2 for 95% cost savings!
 ```
 
-### Solana Checklist:
+### Solana Checklist
+
 ```bash
 # 1. Build with optimizations
 cd programs/mailer
@@ -152,14 +160,16 @@ solana program deploy target/deploy/mailer.so --url mainnet-beta
 
 ## 🎨 Gas/Cost Optimization Tips
 
-### EVM Gas Saving Tips:
+### EVM Gas Saving Tips
+
 1. **Use L2s**: 95%+ cheaper than mainnet
 2. **Time your deployment**: Weekends 2-6 AM UTC (40-70% savings)
-3. **Deploy in low gas**: Monitor https://etherscan.io/gastracker
+3. **Deploy in low gas**: Monitor <https://etherscan.io/gastracker>
 4. **Split deployments**: Deploy proxy and implementation at different low-gas times
 5. **Verify later**: Can verify contract on Etherscan later when gas is low
 
-### Solana Cost Saving Tips:
+### Solana Cost Saving Tips
+
 1. **Test on devnet first**: Completely free
 2. **Optimize binary**: Use `opt-level = "z"` (30-40% savings)
 3. **Monitor SOL price**: Deploy when price is lower
@@ -170,7 +180,8 @@ solana program deploy target/deploy/mailer.so --url mainnet-beta
 
 ## 📊 Expected Costs (Your Project)
 
-### Conservative Estimate:
+### Conservative Estimate
+
 | Deployment | Cost |
 |------------|------|
 | EVM on Polygon | $2 |
@@ -178,7 +189,8 @@ solana program deploy target/deploy/mailer.so --url mainnet-beta
 | Solana Mainnet (optimized) | $400 |
 | **Total** | **$412** |
 
-### High-End Estimate:
+### High-End Estimate
+
 | Deployment | Cost |
 |------------|------|
 | EVM on Ethereum (high gas) | $1,200 |
@@ -186,7 +198,8 @@ solana program deploy target/deploy/mailer.so --url mainnet-beta
 | Solana Mainnet | $500 |
 | **Total** | **$1,715** |
 
-### Recommended Approach:
+### Recommended Approach
+
 | Deployment | Cost |
 |------------|------|
 | EVM on Polygon | $2 |
@@ -198,14 +211,16 @@ solana program deploy target/deploy/mailer.so --url mainnet-beta
 
 ## 🚨 Important Notes
 
-### EVM:
+### EVM
+
 - Your contract is at **99.9% of the 24KB limit**
 - If you need to add features, consider:
   - External libraries
   - Diamond pattern
   - Splitting functionality
 
-### Solana:
+### Solana
+
 - Rent is **recoverable** - you can close accounts later
 - Build time will be **slower** with optimizations (worth it!)
 - Test thoroughly on **devnet** before mainnet
@@ -214,7 +229,8 @@ solana program deploy target/deploy/mailer.so --url mainnet-beta
 
 ## 📞 Quick Commands
 
-### Build & Deploy EVM:
+### Build & Deploy EVM
+
 ```bash
 # Clean build
 npm run clean && npm run compile
@@ -226,7 +242,8 @@ npm test
 npx hardhat run scripts/evm/deploy-upgradeable.ts --network polygon
 ```
 
-### Build & Deploy Solana:
+### Build & Deploy Solana
+
 ```bash
 # Optimized build
 cd programs/mailer

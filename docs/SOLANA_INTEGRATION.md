@@ -393,7 +393,7 @@ pub fn process_user_registration(
 
 When calling Mailer via CPI, you need to pass these accounts:
 
-### For `send()`, `send_prepared()`, `send_through_webhook()`:
+### For `send()`, `send_prepared()`, `send_through_webhook()`
 
 0. `[signer]` Sender
 1. `[writable]` Recipient claim PDA
@@ -403,7 +403,7 @@ When calling Mailer via CPI, you need to pass these accounts:
 5. `[]` SPL Token program
 6. `[]` System program
 
-### For `send_to_email()`, `send_prepared_to_email()`:
+### For `send_to_email()`, `send_prepared_to_email()`
 
 0. `[signer]` Sender
 1. `[]` Mailer state PDA

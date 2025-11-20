@@ -7,7 +7,7 @@ import {
   EstimateGasExecutionError,
 } from 'viem';
 import { ChainInfo } from '@sudobility/configs';
-import { Mailer__factory } from '../../typechain-types/factories/Mailer__factory';
+import { Mailer__factory } from '../../typechain-types/factories/contracts/Mailer__factory';
 
 const MAILER_ABI = Mailer__factory.abi;
 const MAILER_BYTECODE = Mailer__factory.bytecode as `0x${string}`;
@@ -273,7 +273,8 @@ export class EVMMailerClient {
     const hash = await connectedWallet.walletClient.deployContract({
       abi: MAILER_ABI,
       bytecode: MAILER_BYTECODE,
-      args: [normalizeAddress(chainInfo.usdcAddress), normalizeAddress(ownerAddress)] as const,
+      // UUPS proxy pattern: constructor takes no args, initialize() is called separately
+      args: [] as const,
       account,
       chain: connectedWallet.walletClient.chain,
       gas: gasLimit,

@@ -78,7 +78,7 @@ describe("Mailer", function () {
     });
 
     it("Should emit event with feePaid=false when USDC transfer fails (insufficient balance)", async function () {
-      const { mailer, addr1, addr2, publicClient } = this;
+      const { mailer, addr2, publicClient } = this;
       const ownerBefore = await mailer.read.getOwnerClaimable();
 
       const hash = await mailer.write.send([addr2.account.address, "Test Subject", "Test Body", addr2.account .address, true, false], { account: addr2.account  });

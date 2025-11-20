@@ -7,12 +7,14 @@ Complete guide to reducing deployment costs for both EVM and Solana contracts.
 ## 📊 Current Baseline Costs
 
 ### EVM (Mailer.sol)
+
 - **Bytecode Size:** 24.5 KB (deployed)
 - **Ethereum Mainnet:** $412-$1,675 (depends on gas)
 - **Base/Optimism:** $5-$17
 - **Polygon:** $1-$4
 
 ### Solana (mailer program)
+
 - **Estimated Size:** 150-250 KB
 - **Mainnet Cost:** $420-$700 (rent-exempt)
 - **Devnet/Testnet:** FREE
@@ -25,7 +27,8 @@ Complete guide to reducing deployment costs for both EVM and Solana contracts.
 
 **Impact: 5-20% cost reduction**
 
-### Current Settings:
+### Current Settings
+
 ```typescript
 solidity: {
   version: "0.8.24",
@@ -39,7 +42,8 @@ solidity: {
 }
 ```
 
-### Explanation:
+### Explanation
+
 - **`runs: 1`** - Optimizes for deployment size instead of runtime gas
   - `runs: 200` (default) optimizes for code that runs frequently
   - `runs: 1` minimizes deployment cost at expense of slightly higher runtime gas
@@ -50,7 +54,8 @@ solidity: {
   - Better dead code elimination
   - More aggressive inlining
 
-### To revert if needed:
+### To revert if needed
+
 ```typescript
 optimizer: {
   enabled: true,
@@ -90,6 +95,7 @@ struct ClaimableAmount {
 ### B. Custom Errors (ALREADY IMPLEMENTED ✅)
 
 Your contract uses custom errors instead of string reverts:
+
 ```solidity
 error OnlyOwner();
 error NoClaimableAmount();
@@ -103,6 +109,7 @@ error NoClaimableAmount();
 **Potential Savings: 200-500 bytes**
 
 Find all functions and mark them appropriately:
+
 ```solidity
 // Current: All functions are public/external ✅ (good!)
 // No internal functions exposed publicly
@@ -118,6 +125,7 @@ function _internalHelper() internal pure returns (uint256) {
 **Potential Savings: 100-200 bytes per variable**
 
 Change constructor-set variables to `immutable`:
+
 ```solidity
 // Instead of:
 IERC20 public usdcToken;  // Storage variable
@@ -131,6 +139,7 @@ IERC20 public immutable usdcToken;  // Embedded in bytecode
 ### E. Short-Circuit Evaluation
 
 **Already optimized** - You use short-circuit logic:
+
 ```solidity
 if (delegate != address(0) && !feePaused) {
     // If delegate is address(0), !feePaused never evaluated
@@ -140,6 +149,7 @@ if (delegate != address(0) && !feePaused) {
 ### F. Unchecked Math (ALREADY USED ✅)
 
 You already use `unchecked` blocks where safe:
+
 ```solidity
 unchecked {
     feeToCharge = revenueShareToReceiver ? effectiveFee : (effectiveFee * OWNER_SHARE) / 100;
@@ -153,6 +163,7 @@ unchecked {
 ### A. Use L2s for Initial Launch
 
 **Cost Comparison:**
+
 | Network | Cost | Time to Deploy |
 |---------|------|----------------|
 | Polygon (Recommended) | $1-4 | Same |
@@ -160,6 +171,7 @@ unchecked {
 | Ethereum | $412-1,675 | Same |
 
 **Strategy:**
+
 1. Deploy to Polygon/Base first
 2. Get users and traction
 3. Deploy to Ethereum mainnet only if needed
@@ -170,13 +182,15 @@ unchecked {
 ### B. Deploy During Low Gas Periods
 
 **Ethereum Gas Patterns:**
+
 - **Lowest:** Weekends, 2-6 AM UTC
 - **Medium:** Weekdays, 6 AM - 2 PM UTC
 - **Highest:** Weekdays, 2 PM - midnight UTC
 
 **Monitor:**
-- https://etherscan.io/gastracker
-- https://www.blocknative.com/gas-estimator
+
+- <https://etherscan.io/gastracker>
+- <https://www.blocknative.com/gas-estimator>
 - Set up alerts for gas < 20 gwei
 
 **Potential Savings: 40-70% by timing deployment**
@@ -184,10 +198,12 @@ unchecked {
 ### C. Split Deployment Across Transactions
 
 Your UUPS pattern requires 2 deployments:
+
 1. Deploy implementation contract (expensive)
 2. Deploy proxy contract (cheaper)
 
 **Strategy:**
+
 - Deploy implementation during ultra-low gas
 - Wait for next low gas period
 - Deploy proxy
@@ -215,7 +231,8 @@ Your UUPS pattern requires 2 deployments:
 
 ## Strategy 5: Bytecode Analysis
 
-### Check Your Contract Size:
+### Check Your Contract Size
+
 ```bash
 # Current size
 cat artifacts/contracts/Mailer.sol/Mailer.json | jq -r '.deployedBytecode' | wc -c
@@ -226,6 +243,7 @@ cat artifacts/contracts/Mailer.sol/Mailer.json | jq -r '.deployedBytecode' | wc 
 ```
 
 **If you need to add features**, consider:
+
 1. External libraries for complex logic
 2. Splitting into multiple contracts
 3. Using delegatecall for rarely-used functions
@@ -254,12 +272,14 @@ opt-level = "z"          # Optimize dependencies too
 strip = "symbols"
 ```
 
-### Build with optimization:
+### Build with optimization
+
 ```bash
 cargo build-sbf --release
 ```
 
 **Expected Savings:**
+
 - Without optimization: 250 KB
 - With optimization: 150-180 KB
 - **Cost reduction: $140-$280 (30-40%)**
@@ -271,6 +291,7 @@ cargo build-sbf --release
 ### Remove CPI Feature if Unused
 
 Check `programs/mailer/src/lib.rs`:
+
 ```rust
 // Current:
 #[cfg(feature = "cpi")]
@@ -314,6 +335,7 @@ borsh = { version = "1.5", default-features = false }
 ### A. Account Size Optimization (ALREADY DONE ✅)
 
 Your account structures are already optimized:
+
 ```rust
 pub struct MailerState {
     pub owner: Pubkey,              // 32
@@ -330,6 +352,7 @@ pub struct MailerState {
 ### B. Remove Unused Functions
 
 Check if all instructions are actually used:
+
 ```rust
 // If you don't need email sending:
 // SendToEmail
@@ -341,6 +364,7 @@ Check if all instructions are actually used:
 ### C. Inline Small Functions
 
 The compiler usually does this, but you can force it:
+
 ```rust
 #[inline(always)]
 fn small_helper_function() -> u64 {
@@ -375,10 +399,12 @@ pub fn close_mailer_account(ctx: Context<CloseMailer>) -> Result<()> {
 Unlike EVM, Solana deployment cost is fixed (rent-based), but:
 
 ### Monitor SOL Price
+
 - Deploy when SOL price is lower
 - Example: $150/SOL vs $250/SOL = 40% savings
 
 ### Use Devnet First
+
 - **FREE** on devnet
 - Thoroughly test before mainnet
 - Only deploy to mainnet when production-ready
@@ -414,19 +440,21 @@ Unlike EVM, Solana deployment cost is fixed (rent-based), but:
 
 # 🎯 Recommended Action Plan
 
-## Immediate (Do Now):
+## Immediate (Do Now)
 
-### EVM:
+### EVM
+
 1. ✅ Compiler optimization already applied
 2. ⏭️ Deploy to Polygon/Base instead of mainnet (saves 95%)
 3. ⏭️ If mainnet needed, monitor gas and deploy during low periods
 
-### Solana:
+### Solana
+
 1. ❌ Add Cargo profile optimizations (see Strategy 1)
 2. ✅ Test on devnet (already configured)
 3. ⏭️ Deploy to mainnet only when ready
 
-## Future Optimizations:
+## Future Optimizations
 
 1. Consider external libraries if contract grows past 24KB limit
 2. Implement account closing for rent recovery on Solana
@@ -436,7 +464,8 @@ Unlike EVM, Solana deployment cost is fixed (rent-based), but:
 
 # 🧪 Test Your Optimizations
 
-## EVM:
+## EVM
+
 ```bash
 # Check contract size after optimization
 npm run compile
@@ -446,7 +475,8 @@ cat artifacts/contracts/Mailer.sol/Mailer.json | jq -r '.deployedBytecode' | wc 
 npm test
 ```
 
-## Solana:
+## Solana
+
 ```bash
 # Build with optimization
 cd programs/mailer
@@ -463,11 +493,13 @@ npm run test:solana
 
 # 📈 Cost Tracking
 
-## Before Optimization:
+## Before Optimization
+
 - **EVM (Mainnet):** $412-1,675
 - **Solana (Mainnet):** $560-900
 
-## After Optimization:
+## After Optimization
+
 - **EVM (L2):** $1-17 (97%+ savings)
 - **Solana (Optimized):** $280-540 (40% savings)
 
