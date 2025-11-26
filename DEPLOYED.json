@@ -1,7 +1,7 @@
 {
   "description": "Deployment tracking for multi-chain Mailer contracts",
-  "lastUpdated": "2025-11-07T20:42:16.966Z",
-  "version": "1.15.0",
+  "lastUpdated": "2025-11-26T17:34:13.393Z",
+  "version": "1.17.16",
   "architecture": {
     "evm": {
       "contracts": {
@@ -46,36 +46,35 @@
     }
   },
   "deployments": {
-    "note": "Latest deployment addresses with permission system and comprehensive gas optimizations (v1.15.0)",
+    "note": "Latest deployment addresses with payer field in events (v1.17.16)",
     "evm": {
       "sepolia": {
         "chainId": 11155111,
         "network": "sepolia",
-        "mailer": "0xb5f69709c8b1bf5413add7acba44c2d4b00728a8",
-        "blockNumber": 9581750,
-        "transactionHash": "0x76d3c1df74ec44b455e537bcd2bbac2035589f79dd845b7575416c88535bc9d0",
+        "mailer": "0xf03FC32CAB5277fD6303F7299059AB002F2fe9FE",
+        "mailerImplementation": "0x3bc8d68b55166F20Fb98bedd127f864F856F1F96",
+        "blockNumber": 9712219,
+        "transactionHash": "0x24f4aaa9bc8f7044444e2d9aad800270a3890b49d34f18902ec6b333bc1648dd",
         "usdc": "0x1c7D4B196Cb0C7B01d743Fbc6116a902379C7238",
-        "deployer": "0x1996d64d8f6e47a5bf6fb92246ef4efd6ae881e0",
-        "owner": "0x1996d64d8f6e47a5bf6fb92246ef4efd6ae881e0",
-        "timestamp": "2025-11-07T20:42:16.966Z",
+        "deployer": "0x1996d64D8f6E47A5bF6fB92246EF4eFD6Ae881e0",
+        "owner": "0x1996d64D8f6E47A5bF6fB92246EF4eFD6Ae881e0",
+        "timestamp": "2025-11-26T17:34:13.393Z",
         "fees": {
           "sendFee": "0.1 USDC",
           "delegationFee": "10 USDC"
         },
-        "gasOptimizations": {
-          "storageSlotsSaved": 3,
-          "estimatedSavings": "10-17% reduction in gas costs",
-          "optimizedTypes": ["uint128", "uint8", "bool", "uint192", "uint64"],
-          "techniques": ["storage packing", "struct optimization", "delete vs zero", "short-circuit checks", "early returns"]
+        "upgradeable": {
+          "kind": "uups",
+          "admin": "0x1996d64D8f6E47A5bF6fB92246EF4eFD6Ae881e0"
         },
         "verification": {
-          "etherscan": "https://sepolia.etherscan.io/address/0xb5f69709c8b1bf5413add7acba44c2d4b00728a8",
-          "transaction": "https://sepolia.etherscan.io/tx/0x76d3c1df74ec44b455e537bcd2bbac2035589f79dd845b7575416c88535bc9d0"
+          "etherscan": "https://sepolia.etherscan.io/address/0xf03FC32CAB5277fD6303F7299059AB002F2fe9FE",
+          "transaction": "https://sepolia.etherscan.io/tx/0x24f4aaa9bc8f7044444e2d9aad800270a3890b49d34f18902ec6b333bc1648dd"
         },
         "previousDeployment": {
-          "address": "0x8de9c081a31cbb14a5974b6b4a04aa8502a796f7",
-          "blockNumber": 9531686,
-          "note": "Replaced with gas-optimized version v1.15.0"
+          "address": "0xb5f69709c8b1bf5413add7acba44c2d4b00728a8",
+          "blockNumber": 9581750,
+          "note": "Replaced with v1.17.16 - added payer field to events"
         }
       }
     },

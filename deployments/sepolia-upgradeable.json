@@ -1,0 +1,20 @@
+{
+  "network": "sepolia",
+  "chainId": 11155111,
+  "timestamp": "2025-11-26T17:34:13.393Z",
+  "deployer": "0x1996d64D8f6E47A5bF6fB92246EF4eFD6Ae881e0",
+  "owner": "0x1996d64D8f6E47A5bF6fB92246EF4eFD6Ae881e0",
+  "contracts": {
+    "usdc": "0x1c7D4B196Cb0C7B01d743Fbc6116a902379C7238",
+    "mailerProxy": "0xf03FC32CAB5277fD6303F7299059AB002F2fe9FE",
+    "mailerImplementation": "0x3bc8d68b55166F20Fb98bedd127f864F856F1F96"
+  },
+  "fees": {
+    "sendFee": "0.1 USDC",
+    "delegationFee": "10 USDC"
+  },
+  "upgradeable": {
+    "kind": "uups",
+    "admin": "0x1996d64D8f6E47A5bF6fB92246EF4eFD6Ae881e0"
+  }
+}
