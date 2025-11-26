@@ -137,7 +137,9 @@
       "Bash(CONTRACT_ADDRESS=0xb5f69709c8b1bf5413add7acba44c2d4b00728a8 npx hardhat run:*)",
       "Bash(/tmp/integration_tests_fixed.rs)",
       "Bash(npx markdownlint-cli2:*)",
-      "Bash(./scripts/check-contract-size.sh:*)"
+      "Bash(./scripts/check-contract-size.sh:*)",
+      "Bash(SEPOLIA_RPC_URL=\"https://ethereum-sepolia-rpc.publicnode.com\" npx hardhat run:*)",
+      "Bash(CONTRACT_ADDRESS=0xf03FC32CAB5277fD6303F7299059AB002F2fe9FE SEPOLIA_RPC_URL=\"https://ethereum-sepolia-rpc.publicnode.com\" npx hardhat run scripts/evm/get-deployment-block.ts --network sepolia)"
     ],
     "deny": [],
     "defaultMode": "acceptEdits"
