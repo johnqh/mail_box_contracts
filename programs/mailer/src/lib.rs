@@ -695,8 +695,8 @@ fn process_send(
             fee_paid = true; // No fee required
         }
 
-        // Always log the message with fee_paid status
-        msg!("Priority mail sent from {} to {}: {} (revenue share enabled, resolve sender: {}, effective fee: {}, fee paid: {})", sender.key, to, subject, _resolve_sender_to_name, effective_fee, fee_paid);
+        // Always log the message with fee_paid status (payer = sender in Solana)
+        msg!("Priority mail sent from {} payer {} to {}: {} (revenue share enabled, resolve sender: {}, effective fee: {}, fee paid: {})", sender.key, sender.key, to, subject, _resolve_sender_to_name, effective_fee, fee_paid);
     } else {
         // Standard mode: 10% fee only, no revenue sharing
         let owner_fee = (effective_fee * 10) / 100; // 10% of effective fee
@@ -734,9 +734,10 @@ fn process_send(
             mailer_state.serialize(&mut &mut mailer_data[8..])?;
         }
 
-        // Always log the message with fee_paid status
+        // Always log the message with fee_paid status (payer = sender in Solana)
         msg!(
-            "Standard mail sent from {} to {}: {} (resolve sender: {}, effective fee: {}, fee paid: {})",
+            "Standard mail sent from {} payer {} to {}: {} (resolve sender: {}, effective fee: {}, fee paid: {})",
+            sender.key,
             sender.key,
             to,
             subject,
@@ -885,8 +886,8 @@ fn process_send_prepared(
             fee_paid = true; // No fee required
         }
 
-        // Always log the message with fee_paid status
-        msg!("Priority prepared mail sent from {} to {} (mailId: {}, revenue share enabled, resolve sender: {}, effective fee: {}, fee paid: {})", sender.key, to, mail_id, _resolve_sender_to_name, effective_fee, fee_paid);
+        // Always log the message with fee_paid status (payer = sender in Solana)
+        msg!("Priority prepared mail sent from {} payer {} to {} (mailId: {}, revenue share enabled, resolve sender: {}, effective fee: {}, fee paid: {})", sender.key, sender.key, to, mail_id, _resolve_sender_to_name, effective_fee, fee_paid);
     } else {
         // Standard mode: 10% fee only, no revenue sharing
         let owner_fee = (effective_fee * 10) / 100; // 10% of effective fee
@@ -924,9 +925,10 @@ fn process_send_prepared(
             mailer_state.serialize(&mut &mut mailer_data[8..])?;
         }
 
-        // Always log the message with fee_paid status
+        // Always log the message with fee_paid status (payer = sender in Solana)
         msg!(
-            "Standard prepared mail sent from {} to {} (mailId: {}, resolve sender: {}, effective fee: {}, fee paid: {})",
+            "Standard prepared mail sent from {} payer {} to {} (mailId: {}, resolve sender: {}, effective fee: {}, fee paid: {})",
+            sender.key,
             sender.key,
             to,
             mail_id,
@@ -1018,9 +1020,10 @@ fn process_send_to_email(
         mailer_state.serialize(&mut &mut mailer_data[8..])?;
     }
 
-    // Always log the message with fee_paid status
+    // Always log the message with fee_paid status (payer = sender in Solana)
     msg!(
-        "Mail sent from {} to email {}: {} (effective fee: {}, fee paid: {})",
+        "Mail sent from {} payer {} to email {}: {} (effective fee: {}, fee paid: {})",
+        sender.key,
         sender.key,
         to_email,
         subject,
@@ -1109,9 +1112,10 @@ fn process_send_prepared_to_email(
         mailer_state.serialize(&mut &mut mailer_data[8..])?;
     }
 
-    // Always log the message with fee_paid status
+    // Always log the message with fee_paid status (payer = sender in Solana)
     msg!(
-        "Prepared mail sent from {} to email {} (mailId: {}, effective fee: {}, fee paid: {})",
+        "Prepared mail sent from {} payer {} to email {} (mailId: {}, effective fee: {}, fee paid: {})",
+        sender.key,
         sender.key,
         to_email,
         mail_id,
@@ -1258,8 +1262,8 @@ fn process_send_through_webhook(
             fee_paid = true; // No fee required
         }
 
-        // Always log the message with fee_paid status
-        msg!("Webhook mail sent from {} to {} (webhookId: {}, revenue share enabled, resolve sender: {}, effective fee: {}, fee paid: {})", sender.key, to, webhook_id, _resolve_sender_to_name, effective_fee, fee_paid);
+        // Always log the message with fee_paid status (payer = sender in Solana)
+        msg!("Webhook mail sent from {} payer {} to {} (webhookId: {}, revenue share enabled, resolve sender: {}, effective fee: {}, fee paid: {})", sender.key, sender.key, to, webhook_id, _resolve_sender_to_name, effective_fee, fee_paid);
     } else {
         // Standard mode: 10% fee only, no revenue sharing
         let owner_fee = (effective_fee * 10) / 100; // 10% of effective fee
@@ -1297,9 +1301,10 @@ fn process_send_through_webhook(
             mailer_state.serialize(&mut &mut mailer_data[8..])?;
         }
 
-        // Always log the message with fee_paid status
+        // Always log the message with fee_paid status (payer = sender in Solana)
         msg!(
-            "Webhook mail sent from {} to {} (webhookId: {}, resolve sender: {}, effective fee: {}, fee paid: {})",
+            "Webhook mail sent from {} payer {} to {} (webhookId: {}, resolve sender: {}, effective fee: {}, fee paid: {})",
+            sender.key,
             sender.key,
             to,
             webhook_id,
