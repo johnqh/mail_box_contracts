@@ -1,6 +1,6 @@
 {
   "description": "Deployment tracking for multi-chain Mailer contracts",
-  "lastUpdated": "2025-11-30T20:10:00.000Z",
+  "lastUpdated": "2025-11-30T20:20:00.000Z",
   "version": "1.17.16",
   "architecture": {
     "evm": {
@@ -51,30 +51,28 @@
       "sepolia": {
         "chainId": 11155111,
         "network": "sepolia",
-        "mailer": "0xf03FC32CAB5277fD6303F7299059AB002F2fe9FE",
+        "mailer": "0x94c60389D5a69A3f83871990a6b140Abb47b4f10",
         "mailerImplementation": "0x3bc8d68b55166F20Fb98bedd127f864F856F1F96",
-        "blockNumber": 9712219,
-        "transactionHash": "0x24f4aaa9bc8f7044444e2d9aad800270a3890b49d34f18902ec6b333bc1648dd",
+        "blockNumber": 9740830,
         "usdc": "0x1c7D4B196Cb0C7B01d743Fbc6116a902379C7238",
         "deployer": "0x1996d64D8f6E47A5bF6fB92246EF4eFD6Ae881e0",
-        "owner": "0x1996d64D8f6E47A5bF6fB92246EF4eFD6Ae881e0",
-        "timestamp": "2025-11-26T17:34:13.393Z",
+        "owner": "0x9Ea94eDDF851bb1170828335f22F112Dd76D9C3d",
+        "timestamp": "2025-11-30T20:06:36.810Z",
         "fees": {
           "sendFee": "0.1 USDC",
           "delegationFee": "10 USDC"
         },
         "upgradeable": {
           "kind": "uups",
-          "admin": "0x1996d64D8f6E47A5bF6fB92246EF4eFD6Ae881e0"
+          "admin": "0x9Ea94eDDF851bb1170828335f22F112Dd76D9C3d"
         },
         "verification": {
-          "etherscan": "https://sepolia.etherscan.io/address/0xf03FC32CAB5277fD6303F7299059AB002F2fe9FE",
-          "transaction": "https://sepolia.etherscan.io/tx/0x24f4aaa9bc8f7044444e2d9aad800270a3890b49d34f18902ec6b333bc1648dd"
+          "etherscan": "https://sepolia.etherscan.io/address/0x94c60389D5a69A3f83871990a6b140Abb47b4f10"
         },
         "previousDeployment": {
-          "address": "0xb5f69709c8b1bf5413add7acba44c2d4b00728a8",
-          "blockNumber": 9581750,
-          "note": "Replaced with v1.17.16 - added payer field to events"
+          "address": "0xf03FC32CAB5277fD6303F7299059AB002F2fe9FE",
+          "blockNumber": 9712219,
+          "note": "Replaced - owner was incorrectly set to deployer"
         }
       }
     },
