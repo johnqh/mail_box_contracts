@@ -4,13 +4,28 @@
  * @notice These examples demonstrate real-world usage patterns for Solana integration
  */
 
-import { Connection, Keypair, PublicKey } from '@solana/web3.js';
-import { Wallet } from '@coral-xyz/anchor';
-import { MailerClient } from '../src/solana';
+import { Connection, Keypair, PublicKey, Transaction } from '@solana/web3.js';
+import { MailerClient, Wallet } from '../src/solana';
+
+// Simple wallet wrapper for Keypair
+function createWallet(keypair: Keypair): Wallet {
+  return {
+    publicKey: keypair.publicKey,
+    signTransaction: async <T extends Transaction>(tx: T): Promise<T> => {
+      tx.partialSign(keypair);
+      return tx;
+    },
+    signAllTransactions: async <T extends Transaction>(txs: T[]): Promise<T[]> => {
+      txs.forEach(tx => tx.partialSign(keypair));
+      return txs;
+    },
+  };
+}
 
 // Configuration for Solana devnet
 const connection = new Connection('https://api.devnet.solana.com', 'confirmed');
-const wallet = new Wallet(Keypair.generate()); // In practice, use your actual keypair
+const keypair = Keypair.generate(); // In practice, use your actual keypair
+const wallet = createWallet(keypair);
 const usdcMint = new PublicKey('4zMMC9srt5Ri5X14GAgXhaHii3GnPAEERYPJgZJDncDU'); // Devnet USDC
 
 // Example program ID (replace with actual deployed program ID)

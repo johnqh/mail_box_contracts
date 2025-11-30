@@ -122,13 +122,16 @@ await client.claimRevenue();
 ### Solana
 
 ```typescript
-import { OnchainMailerClient } from '@johnqh/mail_box_contracts';
-import { Keypair } from '@solana/web3.js';
-import { Wallet } from '@coral-xyz/anchor';
+import { OnchainMailerClient, Wallet } from '@johnqh/mail_box_contracts';
+import { Keypair, Transaction } from '@solana/web3.js';
 
-// The unified client automatically detects Solana wallets
+// Create a wallet from keypair
 const keypair = Keypair.generate();
-const wallet = new Wallet(keypair);
+const wallet: Wallet = {
+  publicKey: keypair.publicKey,
+  signTransaction: async (tx) => { tx.partialSign(keypair); return tx; },
+  signAllTransactions: async (txs) => { txs.forEach(tx => tx.partialSign(keypair)); return txs; },
+};
 
 const client = new OnchainMailerClient(wallet, SOLANA_CHAIN_CONFIG);
 

@@ -148,7 +148,11 @@
       "Bash(__NEW_LINE__ echo \"\")",
       "Bash(BASE_RPC_URL=\"https://mainnet.base.org\" npx hardhat run:*)",
       "Bash(BASE_RPC_URL=\"https://mainnet.base.org\" npx hardhat:*)",
-      "WebFetch(domain:developers.circle.com)"
+      "WebFetch(domain:developers.circle.com)",
+      "Bash(export PATH=\"$HOME/.local/share/solana/install/active_release/bin:$PATH\")",
+      "Bash(target/deploy/mailer.so )",
+      "Bash(solana-keygen pubkey:*)",
+      "Bash(solana-keygen new:*)"
     ],
     "deny": [],
     "defaultMode": "acceptEdits"

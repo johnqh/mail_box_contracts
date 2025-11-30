@@ -7,7 +7,6 @@
 import hre from 'hardhat';
 import { formatEther } from 'viem';
 import { Connection, Keypair, PublicKey } from '@solana/web3.js';
-import { Wallet } from '@coral-xyz/anchor';
 import { Optional } from '@sudobility/types';
 import fs from 'fs';
 import path from 'path';

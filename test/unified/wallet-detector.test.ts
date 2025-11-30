@@ -1,7 +1,22 @@
 import { expect } from "chai";
-import { Keypair } from "@solana/web3.js";
-import { Wallet } from "@coral-xyz/anchor";
+import { Keypair, Transaction } from "@solana/web3.js";
+import { Wallet } from "../../src/solana/index.js";
 import { WalletDetector } from "../../src/unified/wallet-detector.js";
+
+// Simple wallet wrapper for testing
+function createWallet(keypair: Keypair): Wallet {
+  return {
+    publicKey: keypair.publicKey,
+    signTransaction: async <T extends Transaction>(tx: T): Promise<T> => {
+      tx.partialSign(keypair);
+      return tx;
+    },
+    signAllTransactions: async <T extends Transaction>(txs: T[]): Promise<T[]> => {
+      txs.forEach(tx => tx.partialSign(keypair));
+      return txs;
+    },
+  };
+}
 
 describe("WalletDetector", function () {
   describe("detectWalletType", function () {
@@ -18,7 +33,7 @@ describe("WalletDetector", function () {
 
     it("should detect Solana wallet correctly", function () {
       const keypair = Keypair.generate();
-      const solanaWallet = new Wallet(keypair);
+      const solanaWallet = createWallet(keypair);
 
       const result = WalletDetector.detectWalletType(solanaWallet);
       expect(result).to.equal("solana");

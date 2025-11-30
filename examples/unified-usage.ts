@@ -6,25 +6,40 @@
 
 import { OnchainMailerClient, WalletDetector } from '../src/unified';
 import { DEFAULT_CHAIN_CONFIG, TESTNET_CHAIN_CONFIG } from '../src/utils';
-import { Connection, Keypair } from '@solana/web3.js';
-import { Wallet } from '@coral-xyz/anchor';
+import { Connection, Keypair, PublicKey, Transaction } from '@solana/web3.js';
+import { Wallet } from '../src/solana';
+
+// Simple wallet wrapper for Keypair
+function createWallet(keypair: Keypair): Wallet {
+  return {
+    publicKey: keypair.publicKey,
+    signTransaction: async <T extends Transaction>(tx: T): Promise<T> => {
+      tx.partialSign(keypair);
+      return tx;
+    },
+    signAllTransactions: async <T extends Transaction>(txs: T[]): Promise<T[]> => {
+      txs.forEach(tx => tx.partialSign(keypair));
+      return txs;
+    },
+  };
+}
 
 async function unifiedUsageExamples() {
   console.log('🚀 Mailer Unified Multi-Chain Client - Usage Examples');
-  
+
   // ===== EXAMPLE 1: Automatic Wallet Detection =====
   console.log('\n🔍 Example 1: Automatic Wallet Detection');
-  
+
   // Mock EVM wallet (MetaMask-like)
   const evmWallet = {
     address: '0x1234567890123456789012345678901234567890',
     request: async () => {},
     signTransaction: async (tx: any) => tx
   };
-  
+
   // Mock Solana wallet (Phantom-like)
   const solanaKeypair = Keypair.generate();
-  const solanaWallet = new Wallet(solanaKeypair);
+  const solanaWallet = createWallet(solanaKeypair);
   
   console.log('🔍 EVM wallet detected as:', WalletDetector.detectWalletType(evmWallet));
   console.log('🔍 Solana wallet detected as:', WalletDetector.detectWalletType(solanaWallet));

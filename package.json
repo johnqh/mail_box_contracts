@@ -200,7 +200,6 @@
     "registry": "https://registry.npmjs.org"
   },
   "devDependencies": {
-    "@coral-xyz/anchor": "^0.32.1",
     "@nomicfoundation/hardhat-chai-matchers": "^2.0.0",
     "@nomicfoundation/hardhat-verify": "^2.0.0",
     "@nomicfoundation/hardhat-viem": "^2.0.0",
