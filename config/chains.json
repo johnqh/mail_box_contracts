@@ -1,6 +1,6 @@
 {
   "description": "Chain configuration for multi-chain deployments",
-  "chains": {
+  "evm": {
     "1": {
       "name": "Ethereum Mainnet",
       "network": "mainnet",
@@ -30,6 +30,23 @@
       "name": "Arbitrum One",
       "network": "arbitrum",
       "usdc": "0xaf88d065e77c8cC2239327C5EDb3A432268e5831"
+    }
+  },
+  "solana": {
+    "mainnet-beta": {
+      "name": "Solana Mainnet",
+      "cluster": "mainnet-beta",
+      "usdc": "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v"
+    },
+    "devnet": {
+      "name": "Solana Devnet",
+      "cluster": "devnet",
+      "usdc": "4zMMC9srt5Ri5X14GAgXhaHii3GnPAEERYPJgZJDncDU"
+    },
+    "testnet": {
+      "name": "Solana Testnet",
+      "cluster": "testnet",
+      "usdc": "4zMMC9srt5Ri5X14GAgXhaHii3GnPAEERYPJgZJDncDU"
     }
   }
 }

@@ -9,7 +9,7 @@ type ChainConfig = {
   usdc: string;
 };
 
-const chains = chainsConfig.chains as Record<string, ChainConfig>;
+const evmChains = chainsConfig.evm as Record<string, ChainConfig>;
 
 async function deployMockUSDC() {
   console.log("Deploying MockUSDC for testing...");
@@ -68,7 +68,7 @@ async function main() {
     }
 
     // Get chain info from local config
-    const chainInfo = chains[chainId.toString()];
+    const chainInfo = evmChains[chainId.toString()];
 
     if (!chainInfo) {
       console.error(`❌ Unsupported chain ID: ${chainId} for network: ${networkName}`);
