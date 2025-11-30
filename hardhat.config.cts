@@ -42,7 +42,7 @@ const config: HardhatUserConfig = {
     
     // Ethereum Networks
     mainnet: {
-      url: getAlchemyUrl("eth-mainnet"),
+      url: process.env.MAINNET_RPC_URL || getAlchemyUrl("eth-mainnet") || "https://ethereum-rpc.publicnode.com",
       accounts: (process.env.EVM_PRIVATE_KEY || process.env.PRIVATE_KEY) ? [process.env.EVM_PRIVATE_KEY || process.env.PRIVATE_KEY!] : [],
       chainId: 1,
       gasPrice: "auto",

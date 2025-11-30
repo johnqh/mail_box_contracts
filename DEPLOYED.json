@@ -48,6 +48,27 @@
   "deployments": {
     "note": "Latest deployment addresses with payer field in events (v1.17.16)",
     "evm": {
+      "mainnet": {
+        "chainId": 1,
+        "network": "mainnet",
+        "mailer": "0x76874D65243c3a1c1693714e6Fd4039127C04845",
+        "mailerImplementation": "0x4415638F97bd529158071cF3A7e2CA6E92aB7354",
+        "usdc": "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48",
+        "deployer": "0x1996d64D8f6E47A5bF6fB92246EF4eFD6Ae881e0",
+        "owner": "0x9Ea94eDDF851bb1170828335f22F112Dd76D9C3d",
+        "timestamp": "2025-11-30T20:39:53.006Z",
+        "fees": {
+          "sendFee": "0.1 USDC",
+          "delegationFee": "10 USDC"
+        },
+        "upgradeable": {
+          "kind": "uups",
+          "admin": "0x9Ea94eDDF851bb1170828335f22F112Dd76D9C3d"
+        },
+        "verification": {
+          "etherscan": "https://etherscan.io/address/0x76874D65243c3a1c1693714e6Fd4039127C04845"
+        }
+      },
       "sepolia": {
         "chainId": 11155111,
         "network": "sepolia",
