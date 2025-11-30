@@ -1,0 +1,20 @@
+{
+  "network": "polygon",
+  "chainId": 137,
+  "timestamp": "2025-11-30T20:22:00.715Z",
+  "deployer": "0x1996d64D8f6E47A5bF6fB92246EF4eFD6Ae881e0",
+  "owner": "0x9Ea94eDDF851bb1170828335f22F112Dd76D9C3d",
+  "contracts": {
+    "usdc": "0x3c499c542cEF5E3811e1192ce70d8cC03d5c3359",
+    "mailerProxy": "0x6E641f9fc9ED47810755C4617D234bB01B37F9EC",
+    "mailerImplementation": "0x76874D65243c3a1c1693714e6Fd4039127C04845"
+  },
+  "fees": {
+    "sendFee": "0.1 USDC",
+    "delegationFee": "10 USDC"
+  },
+  "upgradeable": {
+    "kind": "uups",
+    "admin": "0x9Ea94eDDF851bb1170828335f22F112Dd76D9C3d"
+  }
+}

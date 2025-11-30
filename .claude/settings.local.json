@@ -139,7 +139,16 @@
       "Bash(npx markdownlint-cli2:*)",
       "Bash(./scripts/check-contract-size.sh:*)",
       "Bash(SEPOLIA_RPC_URL=\"https://ethereum-sepolia-rpc.publicnode.com\" npx hardhat run:*)",
-      "Bash(CONTRACT_ADDRESS=0xf03FC32CAB5277fD6303F7299059AB002F2fe9FE SEPOLIA_RPC_URL=\"https://ethereum-sepolia-rpc.publicnode.com\" npx hardhat run scripts/evm/get-deployment-block.ts --network sepolia)"
+      "Bash(CONTRACT_ADDRESS=0xf03FC32CAB5277fD6303F7299059AB002F2fe9FE SEPOLIA_RPC_URL=\"https://ethereum-sepolia-rpc.publicnode.com\" npx hardhat run scripts/evm/get-deployment-block.ts --network sepolia)",
+      "WebFetch(domain:l2fees.info)",
+      "WebFetch(domain:api.coingecko.com)",
+      "Bash(sh:*)",
+      "Bash(export PATH=\"/Users/johnhuang/.local/share/solana/install/active_release/bin:$PATH\")",
+      "Bash(__NEW_LINE__ echo \"Remaining testnet balance:\")",
+      "Bash(__NEW_LINE__ echo \"\")",
+      "Bash(BASE_RPC_URL=\"https://mainnet.base.org\" npx hardhat run:*)",
+      "Bash(BASE_RPC_URL=\"https://mainnet.base.org\" npx hardhat:*)",
+      "WebFetch(domain:developers.circle.com)"
     ],
     "deny": [],
     "defaultMode": "acceptEdits"

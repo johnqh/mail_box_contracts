@@ -1,0 +1,241 @@
+{
+  "manifestVersion": "3.2",
+  "proxies": [
+    {
+      "address": "0x76874D65243c3a1c1693714e6Fd4039127C04845",
+      "txHash": "0x61962e7c9287b1b2576b29dd25fc4dbb3727fd429a18a81eef62a478f89ed505",
+      "kind": "uups"
+    }
+  ],
+  "impls": {
+    "404afe93c9e868aec666842e40af570e8d50600fb944fb1f5195efa1012456fe": {
+      "address": "0x4415638F97bd529158071cF3A7e2CA6E92aB7354",
+      "txHash": "0xda08e71e4d0c800f42048c89a63104b31974ca3838734b5b056d9e0a9b333969",
+      "layout": {
+        "solcVersion": "0.8.24",
+        "storage": [
+          {
+            "label": "usdcToken",
+            "offset": 0,
+            "slot": "0",
+            "type": "t_contract(IERC20)3593",
+            "contract": "Mailer",
+            "src": "contracts/Mailer.sol:19"
+          },
+          {
+            "label": "sendFee",
+            "offset": 0,
+            "slot": "1",
+            "type": "t_uint128",
+            "contract": "Mailer",
+            "src": "contracts/Mailer.sol:40"
+          },
+          {
+            "label": "delegationFee",
+            "offset": 16,
+            "slot": "1",
+            "type": "t_uint128",
+            "contract": "Mailer",
+            "src": "contracts/Mailer.sol:43"
+          },
+          {
+            "label": "ownerClaimable",
+            "offset": 0,
+            "slot": "2",
+            "type": "t_uint128",
+            "contract": "Mailer",
+            "src": "contracts/Mailer.sol:46"
+          },
+          {
+            "label": "_status",
+            "offset": 16,
+            "slot": "2",
+            "type": "t_uint8",
+            "contract": "Mailer",
+            "src": "contracts/Mailer.sol:49"
+          },
+          {
+            "label": "paused",
+            "offset": 17,
+            "slot": "2",
+            "type": "t_bool",
+            "contract": "Mailer",
+            "src": "contracts/Mailer.sol:52"
+          },
+          {
+            "label": "feePaused",
+            "offset": 18,
+            "slot": "2",
+            "type": "t_bool",
+            "contract": "Mailer",
+            "src": "contracts/Mailer.sol:55"
+          },
+          {
+            "label": "recipientClaims",
+            "offset": 0,
+            "slot": "3",
+            "type": "t_mapping(t_address,t_struct(ClaimableAmount)1483_storage)",
+            "contract": "Mailer",
+            "src": "contracts/Mailer.sol:70"
+          },
+          {
+            "label": "customFeeDiscount",
+            "offset": 0,
+            "slot": "4",
+            "type": "t_mapping(t_address,t_uint8)",
+            "contract": "Mailer",
+            "src": "contracts/Mailer.sol:75"
+          },
+          {
+            "label": "permissions",
+            "offset": 0,
+            "slot": "5",
+            "type": "t_mapping(t_address,t_mapping(t_address,t_bool))",
+            "contract": "Mailer",
+            "src": "contracts/Mailer.sol:81"
+          },
+          {
+            "label": "__gap",
+            "offset": 0,
+            "slot": "6",
+            "type": "t_array(t_uint256)50_storage",
+            "contract": "Mailer",
+            "src": "contracts/Mailer.sol:926"
+          }
+        ],
+        "types": {
+          "t_address": {
+            "label": "address",
+            "numberOfBytes": "20"
+          },
+          "t_bool": {
+            "label": "bool",
+            "numberOfBytes": "1"
+          },
+          "t_struct(InitializableStorage)73_storage": {
+            "label": "struct Initializable.InitializableStorage",
+            "members": [
+              {
+                "label": "_initialized",
+                "type": "t_uint64",
+                "offset": 0,
+                "slot": "0"
+              },
+              {
+                "label": "_initializing",
+                "type": "t_bool",
+                "offset": 8,
+                "slot": "0"
+              }
+            ],
+            "numberOfBytes": "32"
+          },
+          "t_struct(OwnableStorage)13_storage": {
+            "label": "struct OwnableUpgradeable.OwnableStorage",
+            "members": [
+              {
+                "label": "_owner",
+                "type": "t_address",
+                "offset": 0,
+                "slot": "0"
+              }
+            ],
+            "numberOfBytes": "32"
+          },
+          "t_uint64": {
+            "label": "uint64",
+            "numberOfBytes": "8"
+          },
+          "t_array(t_uint256)50_storage": {
+            "label": "uint256[50]",
+            "numberOfBytes": "1600"
+          },
+          "t_contract(IERC20)3593": {
+            "label": "contract IERC20",
+            "numberOfBytes": "20"
+          },
+          "t_mapping(t_address,t_bool)": {
+            "label": "mapping(address => bool)",
+            "numberOfBytes": "32"
+          },
+          "t_mapping(t_address,t_mapping(t_address,t_bool))": {
+            "label": "mapping(address => mapping(address => bool))",
+            "numberOfBytes": "32"
+          },
+          "t_mapping(t_address,t_struct(ClaimableAmount)1483_storage)": {
+            "label": "mapping(address => struct Mailer.ClaimableAmount)",
+            "numberOfBytes": "32"
+          },
+          "t_mapping(t_address,t_uint8)": {
+            "label": "mapping(address => uint8)",
+            "numberOfBytes": "32"
+          },
+          "t_struct(ClaimableAmount)1483_storage": {
+            "label": "struct Mailer.ClaimableAmount",
+            "members": [
+              {
+                "label": "amount",
+                "type": "t_uint192",
+                "offset": 0,
+                "slot": "0"
+              },
+              {
+                "label": "timestamp",
+                "type": "t_uint64",
+                "offset": 24,
+                "slot": "0"
+              }
+            ],
+            "numberOfBytes": "32"
+          },
+          "t_uint128": {
+            "label": "uint128",
+            "numberOfBytes": "16"
+          },
+          "t_uint192": {
+            "label": "uint192",
+            "numberOfBytes": "24"
+          },
+          "t_uint256": {
+            "label": "uint256",
+            "numberOfBytes": "32"
+          },
+          "t_uint8": {
+            "label": "uint8",
+            "numberOfBytes": "1"
+          }
+        },
+        "namespaces": {
+          "erc7201:openzeppelin.storage.Ownable": [
+            {
+              "contract": "OwnableUpgradeable",
+              "label": "_owner",
+              "type": "t_address",
+              "src": "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol:24",
+              "offset": 0,
+              "slot": "0"
+            }
+          ],
+          "erc7201:openzeppelin.storage.Initializable": [
+            {
+              "contract": "Initializable",
+              "label": "_initialized",
+              "type": "t_uint64",
+              "src": "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol:69",
+              "offset": 0,
+              "slot": "0"
+            },
+            {
+              "contract": "Initializable",
+              "label": "_initializing",
+              "type": "t_bool",
+              "src": "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol:73",
+              "offset": 8,
+              "slot": "0"
+            }
+          ]
+        }
+      }
+    }
+  }
+}

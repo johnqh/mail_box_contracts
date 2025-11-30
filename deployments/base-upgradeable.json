@@ -1,0 +1,20 @@
+{
+  "network": "base",
+  "chainId": 8453,
+  "timestamp": "2025-11-30T20:19:00.000Z",
+  "deployer": "0x1996d64D8f6E47A5bF6fB92246EF4eFD6Ae881e0",
+  "owner": "0x9Ea94eDDF851bb1170828335f22F112Dd76D9C3d",
+  "contracts": {
+    "usdc": "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913",
+    "mailerProxy": "0x0005CB39f4DfF71a8307baCaC03884aBA6FD178f",
+    "mailerImplementation": "0x4fCf3f85528fC6EE6CeE570d46d6ac3AF5214534"
+  },
+  "fees": {
+    "sendFee": "0.1 USDC",
+    "delegationFee": "10 USDC"
+  },
+  "upgradeable": {
+    "kind": "uups",
+    "admin": "0x9Ea94eDDF851bb1170828335f22F112Dd76D9C3d"
+  }
+}

@@ -74,6 +74,69 @@
           "blockNumber": 9712219,
           "note": "Replaced - owner was incorrectly set to deployer"
         }
+      },
+      "base": {
+        "chainId": 8453,
+        "network": "base",
+        "mailer": "0x0005CB39f4DfF71a8307baCaC03884aBA6FD178f",
+        "mailerImplementation": "0x4fCf3f85528fC6EE6CeE570d46d6ac3AF5214534",
+        "usdc": "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913",
+        "deployer": "0x1996d64D8f6E47A5bF6fB92246EF4eFD6Ae881e0",
+        "owner": "0x9Ea94eDDF851bb1170828335f22F112Dd76D9C3d",
+        "timestamp": "2025-11-30T20:19:00.000Z",
+        "fees": {
+          "sendFee": "0.1 USDC",
+          "delegationFee": "10 USDC"
+        },
+        "upgradeable": {
+          "kind": "uups",
+          "admin": "0x9Ea94eDDF851bb1170828335f22F112Dd76D9C3d"
+        },
+        "verification": {
+          "basescan": "https://basescan.org/address/0x0005CB39f4DfF71a8307baCaC03884aBA6FD178f"
+        }
+      },
+      "polygon": {
+        "chainId": 137,
+        "network": "polygon",
+        "mailer": "0x6E641f9fc9ED47810755C4617D234bB01B37F9EC",
+        "mailerImplementation": "0x76874D65243c3a1c1693714e6Fd4039127C04845",
+        "usdc": "0x3c499c542cEF5E3811e1192ce70d8cC03d5c3359",
+        "deployer": "0x1996d64D8f6E47A5bF6fB92246EF4eFD6Ae881e0",
+        "owner": "0x9Ea94eDDF851bb1170828335f22F112Dd76D9C3d",
+        "timestamp": "2025-11-30T20:22:00.715Z",
+        "fees": {
+          "sendFee": "0.1 USDC",
+          "delegationFee": "10 USDC"
+        },
+        "upgradeable": {
+          "kind": "uups",
+          "admin": "0x9Ea94eDDF851bb1170828335f22F112Dd76D9C3d"
+        },
+        "verification": {
+          "polygonscan": "https://polygonscan.com/address/0x6E641f9fc9ED47810755C4617D234bB01B37F9EC"
+        }
+      },
+      "optimism": {
+        "chainId": 10,
+        "network": "optimism",
+        "mailer": "0x76874D65243c3a1c1693714e6Fd4039127C04845",
+        "mailerImplementation": "0x4415638F97bd529158071cF3A7e2CA6E92aB7354",
+        "usdc": "0x0b2C639c533813f4Aa9D7837CAf62653d097Ff85",
+        "deployer": "0x1996d64D8f6E47A5bF6fB92246EF4eFD6Ae881e0",
+        "owner": "0x9Ea94eDDF851bb1170828335f22F112Dd76D9C3d",
+        "timestamp": "2025-11-30T20:21:30.482Z",
+        "fees": {
+          "sendFee": "0.1 USDC",
+          "delegationFee": "10 USDC"
+        },
+        "upgradeable": {
+          "kind": "uups",
+          "admin": "0x9Ea94eDDF851bb1170828335f22F112Dd76D9C3d"
+        },
+        "verification": {
+          "optimistic-etherscan": "https://optimistic.etherscan.io/address/0x76874D65243c3a1c1693714e6Fd4039127C04845"
+        }
       }
     },
     "solana": {

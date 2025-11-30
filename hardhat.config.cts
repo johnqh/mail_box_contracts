@@ -56,7 +56,7 @@ const config: HardhatUserConfig = {
 
     // Polygon Networks
     polygon: {
-      url: getAlchemyUrl("polygon-mainnet"),
+      url: process.env.POLYGON_RPC_URL || getAlchemyUrl("polygon-mainnet") || "https://polygon-rpc.com",
       accounts: (process.env.EVM_PRIVATE_KEY || process.env.PRIVATE_KEY) ? [process.env.EVM_PRIVATE_KEY || process.env.PRIVATE_KEY!] : [],
       chainId: 137,
       gasPrice: "auto",
@@ -64,7 +64,7 @@ const config: HardhatUserConfig = {
 
     // Optimism Networks
     optimism: {
-      url: getAlchemyUrl("opt-mainnet"),
+      url: process.env.OPTIMISM_RPC_URL || getAlchemyUrl("opt-mainnet") || "https://mainnet.optimism.io",
       accounts: (process.env.EVM_PRIVATE_KEY || process.env.PRIVATE_KEY) ? [process.env.EVM_PRIVATE_KEY || process.env.PRIVATE_KEY!] : [],
       chainId: 10,
       gasPrice: "auto",
@@ -72,7 +72,7 @@ const config: HardhatUserConfig = {
 
     // Base Networks
     base: {
-      url: getAlchemyUrl("base-mainnet"),
+      url: process.env.BASE_RPC_URL || getAlchemyUrl("base-mainnet") || "https://mainnet.base.org",
       accounts: (process.env.EVM_PRIVATE_KEY || process.env.PRIVATE_KEY) ? [process.env.EVM_PRIVATE_KEY || process.env.PRIVATE_KEY!] : [],
       chainId: 8453,
       gasPrice: "auto",
