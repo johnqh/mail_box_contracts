@@ -152,7 +152,12 @@
       "Bash(export PATH=\"$HOME/.local/share/solana/install/active_release/bin:$PATH\")",
       "Bash(target/deploy/mailer.so )",
       "Bash(solana-keygen pubkey:*)",
-      "Bash(solana-keygen new:*)"
+      "Bash(solana-keygen new:*)",
+      "Bash(MAINNET_RPC_URL=\"https://ethereum-rpc.publicnode.com\" npx hardhat run:*)",
+      "Bash(CONTRACT_ADDRESS=0x76874D65243c3a1c1693714e6Fd4039127C04845 MAINNET_RPC_URL=\"https://ethereum-rpc.publicnode.com\" npx hardhat run:*)",
+      "Bash(CONTRACT_ADDRESS=0x0005CB39f4DfF71a8307baCaC03884aBA6FD178f npx hardhat run:*)",
+      "Bash(CONTRACT_ADDRESS=0x6E641f9fc9ED47810755C4617D234bB01B37F9EC npx hardhat run:*)",
+      "Bash(CONTRACT_ADDRESS=0x76874D65243c3a1c1693714e6Fd4039127C04845 npx hardhat run:*)"
     ],
     "deny": [],
     "defaultMode": "acceptEdits"
