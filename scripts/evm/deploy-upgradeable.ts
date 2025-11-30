@@ -1,7 +1,15 @@
 import hre from "hardhat";
-import { RpcHelpers } from "@sudobility/configs";
 import { formatEther, formatUnits, getAddress } from "viem";
+import chainsConfig from "../../config/chains.json" with { type: "json" };
 const { ethers, upgrades, network } = hre;
+
+type ChainConfig = {
+  name: string;
+  network: string;
+  usdc: string;
+};
+
+const chains = chainsConfig.chains as Record<string, ChainConfig>;
 
 async function deployMockUSDC() {
   console.log("Deploying MockUSDC for testing...");
@@ -52,30 +60,30 @@ async function main() {
       console.log("✅ Deployed MockUSDC for local testing");
     }
   } else {
-    // For all other networks, find chain by chainId from visible chains (including testnets)
+    // For all other networks, look up USDC address from config/chains.json
     const chainId = network.config.chainId;
     if (!chainId) {
       console.error(`❌ No chainId configured for network: ${networkName}`);
       process.exit(1);
     }
 
-    // Get chain info directly by chainId
-    const chainInfo = RpcHelpers.getChainInfoById(chainId);
+    // Get chain info from local config
+    const chainInfo = chains[chainId.toString()];
 
     if (!chainInfo) {
       console.error(`❌ Unsupported chain ID: ${chainId} for network: ${networkName}`);
-      console.error("This chain is not in the visible chains list. Please set USDC_ADDRESS environment variable.");
+      console.error("Please add this chain to config/chains.json or set USDC_ADDRESS environment variable.");
       process.exit(1);
     }
 
-    if (!chainInfo.usdcAddress) {
-      console.error(`❌ No USDC address available for chain: ${chainInfo.name} (chainId: ${chainId})`);
-      console.error("This chain may not have USDC deployed. Please set USDC_ADDRESS environment variable.");
+    if (!chainInfo.usdc) {
+      console.error(`❌ No USDC address configured for chain: ${chainInfo.name} (chainId: ${chainId})`);
+      console.error("Please add USDC address to config/chains.json or set USDC_ADDRESS environment variable.");
       process.exit(1);
     }
 
-    usdcAddress = chainInfo.usdcAddress;
-    console.log(`Using USDC address from RpcHelper for ${chainInfo.name}:`, usdcAddress);
+    usdcAddress = chainInfo.usdc;
+    console.log(`Using USDC address from config for ${chainInfo.name}:`, usdcAddress);
   }
 
   // Ensure address has proper checksum (convert to lowercase first to avoid checksum validation)
