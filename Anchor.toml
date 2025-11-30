@@ -9,7 +9,10 @@ skip-lint = false
 mailer = "9FLkBDGpZBcR8LMsQ7MwwV6X9P4TDFgN3DeRh5qYyHJF"
 
 [programs.devnet]
-mailer = "LXnAjV225sxynbhbjMtQy8gnEatzVH97467D9UqNRBc"
+mailer = "yW7AiuUVdtSDUvExyNtjQDLMLsccnbgAqgZHJYYsqCW"
+
+[programs.testnet]
+mailer = "yW7AiuUVdtSDUvExyNtjQDLMLsccnbgAqgZHJYYsqCW"
 
 [registry]
 url = "https://api.apr.dev"

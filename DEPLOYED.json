@@ -1,6 +1,6 @@
 {
   "description": "Deployment tracking for multi-chain Mailer contracts",
-  "lastUpdated": "2025-11-26T17:34:13.393Z",
+  "lastUpdated": "2025-11-30T20:10:00.000Z",
   "version": "1.17.16",
   "architecture": {
     "evm": {
@@ -78,6 +78,61 @@
         }
       }
     },
-    "solana": {}
+    "solana": {
+      "devnet": {
+        "cluster": "devnet",
+        "network": "devnet",
+        "mailer": "yW7AiuUVdtSDUvExyNtjQDLMLsccnbgAqgZHJYYsqCW",
+        "programDataAddress": "3tpgXFidFKKQyS3ghYu5NJpncgWwCAY4Zdp1DGttPeyV",
+        "slot": 425146161,
+        "signature": "4uWrJdTURp78HQw3tGrk3snzweUcbKMtquRNBzHEF4TQW79RmFLHNQ3gC7ME3YRSGEtrvrqhVqMg7e61mT4pcm1A",
+        "usdc": "4zMMC9srt5Ri5X14GAgXhaHii3GnPAEERYPJgZJDncDU",
+        "deployer": "66qY6ZPAmU4CDTaDpmHVnLaH2eZhytJQPatq1dABgwXK",
+        "upgradeAuthority": "66qY6ZPAmU4CDTaDpmHVnLaH2eZhytJQPatq1dABgwXK",
+        "owner": "66qY6ZPAmU4CDTaDpmHVnLaH2eZhytJQPatq1dABgwXK",
+        "pendingOwner": "5o9EcSWRjipX3L6QE1zxHPpdEeECkkFUGBiRxc63ntGE",
+        "mailerPda": "H4Qrtc7AGyTNZMyXKT56BB8JuWEATJKtsTL1zaoC7FvY",
+        "initSignature": "3W9mAu4hxvaTsZexSe2MQGPQxGDtQ9EzNWeMrTEvj9HBhGuiTL6FdqkurRgyjtb22kZF7cgoozqPY4aZ8pYmtwr1",
+        "timestamp": "2025-11-30T19:52:00.000Z",
+        "programSize": "206504 bytes",
+        "rentCost": "1.43847192 SOL",
+        "fees": {
+          "sendFee": "0.1 USDC",
+          "delegationFee": "10 USDC"
+        },
+        "verification": {
+          "solscan": "https://solscan.io/account/yW7AiuUVdtSDUvExyNtjQDLMLsccnbgAqgZHJYYsqCW?cluster=devnet",
+          "explorer": "https://explorer.solana.com/address/yW7AiuUVdtSDUvExyNtjQDLMLsccnbgAqgZHJYYsqCW?cluster=devnet"
+        },
+        "note": "Initialized with deployer as owner. Transfer ownership to pendingOwner when ready."
+      },
+      "testnet": {
+        "cluster": "testnet",
+        "network": "testnet",
+        "mailer": "yW7AiuUVdtSDUvExyNtjQDLMLsccnbgAqgZHJYYsqCW",
+        "programDataAddress": "3tpgXFidFKKQyS3ghYu5NJpncgWwCAY4Zdp1DGttPeyV",
+        "slot": 373652319,
+        "signature": "JdfTBSGviTAJ2LPbZ1rSUyX6UnLfNuMhP4jzEmzqrPSdTkHecphSQJpw6ZR9c7JZy2ry1pXJTuKErFnhbTrkVRX",
+        "usdc": "4zMMC9srt5Ri5X14GAgXhaHii3GnPAEERYPJgZJDncDU",
+        "deployer": "66qY6ZPAmU4CDTaDpmHVnLaH2eZhytJQPatq1dABgwXK",
+        "upgradeAuthority": "66qY6ZPAmU4CDTaDpmHVnLaH2eZhytJQPatq1dABgwXK",
+        "owner": "66qY6ZPAmU4CDTaDpmHVnLaH2eZhytJQPatq1dABgwXK",
+        "pendingOwner": "5o9EcSWRjipX3L6QE1zxHPpdEeECkkFUGBiRxc63ntGE",
+        "mailerPda": "H4Qrtc7AGyTNZMyXKT56BB8JuWEATJKtsTL1zaoC7FvY",
+        "initSignature": "5JtsQDBtxj3azFi99kVsYFcp1ah1H5oFH1wbHvfuyQiCbMK59G6NpGe8ArZxiPz3wwWdickGqreicy2yzHyL3vej",
+        "timestamp": "2025-11-30T20:10:00.000Z",
+        "programSize": "206504 bytes",
+        "rentCost": "1.43847192 SOL",
+        "fees": {
+          "sendFee": "0.1 USDC",
+          "delegationFee": "10 USDC"
+        },
+        "verification": {
+          "solscan": "https://solscan.io/account/yW7AiuUVdtSDUvExyNtjQDLMLsccnbgAqgZHJYYsqCW?cluster=testnet",
+          "explorer": "https://explorer.solana.com/address/yW7AiuUVdtSDUvExyNtjQDLMLsccnbgAqgZHJYYsqCW?cluster=testnet"
+        },
+        "note": "Initialized with deployer as owner. Transfer ownership to pendingOwner when ready."
+      }
+    }
   }
 }

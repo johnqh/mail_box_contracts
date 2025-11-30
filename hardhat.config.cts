@@ -8,10 +8,10 @@ import "hardhat-gas-reporter";
 import * as dotenv from "dotenv";
 import * as fs from "fs";
 
-// Load .env first, then .env.local as fallback
+// Load .env first, then .env.local with higher priority (overrides .env)
 dotenv.config();
 if (fs.existsSync('.env.local')) {
-  dotenv.config({ path: '.env.local', override: false });
+  dotenv.config({ path: '.env.local', override: true });
 }
 
 // Build Alchemy URLs using ALCHEMY_API_KEY
@@ -43,13 +43,13 @@ const config: HardhatUserConfig = {
     // Ethereum Networks
     mainnet: {
       url: getAlchemyUrl("eth-mainnet"),
-      accounts: process.env.PRIVATE_KEY ? [process.env.PRIVATE_KEY] : [],
+      accounts: (process.env.EVM_PRIVATE_KEY || process.env.PRIVATE_KEY) ? [process.env.EVM_PRIVATE_KEY || process.env.PRIVATE_KEY!] : [],
       chainId: 1,
       gasPrice: "auto",
     },
     sepolia: {
       url: process.env.SEPOLIA_RPC_URL || getAlchemyUrl("eth-sepolia") || "https://ethereum-sepolia-rpc.publicnode.com",
-      accounts: process.env.PRIVATE_KEY ? [process.env.PRIVATE_KEY] : [],
+      accounts: (process.env.EVM_PRIVATE_KEY || process.env.PRIVATE_KEY) ? [process.env.EVM_PRIVATE_KEY || process.env.PRIVATE_KEY!] : [],
       chainId: 11155111,
       gasPrice: "auto",
     },
@@ -57,7 +57,7 @@ const config: HardhatUserConfig = {
     // Polygon Networks
     polygon: {
       url: getAlchemyUrl("polygon-mainnet"),
-      accounts: process.env.PRIVATE_KEY ? [process.env.PRIVATE_KEY] : [],
+      accounts: (process.env.EVM_PRIVATE_KEY || process.env.PRIVATE_KEY) ? [process.env.EVM_PRIVATE_KEY || process.env.PRIVATE_KEY!] : [],
       chainId: 137,
       gasPrice: "auto",
     },
@@ -65,7 +65,7 @@ const config: HardhatUserConfig = {
     // Optimism Networks
     optimism: {
       url: getAlchemyUrl("opt-mainnet"),
-      accounts: process.env.PRIVATE_KEY ? [process.env.PRIVATE_KEY] : [],
+      accounts: (process.env.EVM_PRIVATE_KEY || process.env.PRIVATE_KEY) ? [process.env.EVM_PRIVATE_KEY || process.env.PRIVATE_KEY!] : [],
       chainId: 10,
       gasPrice: "auto",
     },
@@ -73,7 +73,7 @@ const config: HardhatUserConfig = {
     // Base Networks
     base: {
       url: getAlchemyUrl("base-mainnet"),
-      accounts: process.env.PRIVATE_KEY ? [process.env.PRIVATE_KEY] : [],
+      accounts: (process.env.EVM_PRIVATE_KEY || process.env.PRIVATE_KEY) ? [process.env.EVM_PRIVATE_KEY || process.env.PRIVATE_KEY!] : [],
       chainId: 8453,
       gasPrice: "auto",
     },

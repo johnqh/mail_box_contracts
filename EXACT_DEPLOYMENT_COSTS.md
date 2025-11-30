@@ -21,7 +21,7 @@
 
 ---
 
-# 📏 EXACT EVM Measurements
+## 📏 EXACT EVM Measurements
 
 ## Contract Size Analysis
 
@@ -69,7 +69,7 @@ Implementation + Proxy:    2,810,000 gas
 
 ---
 
-# 💰 EXACT Deployment Costs by Network
+## 💰 EXACT Deployment Costs by Network
 
 ## Ethereum Mainnet
 
@@ -134,7 +134,7 @@ All testnets are **100% FREE** - use faucets for test tokens:
 
 ---
 
-# 🦀 Solana Program Costs
+## 🦀 Solana Program Costs
 
 ## Source Code Analysis
 
@@ -225,7 +225,7 @@ solana balance --url devnet
 
 ---
 
-# 🎯 Recommended Deployment Strategy
+## 🎯 Recommended Deployment Strategy
 
 ## Phase 1: Testing (FREE)
 
@@ -279,7 +279,7 @@ npx hardhat run scripts/evm/deploy-upgradeable.ts --network mainnet
 
 ---
 
-# 📊 Cost Comparison Table
+## 📊 Cost Comparison Table
 
 ## Multi-Chain Deployment Scenarios
 
@@ -294,7 +294,7 @@ npx hardhat run scripts/evm/deploy-upgradeable.ts --network mainnet
 
 ---
 
-# 🔧 How to Get Exact Solana Size
+## 🔧 How to Get Exact Solana Size
 
 To get the **exact** Solana program size (instead of estimate):
 
@@ -336,7 +336,7 @@ wc -c target/deploy/mailer.so
 
 ---
 
-# 💡 Key Insights
+## 💡 Key Insights
 
 ## EVM Findings
 
@@ -366,7 +366,7 @@ wc -c target/deploy/mailer.so
 
 ---
 
-# 🎯 Final Recommendation
+## 🎯 Final Recommendation
 
 ## Best Strategy for Your Project
 
@@ -394,7 +394,7 @@ Phase 3: Optional Ethereum
 
 ---
 
-# 📞 Deployment Commands
+## 📞 Deployment Commands
 
 ## Quick Deploy - Polygon (FREE)
 
@@ -425,7 +425,7 @@ solana program deploy target/deploy/mailer.so --url mainnet-beta
 
 ---
 
-# ✅ Deployment Checklist
+## ✅ Deployment Checklist
 
 ## Pre-Deployment
 
@@ -454,7 +454,7 @@ solana program deploy target/deploy/mailer.so --url mainnet-beta
 
 ---
 
-# 📈 Cost Tracking
+## 📈 Cost Tracking
 
 | Item | Estimated | Actual | Notes |
 |------|-----------|--------|-------|

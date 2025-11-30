@@ -28,37 +28,37 @@ const config: HardhatUserConfig = {
     // L2 Networks (Cheap Deployment Options)
     polygon: {
       url: process.env.POLYGON_RPC_URL || "https://polygon-rpc.com",
-      accounts: process.env.PRIVATE_KEY ? [process.env.PRIVATE_KEY] : [],
+      accounts: (process.env.EVM_PRIVATE_KEY || process.env.PRIVATE_KEY) ? [process.env.EVM_PRIVATE_KEY || process.env.PRIVATE_KEY!] : [],
       chainId: 137,
       // Deployment cost: ~$1-4
     },
     base: {
       url: process.env.BASE_RPC_URL || "https://mainnet.base.org",
-      accounts: process.env.PRIVATE_KEY ? [process.env.PRIVATE_KEY] : [],
+      accounts: (process.env.EVM_PRIVATE_KEY || process.env.PRIVATE_KEY) ? [process.env.EVM_PRIVATE_KEY || process.env.PRIVATE_KEY!] : [],
       chainId: 8453,
       // Deployment cost: ~$5-17
     },
     optimism: {
       url: process.env.OPTIMISM_RPC_URL || "https://mainnet.optimism.io",
-      accounts: process.env.PRIVATE_KEY ? [process.env.PRIVATE_KEY] : [],
+      accounts: (process.env.EVM_PRIVATE_KEY || process.env.PRIVATE_KEY) ? [process.env.EVM_PRIVATE_KEY || process.env.PRIVATE_KEY!] : [],
       chainId: 10,
       // Deployment cost: ~$5-17
     },
     // Testnet Networks (FREE)
     polygonMumbai: {
       url: process.env.POLYGON_MUMBAI_RPC_URL || "https://rpc-mumbai.maticvigil.com",
-      accounts: process.env.PRIVATE_KEY ? [process.env.PRIVATE_KEY] : [],
+      accounts: (process.env.EVM_PRIVATE_KEY || process.env.PRIVATE_KEY) ? [process.env.EVM_PRIVATE_KEY || process.env.PRIVATE_KEY!] : [],
       chainId: 80001,
     },
     baseSepolia: {
       url: process.env.BASE_SEPOLIA_RPC_URL || "https://sepolia.base.org",
-      accounts: process.env.PRIVATE_KEY ? [process.env.PRIVATE_KEY] : [],
+      accounts: (process.env.EVM_PRIVATE_KEY || process.env.PRIVATE_KEY) ? [process.env.EVM_PRIVATE_KEY || process.env.PRIVATE_KEY!] : [],
       chainId: 84532,
     },
     // Mainnet (Expensive - Use Only If Necessary)
     mainnet: {
       url: process.env.MAINNET_RPC_URL || `https://mainnet.infura.io/v3/${process.env.INFURA_API_KEY}`,
-      accounts: process.env.PRIVATE_KEY ? [process.env.PRIVATE_KEY] : [],
+      accounts: (process.env.EVM_PRIVATE_KEY || process.env.PRIVATE_KEY) ? [process.env.EVM_PRIVATE_KEY || process.env.PRIVATE_KEY!] : [],
       chainId: 1,
       // Deployment cost: ~$412-1,675 (depends on gas)
     },

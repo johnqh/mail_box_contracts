@@ -11,6 +11,7 @@ import { Optional } from '@sudobility/types';
 import { Mailer } from '../target/types/mailer';
 import * as fs from 'fs';
 import * as path from 'path';
+import bs58 from 'bs58';
 
 // USDC mint addresses for different networks
 const USDC_MINTS = {
@@ -52,29 +53,53 @@ export class MailerDeployer {
       'confirmed'
     );
 
-    // Setup wallet
+    // Setup wallet - priority: CLI arg > SOLANA_PRIVATE_KEY > SOLANA_KEYPAIR_PATH > default path
     let wallet: Wallet;
+    let keypairSource: string;
+
     if (keypairPath) {
-      const keypairData = JSON.parse(fs.readFileSync(keypairPath, 'utf8'));
+      // CLI argument provided
+      const resolvedPath = keypairPath.replace('~', process.env.HOME || '');
+      const keypairData = JSON.parse(fs.readFileSync(resolvedPath, 'utf8'));
       const keypair = Keypair.fromSecretKey(new Uint8Array(keypairData));
       wallet = new Wallet(keypair);
+      keypairSource = `CLI arg: ${keypairPath}`;
+    } else if (process.env.SOLANA_PRIVATE_KEY) {
+      // Environment variable with key data - supports base58 (Phantom) or JSON array format
+      const keyString = process.env.SOLANA_PRIVATE_KEY.trim();
+      let secretKey: Uint8Array;
+
+      if (keyString.startsWith('[')) {
+        // JSON array format: [1,2,3,...]
+        secretKey = new Uint8Array(JSON.parse(keyString));
+      } else {
+        // Base58 format (from Phantom wallet export)
+        secretKey = bs58.decode(keyString);
+      }
+
+      const keypair = Keypair.fromSecretKey(secretKey);
+      wallet = new Wallet(keypair);
+      keypairSource = 'SOLANA_PRIVATE_KEY env var';
     } else {
-      // Use default Solana CLI config
-      const configPath = path.join(
-        process.env.HOME || '~',
-        '.config/solana/id.json'
-      );
+      // Use keypair path from env or default
+      const envPath = process.env.SOLANA_KEYPAIR_PATH;
+      const configPath = envPath
+        ? envPath.replace('~', process.env.HOME || '')
+        : path.join(process.env.HOME || '~', '.config/solana/id.json');
+
       if (fs.existsSync(configPath)) {
         const keypairData = JSON.parse(fs.readFileSync(configPath, 'utf8'));
         const keypair = Keypair.fromSecretKey(new Uint8Array(keypairData));
         wallet = new Wallet(keypair);
+        keypairSource = envPath ? `SOLANA_KEYPAIR_PATH: ${envPath}` : `default: ${configPath}`;
       } else {
         throw new Error(
-          'No keypair found. Please specify keypairPath or setup Solana CLI'
+          'No keypair found. Set SOLANA_PRIVATE_KEY, SOLANA_KEYPAIR_PATH, or setup Solana CLI'
         );
       }
     }
 
+    console.log('Keypair source:', keypairSource);
     return new MailerDeployer(connection, wallet);
   }
 
@@ -229,7 +254,8 @@ async function main() {
   const cluster = args[0] || 'localnet';
   const rpcUrl = args[1];
   const keypairPath = args[2];
-  const ownerAddress = args[3];
+  // CLI arg takes priority, then env var, then defaults to deployer
+  const ownerAddress = args[3] || process.env.SOLANA_OWNER_ADDRESS;
 
   try {
     const deployer = await MailerDeployer.create(rpcUrl, keypairPath);
@@ -237,6 +263,7 @@ async function main() {
     let owner: PublicKey | undefined;
     if (ownerAddress) {
       owner = new PublicKey(ownerAddress);
+      console.log('Owner address from', args[3] ? 'CLI arg' : 'SOLANA_OWNER_ADDRESS env var');
     }
 
     await deployer.deploy(cluster, owner);

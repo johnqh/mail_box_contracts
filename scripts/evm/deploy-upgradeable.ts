@@ -18,7 +18,7 @@ async function main() {
   const networkName = network.name;
 
   // Get owner address from environment variable, fallback to deployer
-  const ownerAddress = process.env.OWNER_ADDRESS || deployer.address;
+  const ownerAddress = process.env.EVM_OWNER_ADDRESS || process.env.OWNER_ADDRESS || deployer.address;
   console.log("Contract owner will be:", ownerAddress);
 
   console.log("=".repeat(50));

@@ -21,7 +21,7 @@ Complete guide to reducing deployment costs for both EVM and Solana contracts.
 
 ---
 
-# 🔧 EVM Optimization Strategies
+## 🔧 EVM Optimization Strategies
 
 ## Strategy 1: Compiler Optimization (APPLIED ✅)
 
@@ -250,7 +250,7 @@ cat artifacts/contracts/Mailer.sol/Mailer.json | jq -r '.deployedBytecode' | wc 
 
 ---
 
-# 🦀 Solana Optimization Strategies
+## 🦀 Solana Optimization Strategies
 
 ## Strategy 1: Cargo Profile Optimization (APPLY THIS!)
 
@@ -411,7 +411,7 @@ Unlike EVM, Solana deployment cost is fixed (rent-based), but:
 
 ---
 
-# 📊 Optimization Summary
+## 📊 Optimization Summary
 
 ## EVM Quick Wins (Already Applied)
 
@@ -438,7 +438,7 @@ Unlike EVM, Solana deployment cost is fixed (rent-based), but:
 
 ---
 
-# 🎯 Recommended Action Plan
+## 🎯 Recommended Action Plan
 
 ## Immediate (Do Now)
 
@@ -462,7 +462,7 @@ Unlike EVM, Solana deployment cost is fixed (rent-based), but:
 
 ---
 
-# 🧪 Test Your Optimizations
+## 🧪 Test Your Optimizations
 
 ## EVM
 
@@ -491,7 +491,7 @@ npm run test:solana
 
 ---
 
-# 📈 Cost Tracking
+## 📈 Cost Tracking
 
 ## Before Optimization
 
