@@ -16,6 +16,11 @@ export default [
       'coverage/**',
       '**/*.d.ts',
       '.ai/**',
+      // JSX/TSX files that require React parser config
+      'examples/react-usage.tsx',
+      'examples/stateless-client-usage.ts',
+      'examples/stateless-usage.ts',
+      'src/react/**',
     ]
   },
   
