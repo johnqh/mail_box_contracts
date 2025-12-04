@@ -1,6 +1,6 @@
 {
   "name": "@sudobility/contracts",
-  "version": "1.17.30",
+  "version": "1.17.31",
   "type": "module",
   "main": "dist/unified/src/unified/index.js",
   "types": "dist/unified/src/unified/index.d.ts",
@@ -13,9 +13,21 @@
       "types": "./dist/unified/src/evm/index.d.ts",
       "default": "./dist/unified/src/evm/index.js"
     },
+    "./solana": {
+      "types": "./dist/unified/src/solana/index.d.ts",
+      "default": "./dist/unified/src/solana/index.js"
+    },
     "./react": {
       "types": "./dist/unified/src/react/index.d.ts",
       "default": "./dist/unified/src/react/index.js"
+    },
+    "./react-native": {
+      "types": "./dist/react-native/src/react-native/index.d.ts",
+      "default": "./dist/react-native/src/react-native/index.js"
+    },
+    "./react-native/polyfills": {
+      "types": "./dist/react-native/src/react-native/polyfills.d.ts",
+      "default": "./dist/react-native/src/react-native/polyfills.js"
     }
   },
   "peerDependencies": {
@@ -23,6 +35,11 @@
     "@solana/web3.js": ">=1.95.0",
     "@tanstack/react-query": ">=5.0.0",
     "react": "^18.0.0 || ^19.0.0",
+    "react-native": ">=0.70.0",
+    "react-native-get-random-values": ">=1.8.0",
+    "react-native-url-polyfill": ">=2.0.0",
+    "buffer": ">=6.0.0",
+    "text-encoding": ">=0.7.0",
     "viem": ">=2.0.0"
   },
   "peerDependenciesMeta": {
@@ -35,6 +52,21 @@
     "react": {
       "optional": true
     },
+    "react-native": {
+      "optional": true
+    },
+    "react-native-get-random-values": {
+      "optional": true
+    },
+    "react-native-url-polyfill": {
+      "optional": true
+    },
+    "buffer": {
+      "optional": true
+    },
+    "text-encoding": {
+      "optional": true
+    },
     "@tanstack/react-query": {
       "optional": true
     },
@@ -43,11 +75,12 @@
     }
   },
   "scripts": {
-    "build": "npm run build:evm && npm run build:solana && npm run build:unified",
-    "build:ci": "npm run build:unified",
+    "build": "npm run build:evm && npm run build:solana && npm run build:unified && npm run build:react-native",
+    "build:ci": "npm run build:unified && npm run build:react-native",
     "build:evm": "npx hardhat compile && tsc --project tsconfig.evm.json",
     "build:solana": "cargo build --manifest-path programs/mailer/Cargo.toml && tsc --project tsconfig.solana.json",
     "build:unified": "tsc --project tsconfig.unified.json",
+    "build:react-native": "tsc --project tsconfig.react-native.json",
     "test": "npm run test:evm && npm run test:solana && npm run test:unified:direct",
     "test:ci": "npm run build:unified && npm run test:unified:direct",
     "test:evm": "npx hardhat test test/evm/Mailer.test.ts",
@@ -167,7 +200,9 @@
     "revenue-sharing",
     "hardhat",
     "typechain",
-    "typescript"
+    "typescript",
+    "react-native",
+    "mobile"
   ],
   "author": "Mailer Team",
   "license": "MIT",
