@@ -1,6 +1,6 @@
 {
   "name": "@sudobility/contracts",
-  "version": "1.17.28",
+  "version": "1.17.29",
   "type": "module",
   "main": "dist/unified/src/unified/index.js",
   "types": "dist/unified/src/unified/index.d.ts",
@@ -201,6 +201,7 @@
   },
   "devDependencies": {
     "@nomicfoundation/hardhat-chai-matchers": "^2.0.0",
+    "@nomicfoundation/hardhat-ethers": "^3.1.2",
     "@nomicfoundation/hardhat-verify": "^2.0.0",
     "@nomicfoundation/hardhat-viem": "^2.0.0",
     "@openzeppelin/contracts-upgradeable": "^5.4.0",
@@ -220,6 +221,7 @@
     "chai-as-promised": "^7.1.2",
     "dotenv": "^17.2.3",
     "eslint": "^9.19.0",
+    "ethers": "^6.16.0",
     "hardhat": "^2.26.3",
     "hardhat-gas-reporter": "^2.2.0",
     "markdownlint-cli2": "^0.19.0",
@@ -233,7 +235,7 @@
     "viem": "^2.38.4"
   },
   "dependencies": {
-    "@sudobility/configs": "^0.0.40",
+    "@sudobility/configs": "^0.0.41",
     "@sudobility/types": "^1.9.31"
   },
   "overrides": {
