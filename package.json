@@ -1,11 +1,31 @@
 {
   "name": "@sudobility/contracts",
-  "version": "1.17.31",
+  "version": "1.17.32",
   "type": "module",
   "main": "dist/unified/src/unified/index.js",
   "types": "dist/unified/src/unified/index.d.ts",
+  "browser": "dist/unified/src/unified/index.js",
+  "react-native": "dist/react-native/src/react-native/index.js",
   "exports": {
     ".": {
+      "react-native": {
+        "types": "./dist/react-native/src/react-native/index.d.ts",
+        "default": "./dist/react-native/src/react-native/index.js"
+      },
+      "browser": {
+        "types": "./dist/unified/src/unified/index.d.ts",
+        "default": "./dist/unified/src/unified/index.js"
+      },
+      "node": {
+        "types": "./dist/unified/src/unified/index.d.ts",
+        "default": "./dist/unified/src/unified/index.js"
+      },
+      "default": {
+        "types": "./dist/unified/src/unified/index.d.ts",
+        "default": "./dist/unified/src/unified/index.js"
+      }
+    },
+    "./web": {
       "types": "./dist/unified/src/unified/index.d.ts",
       "default": "./dist/unified/src/unified/index.js"
     },

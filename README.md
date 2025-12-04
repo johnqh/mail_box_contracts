@@ -34,6 +34,67 @@ npm install @johnqh/mail_box_contracts
 yarn add @johnqh/mail_box_contracts
 ```
 
+## 📱 Platform Support
+
+The package automatically detects your platform and loads the appropriate implementation:
+
+| Environment | Import | Resolves to |
+|-------------|--------|-------------|
+| React Native (Metro) | `@sudobility/contracts` | React Native build |
+| Browser (webpack/vite) | `@sudobility/contracts` | Web build |
+| Node.js | `@sudobility/contracts` | Web build |
+
+### Auto-Detection (Recommended)
+
+```typescript
+// Works everywhere - auto-detects platform
+import { OnchainMailerClient } from '@sudobility/contracts';
+```
+
+### Explicit Imports
+
+```typescript
+// Force specific platform
+import { OnchainMailerClient } from '@sudobility/contracts/web';
+import { OnchainMailerClient } from '@sudobility/contracts/react-native';
+
+// Chain-specific imports
+import { EVMMailerClient } from '@sudobility/contracts/evm';
+import { SolanaMailerClient } from '@sudobility/contracts/solana';
+```
+
+### React Native Setup
+
+React Native requires polyfills to be imported first in your app entry point:
+
+```typescript
+// index.js (MUST be the first import)
+import '@sudobility/contracts/react-native/polyfills';
+
+import { AppRegistry } from 'react-native';
+import App from './App';
+AppRegistry.registerComponent('YourApp', () => App);
+```
+
+Then use the client normally in your app:
+
+```typescript
+// App.tsx - auto-detected as React Native
+import { OnchainMailerClient, verifyPolyfills } from '@sudobility/contracts';
+
+// Optional: verify polyfills loaded correctly
+const { success, missing } = verifyPolyfills();
+if (!success) console.error('Missing polyfills:', missing);
+```
+
+**Required React Native dependencies:**
+
+```bash
+npm install react-native-get-random-values buffer react-native-url-polyfill text-encoding
+```
+
+See [`docs/REACT_NATIVE.md`](./docs/REACT_NATIVE.md) for complete React Native setup guide.
+
 ## 🚀 Quick Start - Unified Multi-Chain Client
 
 ### Option 1: Using ChainConfig with RpcHelpers (Recommended)
@@ -174,6 +235,7 @@ mail_box_contracts/
 │   ├── evm/              # EVM-specific clients
 │   ├── solana/           # Solana-specific clients
 │   ├── unified/          # Cross-chain unified client
+│   ├── react-native/     # React Native entry point & polyfills
 │   └── utils/            # Shared utilities & validation
 ├── test/                  # Comprehensive test suites (116 tests)
 │   ├── evm/              # EVM contract tests (75 tests)
@@ -367,4 +429,4 @@ MIT License - see LICENSE file for details.
 
 ---
 
-**Built with**: Hardhat, TypeScript, Solidity ^0.8.24, Ethers v6
+**Built with**: Hardhat, TypeScript, Solidity ^0.8.24, Ethers v6, React Native
