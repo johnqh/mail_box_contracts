@@ -1,11 +1,10 @@
 // Import types from @sudobility/types package (now ESM compatible)
+import { ChainType, Optional } from '@sudobility/types';
 import {
-  ChainType,
   MessageSendResponse,
   DomainRegistrationResponse,
   MailboxDelegationResponse,
-  Optional,
-} from '@sudobility/types';
+} from '@sudobility/mail_box_types';
 import type { WalletClient, PublicClient } from 'viem';
 import type { ChainInfo } from '@sudobility/configs';
 
