@@ -1,6 +1,6 @@
 {
   "name": "@sudobility/contracts",
-  "version": "1.17.39",
+  "version": "1.17.40",
   "type": "module",
   "main": "dist/unified/src/unified/index.js",
   "types": "dist/unified/src/unified/index.d.ts",
@@ -293,7 +293,7 @@
   },
   "dependencies": {
     "@openzeppelin/contracts": "^5.4.0",
-    "@sudobility/configs": "^0.0.47",
+    "@sudobility/configs": "^0.0.48",
     "@sudobility/types": "^1.9.38"
   },
   "overrides": {
