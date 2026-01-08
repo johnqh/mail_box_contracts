@@ -5,8 +5,8 @@
       "name": "@sudobility/contracts",
       "dependencies": {
         "@openzeppelin/contracts": "^5.4.0",
-        "@sudobility/configs": "^0.0.49",
-        "@sudobility/types": "^1.9.40",
+        "@sudobility/configs": "^0.0.50",
+        "@sudobility/types": "^1.9.41",
       },
       "devDependencies": {
         "@nomicfoundation/hardhat-chai-matchers": "^2.0.0",
@@ -443,11 +443,11 @@
 
     "@solidity-parser/parser": ["@solidity-parser/parser@0.20.2", "", {}, "sha512-rbu0bzwNvMcwAjH86hiEAcOeRI2EeK8zCkHDrFykh/Al8mvJeFmjy3UrE7GYQjNwOgbGUUtCn5/k8CB8zIu7QA=="],
 
-    "@sudobility/configs": ["@sudobility/configs@0.0.49", "", { "peerDependencies": { "@sudobility/types": "^1.9.40" } }, "sha512-96mcZGh24lmw8Iv1d7lpTDOJQTLD5UmeFDdsfDXQJENYP/iltG6IYPp3SfBL61EvZZP5bIdaVjGLvQbJTluIfQ=="],
+    "@sudobility/configs": ["@sudobility/configs@0.0.50", "", { "peerDependencies": { "@sudobility/types": "^1.9.40" } }, "sha512-o2Xw5cVdPLcwy6ok/UH95YYFA0BgPdZ/LQFcKelthchtOlSAfvEEOta6bTP9i6GRxyvQDKm6k3R5+n8xz0ateg=="],
 
     "@sudobility/mail_box_types": ["@sudobility/mail_box_types@1.0.2", "", { "peerDependencies": { "@sudobility/types": "^1.9.35" } }, "sha512-76NEsxRoVOv7sXh1rwRoyGYT1yCXlVTyUfVXtVkPGY5xQKUXdfd4MXU4jGVh9n7UuoaRmduVoa/HGu2MFjOvag=="],
 
-    "@sudobility/types": ["@sudobility/types@1.9.40", "", {}, "sha512-OxG5KxSee+GnuFHTUj8kCI2ARpuTKec1MRiGqOFut6T2MSiv1YcA+Sfg+n+eh+mTMKi+VkjNRZi1hkrFePBkWQ=="],
+    "@sudobility/types": ["@sudobility/types@1.9.41", "", {}, "sha512-W2RuqIhCdhvNaNMiThT8zAZ8YcIbgPceb85Jh+UeGMG66fEn63fvdOSDKil72i/DySAWeab0yhse1Yl5lYDbnA=="],
 
     "@swc/helpers": ["@swc/helpers@0.5.18", "", { "dependencies": { "tslib": "^2.8.0" } }, "sha512-TXTnIcNJQEKwThMMqBXsZ4VGAza6bvN4pa41Rkqoio6QBKMvo+5lexeTMScGCIxtzgQJzElcvIltani+adC5PQ=="],
 
