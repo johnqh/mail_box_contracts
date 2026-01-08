@@ -102,6 +102,7 @@
     "build:solana": "cargo build --manifest-path programs/mailer/Cargo.toml && tsc --project tsconfig.solana.json",
     "build:unified": "tsc --project tsconfig.unified.json",
     "build:react-native": "tsc --project tsconfig.react-native.json",
+    "pretest": "npx hardhat compile",
     "test": "bun run test:evm && bun run test:solana && bun run test:unified:direct",
     "test:ci": "bun run build:unified && bun run test:unified:direct",
     "test:evm": "npx hardhat test test/evm/Mailer.test.ts",
