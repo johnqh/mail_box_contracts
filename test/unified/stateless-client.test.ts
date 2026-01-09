@@ -4,6 +4,7 @@ import chai from 'chai';
 import { ChainType, Chain } from '@sudobility/types';
 import { RpcHelpers } from '@sudobility/configs';
 import { OnchainMailerClient } from '../../src/unified/onchain-mailer-client.js';
+import type { Wallet } from '../../src/unified/types.js';
 
 chai.use(chaiAsPromised);
 
@@ -99,7 +100,7 @@ describe('Stateless OnchainMailerClient', () => {
 
   describe('Error handling', () => {
     it('should validate message subject', async () => {
-      const mockWallet = { walletClient: {}, publicClient: {} };
+      const mockWallet = { walletClient: {}, publicClient: {} } as unknown as Wallet;
       const mockChainInfo = RpcHelpers.getChainInfo(Chain.ETH_MAINNET);
 
       // Subject too long
@@ -115,7 +116,7 @@ describe('Stateless OnchainMailerClient', () => {
     });
 
     it('should validate message body', async () => {
-      const mockWallet = { walletClient: {}, publicClient: {} };
+      const mockWallet = { walletClient: {}, publicClient: {} } as unknown as Wallet;
       const mockChainInfo = RpcHelpers.getChainInfo(Chain.ETH_MAINNET);
 
       // Body too long
@@ -131,7 +132,7 @@ describe('Stateless OnchainMailerClient', () => {
     });
 
     it('should throw error for unsupported chain type', async () => {
-      const mockWallet = { walletClient: {}, publicClient: {} };
+      const mockWallet = { walletClient: {}, publicClient: {} } as unknown as Wallet;
       const invalidChainInfo = {
         ...RpcHelpers.getChainInfo(Chain.ETH_MAINNET),
         chainType: 'INVALID' as any
