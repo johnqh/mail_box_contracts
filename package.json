@@ -1,6 +1,6 @@
 {
   "name": "@sudobility/contracts",
-  "version": "1.17.48",
+  "version": "1.17.49",
   "type": "module",
   "main": "dist/unified/src/unified/index.js",
   "types": "dist/unified/src/unified/index.d.ts",
@@ -105,7 +105,7 @@
     "pretest": "npx hardhat compile",
     "test": "bun run test:evm && bun run test:solana && bun run test:unified:direct",
     "test:ci": "bun run build:unified && bun run test:unified:direct",
-    "test:evm": "npx hardhat test test/evm/Mailer.test.ts",
+    "test:evm": "node --import tsx/esm ./node_modules/.bin/hardhat test test/evm/Mailer.test.ts",
     "test:solana": "cd programs/mailer && cargo test",
     "test:unified": "mocha dist/test/unified/**/*.test.js",
     "test:unified:direct": "node scripts/run-unified-tests.mjs",
@@ -288,6 +288,7 @@
     "react": "^19.0.0",
     "ts-mocha": "^11.1.0",
     "ts-node": "^10.9.2",
+    "tsx": "^4.21.0",
     "typechain": "^8.3.2",
     "typescript": "^5.9.3",
     "viem": "^2.38.4"
