@@ -63,46 +63,58 @@ mail_box_contracts/
 └── README.md             # Main project documentation (AI-optimized)
 ```
 
+## Package Manager
+
+**This project uses Bun as the package manager.** Always use `bun` commands instead of `npm`:
+
+```bash
+# Install dependencies
+bun install
+
+# Run any script
+bun run <script-name>
+```
+
 ## 🛠️ AI-Optimized Development Commands
 
 ```bash
 # AI Workflow Automation (ENHANCED!)
-npm run ai:status                   # Check project health & environment
-npm run ai:build                    # AI-optimized complete build workflow  
-npm run ai:test                     # Comprehensive multi-chain testing (116 tests)
-npm run ai:check                    # Fast validation and quick checks
-npm run ai:workflow <command>       # Advanced workflow automation
+bun run ai:status                   # Check project health & environment
+bun run ai:build                    # AI-optimized complete build workflow
+bun run ai:test                     # Comprehensive multi-chain testing (116 tests)
+bun run ai:check                    # Fast validation and quick checks
+bun run ai:workflow <command>       # Advanced workflow automation
 
 # Advanced AI Workflows
-npm run ai:workflow status          # Detailed project status
-npm run ai:workflow run full-build  # Complete build with validation
-npm run ai:workflow run test-all    # Multi-chain test execution
-npm run ai:workflow run quick-check # Fast development validation
+bun run ai:workflow status          # Detailed project status
+bun run ai:workflow run full-build  # Complete build with validation
+bun run ai:workflow run test-all    # Multi-chain test execution
+bun run ai:workflow run quick-check # Fast development validation
 ```
 
 ## 🛠️ Common Development Commands
 
 ```bash
 # Essential Commands (run these frequently)
-npm run compile    # Compile contracts + generate TypeScript types
-npm test          # Run all tests (116 tests total)
-npm run build     # Build TypeScript files
+bun run compile    # Compile contracts + generate TypeScript types
+bun test          # Run all tests (116 tests total)
+bun run build     # Build TypeScript files
 
 # Deployment Commands
-npm run deploy:local           # Deploy to local Hardhat network (standard)
+bun run deploy:local           # Deploy to local Hardhat network (standard)
 npx hardhat node              # Start local blockchain
 npx hardhat run scripts/evm/deploy-upgradeable.ts --network sepolia  # Deploy upgradeable proxy
 PROXY_ADDRESS=0x... npx hardhat run scripts/evm/upgrade.ts --network sepolia  # Upgrade contract
 
 # Development Commands
-npm run clean          # Clean compiled artifacts
-npm install           # Install dependencies
+bun run clean          # Clean compiled artifacts
+bun install           # Install dependencies
 npx ts-node examples/unified-usage.ts  # Run comprehensive examples
 
 # Testing Commands
-npm test -- --grep "MailService"  # Run only MailService tests
-npm test -- --grep "Mailer"       # Run only Mailer tests
-npm test -- --verbose            # Run tests with detailed output
+bun test -- --grep "MailService"  # Run only MailService tests
+bun test -- --grep "Mailer"       # Run only Mailer tests
+bun test -- --verbose            # Run tests with detailed output
 ```
 
 ## Smart Contract Architecture
@@ -187,7 +199,7 @@ npm test -- --verbose            # Run tests with detailed output
 
 ### Making Contract Changes
 
-1. **Modify Contract** → `npm run compile` → `npm test`
+1. **Modify Contract** → `bun run compile` → `bun test`
 2. **Always run compile after contract changes** - regenerates TypeScript types
 3. **Run full test suite** - ensures no regressions
 4. **Check for breaking changes** in generated types
@@ -303,8 +315,8 @@ expect(finalBalance - initialBalance).to.equal(expectedFee);
 
 ### Critical Development Workflow
 
-1. **Always run `npm run compile` after contract changes** - Regenerates TypeScript types
-2. **Run `npm test` to verify changes don't break existing functionality** - 116 comprehensive tests
+1. **Always run `bun run compile` after contract changes** - Regenerates TypeScript types
+2. **Run `bun test` to verify changes don't break existing functionality** - 116 comprehensive tests
 3. **Follow existing test patterns** documented in AI_DEVELOPMENT_GUIDE.md
 4. **Use MockUSDC for all USDC-related testing** - Never use real tokens
 5. **Check both positive and negative test cases** - Error conditions are critical
