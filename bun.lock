@@ -5,7 +5,7 @@
       "name": "@sudobility/contracts",
       "dependencies": {
         "@openzeppelin/contracts": "^5.4.0",
-        "@sudobility/configs": "^0.0.51",
+        "@sudobility/configs": "^0.0.52",
         "@sudobility/types": "^1.9.42",
       },
       "devDependencies": {
@@ -443,7 +443,7 @@
 
     "@solidity-parser/parser": ["@solidity-parser/parser@0.20.2", "", {}, "sha512-rbu0bzwNvMcwAjH86hiEAcOeRI2EeK8zCkHDrFykh/Al8mvJeFmjy3UrE7GYQjNwOgbGUUtCn5/k8CB8zIu7QA=="],
 
-    "@sudobility/configs": ["@sudobility/configs@0.0.51", "", { "peerDependencies": { "@sudobility/types": "^1.9.41" } }, "sha512-95pxTGJ//fm7mxwH2zv09G6SX85pnrXdh0Uci0z74nK0JNKdoS1ngk/NglKFRdkd+8UJn2z9BMrPQNnr1vdO3g=="],
+    "@sudobility/configs": ["@sudobility/configs@0.0.52", "", { "peerDependencies": { "@sudobility/types": "^1.9.42" } }, "sha512-KRlPD9DpVIhLO5m7MVhSZGKXf6fkeHB3xqNQhaWLvjTUvm99N+gVQjnhTpDV+PRKzboj3dLVdXyyxaSWpUS9ZQ=="],
 
     "@sudobility/mail_box_types": ["@sudobility/mail_box_types@1.0.2", "", { "peerDependencies": { "@sudobility/types": "^1.9.35" } }, "sha512-76NEsxRoVOv7sXh1rwRoyGYT1yCXlVTyUfVXtVkPGY5xQKUXdfd4MXU4jGVh9n7UuoaRmduVoa/HGu2MFjOvag=="],
 
