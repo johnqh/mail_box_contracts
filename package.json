@@ -1,6 +1,6 @@
 {
   "name": "@sudobility/contracts",
-  "version": "1.17.55",
+  "version": "1.17.56",
   "type": "module",
   "main": "dist/unified/src/unified/index.js",
   "types": "dist/unified/src/unified/index.d.ts",
@@ -131,7 +131,6 @@
     "format": "prettier --write \"**/*.{ts,js,json,md}\"",
     "format:check": "prettier --check \"**/*.{ts,js,json,md}\"",
     "security:audit": "bash scripts/security-audit.sh",
-    "postinstall": "echo 'Multi-chain Mailer Contracts installed successfully!'",
     "deploy:evm:local": "npx hardhat run scripts/evm/deploy.ts --network hardhat",
     "deploy:solana:local": "anchor deploy --provider.cluster localnet",
     "deploy:solana:devnet": "anchor deploy --provider.cluster devnet",
