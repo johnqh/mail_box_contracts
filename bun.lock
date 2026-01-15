@@ -6,7 +6,7 @@
       "dependencies": {
         "@openzeppelin/contracts": "^5.4.0",
         "@sudobility/configs": "^0.0.57",
-        "@sudobility/types": "^1.9.44",
+        "@sudobility/types": "^1.9.45",
       },
       "devDependencies": {
         "@nomicfoundation/hardhat-chai-matchers": "^2.0.0",
@@ -500,7 +500,7 @@
 
     "@sudobility/mail_box_types": ["@sudobility/mail_box_types@1.0.4", "", { "peerDependencies": { "@sudobility/types": "^1.9.44" } }, "sha512-5ZwW9YLf0UdicM5rIczgv7qHHXJtKkN8fiibxBS9NL9LDpuzwbsrf6W0ZcNeXgl13fmCz0J2PLayEZo0iZs18A=="],
 
-    "@sudobility/types": ["@sudobility/types@1.9.44", "", {}, "sha512-2oRTD6sQ6Ouwyb4DAerU6FNCkGRaXnzPNwTg7puIzA3ZVTTauN6DzMLw0QzzUiwLHWlVpYZfldZK+IRYOz0LDA=="],
+    "@sudobility/types": ["@sudobility/types@1.9.45", "", {}, "sha512-bANwJwRnsrRycBbFvBdN3WatK9SbjN99IC0ms80Qq/+MWToT9ZJ8k7pyRjd8/TUsfpRkM6cZzSfG02YEvTUzUw=="],
 
     "@swc/helpers": ["@swc/helpers@0.5.18", "", { "dependencies": { "tslib": "^2.8.0" } }, "sha512-TXTnIcNJQEKwThMMqBXsZ4VGAza6bvN4pa41Rkqoio6QBKMvo+5lexeTMScGCIxtzgQJzElcvIltani+adC5PQ=="],
 
