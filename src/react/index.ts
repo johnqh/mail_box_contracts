@@ -32,7 +32,7 @@
  */
 
 // Context and Provider
-export { MailerProvider, useMailerClient, useMailerContext, QueryClient, QueryClientProvider } from './context/MailerProvider';
+export { MailerProvider, useMailerClient, useMailerContext } from './context/MailerProvider';
 
 // Grouped Query Hooks (Preferred - no context dependency)
 export {

@@ -159,7 +159,3 @@ export function useMailerClient(): OnchainMailerClient {
   return client;
 }
 
-/**
- * Re-export QueryClientProvider for convenience
- */
-export { QueryClientProvider, QueryClient } from '@tanstack/react-query';
