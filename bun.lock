@@ -5,8 +5,8 @@
       "name": "@sudobility/contracts",
       "dependencies": {
         "@openzeppelin/contracts": "^5.4.0",
-        "@sudobility/configs": "^0.0.61",
-        "@sudobility/types": "^1.9.49",
+        "@sudobility/configs": "^0.0.62",
+        "@sudobility/types": "^1.9.50",
       },
       "devDependencies": {
         "@nomicfoundation/hardhat-chai-matchers": "^2.0.0",
@@ -18,7 +18,7 @@
         "@solana/spl-token": "^0.4.14",
         "@solana/wallet-adapter-base": "^0.9.27",
         "@solana/web3.js": "^1.98.4",
-        "@sudobility/mail_box_types": "^1.0.8",
+        "@sudobility/mail_box_types": "^1.0.9",
         "@tanstack/react-query": "^5.90.1",
         "@typechain/hardhat": "^9.1.0",
         "@types/chai": "^4.3.20",
@@ -48,7 +48,7 @@
       "peerDependencies": {
         "@solana/spl-token": ">=0.4.0",
         "@solana/web3.js": ">=1.95.0",
-        "@sudobility/mail_box_types": "^1.0.8",
+        "@sudobility/mail_box_types": "^1.0.9",
         "@tanstack/react-query": ">=5.0.0",
         "buffer": ">=6.0.0",
         "react": "^18.0.0 || ^19.0.0",
@@ -496,11 +496,11 @@
 
     "@solidity-parser/parser": ["@solidity-parser/parser@0.20.2", "", {}, "sha512-rbu0bzwNvMcwAjH86hiEAcOeRI2EeK8zCkHDrFykh/Al8mvJeFmjy3UrE7GYQjNwOgbGUUtCn5/k8CB8zIu7QA=="],
 
-    "@sudobility/configs": ["@sudobility/configs@0.0.61", "", { "peerDependencies": { "@sudobility/types": "^1.9.49" } }, "sha512-6kWblGfcSzmKSn9ehd00QKoT34aukCgc/AyvlBuMEBaKrkDX9Xl9SZrpTfpxiGVotWIALAhTjT8nDkeiUwh0oA=="],
+    "@sudobility/configs": ["@sudobility/configs@0.0.62", "", { "peerDependencies": { "@sudobility/types": "^1.9.50" } }, "sha512-MQAE/gpleAv1zbRc8Q+H7QIQoRZ2a8Qhb7jmTgQWo2w+QKmKYHkepMWo0xGf2UNI7y8mqofK7P8Z9dC5EKqHEA=="],
 
-    "@sudobility/mail_box_types": ["@sudobility/mail_box_types@1.0.8", "", { "peerDependencies": { "@sudobility/types": "^1.9.49" } }, "sha512-76oBt6kewWoCc2Is+5fRbhb26rzZCEKWOVNyFtAIk87ZgSjwE7ZxoFql5t8+jhbIBceLwZpIH01QU4Svcg+h9Q=="],
+    "@sudobility/mail_box_types": ["@sudobility/mail_box_types@1.0.9", "", { "peerDependencies": { "@sudobility/types": "^1.9.50" } }, "sha512-FBemxMoJNPMYedK2WJMcIHg0xOTrTzPCvPHvmDoIFwi2aKb94+JfoFxfykmm9/Fv4lrvXMQVJ/7bDbeuxx7LMQ=="],
 
-    "@sudobility/types": ["@sudobility/types@1.9.49", "", {}, "sha512-Gt8kaxnL5uWDsIAW1A6vKKvDUopb+q3QeyuUirVnT7yyqaMKXmcqvAGupvvZ/ATr2bOckcSPns/Bz3lRT1GVTg=="],
+    "@sudobility/types": ["@sudobility/types@1.9.50", "", {}, "sha512-SKopIMJqgNVopcz/MNukrm936yKuBJMFcz4uUbQz9XB7cDjyuExoVeyMnvidMKtOLkmJSRdYYV4+M7eG7KN2aw=="],
 
     "@swc/helpers": ["@swc/helpers@0.5.18", "", { "dependencies": { "tslib": "^2.8.0" } }, "sha512-TXTnIcNJQEKwThMMqBXsZ4VGAza6bvN4pa41Rkqoio6QBKMvo+5lexeTMScGCIxtzgQJzElcvIltani+adC5PQ=="],
 

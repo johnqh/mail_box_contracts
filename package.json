@@ -1,6 +1,6 @@
 {
   "name": "@sudobility/contracts",
-  "version": "1.17.61",
+  "version": "1.17.62",
   "type": "module",
   "main": "dist/unified/src/unified/index.js",
   "types": "dist/unified/src/unified/index.d.ts",
@@ -53,7 +53,7 @@
   "peerDependencies": {
     "@solana/spl-token": ">=0.4.0",
     "@solana/web3.js": ">=1.95.0",
-    "@sudobility/mail_box_types": "^1.0.8",
+    "@sudobility/mail_box_types": "^1.0.9",
     "@tanstack/react-query": ">=5.0.0",
     "buffer": ">=6.0.0",
     "react": "^18.0.0 || ^19.0.0",
@@ -226,7 +226,7 @@
     "mobile"
   ],
   "author": "Mailer Team",
-  "license": "MIT",
+  "license": "BUSL-1.1",
   "description": "Multi-chain decentralized messaging system with USDC fees, revenue sharing, and delegation management. Unified TypeScript client for EVM chains and Solana.",
   "homepage": "https://github.com/johnqh/mail_box_contracts#readme",
   "repository": {
@@ -265,7 +265,7 @@
     "@solana/spl-token": "^0.4.14",
     "@solana/wallet-adapter-base": "^0.9.27",
     "@solana/web3.js": "^1.98.4",
-    "@sudobility/mail_box_types": "^1.0.8",
+    "@sudobility/mail_box_types": "^1.0.9",
     "@tanstack/react-query": "^5.90.1",
     "@typechain/hardhat": "^9.1.0",
     "@types/chai": "^4.3.20",
@@ -294,8 +294,8 @@
   },
   "dependencies": {
     "@openzeppelin/contracts": "^5.4.0",
-    "@sudobility/configs": "^0.0.61",
-    "@sudobility/types": "^1.9.49"
+    "@sudobility/configs": "^0.0.62",
+    "@sudobility/types": "^1.9.50"
   },
   "overrides": {
     "bigint-buffer": "^1.1.5"
