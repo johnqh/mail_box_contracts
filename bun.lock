@@ -5,8 +5,8 @@
       "name": "@sudobility/contracts",
       "dependencies": {
         "@openzeppelin/contracts": "^5.4.0",
-        "@sudobility/configs": "^0.0.63",
-        "@sudobility/types": "^1.9.51",
+        "@sudobility/configs": "^0.0.64",
+        "@sudobility/types": "^1.9.52",
       },
       "devDependencies": {
         "@nomicfoundation/hardhat-chai-matchers": "^2.0.0",
@@ -18,7 +18,7 @@
         "@solana/spl-token": "^0.4.14",
         "@solana/wallet-adapter-base": "^0.9.27",
         "@solana/web3.js": "^1.98.4",
-        "@sudobility/mail_box_types": "^1.0.10",
+        "@sudobility/mail_box_types": "^1.0.11",
         "@tanstack/react-query": "^5.90.1",
         "@typechain/hardhat": "^9.1.0",
         "@types/chai": "^4.3.20",
@@ -496,11 +496,11 @@
 
     "@solidity-parser/parser": ["@solidity-parser/parser@0.20.2", "", {}, "sha512-rbu0bzwNvMcwAjH86hiEAcOeRI2EeK8zCkHDrFykh/Al8mvJeFmjy3UrE7GYQjNwOgbGUUtCn5/k8CB8zIu7QA=="],
 
-    "@sudobility/configs": ["@sudobility/configs@0.0.63", "", { "peerDependencies": { "@sudobility/types": "^1.9.51" } }, "sha512-tsonpPpiLEKwYmba9/MgNcoEVDnVwUAcIV0/Ulm2zMKSrcNmOMhyT+O6oB9fGSWip+abc8t1qMxVFnzDdOMxQA=="],
+    "@sudobility/configs": ["@sudobility/configs@0.0.64", "", { "peerDependencies": { "@sudobility/types": "^1.9.52" } }, "sha512-19hDnLSKkFpXswDfsc2DxXgJXko9F36B+vgfyVCHOwGO5XPiMAKybx09C18gSV77LW6brAyUTzmvBGcw3FipWA=="],
 
-    "@sudobility/mail_box_types": ["@sudobility/mail_box_types@1.0.10", "", { "peerDependencies": { "@sudobility/types": "^1.9.51" } }, "sha512-BzD6Le//0jxLSRuNKTnvPpSixzLQADm1dZkQhK3+zNPTYbLTDwS5n/7Sa/W+Z3szwJHhX1lCWJRIYRHyKtBhGQ=="],
+    "@sudobility/mail_box_types": ["@sudobility/mail_box_types@1.0.11", "", { "peerDependencies": { "@sudobility/types": "^1.9.52" } }, "sha512-5PGe7KTTLjO9RtCbnWXxh5PeVE5sMbvtFycCxrdvPEGLQt6TufD7Br5v32tA3YJ6gkfW1wIp+dx7mP8Qp8qFHw=="],
 
-    "@sudobility/types": ["@sudobility/types@1.9.51", "", {}, "sha512-u4hpUH4Jy3t6OAWExkKolwV93n3apECIBaN7u3iqwngpI5p0SxDlQP5utoCt6wrObcKoUmJJ3Ly4nNKLel+ufA=="],
+    "@sudobility/types": ["@sudobility/types@1.9.52", "", {}, "sha512-+XE4KoltuhPsDiMlTC8P3PDSaHX7SmrtRydXBqzL4vlaxczIEI6SEZSFIXMTNjiLkwjsze4HoD9U5RJFhAfjuw=="],
 
     "@swc/helpers": ["@swc/helpers@0.5.18", "", { "dependencies": { "tslib": "^2.8.0" } }, "sha512-TXTnIcNJQEKwThMMqBXsZ4VGAza6bvN4pa41Rkqoio6QBKMvo+5lexeTMScGCIxtzgQJzElcvIltani+adC5PQ=="],
 
