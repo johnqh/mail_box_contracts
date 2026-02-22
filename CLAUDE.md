@@ -1,382 +1,454 @@
-# CLAUDE.md - AI Assistant Guide
+# mail_box_contracts - AI Development Guide
 
-This file provides comprehensive guidance for AI assistants working with this multi-chain decentralized messaging system.
+## Overview
 
-## 🚀 Project Overview
+Multi-chain decentralized messaging system published as `@sudobility/contracts`. Supports EVM chains (Ethereum, Polygon, Optimism, Base, Arbitrum, Avalanche, BSC, and more) and Solana with USDC-based fees, revenue sharing, delegation management, and a unified TypeScript client. The system uses a two-tier fee model (Priority and Standard) with a 90/10 revenue split and 60-day claim periods.
 
-This is a production-ready multi-chain decentralized messaging system with USDC fee integration, automatic wallet detection, and comprehensive AI-friendly documentation supporting both EVM chains and Solana.
+- **Package**: `@sudobility/contracts` v1.17.63
+- **License**: BUSL-1.1
+- **Package manager**: Bun
+- **Node requirement**: >=20.18.0
 
-### Core Components
-
-#### EVM Implementation
-
-1. **Mailer.sol** - Complete messaging system with delegation management and revenue sharing
-2. **MockUSDC.sol** - Test token for development
-
-#### Solana Implementation
-
-1. **mailer** - Complete messaging program with delegation management and revenue sharing
-
-#### Unified Client
-
-1. **OnchainMailerClient** - Single interface for all chains
-2. **WalletDetector** - Automatic chain detection
-3. **Dynamic imports** - Chain-specific module loading
-
-### 📁 Enhanced Multi-Chain Project Structure
+## Project Structure
 
 ```
 mail_box_contracts/
-├── contracts/              # EVM smart contracts (Solidity)
-│   ├── Mailer.sol         # Complete messaging system with delegation
-│   └── MockUSDC.sol       # Test USDC token
-├── programs/               # Solana programs (Rust)
-│   └── mailer/           # Complete messaging program with delegation
-├── src/                   # Multi-chain TypeScript clients
-│   ├── evm/              # EVM-specific clients
-│   ├── solana/           # Solana-specific clients  
-│   ├── unified/          # Cross-chain unified client
-│   └── utils/            # Shared utilities & validation
-├── test/                  # Comprehensive test suites (116 tests)
-│   ├── evm/              # EVM contract tests (75 tests)
-│   ├── solana/           # Solana program tests
-│   └── unified/          # Cross-chain client tests (41 tests)
-├── scripts/               # Multi-chain deployment scripts
-│   ├── evm/              # EVM deployment scripts
-│   ├── solana/           # Solana deployment scripts
-│   └── unified/          # Multi-chain deployment
-├── examples/              # Complete usage examples
-│   ├── evm-usage.ts      # EVM-specific examples
-│   ├── solana-usage.ts   # Solana-specific examples
-│   └── unified-usage.ts  # Cross-chain examples
-│   └── README.md          # Example documentation
-├── typechain-types/       # Auto-generated TypeScript types
-├── scripts/               # Deployment scripts
-├── AI_DEVELOPMENT_GUIDE.md # Comprehensive AI assistant guide
-├── CLAUDE.md             # This file - AI assistant documentation
-├── docs/                   # AI optimization documentation
-│   └── ai-development-patterns.md  # Comprehensive AI patterns guide
-├── .ai-config.json         # AI assistant configuration
-├── .vscode/               # VS Code AI-friendly settings
-│   ├── settings.json      # Language and editor configuration
-│   └── tasks.json         # Build and test automation
-└── README.md             # Main project documentation (AI-optimized)
+├── contracts/                      # EVM smart contracts (Solidity 0.8.24)
+│   ├── Mailer.sol                  # Core messaging contract (UUPS upgradeable)
+│   ├── MockUSDC.sol                # Mock ERC20 token for testing (6 decimals)
+│   ├── interfaces/
+│   │   ├── IERC20.sol              # Minimal ERC20 interface
+│   │   └── IMailer.sol             # Mailer interface for CPI
+│   └── examples/                   # Integration example contracts
+├── programs/                       # Solana programs (Rust, native - no Anchor)
+│   ├── mailer/
+│   │   ├── Cargo.toml              # solana-program 1.16, borsh 1.5, spl-token 3.5
+│   │   ├── src/
+│   │   │   ├── lib.rs              # Full program: state, instructions, processing
+│   │   │   └── cpi.rs              # Cross-program invocation helpers
+│   │   └── tests/
+│   │       └── integration_tests.rs
+│   └── mailer-integration-example/ # CPI integration example
+├── src/                            # TypeScript client library
+│   ├── index.ts                    # Root re-exports (unified + EVM + Solana + utils)
+│   ├── unified/
+│   │   ├── index.ts                # Exports OnchainMailerClient, WalletDetector, types
+│   │   ├── onchain-mailer-client.ts # Stateless multi-chain client (dynamic imports)
+│   │   ├── wallet-detector.ts      # Auto-detect EVM vs Solana wallet/address
+│   │   └── types.ts                # UnifiedTransaction, Wallet, ChainConfig types
+│   ├── evm/
+│   │   ├── index.ts                # Exports EVMMailerClient, Mailer__factory, types
+│   │   └── evm-mailer-client.ts    # Stateless EVM client (viem-based)
+│   ├── solana/
+│   │   ├── index.ts                # Exports SolanaMailerClient, types
+│   │   ├── solana-mailer-client.ts # Stateless Solana client (@solana/web3.js)
+│   │   └── types.ts                # ClaimableInfo, MailerFees, DelegationInfo
+│   ├── react/
+│   │   ├── index.ts                # Exports MailerProvider, hooks (queries + mutations)
+│   │   ├── context/
+│   │   │   └── MailerProvider.tsx   # React Context wrapping OnchainMailerClient
+│   │   └── hooks/
+│   │       ├── useMailerQueries.ts  # TanStack React Query hooks (fees, claims, state)
+│   │       └── useMailerMutations.ts # Mutation hooks (send, claim, delegate, etc.)
+│   ├── react-native/
+│   │   ├── index.ts                # Re-exports with RN-compatible paths
+│   │   └── polyfills.ts            # Buffer, URL, crypto polyfills for RN
+│   ├── types/
+│   │   └── common.ts               # Shared types: Message, FeeStructure, ChainType, etc.
+│   └── utils/
+│       ├── index.ts                # Re-exports validation + chain-config
+│       ├── chain-config.ts         # NETWORK_CONFIGS, createChainConfig()
+│       ├── validation.ts           # validateDomain, validateMessage, validateAddress, validateAmount
+│       └── currency.ts             # USDC_DECIMALS, formatUSDC, parseUSDC
+├── test/
+│   ├── evm/
+│   │   ├── Mailer.test.ts          # Main EVM test suite (~75 tests)
+│   │   ├── Mailer.upgrade.test.ts  # UUPS upgrade tests
+│   │   └── MailerIntegration.test.ts
+│   └── unified/
+│       ├── stateless-client.test.ts # OnchainMailerClient tests
+│       ├── validation.test.ts       # Validation utility tests
+│       └── wallet-detector.test.ts  # WalletDetector tests
+├── scripts/
+│   ├── evm/
+│   │   ├── deploy.ts               # Standard EVM deployment
+│   │   ├── deploy-upgradeable.ts   # UUPS proxy deployment
+│   │   ├── upgrade.ts              # Contract upgrade script
+│   │   └── verify.ts               # Etherscan verification
+│   ├── solana/
+│   │   ├── init-native.ts          # Initialize Solana program state
+│   │   ├── upgrade.ts              # Program upgrade
+│   │   └── manage-upgrade-authority.ts
+│   └── unified/
+│       └── deploy-all.ts           # Multi-chain deployment orchestrator
+├── examples/                       # Usage examples
+│   ├── evm-usage.ts                # EVM-specific example
+│   ├── solana-usage.ts             # Solana-specific example
+│   ├── unified-usage.ts            # Cross-chain unified example
+│   ├── react-usage.tsx             # React hooks example
+│   ├── stateless-usage.ts          # Stateless client pattern
+│   ├── gas-estimation-demo.ts      # EVM gas optimization
+│   ├── solana-compute-units-demo.ts # Solana compute unit optimization
+│   ├── wagmi-integration.ts        # wagmi library integration
+│   └── wallet-adapter-integration.ts # Solana wallet adapter integration
+├── typechain-types/                # Auto-generated TS types from Solidity (ethers-v6)
+├── deployments/                    # Deployment address records per network
+├── artifacts/                      # Compiled contract artifacts
+├── dist/                           # Built output (unified + react-native targets)
+├── hardhat.config.cts              # Hardhat config (multi-network, Alchemy, Etherscan)
+├── Cargo.toml                      # Workspace Cargo config
+├── tsconfig.unified.json           # TS config for unified build (ESNext, node10 resolution)
+├── tsconfig.react-native.json      # TS config for React Native build
+├── tsconfig.evm.json               # TS config for EVM-only build
+├── tsconfig.solana.json            # TS config for Solana-only build
+├── DEPLOYED.json                   # Deployment tracking with addresses and features
+└── .env / .env.local               # Environment variables (API keys, private keys)
 ```
 
-## Package Manager
+## Key Exports
 
-**This project uses Bun as the package manager.** Always use `bun` commands instead of `npm`:
+The package exposes multiple entry points via the `exports` field in package.json:
+
+| Entry point | Import path | Contents |
+|---|---|---|
+| Default / Node / Browser | `@sudobility/contracts` | `OnchainMailerClient`, `WalletDetector`, unified types |
+| EVM | `@sudobility/contracts/evm` | `EVMMailerClient`, `Mailer__factory`, `Mailer` type |
+| Solana | `@sudobility/contracts/solana` | `SolanaMailerClient`, `SolanaWallet`, Solana types |
+| React | `@sudobility/contracts/react` | `MailerProvider`, query hooks, mutation hooks |
+| React Native | `@sudobility/contracts/react-native` | Same as unified + polyfills |
+| Web | `@sudobility/contracts/web` | Same as unified |
+
+### OnchainMailerClient (unified)
+
+Stateless multi-chain client. No constructor config needed. Uses dynamic imports to lazy-load the EVM or Solana client based on `chainInfo.chainType`. Key methods:
+
+- `sendMessage(wallet, chainInfo, subject, body, options?)` -- send inline message
+- `sendPrepared(wallet, chainInfo, to, mailId, options?)` -- send with off-chain content ref
+- `sendThroughWebhook(wallet, chainInfo, to, webhookId, options?)` -- webhook-triggered send
+- `sendToEmailAddress(wallet, chainInfo, toEmail, subject, body, options?)` -- send to email
+- `sendPreparedToEmailAddress(wallet, chainInfo, toEmail, mailId, options?)` -- prepared to email
+- `delegateTo(wallet, chainInfo, delegate, options?)` -- set delegation (costs 10 USDC)
+- `rejectDelegation(wallet, chainInfo, delegatingAddress, options?)` -- reject incoming delegation
+- `claimRevenue(wallet, chainInfo, options?)` -- claim 90% revenue share
+- `claimOwnerShare(wallet, chainInfo, options?)` -- owner claims accumulated fees
+- `claimExpiredShares(wallet, chainInfo, recipient, options?)` -- owner reclaims expired shares
+- `setFees(wallet, chainInfo, sendFee, delegationFee?, options?)` -- owner sets fees
+- `setFeePaused(wallet, chainInfo, paused, options?)` -- toggle fee collection
+- `setCustomFeePercentage(wallet, chainInfo, account, percentage, options?)` -- per-address discount
+- `pause(wallet, chainInfo, options?)` / `unpause(...)` / `emergencyUnpause(...)`
+- `setPermission(wallet, chainInfo, contractAddress, options?)` -- authorize contract to send on behalf
+- `removePermission(wallet, chainInfo, contractAddress, options?)`
+- `getSendFee(chainInfo)` / `getDelegationFee(chainInfo)` / `getRecipientClaimable(chainInfo, address)` / `getOwnerClaimable(chainInfo)` / `getDelegation(chainInfo, address)` / `isPaused(chainInfo)` / `getOwner(chainInfo)` / `getCustomFeePercentage(chainInfo, address)` / `hasPermission(chainInfo, contract, wallet)`
+
+### Contract ABIs
+
+- `Mailer__factory` from `@sudobility/contracts/evm` -- contains `.abi` and `.bytecode` (generated by TypeChain from ethers-v6)
+- `Mailer` type -- fully typed contract interface
+
+### Solana Client
+
+- `SolanaMailerClient` -- stateless, all methods take `(wallet, chainInfo, ...)` parameters
+- Program ID: `9FLkBDGpZBcR8LMsQ7MwwV6X9P4TDFgN3DeRh5qYyHJF`
+- Uses Borsh serialization, native `solana-program` (no Anchor)
+
+## Smart Contracts
+
+### EVM -- Mailer.sol (Solidity 0.8.24)
+
+**Architecture**: UUPS upgradeable proxy pattern (OpenZeppelin v5.4)
+
+- Inherits: `Initializable`, `OwnableUpgradeable`, `UUPSUpgradeable`
+- Compiler: solc 0.8.24, optimizer 200 runs
+
+**Storage layout** (gas-optimized, 2 slots for all scalars):
+- Slot 0: `sendFee` (uint128, default 100000 = 0.1 USDC) + `delegationFee` (uint128, default 10000000 = 10 USDC)
+- Slot 1: `ownerClaimable` (uint128) + `_status` (uint8) + `paused` (bool) + `feePaused` (bool)
+- `ClaimableAmount` struct: `amount` (uint192) + `timestamp` (uint64) = 1 slot
+
+**Mappings**:
+- `recipientClaims`: address => ClaimableAmount (90% revenue shares)
+- `customFeeDiscount`: address => uint8 (0-100 discount percentage)
+- `permissions`: address => address => bool (contract-to-wallet authorization)
+
+**Fee model**:
+- Priority (revenueShareToReceiver=true): payer pays full `sendFee` (0.1 USDC), receiver gets 90% claimable within 60 days
+- Standard (revenueShareToReceiver=false): payer pays 10% of `sendFee` (0.01 USDC), no revenue share
+- Delegation: 10 USDC flat fee
+- Custom discounts: per-address 0-100% discount off base fee
+
+**Soft-fail behavior**: `send`, `sendPrepared`, `sendToEmailAddress`, `sendPreparedToEmailAddress`, `sendThroughWebhook` do NOT revert on fee payment failure. They emit the event with `feePaid=false`. This enables composability with other contracts.
+
+**Key functions**:
+- `initialize(address _usdcToken, address _owner)` -- proxy initializer
+- `send(to, subject, body, payer, revenueShareToReceiver, resolveSenderToName)`
+- `sendPrepared(to, mailId, payer, revenueShareToReceiver, resolveSenderToName)`
+- `sendToEmailAddress(toEmail, subject, body, payer)`
+- `sendPreparedToEmailAddress(toEmail, mailId, payer)`
+- `sendThroughWebhook(to, webhookId, payer, revenueShareToReceiver, resolveSenderToName)`
+- `claimRecipientShare()` / `claimOwnerShare()` / `claimExpiredShares(recipient)`
+- `delegateTo(delegate)` / `rejectDelegation(delegatingAddress)`
+- `setFee(usdcAmount)` / `setDelegationFee(usdcAmount)` / `setCustomFeePercentage(account, percentage)` / `clearCustomFeePercentage(account)`
+- `setPermission(contractAddress)` / `removePermission(contractAddress)`
+- `pause()` / `unpause()` / `emergencyUnpause()` / `setFeePaused(bool)` / `distributeClaimableFunds(recipient)`
+
+**Events**: `MailSent`, `PreparedMailSent`, `MailSentToEmail`, `PreparedMailSentToEmail`, `WebhookMailSent`, `FeeUpdated`, `SharesRecorded`, `RecipientClaimed`, `OwnerClaimed`, `ExpiredSharesClaimed`, `DelegationSet`, `DelegationFeeUpdated`, `ContractPaused`, `ContractUnpaused`, `EmergencyUnpaused`, `FeePauseToggled`, `FundsDistributed`, `CustomFeePercentageSet`, `PermissionGranted`, `PermissionRevoked`
+
+**Custom errors**: `OnlyOwner`, `NoClaimableAmount`, `ClaimPeriodNotExpired`, `FeePaymentRequired`, `TransferFailed`, `ReentrancyGuard`, `InvalidAddress`, `MathOverflow`, `ContractIsPaused`, `ContractNotPaused`, `InvalidPercentage`, `UnpermittedPayer`
+
+### Solana -- Native Mailer Program (Rust)
+
+**Architecture**: Native Solana program (no Anchor framework), uses Borsh serialization.
+
+**Program state accounts** (PDAs):
+- `MailerState` [seed: `b"mailer"`]: owner, usdc_mint, send_fee, delegation_fee, owner_claimable, paused, fee_paused, bump (91 bytes)
+- `RecipientClaim` [seed: `b"claim", &[1], recipient`]: recipient, amount, timestamp, bump (49 bytes)
+- `Delegation` [seed: `b"delegation", &[1], delegator`]: delegator, delegate (Option), bump (66 bytes)
+- `FeeDiscount` [seed: `b"discount", &[1], account`]: account, discount (0-100), bump (34 bytes)
+
+PDA version byte (`PDA_VERSION = 1`) used for forward compatibility.
+
+**Instructions** (enum `MailerInstruction`):
+- `Initialize { usdc_mint }` -- set up program state
+- `Send { to, subject, _body, revenue_share_to_receiver, resolve_sender_to_name }` -- inline message
+- `SendPrepared { to, mail_id, revenue_share_to_receiver, resolve_sender_to_name }` -- prepared message
+- `SendToEmail { to_email, subject, _body }` -- email recipient
+- `SendPreparedToEmail { to_email, mail_id }` -- prepared email
+- `SendThroughWebhook { to, webhook_id, revenue_share_to_receiver, resolve_sender_to_name }`
+- `DelegateTo { delegate }` / `RejectDelegation { delegating_address }`
+- `ClaimRecipientShare` / `ClaimOwnerShare` / `ClaimExpiredShares { recipient }`
+- `SetFees { send_fee, delegation_fee }` / `SetCustomFeePercentage { account, percentage }` / `ClearCustomFeePercentage { account }`
+- `Pause` / `Unpause` / `EmergencyUnpause` / `SetFeePaused { fee_paused }`
+- `DistributeClaimableFunds { recipient }`
+
+Same soft-fail behavior as EVM: fee payment failure does not cause program error.
+
+**Crate features**: `cpi` (enables cross-program invocation module), `no-entrypoint` (library mode)
+
+## Development Commands
 
 ```bash
 # Install dependencies
 bun install
 
-# Run any script
-bun run <script-name>
+# Compile EVM contracts (generates typechain-types/)
+bun run compile              # alias for compile:evm
+bun run compile:evm          # npx hardhat compile
+bun run compile:solana       # anchor build
+
+# Build all targets
+bun run build                # build:evm + build:solana + build:unified + build:react-native
+bun run build:evm            # hardhat compile + tsc (tsconfig.evm.json)
+bun run build:solana         # cargo build + tsc (tsconfig.solana.json)
+bun run build:unified        # tsc (tsconfig.unified.json) -> dist/unified/
+bun run build:react-native   # tsc (tsconfig.react-native.json) -> dist/react-native/
+bun run build:ci             # build:unified + build:react-native (no compile step)
+
+# Run tests
+bun test                     # test:evm + test:solana + test:unified:direct
+bun run test:evm             # Hardhat test via tsx (test/evm/Mailer.test.ts)
+bun run test:solana          # cargo test in programs/mailer/
+bun run test:unified:direct  # node scripts/run-unified-tests.mjs
+bun run test:ci              # build:unified + test:unified:direct
+
+# Deploy EVM contracts
+bun run deploy:evm:localhost     # Local Hardhat node
+bun run deploy:evm:sepolia       # Sepolia testnet
+bun run deploy:evm:mainnet       # Ethereum mainnet
+bun run deploy:evm:polygon       # Polygon
+bun run deploy:evm:optimism      # Optimism
+bun run deploy:evm:base          # Base
+bun run deploy:evm:arbitrum      # Arbitrum
+# ... and many more (BSC, Fantom, zkSync, Linea, Scroll, Mantle, Gnosis, Moonbeam, Celo)
+
+# Deploy Solana program
+bun run deploy:solana:local      # anchor deploy --provider.cluster localnet
+bun run deploy:solana:devnet     # anchor deploy --provider.cluster devnet
+bun run deploy:solana:mainnet    # anchor deploy --provider.cluster mainnet-beta
+
+# UUPS upgradeable deployment (EVM)
+npx hardhat run scripts/evm/deploy-upgradeable.ts --network sepolia
+PROXY_ADDRESS=0x... npx hardhat run scripts/evm/upgrade.ts --network sepolia
+
+# Verify on block explorers
+bun run verify:evm:mainnet       # Etherscan verification
+bun run verify:evm:sepolia
+bun run verify:evm:polygon
+bun run verify:evm:base
+# ... (available for all supported networks)
+
+# Lint, format, type-check
+bun run lint                 # ESLint (excludes examples/)
+bun run lint:fix
+bun run lint:md              # Markdown lint
+bun run typecheck            # tsc --noEmit
+bun run format               # Prettier
+bun run format:check
+
+# Clean
+bun run clean                # npx hardhat clean
+
+# Security
+bun run security:audit       # bash scripts/security-audit.sh
+
+# Contract size check
+bash scripts/check-contract-size.sh
 ```
 
-## 🛠️ AI-Optimized Development Commands
+## Architecture / Patterns
 
-```bash
-# AI Workflow Automation (ENHANCED!)
-bun run ai:status                   # Check project health & environment
-bun run ai:build                    # AI-optimized complete build workflow
-bun run ai:test                     # Comprehensive multi-chain testing (116 tests)
-bun run ai:check                    # Fast validation and quick checks
-bun run ai:workflow <command>       # Advanced workflow automation
+### Multi-chain stateless client
 
-# Advanced AI Workflows
-bun run ai:workflow status          # Detailed project status
-bun run ai:workflow run full-build  # Complete build with validation
-bun run ai:workflow run test-all    # Multi-chain test execution
-bun run ai:workflow run quick-check # Fast development validation
+`OnchainMailerClient` is fully stateless -- no constructor config, no stored wallet references. Every method receives `(wallet, chainInfo, ...)` as parameters. Internally it lazy-loads `EVMMailerClient` or `SolanaMailerClient` via dynamic `import()` and caches them as static class properties. This pattern:
+- Avoids bundling both chain implementations when only one is needed
+- Supports tree-shaking in bundlers
+- Makes the client safe for server-side and multi-tenant usage
+
+### Wallet type detection
+
+`WalletDetector.detectWalletType(wallet)` inspects the wallet object shape to determine EVM vs Solana:
+- Solana: has `publicKey` + `signTransaction`, no `address`
+- EVM: has `address` + `request`, no `publicKey`
+- Also detects from address format: `isEVMAddress()` / `isSolanaAddress()`
+
+### EVM contract interaction (viem)
+
+`EVMMailerClient` uses **viem** (not ethers) for all blockchain interactions. The ABI and bytecode come from `Mailer__factory` (generated by TypeChain with ethers-v6 target, but the ABI is format-agnostic). Gas estimation with configurable multiplier (default 1.2x) is built in via `GasOptions`.
+
+### Solana instruction building
+
+`SolanaMailerClient` manually constructs `TransactionInstruction` objects with Borsh-serialized data. Compute unit optimization via `ComputeUnitOptions` with auto-simulate capability. Uses `getAssociatedTokenAddressSync` for USDC token accounts.
+
+### UUPS upgradeable proxy (EVM)
+
+Contracts deploy behind ERC1967 proxies. The proxy address is stable; the implementation can be upgraded by the owner via `_authorizeUpgrade`. Storage layout is preserved across upgrades. The `deploy-upgradeable.ts` script handles proxy creation, and `upgrade.ts` handles implementation replacement.
+
+### React integration
+
+React hooks are built on TanStack React Query v5. Two patterns:
+1. **Grouped hooks** (preferred): `useFees()`, `useClaimableAmounts()`, `useDelegationAndPermissions()`, `useContractState()`, `useMessaging()`, `useClaims()`, `useDelegation()`, `usePermissions()`, `useContractControl()`, `useOwnerOperations()`
+2. **Legacy individual hooks** (deprecated): `useGetSendFee()`, `useSendMessage()`, etc.
+
+`MailerProvider` wraps the app with `OnchainMailerClient` context.
+
+### React Native support
+
+Dedicated build target with polyfills for `Buffer`, `URL`, and `crypto.getRandomValues`. Import polyfills before any other imports:
+```typescript
+import '@sudobility/contracts/react-native/polyfills';
+import { OnchainMailerClient } from '@sudobility/contracts/react-native';
 ```
 
-## 🛠️ Common Development Commands
+### Soft-fail fee pattern
 
-```bash
-# Essential Commands (run these frequently)
-bun run compile    # Compile contracts + generate TypeScript types
-bun test          # Run all tests (116 tests total)
-bun run build     # Build TypeScript files
+Both EVM and Solana implementations use a soft-fail pattern for fee processing. If USDC transfer fails (insufficient balance, no approval), the transaction does NOT revert. Instead, the event/log is emitted with `feePaid=false`. This is designed for composability so calling contracts do not fail when message fees cannot be collected.
 
-# Deployment Commands
-bun run deploy:local           # Deploy to local Hardhat network (standard)
-npx hardhat node              # Start local blockchain
-npx hardhat run scripts/evm/deploy-upgradeable.ts --network sepolia  # Deploy upgradeable proxy
-PROXY_ADDRESS=0x... npx hardhat run scripts/evm/upgrade.ts --network sepolia  # Upgrade contract
+### Permission system (EVM)
 
-# Development Commands
-bun run clean          # Clean compiled artifacts
-bun install           # Install dependencies
-npx ts-node examples/unified-usage.ts  # Run comprehensive examples
+Smart contracts can send messages through the Mailer. A wallet calls `setPermission(contractAddress)` to authorize that contract to send messages while the wallet pays fees. The `permissions[contractAddress][walletAddress]` mapping tracks this. When `msg.sender` is a contract, the `payer` parameter must be an authorized wallet.
 
-# Testing Commands
-bun test -- --grep "MailService"  # Run only MailService tests
-bun test -- --grep "Mailer"       # Run only Mailer tests
-bun test -- --verbose            # Run tests with detailed output
-```
+## Common Tasks
 
-## Smart Contract Architecture
+### Deploying to a new EVM chain
 
-### Mailer Contract (`contracts/Mailer.sol`)
+1. Add network config in `hardhat.config.cts` (RPC URL, chain ID, accounts)
+2. Add Etherscan API key for verification in the `etherscan.apiKey` section
+3. Add deploy/verify scripts in `package.json` if not already present
+4. Set environment variables in `.env.local`: `EVM_PRIVATE_KEY`, `ALCHEMY_API_KEY`, relevant `*_RPC_URL`
+5. Run: `npx hardhat run scripts/evm/deploy-upgradeable.ts --network <name>`
+6. Verify: `npx hardhat run scripts/evm/verify.ts --network <name>`
+7. Update `DEPLOYED.json` and `deployments/` with new addresses
 
-**Purpose**: Complete messaging system with delegation management and revenue sharing
+### Adding a new contract function (EVM)
 
-**Architecture**: Upgradeable UUPS proxy pattern
+1. Add the function to `contracts/Mailer.sol` with NatSpec documentation
+2. Run `bun run compile` to regenerate typechain-types
+3. Add corresponding method to `src/evm/evm-mailer-client.ts`
+4. Add corresponding method to `src/unified/onchain-mailer-client.ts`
+5. Add tests in `test/evm/Mailer.test.ts`
+6. Run `bun test` to verify
 
-- Proxy contract: User-facing address that never changes
-- Implementation: Logic contract, can be upgraded by owner
-- Storage: Lives in proxy, preserved across upgrades
+### Adding a new Solana instruction
 
-**Key Features**:
+1. Add new variant to `MailerInstruction` enum in `programs/mailer/src/lib.rs`
+2. Add handler function and wire it in `process_instruction`
+3. Run `bun run test:solana` (cargo test)
+4. Add corresponding method to `src/solana/solana-mailer-client.ts`
+5. Add corresponding method to `src/unified/onchain-mailer-client.ts`
 
-- Two fee tiers: Priority (100% fee) and Standard (10% fee)
-- Revenue sharing: 90% to sender, 10% to owner
-- Delegation system with rejection capability
-- 60-day claim period for recipients
-- Messages can be sent to any address via "to" parameter
-- Upgradeable by owner only (UUPS pattern)
+### Upgrading a deployed EVM contract
 
-**Core Functions**:
+1. Make changes to `Mailer.sol` (preserve storage layout -- never reorder or remove existing storage variables)
+2. Run `bun run compile` and `bun test`
+3. Set `PROXY_ADDRESS` env variable to the deployed proxy address
+4. Run: `PROXY_ADDRESS=0x... npx hardhat run scripts/evm/upgrade.ts --network <name>`
 
-- `sendPriority(address to, string subject, string body)` - Full fee, 90% revenue share
-- `sendPriorityPrepared(address to, string mailId)` - Full fee, pre-prepared message
-- `send(address to, string subject, string body)` - 10% fee only
-- `sendPrepared(address to, string mailId)` - 10% fee, pre-prepared message
-- `delegateTo(address delegate)` - Set delegation, costs 10 USDC
-- `rejectDelegation(address delegatingAddress)` - Reject delegation made to you
-- `claimRecipientShare()` - Claim your 90% share within 60 days
-- `claimOwnerShare()` - Owner claims accumulated fees
-- `claimExpiredShares(address)` - Owner reclaims expired shares
+### Adding React hooks for a new feature
 
-**Revenue Model**:
+1. Add query hook in `src/react/hooks/useMailerQueries.ts` (for read operations)
+2. Add mutation hook in `src/react/hooks/useMailerMutations.ts` (for write operations)
+3. Export from `src/react/index.ts`
+4. Follow the grouped hook pattern (e.g., add to `useFees()` or create a new group)
 
-- **Priority functions**: Sender pays full fee, gets 90% back as claimable
-- **Standard functions**: Sender pays 10% fee only
-- Messages are sent to specified recipient address via "to" parameter
-
-**Storage**:
-
-- `mapping(address => ClaimableAmount) recipientClaims` - 90% revenue shares
-- `uint256 ownerClaimable` - Accumulated owner fees
-- `uint256 sendFee` - 0.1 USDC default
-
-## Testing Architecture
-
-**Test Files**: `test/evm/Mailer.test.ts`, `test/unified/*.test.ts`
-**Total Tests**: 116 passing tests
-**Test Categories**:
-
-### EVM Tests (75 tests)
-
-- Contract setup and configuration
-- Message sending (all 4 variants: send, sendPrepared, sendPriority, sendPriorityPrepared)
-- Fee management and updates
-- Revenue sharing system
-- Claims management (recipient, owner, expired)
-- Delegation lifecycle (creation, rejection, edge cases)
-- Pause functionality and emergency controls
-- Edge cases and security
-
-### Unified Client Tests (41 tests)
-
-- Multi-chain client initialization
-- Wallet detection and validation
-- Cross-chain message routing
-- Validation utilities (domain, message, address, amount)
-- Error handling and edge cases
-
-**Key Test Patterns**:
-
-- MockUSDC for testing USDC interactions
-- Comprehensive fee calculation verification
-- Event emission testing
-- Time manipulation for claim expiration testing
-- Error condition testing with custom errors
-
-## Development Workflow & Best Practices
-
-### Making Contract Changes
-
-1. **Modify Contract** → `bun run compile` → `bun test`
-2. **Always run compile after contract changes** - regenerates TypeScript types
-3. **Run full test suite** - ensures no regressions
-4. **Check for breaking changes** in generated types
-
-### Common Development Patterns
-
-**Testing New Features**:
+### Testing patterns
 
 ```typescript
-// Fund test accounts with USDC
+// Fund test accounts with MockUSDC
 await mockUSDC.mint(addr1.address, ethers.parseUnits("100", 6));
 await mockUSDC.connect(addr1).approve(contractAddress, ethers.parseUnits("100", 6));
 
-// Test function calls with event verification
-await expect(contract.connect(addr1).functionName(...args))
-  .to.emit(contract, "EventName")
-  .withArgs(...expectedArgs);
-```
+// Test with event verification
+await expect(contract.connect(addr1).send(to, "subject", "body", addr1.address, true, false))
+  .to.emit(contract, "MailSent")
+  .withArgs(addr1.address, addr1.address, to, "subject", "body", true, false, true);
 
-**Fee Calculations**:
-
-```typescript
-// Standard pattern for fee testing
+// Fee calculation verification
 const initialBalance = await mockUSDC.balanceOf(contractAddress);
 await contract.someFunction();
 const finalBalance = await mockUSDC.balanceOf(contractAddress);
 expect(finalBalance - initialBalance).to.equal(expectedFee);
 ```
 
-### Important Notes for AI Assistants
+## Key Dependencies
 
-**Security Considerations**:
+### Runtime (dependencies)
 
-- All functions use `msg.sender` for authentication
-- USDC transfers must succeed for operations to proceed
-- Revenue shares have time-based expiration (60 days)
-- Owner functions protected by `onlyOwner` modifier
+| Package | Purpose |
+|---|---|
+| `@openzeppelin/contracts` ^5.4.0 | ERC20, upgradeable base contracts |
+| `@sudobility/configs` ^0.0.63 | Chain configuration, RPC helpers, ChainInfo type |
+| `@sudobility/types` ^1.9.51 | Shared types: ChainType, Chain enum, validation functions |
 
-**Common Pitfalls**:
+### Peer dependencies (optional, consumer-provided)
 
-- Don't forget to fund test accounts with USDC + approvals
-- Remember address(0) represents cleared delegation
-- Mailer now sends messages to specified recipient (not just sender)
-- Fee amounts are in 6-decimal USDC format
+| Package | Purpose |
+|---|---|
+| `viem` >=2.0.0 | EVM blockchain interaction (used by EVMMailerClient) |
+| `@solana/web3.js` >=1.95.0 | Solana interaction (used by SolanaMailerClient) |
+| `@solana/spl-token` >=0.4.0 | SPL token operations (USDC transfers on Solana) |
+| `@sudobility/mail_box_types` ^1.0.10 | Response types: MessageSendResponse, etc. |
+| `react` ^18 or ^19 | React hooks integration |
+| `@tanstack/react-query` >=5.0.0 | React Query hooks |
+| `react-native` >=0.70.0 | React Native support |
 
-**File Structure**:
+### Dev dependencies (key ones)
 
-- `contracts/` - Solidity source code
-- `test/` - Comprehensive test suites
-- `typechain-types/` - Auto-generated, don't edit manually
-- `src/` - TypeScript client wrapper
-- `scripts/` - Deployment and verification scripts
+| Package | Purpose |
+|---|---|
+| `hardhat` ^2.26.3 | EVM development framework |
+| `@nomicfoundation/hardhat-viem` ^2.0.0 | Hardhat viem plugin |
+| `@openzeppelin/hardhat-upgrades` ^3.9.1 | UUPS proxy deployment/upgrades |
+| `@typechain/hardhat` ^9.1.0 | TypeScript type generation from ABIs |
+| `ethers` ^6.16.0 | Used by Hardhat tests (not the client library) |
+| `typescript` ^5.9.3 | TypeScript compiler |
+| `mocha` ^11.7.4 | Test runner (unified tests) |
+| `chai` ^4.5.0 | Assertion library |
+| `tsx` ^4.21.0 | TypeScript execution for Hardhat tests |
 
-## TypeScript Integration
+### Solana program dependencies (Cargo.toml)
 
-**Generated Types**: All contracts have full TypeScript support via TypeChain
-**Unified Client**: `src/unified/onchain-mailer-client.ts` provides cross-chain interface
-**Type Safety**: All contract interactions are fully typed
-
-### Network Configuration
-
-- **Local Development**: Hardhat network (chainId 1337)
-- **Test Environment**: Built-in Hardhat test network
-- **Deployment**: Uses standard Hardhat deployment patterns
-
-## 📚 AI-Friendly Documentation Structure
-
-### Comprehensive Documentation Files
-
-1. **README.md** - Main project documentation with:
-   - Quick start guide
-   - NPM package usage
-   - Architecture overview
-   - Development commands
-   - TypeScript integration examples
-
-2. **AI_DEVELOPMENT_GUIDE.md** - Specialized guide for AI assistants with:
-   - Development patterns and workflows
-   - Common scenarios and solutions
-   - Testing strategies
-   - Code style guidelines
-   - Security best practices
-   - Performance optimization tips
-
-3. **examples/unified-usage.ts** - Comprehensive working examples with:
-   - Complete deployment workflow
-   - All major functionality demonstrated
-   - Error handling patterns
-   - Event listening examples
-   - Expected output documentation
-
-4. **Contract Documentation** - All contracts have extensive inline documentation:
-   - NatSpec comments for all functions
-   - Parameter descriptions
-   - Usage examples in comments
-   - Error condition explanations
-
-5. **Client Library Documentation** - TypeScript client with full JSDoc:
-   - Class-level documentation with usage examples
-   - Method-level documentation with parameters
-   - Return type descriptions
-   - Example code snippets
-
-### Key AI Integration Points
-
-**Smart Contract Comments**: Every function, event, and error is documented with NatSpec
-**TypeScript Client**: Full JSDoc with usage examples and parameter descriptions
-**Test Patterns**: Comprehensive test suites demonstrating all functionality
-**Example Code**: Working examples with expected output and error handling
-**Development Guides**: Step-by-step workflows for common AI development tasks
-
-## 🤖 Enhanced AI Assistant Instructions
-
-### Critical Development Workflow
-
-1. **Always run `bun run compile` after contract changes** - Regenerates TypeScript types
-2. **Run `bun test` to verify changes don't break existing functionality** - 116 comprehensive tests
-3. **Follow existing test patterns** documented in AI_DEVELOPMENT_GUIDE.md
-4. **Use MockUSDC for all USDC-related testing** - Never use real tokens
-5. **Check both positive and negative test cases** - Error conditions are critical
-6. **Verify event emissions match expected parameters** - Events drive UI updates
-7. **Consider fee calculations and revenue sharing implications** - Core business logic
-8. **Test edge cases like insufficient balances and permissions** - Security critical
-
-### AI-Specific Guidance
-
-**Code Generation Patterns**:
-
-- Reference `examples/unified-usage.ts` for working patterns
-- Use existing client methods as templates for new functionality
-- Follow the established error handling patterns
-- Maintain consistency with existing naming conventions
-
-**Testing Patterns**:
-
-- Fund test accounts with MockUSDC before testing
-- Approve contract spending before operations
-- Test both success and failure scenarios
-- Verify event emissions with expected parameters
-- Use time manipulation for claim expiration testing
-
-**Documentation Standards**:
-
-- Add NatSpec comments to all new Solidity functions
-- Include JSDoc comments for all TypeScript methods
-- Provide usage examples in complex functions
-- Document error conditions and their causes
-
-**Security Considerations**:
-
-- Always use reentrancy protection on external functions
-- Validate all external inputs
-- Use custom errors instead of require statements
-- Test authorization and access control thoroughly
-
-### Quick Reference Files for AI
-
-- `docs/AI_QUICK_START.md` - **START HERE** - Essential commands and workflows
-- `docs/ai-development-patterns.md` - **PRIMARY REFERENCE** - Comprehensive AI patterns guide  
-- `.ai-config.json` - Project configuration and metadata for AI assistants (UPDATED)
-- `scripts/ai-helpers/dev-workflow.ts` - Automated workflow scripts (ENHANCED)
-- `.vscode/` - VS Code configuration optimized for AI development (NEW)
-- `src/types/common.ts` - Comprehensive type definitions and utilities
-- `AI_DEVELOPMENT_GUIDE.md` - Extended development patterns
-- `examples/unified-usage.ts` - Working code examples
-- `examples/README.md` - Usage patterns documentation
-- `src/mailer-client.ts` - Full API reference with examples
-- `test/` directory - Comprehensive test patterns
-
-### Project Philosophy
-
-This project emphasizes **security, comprehensive testing, AI-friendly documentation, and clear separation of concerns** between domain management and messaging functionality. All code should be self-documenting with extensive examples and clear usage patterns.
-
-### Common AI Development Scenarios
-
-1. **Adding new contract functions** - Follow MailService/Mailer patterns
-2. **Extending client library** - Use existing client methods as templates
-3. **Writing tests** - Reference existing comprehensive test suites
-4. **Debugging issues** - Check AI_DEVELOPMENT_GUIDE.md for common solutions
-5. **Understanding architecture** - Start with examples/unified-usage.ts walkthrough
+| Crate | Version | Purpose |
+|---|---|---|
+| `solana-program` | 1.16 | Solana runtime interface |
+| `spl-token` | 3.5 | SPL token program interface |
+| `borsh` | 1.5 | Binary serialization |
+| `thiserror` | 1.0 | Error derive macros |
