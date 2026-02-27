@@ -48,3 +48,5 @@ coverage/
 
 # Rust/Cargo build artifacts (entire directory)
 target/
+# Claude Code local settings
+.claude/settings.local.json
