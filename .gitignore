@@ -50,3 +50,5 @@ coverage/
 target/
 # Claude Code local settings
 .claude/settings.local.json
+.env
+.env.merged
