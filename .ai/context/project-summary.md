@@ -7,7 +7,7 @@ A production-ready multi-chain decentralized messaging system that automatically
 ## 🏗️ Architecture Overview
 
 - **Unified Client**: Single API that works with any wallet
-- **Automatic Detection**: Detects EVM vs Solana wallets automatically  
+- **Automatic Detection**: Detects EVM vs Solana wallets automatically
 - **Dynamic Loading**: Loads chain-specific code on-demand for performance
 - **Revenue Sharing**: 90% back to senders on priority messages
 - **Delegation System**: Users can delegate message handling to others
@@ -27,23 +27,23 @@ A production-ready multi-chain decentralized messaging system that automatically
 // Single client works with ANY wallet type
 const client = new OnchainMailerClient(wallet, config);
 console.log('Chain:', client.getChainType()); // 'evm' | 'solana'
-await client.sendMessage("Hello Multi-Chain!", "Universal messaging", true);
+await client.sendMessage('Hello Multi-Chain!', 'Universal messaging', true);
 ```
 
 ### Wallet Detection (`src/unified/wallet-detector.ts`)
 
 ```typescript
 // Automatic wallet type detection
-WalletDetector.detectWalletType(wallet) // Returns 'evm' | 'solana'
-WalletDetector.detectChainFromAddress(address) // Chain detection from address
+WalletDetector.detectWalletType(wallet); // Returns 'evm' | 'solana'
+WalletDetector.detectChainFromAddress(address); // Chain detection from address
 ```
 
 ### Chain Configurations (`src/utils/chain-config.ts`)
 
 ```typescript
 // Pre-configured networks with real USDC addresses
-DEFAULT_CHAIN_CONFIG  // Mainnet configurations
-TESTNET_CHAIN_CONFIG  // Testnet configurations
+DEFAULT_CHAIN_CONFIG; // Mainnet configurations
+TESTNET_CHAIN_CONFIG; // Testnet configurations
 ```
 
 ## 🚀 Main Use Cases

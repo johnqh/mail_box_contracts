@@ -2,25 +2,25 @@
 /* tslint:disable */
 /* eslint-disable */
 
-import { Contract, Interface, type ContractRunner } from "ethers";
+import { Contract, Interface, type ContractRunner } from 'ethers';
 import type {
   IERC1822Proxiable,
   IERC1822ProxiableInterface,
-} from "../../../../../@openzeppelin/contracts/interfaces/draft-IERC1822.sol/IERC1822Proxiable";
+} from '../../../../../@openzeppelin/contracts/interfaces/draft-IERC1822.sol/IERC1822Proxiable';
 
 const _abi = [
   {
     inputs: [],
-    name: "proxiableUUID",
+    name: 'proxiableUUID',
     outputs: [
       {
-        internalType: "bytes32",
-        name: "",
-        type: "bytes32",
+        internalType: 'bytes32',
+        name: '',
+        type: 'bytes32',
       },
     ],
-    stateMutability: "view",
-    type: "function",
+    stateMutability: 'view',
+    type: 'function',
   },
 ] as const;
 

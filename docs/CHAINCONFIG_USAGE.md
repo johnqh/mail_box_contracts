@@ -108,16 +108,16 @@ Switching between mainnet and testnet is as simple as changing one enum value:
 ```typescript
 // Mainnet
 const mainnetConfig: ChainConfig = {
-  chain: Chain.ETH_MAINNET,  // 👈 Change this
+  chain: Chain.ETH_MAINNET, // 👈 Change this
   alchemyApiKey: '...',
-  etherscanApiKey: '...'
+  etherscanApiKey: '...',
 };
 
 // Testnet
 const testnetConfig: ChainConfig = {
-  chain: Chain.ETH_SEPOLIA,  // 👈 To this
+  chain: Chain.ETH_SEPOLIA, // 👈 To this
   alchemyApiKey: '...',
-  etherscanApiKey: '...'
+  etherscanApiKey: '...',
 };
 ```
 
@@ -147,11 +147,18 @@ const name = RpcHelpers.getUserFriendlyName(Chain.BASE_MAINNET);
 
 // Get RPC URL (with API keys object)
 const apiKeys = { alchemyApiKey: 'your-key' };
-const rpcUrl = RpcHelpers.getRpcUrl(apiKeys, Chain.ETH_MAINNET, RpcEndpoint.Alchemy);
+const rpcUrl = RpcHelpers.getRpcUrl(
+  apiKeys,
+  Chain.ETH_MAINNET,
+  RpcEndpoint.Alchemy
+);
 // Returns: "https://eth-mainnet.g.alchemy.com/v2/your-key"
 
 // Get block explorer API URL
-const explorerApi = RpcHelpers.getExplorerApiUrl(etherscanApiKey, Chain.ETH_MAINNET);
+const explorerApi = RpcHelpers.getExplorerApiUrl(
+  etherscanApiKey,
+  Chain.ETH_MAINNET
+);
 // Returns: "https://api.etherscan.io/api?apikey=YOUR_KEY"
 
 // Get block explorer browser URL
@@ -192,9 +199,9 @@ const config = {
     chainId: 1,
     contracts: {
       mailer: '0x...',
-      usdc: '0xA0b86a33E6441146a8A8e27c01f0D9B1F5E42E92'
-    }
-  }
+      usdc: '0xA0b86a33E6441146a8A8e27c01f0D9B1F5E42E92',
+    },
+  },
 };
 ```
 
@@ -208,7 +215,7 @@ import { buildChainConfig } from '@johnqh/mail_box_contracts';
 const chainConfig: ChainConfig = {
   chain: Chain.ETH_MAINNET,
   alchemyApiKey: process.env.ALCHEMY_API_KEY!,
-  etherscanApiKey: process.env.ETHERSCAN_MULTICHAIN_API_KEY!
+  etherscanApiKey: process.env.ETHERSCAN_MULTICHAIN_API_KEY!,
 };
 
 const config = buildChainConfig(chainConfig, '0x...');

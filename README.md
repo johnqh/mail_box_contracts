@@ -16,13 +16,19 @@ Peer dependencies: `viem` (>=2.0.0), `@solana/web3.js` (>=1.95.0), `@solana/spl-
 import { OnchainMailerClient, WalletDetector } from '@sudobility/contracts';
 import { EVMMailerClient } from '@sudobility/contracts/evm';
 import { SolanaMailerClient } from '@sudobility/contracts/solana';
-import { MailerProvider, useFees, useMessaging } from '@sudobility/contracts/react';
+import {
+  MailerProvider,
+  useFees,
+  useMessaging,
+} from '@sudobility/contracts/react';
 
 // Unified client -- stateless, auto-detects chain type
 const client = new OnchainMailerClient();
 
 // Send a message (works on any chain)
-await client.sendMessage(wallet, chainInfo, 'Subject', 'Body', { revenueShare: true });
+await client.sendMessage(wallet, chainInfo, 'Subject', 'Body', {
+  revenueShare: true,
+});
 
 // Delegate, claim revenue, manage fees
 await client.delegateTo(wallet, chainInfo, delegateAddress);
@@ -33,7 +39,11 @@ const fee = await client.getSendFee(chainInfo);
 ### React Integration
 
 ```tsx
-import { MailerProvider, useMessaging, useFees } from '@sudobility/contracts/react';
+import {
+  MailerProvider,
+  useMessaging,
+  useFees,
+} from '@sudobility/contracts/react';
 
 function App() {
   return (
@@ -55,13 +65,13 @@ import { OnchainMailerClient } from '@sudobility/contracts/react-native';
 
 ### Entry Points
 
-| Import Path | Contents |
-|-------------|----------|
-| `@sudobility/contracts` | `OnchainMailerClient`, `WalletDetector`, unified types |
-| `@sudobility/contracts/evm` | `EVMMailerClient`, `Mailer__factory`, ABI |
-| `@sudobility/contracts/solana` | `SolanaMailerClient`, Solana types |
-| `@sudobility/contracts/react` | `MailerProvider`, query hooks, mutation hooks |
-| `@sudobility/contracts/react-native` | Unified client + polyfills |
+| Import Path                          | Contents                                               |
+| ------------------------------------ | ------------------------------------------------------ |
+| `@sudobility/contracts`              | `OnchainMailerClient`, `WalletDetector`, unified types |
+| `@sudobility/contracts/evm`          | `EVMMailerClient`, `Mailer__factory`, ABI              |
+| `@sudobility/contracts/solana`       | `SolanaMailerClient`, Solana types                     |
+| `@sudobility/contracts/react`        | `MailerProvider`, query hooks, mutation hooks          |
+| `@sudobility/contracts/react-native` | Unified client + polyfills                             |
 
 ### Smart Contracts
 

@@ -64,7 +64,7 @@ const evmWallet = {
   }),
   publicClient: createPublicClient({
     // ... public client config (optional)
-  })
+  }),
 };
 
 const chainInfo: ChainInfo = {
@@ -82,7 +82,7 @@ const result = await client.sendMessage(
   chainInfo,
   {
     to: '0xRecipient',
-    priority: true
+    priority: true,
   }
 );
 ```

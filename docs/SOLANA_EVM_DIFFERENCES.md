@@ -160,18 +160,18 @@ pub struct FeeDiscount {
 
 ## Summary Table
 
-| Feature | EVM | Solana | Reason for Difference |
-|---------|-----|--------|----------------------|
-| Core Business Logic | ✅ | ✅ | Platform-agnostic |
-| Revenue Sharing | ✅ | ✅ | Platform-agnostic |
-| Email Functions | ✅ | ✅ | Platform-agnostic |
-| Delegation System | ✅ | ✅ | Platform-agnostic |
-| Custom Fee Discounts | ✅ | ✅ | Platform-agnostic |
-| Pause Functionality | ✅ | ✅ | Platform-agnostic |
-| **Permission System** | ✅ | ❌ | EVM-specific (approval pattern) |
-| Token Approvals | Required | Not needed | Different token models |
-| Account Model | Single address | Multiple accounts (PDAs) | Blockchain architecture |
-| Storage Pattern | Contract mappings | PDA accounts | Blockchain architecture |
+| Feature               | EVM               | Solana                   | Reason for Difference           |
+| --------------------- | ----------------- | ------------------------ | ------------------------------- |
+| Core Business Logic   | ✅                | ✅                       | Platform-agnostic               |
+| Revenue Sharing       | ✅                | ✅                       | Platform-agnostic               |
+| Email Functions       | ✅                | ✅                       | Platform-agnostic               |
+| Delegation System     | ✅                | ✅                       | Platform-agnostic               |
+| Custom Fee Discounts  | ✅                | ✅                       | Platform-agnostic               |
+| Pause Functionality   | ✅                | ✅                       | Platform-agnostic               |
+| **Permission System** | ✅                | ❌                       | EVM-specific (approval pattern) |
+| Token Approvals       | Required          | Not needed               | Different token models          |
+| Account Model         | Single address    | Multiple accounts (PDAs) | Blockchain architecture         |
+| Storage Pattern       | Contract mappings | PDA accounts             | Blockchain architecture         |
 
 ## Conclusion
 

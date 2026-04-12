@@ -146,17 +146,13 @@ const chainInfo = RpcHelpers.getChainInfo(Chain.ETH_MAINNET);
 const walletClient = createWalletClient({
   account: privateKeyToAccount('0x...'),
   chain: mainnet,
-  transport: http()
+  transport: http(),
 });
 
 // Send message
-await client.sendMessage(
-  'Subject',
-  'Body',
-  { walletClient },
-  chainInfo,
-  { priority: true }
-);
+await client.sendMessage('Subject', 'Body', { walletClient }, chainInfo, {
+  priority: true,
+});
 ```
 
 ### Basic Solana Usage
@@ -173,13 +169,9 @@ const wallet = new PhantomWalletAdapter();
 await wallet.connect();
 
 // Send message
-await client.sendMessage(
-  'Subject',
-  'Body',
-  { wallet },
-  chainInfo,
-  { priority: true }
-);
+await client.sendMessage('Subject', 'Body', { wallet }, chainInfo, {
+  priority: true,
+});
 ```
 
 ### Multi-Chain Usage

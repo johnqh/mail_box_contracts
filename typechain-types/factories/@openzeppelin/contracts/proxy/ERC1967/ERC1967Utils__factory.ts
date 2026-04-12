@@ -6,57 +6,57 @@ import {
   ContractFactory,
   ContractTransactionResponse,
   Interface,
-} from "ethers";
-import type { Signer, ContractDeployTransaction, ContractRunner } from "ethers";
-import type { NonPayableOverrides } from "../../../../../common";
+} from 'ethers';
+import type { Signer, ContractDeployTransaction, ContractRunner } from 'ethers';
+import type { NonPayableOverrides } from '../../../../../common';
 import type {
   ERC1967Utils,
   ERC1967UtilsInterface,
-} from "../../../../../@openzeppelin/contracts/proxy/ERC1967/ERC1967Utils";
+} from '../../../../../@openzeppelin/contracts/proxy/ERC1967/ERC1967Utils';
 
 const _abi = [
   {
     inputs: [
       {
-        internalType: "address",
-        name: "admin",
-        type: "address",
+        internalType: 'address',
+        name: 'admin',
+        type: 'address',
       },
     ],
-    name: "ERC1967InvalidAdmin",
-    type: "error",
+    name: 'ERC1967InvalidAdmin',
+    type: 'error',
   },
   {
     inputs: [
       {
-        internalType: "address",
-        name: "beacon",
-        type: "address",
+        internalType: 'address',
+        name: 'beacon',
+        type: 'address',
       },
     ],
-    name: "ERC1967InvalidBeacon",
-    type: "error",
+    name: 'ERC1967InvalidBeacon',
+    type: 'error',
   },
   {
     inputs: [
       {
-        internalType: "address",
-        name: "implementation",
-        type: "address",
+        internalType: 'address',
+        name: 'implementation',
+        type: 'address',
       },
     ],
-    name: "ERC1967InvalidImplementation",
-    type: "error",
+    name: 'ERC1967InvalidImplementation',
+    type: 'error',
   },
   {
     inputs: [],
-    name: "ERC1967NonPayable",
-    type: "error",
+    name: 'ERC1967NonPayable',
+    type: 'error',
   },
 ] as const;
 
 const _bytecode =
-  "0x60566037600b82828239805160001a607314602a57634e487b7160e01b600052600060045260246000fd5b30600052607381538281f3fe73000000000000000000000000000000000000000030146080604052600080fdfea2646970667358221220d7a2971376891496b37216d93c14b69d992693a7f65420db0cf49d919e3ce07e64736f6c63430008180033";
+  '0x60566037600b82828239805160001a607314602a57634e487b7160e01b600052600060045260246000fd5b30600052607381538281f3fe73000000000000000000000000000000000000000030146080604052600080fdfea2646970667358221220d7a2971376891496b37216d93c14b69d992693a7f65420db0cf49d919e3ce07e64736f6c63430008180033';
 
 type ERC1967UtilsConstructorParams =
   | [signer?: Signer]

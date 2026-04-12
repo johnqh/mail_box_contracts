@@ -27,20 +27,23 @@ The package supports both CommonJS and ESM module formats, automatically serving
 ### CommonJS (Traditional Node.js)
 
 ```javascript
-const { OnchainMailerClient, WalletDetector } = require('@johnqh/mail_box_contracts');
+const {
+  OnchainMailerClient,
+  WalletDetector,
+} = require('@johnqh/mail_box_contracts');
 
 // Initialize client
 const client = new OnchainMailerClient({
-  network: { 
-    chainType: 'evm', 
-    network: 'mainnet', 
-    rpcUrl: process.env.RPC_URL 
+  network: {
+    chainType: 'evm',
+    network: 'mainnet',
+    rpcUrl: process.env.RPC_URL,
   },
-  addresses: { 
+  addresses: {
     mailer: process.env.MAILER_ADDRESS,
-    usdcToken: process.env.USDC_ADDRESS 
+    usdcToken: process.env.USDC_ADDRESS,
   },
-  privateKey: process.env.PRIVATE_KEY
+  privateKey: process.env.PRIVATE_KEY,
 });
 
 // Send a message
@@ -61,15 +64,22 @@ async function sendMessage() {
 ### ESM (Modern Node.js)
 
 ```javascript
-import { OnchainMailerClient, WalletDetector } from '@johnqh/mail_box_contracts';
+import {
+  OnchainMailerClient,
+  WalletDetector,
+} from '@johnqh/mail_box_contracts';
 
 const client = new OnchainMailerClient({
-  network: { chainType: 'solana', network: 'mainnet-beta', rpcUrl: process.env.SOLANA_RPC },
-  addresses: { 
-    mailer: process.env.SOLANA_MAILER_PROGRAM,
-    usdcToken: 'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v'
+  network: {
+    chainType: 'solana',
+    network: 'mainnet-beta',
+    rpcUrl: process.env.SOLANA_RPC,
   },
-  privateKey: process.env.SOLANA_PRIVATE_KEY
+  addresses: {
+    mailer: process.env.SOLANA_MAILER_PROGRAM,
+    usdcToken: 'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v',
+  },
+  privateKey: process.env.SOLANA_PRIVATE_KEY,
 });
 
 // Use async/await at top level in ESM
@@ -86,7 +96,11 @@ const result = await client.sendMessage(
 
 ```tsx
 import React, { useState } from 'react';
-import { OnchainMailerClient, WalletDetector, ChainType } from '@johnqh/mail_box_contracts';
+import {
+  OnchainMailerClient,
+  WalletDetector,
+  ChainType,
+} from '@johnqh/mail_box_contracts';
 
 const MailComponent: React.FC = () => {
   const [client, setClient] = useState<OnchainMailerClient | null>(null);
@@ -95,17 +109,17 @@ const MailComponent: React.FC = () => {
     async function initializeClient() {
       // Detect wallet type
       const walletType = WalletDetector.detectWalletType(window.ethereum);
-      
+
       const clientConfig = {
-        network: { 
+        network: {
           chainType: ChainType.EVM,
-          network: 'mainnet', 
-          rpcUrl: process.env.REACT_APP_RPC_URL 
+          network: 'mainnet',
+          rpcUrl: process.env.REACT_APP_RPC_URL,
         },
-        addresses: { 
+        addresses: {
           mailer: process.env.REACT_APP_MAILER_ADDRESS,
-          usdcToken: process.env.REACT_APP_USDC_ADDRESS 
-        }
+          usdcToken: process.env.REACT_APP_USDC_ADDRESS,
+        },
       };
 
       const mailerClient = new OnchainMailerClient(clientConfig);
@@ -117,13 +131,9 @@ const MailComponent: React.FC = () => {
 
   const sendMessage = async () => {
     if (!client) return;
-    
+
     try {
-      const result = await client.sendMessage(
-        recipient,
-        subject,
-        messageBody
-      );
+      const result = await client.sendMessage(recipient, subject, messageBody);
       alert(`Message sent! TX: ${result.txHash}`);
     } catch (error) {
       alert(`Error: ${error.message}`);
@@ -153,17 +163,21 @@ import { OnchainMailerClient } from '@johnqh/mail_box_contracts';
 export default {
   data() {
     return {
-      client: null
+      client: null,
     };
   },
-  
+
   async mounted() {
     this.client = new OnchainMailerClient({
-      network: { chainType: 'evm', network: 'mainnet', rpcUrl: process.env.VUE_APP_RPC_URL },
-      addresses: { 
+      network: {
+        chainType: 'evm',
+        network: 'mainnet',
+        rpcUrl: process.env.VUE_APP_RPC_URL,
+      },
+      addresses: {
         mailer: process.env.VUE_APP_MAILER_ADDRESS,
-        usdcToken: process.env.VUE_APP_USDC_ADDRESS 
-      }
+        usdcToken: process.env.VUE_APP_USDC_ADDRESS,
+      },
     });
   },
 
@@ -171,8 +185,8 @@ export default {
     async sendMessage() {
       const result = await this.client.sendMessage('0x...', 'Subject', 'Body');
       console.log('Sent:', result.txHash);
-    }
-  }
+    },
+  },
 };
 </script>
 ```
@@ -190,16 +204,16 @@ const MailScreen: React.FC = () => {
   useEffect(() => {
     const initClient = async () => {
       const mailerClient = new OnchainMailerClient({
-        network: { 
+        network: {
           chainType: ChainType.SOLANA,
-          network: 'devnet', 
-          rpcUrl: 'https://api.devnet.solana.com'
+          network: 'devnet',
+          rpcUrl: 'https://api.devnet.solana.com',
         },
-        addresses: { 
+        addresses: {
           mailer: 'YOUR_SOLANA_PROGRAM_ID',
-          usdcToken: '4zMMC9srt5Ri5X14GAgXhaHii3GnPAEERYPJgZJDncDU'
+          usdcToken: '4zMMC9srt5Ri5X14GAgXhaHii3GnPAEERYPJgZJDncDU',
         },
-        privateKey: 'YOUR_PRIVATE_KEY' // In production, use secure key management
+        privateKey: 'YOUR_PRIVATE_KEY', // In production, use secure key management
       });
       setClient(mailerClient);
     };
@@ -224,7 +238,7 @@ const MailScreen: React.FC = () => {
 
   return (
     <View>
-      <Button title="Send Message" onPress={handleSendMessage} />
+      <Button title='Send Message' onPress={handleSendMessage} />
     </View>
   );
 };
@@ -243,31 +257,35 @@ app.use(express.json());
 
 // Initialize client once
 const mailerClient = new OnchainMailerClient({
-  network: { chainType: 'evm', network: 'mainnet', rpcUrl: process.env.RPC_URL },
-  addresses: { 
-    mailer: process.env.MAILER_ADDRESS,
-    usdcToken: process.env.USDC_ADDRESS 
+  network: {
+    chainType: 'evm',
+    network: 'mainnet',
+    rpcUrl: process.env.RPC_URL,
   },
-  privateKey: process.env.PRIVATE_KEY
+  addresses: {
+    mailer: process.env.MAILER_ADDRESS,
+    usdcToken: process.env.USDC_ADDRESS,
+  },
+  privateKey: process.env.PRIVATE_KEY,
 });
 
 // Send message endpoint
 app.post('/api/send-message', async (req, res) => {
   try {
     const { to, subject, body, priority } = req.body;
-    
+
     const options = { priority: priority || 'standard' };
     const result = await mailerClient.sendMessage(to, subject, body, options);
-    
-    res.json({ 
-      success: true, 
+
+    res.json({
+      success: true,
       txHash: result.txHash,
-      block: result.block 
+      block: result.block,
     });
   } catch (error) {
-    res.status(500).json({ 
-      success: false, 
-      error: error.message 
+    res.status(500).json({
+      success: false,
+      error: error.message,
     });
   }
 });
@@ -295,16 +313,16 @@ import type { NextApiRequest, NextApiResponse } from 'next';
 import { OnchainMailerClient, ChainType } from '@johnqh/mail_box_contracts';
 
 const client = new OnchainMailerClient({
-  network: { 
+  network: {
     chainType: ChainType.EVM,
-    network: 'mainnet', 
-    rpcUrl: process.env.RPC_URL! 
+    network: 'mainnet',
+    rpcUrl: process.env.RPC_URL!,
   },
-  addresses: { 
+  addresses: {
     mailer: process.env.MAILER_ADDRESS!,
-    usdcToken: process.env.USDC_ADDRESS!
+    usdcToken: process.env.USDC_ADDRESS!,
   },
-  privateKey: process.env.PRIVATE_KEY!
+  privateKey: process.env.PRIVATE_KEY!,
 });
 
 export default async function handler(
@@ -318,15 +336,15 @@ export default async function handler(
   try {
     const { to, subject, body } = req.body;
     const result = await client.sendMessage(to, subject, body);
-    
-    res.status(200).json({ 
+
+    res.status(200).json({
       success: true,
-      txHash: result.txHash 
+      txHash: result.txHash,
     });
   } catch (error) {
-    res.status(500).json({ 
-      success: false, 
-      error: error instanceof Error ? error.message : 'Unknown error'
+    res.status(500).json({
+      success: false,
+      error: error instanceof Error ? error.message : 'Unknown error',
     });
   }
 }
@@ -338,7 +356,11 @@ export default async function handler(
 // mail.service.ts
 import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { OnchainMailerClient, ChainType, SendMessageOptions } from '@johnqh/mail_box_contracts';
+import {
+  OnchainMailerClient,
+  ChainType,
+  SendMessageOptions,
+} from '@johnqh/mail_box_contracts';
 
 @Injectable()
 export class MailService {
@@ -350,13 +372,13 @@ export class MailService {
       network: {
         chainType: ChainType.EVM,
         network: this.configService.get('NETWORK') || 'mainnet',
-        rpcUrl: this.configService.get('RPC_URL')!
+        rpcUrl: this.configService.get('RPC_URL')!,
       },
       addresses: {
         mailer: this.configService.get('MAILER_ADDRESS')!,
-        usdcToken: this.configService.get('USDC_ADDRESS')!
+        usdcToken: this.configService.get('USDC_ADDRESS')!,
       },
-      privateKey: this.configService.get('PRIVATE_KEY')!
+      privateKey: this.configService.get('PRIVATE_KEY')!,
     });
   }
 
@@ -393,22 +415,19 @@ import { VercelRequest, VercelResponse } from '@vercel/node';
 import { OnchainMailerClient, ChainType } from '@johnqh/mail_box_contracts';
 
 const client = new OnchainMailerClient({
-  network: { 
+  network: {
     chainType: ChainType.SOLANA,
-    network: 'mainnet-beta', 
-    rpcUrl: process.env.SOLANA_RPC_URL!
+    network: 'mainnet-beta',
+    rpcUrl: process.env.SOLANA_RPC_URL!,
   },
-  addresses: { 
+  addresses: {
     mailer: process.env.SOLANA_MAILER_PROGRAM!,
-    usdcToken: 'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v'
+    usdcToken: 'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v',
   },
-  privateKey: process.env.SOLANA_PRIVATE_KEY!
+  privateKey: process.env.SOLANA_PRIVATE_KEY!,
 });
 
-export default async function handler(
-  req: VercelRequest,
-  res: VercelResponse
-) {
+export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' });
   }
@@ -416,7 +435,7 @@ export default async function handler(
   try {
     const { to, subject, body } = req.body;
     const result = await client.sendMessage(to, subject, body);
-    
+
     res.json({ success: true, txHash: result.txHash });
   } catch (error) {
     res.status(500).json({ error: error.message });
@@ -431,16 +450,16 @@ import { APIGatewayProxyEvent, APIGatewayProxyResult } from 'aws-lambda';
 import { OnchainMailerClient, ChainType } from '@johnqh/mail_box_contracts';
 
 const client = new OnchainMailerClient({
-  network: { 
+  network: {
     chainType: ChainType.EVM,
-    network: 'mainnet', 
-    rpcUrl: process.env.RPC_URL! 
+    network: 'mainnet',
+    rpcUrl: process.env.RPC_URL!,
   },
-  addresses: { 
+  addresses: {
     mailer: process.env.MAILER_ADDRESS!,
-    usdcToken: process.env.USDC_ADDRESS!
+    usdcToken: process.env.USDC_ADDRESS!,
   },
-  privateKey: process.env.PRIVATE_KEY!
+  privateKey: process.env.PRIVATE_KEY!,
 });
 
 export const handler = async (
@@ -449,20 +468,20 @@ export const handler = async (
   try {
     const { to, subject, body } = JSON.parse(event.body || '{}');
     const result = await client.sendMessage(to, subject, body);
-    
+
     return {
       statusCode: 200,
-      body: JSON.stringify({ 
-        success: true, 
-        txHash: result.txHash 
-      })
+      body: JSON.stringify({
+        success: true,
+        txHash: result.txHash,
+      }),
     };
   } catch (error) {
     return {
       statusCode: 500,
-      body: JSON.stringify({ 
-        error: error instanceof Error ? error.message : 'Unknown error' 
-      })
+      body: JSON.stringify({
+        error: error instanceof Error ? error.message : 'Unknown error',
+      }),
     };
   }
 };
@@ -473,13 +492,13 @@ export const handler = async (
 The package includes complete TypeScript definitions:
 
 ```typescript
-import { 
+import {
   OnchainMailerClient,
   WalletDetector,
   ChainType,
   SendMessageOptions,
   TransactionResult,
-  NetworkConfig 
+  NetworkConfig,
 } from '@johnqh/mail_box_contracts';
 
 // Fully typed configuration
@@ -487,7 +506,7 @@ const config: NetworkConfig = {
   chainType: ChainType.EVM,
   network: 'mainnet',
   rpcUrl: 'https://mainnet.infura.io/v3/YOUR_KEY',
-  chainId: 1
+  chainId: 1,
 };
 
 // Typed options
@@ -495,8 +514,8 @@ const options: SendMessageOptions = {
   priority: 'priority',
   gasConfig: {
     gasPrice: 20000000000n,
-    gasLimit: 100000n
-  }
+    gasLimit: 100000n,
+  },
 };
 
 // Typed result
@@ -546,24 +565,24 @@ import { OnchainMailerClient, ChainType } from '@johnqh/mail_box_contracts';
 
 function createMailerClient() {
   const isProduction = process.env.NODE_ENV === 'production';
-  
+
   return new OnchainMailerClient({
     network: {
       chainType: ChainType.EVM,
       network: isProduction ? 'mainnet' : 'sepolia',
-      rpcUrl: isProduction 
-        ? process.env.MAINNET_RPC_URL! 
-        : process.env.SEPOLIA_RPC_URL!
+      rpcUrl: isProduction
+        ? process.env.MAINNET_RPC_URL!
+        : process.env.SEPOLIA_RPC_URL!,
     },
     addresses: {
-      mailer: isProduction 
+      mailer: isProduction
         ? process.env.MAINNET_MAILER_ADDRESS!
         : process.env.SEPOLIA_MAILER_ADDRESS!,
       usdcToken: isProduction
         ? '0xA0b86a33E6Bef2a7ceDE37CEFf51097e' // Mainnet USDC
-        : '0x1c7D4B196Cb0C7B01d743Fbc6116a902379C7238' // Sepolia USDC
+        : '0x1c7D4B196Cb0C7B01d743Fbc6116a902379C7238', // Sepolia USDC
     },
-    privateKey: process.env.PRIVATE_KEY!
+    privateKey: process.env.PRIVATE_KEY!,
   });
 }
 
@@ -574,7 +593,10 @@ export const mailerClient = createMailerClient();
 
 ```typescript
 // utils/mailer-wrapper.ts
-import { OnchainMailerClient, OperationError } from '@johnqh/mail_box_contracts';
+import {
+  OnchainMailerClient,
+  OperationError,
+} from '@johnqh/mail_box_contracts';
 
 export class MailerWrapper {
   private client: OnchainMailerClient;
@@ -589,13 +611,13 @@ export class MailerWrapper {
       return { success: true, data: result };
     } catch (error) {
       const operationError = error as OperationError;
-      return { 
-        success: false, 
+      return {
+        success: false,
         error: {
           code: operationError.code || 'UNKNOWN_ERROR',
           message: operationError.message,
-          txHash: operationError.txHash
-        }
+          txHash: operationError.txHash,
+        },
       };
     }
   }
@@ -606,7 +628,11 @@ export class MailerWrapper {
 
 ```typescript
 // services/multi-chain-mailer.ts
-import { OnchainMailerClient, ChainType, WalletDetector } from '@johnqh/mail_box_contracts';
+import {
+  OnchainMailerClient,
+  ChainType,
+  WalletDetector,
+} from '@johnqh/mail_box_contracts';
 
 export class MultiChainMailer {
   private evmClient: OnchainMailerClient;
@@ -614,26 +640,34 @@ export class MultiChainMailer {
 
   constructor() {
     this.evmClient = new OnchainMailerClient({
-      network: { chainType: ChainType.EVM, network: 'mainnet', rpcUrl: process.env.EVM_RPC! },
-      addresses: { 
+      network: {
+        chainType: ChainType.EVM,
+        network: 'mainnet',
+        rpcUrl: process.env.EVM_RPC!,
+      },
+      addresses: {
         mailer: process.env.EVM_MAILER_ADDRESS!,
-        usdcToken: process.env.EVM_USDC_ADDRESS!
-      }
+        usdcToken: process.env.EVM_USDC_ADDRESS!,
+      },
     });
 
     this.solanaClient = new OnchainMailerClient({
-      network: { chainType: ChainType.SOLANA, network: 'mainnet-beta', rpcUrl: process.env.SOLANA_RPC! },
-      addresses: { 
+      network: {
+        chainType: ChainType.SOLANA,
+        network: 'mainnet-beta',
+        rpcUrl: process.env.SOLANA_RPC!,
+      },
+      addresses: {
         mailer: process.env.SOLANA_MAILER_PROGRAM!,
-        usdcToken: 'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v'
-      }
+        usdcToken: 'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v',
+      },
     });
   }
 
   async sendMessage(to: string, subject: string, body: string) {
     // Auto-detect chain based on address format
     const chainType = WalletDetector.detectChainFromAddress(to);
-    
+
     if (chainType === ChainType.EVM) {
       return await this.evmClient.sendMessage(to, subject, body);
     } else if (chainType === ChainType.SOLANA) {
@@ -690,9 +724,10 @@ import { OnchainMailerClient, ChainType } from '@johnqh/mail_box_contracts';
 module.exports = {
   resolver: {
     alias: {
-      '@johnqh/mail_box_contracts': '@johnqh/mail_box_contracts/dist/unified-esm/src/unified/index.js'
-    }
-  }
+      '@johnqh/mail_box_contracts':
+        '@johnqh/mail_box_contracts/dist/unified-esm/src/unified/index.js',
+    },
+  },
 };
 ```
 
@@ -703,8 +738,8 @@ module.exports = {
 module.exports = {
   optimization: {
     usedExports: true,
-    sideEffects: false
-  }
+    sideEffects: false,
+  },
 };
 ```
 

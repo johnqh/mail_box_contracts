@@ -4,7 +4,7 @@ This directory will contain documentation specific to the Solana implementation 
 
 ## Content (Coming in Phase 2)
 
-- Program deployment guides  
+- Program deployment guides
 - Anchor configuration
 - TypeScript client usage
 - Testing with Solana validator

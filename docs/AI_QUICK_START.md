@@ -8,7 +8,7 @@ This guide provides AI assistants with everything needed to effectively work on 
 # 1. Check project health
 npm run ai:status
 
-# 2. Complete environment setup  
+# 2. Complete environment setup
 npm run ai:build
 
 # 3. Run comprehensive tests
@@ -22,29 +22,29 @@ npm run ai:check
 
 ### Primary Development Commands
 
-| Command | Purpose | When to Use |
-|---------|---------|-------------|
-| `npm run ai:build` | Complete build workflow | After cloning, major changes |
-| `npm run ai:test` | Comprehensive testing | Before commits, after features |
-| `npm run ai:check` | Quick validation | During development |
-| `npm run ai:status` | Project health check | Troubleshooting |
+| Command             | Purpose                 | When to Use                    |
+| ------------------- | ----------------------- | ------------------------------ |
+| `npm run ai:build`  | Complete build workflow | After cloning, major changes   |
+| `npm run ai:test`   | Comprehensive testing   | Before commits, after features |
+| `npm run ai:check`  | Quick validation        | During development             |
+| `npm run ai:status` | Project health check    | Troubleshooting                |
 
 ### Chain-Specific Commands
 
-| Command | Purpose | Technology |
-|---------|---------|------------|
-| `npm run compile:evm` | EVM contracts | Solidity + Hardhat |
-| `npm run compile:solana` | Solana programs | Rust + Anchor |
-| `npm run test:evm` | EVM tests only | Hardhat tests |
-| `npm run test:solana` | Solana tests only | Anchor tests |
-| `npm run test:unified` | Client tests | Cross-chain TypeScript |
+| Command                  | Purpose           | Technology             |
+| ------------------------ | ----------------- | ---------------------- |
+| `npm run compile:evm`    | EVM contracts     | Solidity + Hardhat     |
+| `npm run compile:solana` | Solana programs   | Rust + Anchor          |
+| `npm run test:evm`       | EVM tests only    | Hardhat tests          |
+| `npm run test:solana`    | Solana tests only | Anchor tests           |
+| `npm run test:unified`   | Client tests      | Cross-chain TypeScript |
 
 ## 🏗️ Project Architecture
 
 ### Multi-Chain Structure
 
 ```
-contracts/          # EVM (Ethereum-compatible) 
+contracts/          # EVM (Ethereum-compatible)
 ├── MailService.sol # Delegation management
 ├── Mailer.sol      # Messaging with revenue sharing
 └── MockUSDC.sol    # Test token
@@ -89,7 +89,7 @@ npm test
 ### 3. Multi-Chain Considerations
 
 - **EVM contracts**: Solidity with 6-decimal USDC
-- **Solana programs**: Rust with SPL tokens  
+- **Solana programs**: Rust with SPL tokens
 - **Unified client**: TypeScript with chain detection
 
 ## 🧪 Testing Patterns
@@ -98,12 +98,14 @@ npm test
 
 ```typescript
 // Fund test accounts with MockUSDC
-await mockUSDC.mint(addr1.address, ethers.parseUnits("100", 6));
-await mockUSDC.connect(addr1).approve(contractAddress, ethers.parseUnits("100", 6));
+await mockUSDC.mint(addr1.address, ethers.parseUnits('100', 6));
+await mockUSDC
+  .connect(addr1)
+  .approve(contractAddress, ethers.parseUnits('100', 6));
 
 // Test events and state changes
 await expect(contract.delegateTo(delegate))
-  .to.emit(contract, "DelegationSet")
+  .to.emit(contract, 'DelegationSet')
   .withArgs(addr1.address, delegate);
 ```
 
@@ -168,7 +170,7 @@ anchor --version  # Should be 0.28.0
 - `.ai-config.json` - Project metadata
 - `README.md` - User documentation
 
-### Configuration  
+### Configuration
 
 - `package.json` - NPM scripts and dependencies
 - `hardhat.config.ts` - EVM configuration
@@ -187,7 +189,7 @@ anchor --version  # Should be 0.28.0
 # 🏥 Health Check
 npm run ai:status
 
-# 🏗️ Build Everything  
+# 🏗️ Build Everything
 npm run ai:build
 
 # 🧪 Test Everything
@@ -199,7 +201,7 @@ npm run ai:check
 # 🔧 EVM Development
 npm run compile:evm && npm run test:evm
 
-# 🦀 Solana Development  
+# 🦀 Solana Development
 npm run compile:solana && npm run test:solana
 
 # 🔄 Unified Development

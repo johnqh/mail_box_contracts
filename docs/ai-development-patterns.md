@@ -10,7 +10,7 @@
 # After ANY contract changes
 npm run compile
 
-# Before committing changes  
+# Before committing changes
 npm test
 
 # Check project health
@@ -61,18 +61,18 @@ npm test  # Will fail with outdated types
 // contracts/Mailer.sol
 /**
  * @notice Send bulk messages to multiple recipients
- * @param recipients Array of recipient addresses  
+ * @param recipients Array of recipient addresses
  * @param subjects Array of message subjects
  * @param bodies Array of message bodies
  * @dev Each array must have the same length
  */
 function sendBulk(
     address[] calldata recipients,
-    string[] calldata subjects, 
+    string[] calldata subjects,
     string[] calldata bodies
 ) external nonReentrant {
     require(recipients.length == subjects.length && subjects.length == bodies.length, "Array length mismatch");
-    
+
     for (uint256 i = 0; i < recipients.length; i++) {
         // Implementation logic
         emit MailSent(msg.sender, recipients[i], subjects[i], bodies[i]);
@@ -93,7 +93,7 @@ function sendBulk(
 **Standard Test Structure:**
 
 ```typescript
-describe("New Feature", function () {
+describe('New Feature', function () {
   let mailer: Mailer;
   let mockUSDC: MockUSDC;
   let owner: SignerWithAddress;
@@ -106,29 +106,32 @@ describe("New Feature", function () {
     addr1 = addr1Signer;
 
     // Deploy MockUSDC
-    const MockUSDCFactory = await ethers.getContractFactory("MockUSDC");
+    const MockUSDCFactory = await ethers.getContractFactory('MockUSDC');
     mockUSDC = await MockUSDCFactory.deploy();
-    
+
     // Deploy Mailer
-    const MailerFactory = await ethers.getContractFactory("Mailer");
+    const MailerFactory = await ethers.getContractFactory('Mailer');
     mailer = await MailerFactory.deploy(mockUSDC.target, owner.address);
 
     // Fund test account
-    await mockUSDC.mint(addr1.address, ethers.parseUnits("100", 6));
-    await mockUSDC.connect(addr1).approve(mailer.target, ethers.parseUnits("100", 6));
+    await mockUSDC.mint(addr1.address, ethers.parseUnits('100', 6));
+    await mockUSDC
+      .connect(addr1)
+      .approve(mailer.target, ethers.parseUnits('100', 6));
   });
 
-  it("Should handle new functionality correctly", async function () {
+  it('Should handle new functionality correctly', async function () {
     // Test implementation
     await expect(mailer.connect(addr1).newFunction(...args))
-      .to.emit(mailer, "EventName")
+      .to.emit(mailer, 'EventName')
       .withArgs(...expectedArgs);
   });
 
-  it("Should handle error conditions", async function () {
+  it('Should handle error conditions', async function () {
     // Test error conditions
-    await expect(mailer.connect(addr1).newFunction(...invalidArgs))
-      .to.be.revertedWithCustomError(mailer, "ExpectedError");
+    await expect(
+      mailer.connect(addr1).newFunction(...invalidArgs)
+    ).to.be.revertedWithCustomError(mailer, 'ExpectedError');
   });
 });
 ```
@@ -136,7 +139,7 @@ describe("New Feature", function () {
 **Key Testing Patterns:**
 
 - Always fund accounts with MockUSDC before testing
-- Test both success and failure scenarios  
+- Test both success and failure scenarios
 - Verify event emissions with exact parameters
 - Test fee calculations and balance changes
 - Use custom errors, not require() messages
@@ -201,8 +204,8 @@ async send(
 **1. Unit Tests (Individual Functions)**
 
 ```typescript
-describe("Fee Calculation", function () {
-  it("Should calculate standard fee correctly", async function () {
+describe('Fee Calculation', function () {
+  it('Should calculate standard fee correctly', async function () {
     const baseFee = await mailer.getFee();
     const standardFee = (baseFee * 10n) / 100n;
     // Test fee calculation
@@ -212,19 +215,19 @@ describe("Fee Calculation", function () {
 
 **2. Integration Tests (Full Workflows)**
 
-```typescript  
-describe("Message Sending Workflow", function () {
-  it("Should complete full send -> claim workflow", async function () {
+```typescript
+describe('Message Sending Workflow', function () {
+  it('Should complete full send -> claim workflow', async function () {
     // 1. Send priority message
     await mailer.connect(addr1).sendPriority(recipient, subject, body);
-    
+
     // 2. Verify claimable amount
     const claimable = await mailer.getRecipientClaimable(addr1.address);
     expect(claimable.amount).to.be.gt(0);
-    
-    // 3. Claim revenue share  
+
+    // 3. Claim revenue share
     await mailer.connect(addr1).claimRecipientShare();
-    
+
     // 4. Verify balance updated
     const finalBalance = await mockUSDC.balanceOf(addr1.address);
     expect(finalBalance).to.be.gt(initialBalance);
@@ -235,14 +238,17 @@ describe("Message Sending Workflow", function () {
 **3. Error Condition Tests**
 
 ```typescript
-describe("Error Handling", function () {
-  it("Should reject insufficient balance", async function () {
+describe('Error Handling', function () {
+  it('Should reject insufficient balance', async function () {
     // Remove USDC from account
-    await mockUSDC.connect(addr1).transfer(owner.address, await mockUSDC.balanceOf(addr1.address));
-    
+    await mockUSDC
+      .connect(addr1)
+      .transfer(owner.address, await mockUSDC.balanceOf(addr1.address));
+
     // Should fail
-    await expect(mailer.connect(addr1).send(recipient, subject, body))
-      .to.be.revertedWithCustomError(mailer, "FeePaymentRequired");
+    await expect(
+      mailer.connect(addr1).send(recipient, subject, body)
+    ).to.be.revertedWithCustomError(mailer, 'FeePaymentRequired');
   });
 });
 ```
@@ -283,8 +289,10 @@ npm run compile
 
 ```typescript
 // Always fund and approve before testing
-await mockUSDC.mint(testAddress, ethers.parseUnits("1000", 6));
-await mockUSDC.connect(testSigner).approve(contractAddress, ethers.parseUnits("1000", 6));
+await mockUSDC.mint(testAddress, ethers.parseUnits('1000', 6));
+await mockUSDC
+  .connect(testSigner)
+  .approve(contractAddress, ethers.parseUnits('1000', 6));
 ```
 
 ## 🚀 AI Workflow Automation
@@ -296,7 +304,7 @@ await mockUSDC.connect(testSigner).approve(contractAddress, ethers.parseUnits("1
 npm run ai:workflow list
 
 # Check project health
-npm run ai:workflow status  
+npm run ai:workflow status
 
 # Complete build process
 npm run ai:workflow run full-build
@@ -358,7 +366,7 @@ npm run ai:workflow run test-all --dry-run
 
    ```bash
    npm run test:evm     # Only EVM tests
-   npm run test:solana  # Only Solana tests  
+   npm run test:solana  # Only Solana tests
    npm test -- --grep "MailService"  # Specific pattern
    ```
 
@@ -427,7 +435,7 @@ console.log(`Send took ${Date.now() - start}ms`);
 
 - **ALWAYS** run `npm run compile` after contract changes
 - **NEVER** skip testing before committing
-- **MAINTAIN** consistency between EVM and Solana implementations  
+- **MAINTAIN** consistency between EVM and Solana implementations
 - **USE** the workflow automation scripts for complex tasks
 - **FOLLOW** existing patterns and naming conventions
 - **DOCUMENT** all new functions with comprehensive comments

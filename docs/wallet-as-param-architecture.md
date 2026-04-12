@@ -31,7 +31,7 @@ await client.sendMessage('Subject', 'Body', { priority: true });
 // Only configuration in constructor
 const client = new OnchainMailerClient({
   evm: { mailerAddress: '0x...', usdcAddress: '0x...' },
-  solana: { programId: '...', usdcMint: '...' }
+  solana: { programId: '...', usdcMint: '...' },
 });
 
 // Wallet passed to methods
@@ -130,14 +130,10 @@ class OnchainMailerClient {
     wallet: Wallet
   ): Promise<TransactionResult>;
 
-  async claimRevenue(
-    wallet: Wallet
-  ): Promise<TransactionResult>;
+  async claimRevenue(wallet: Wallet): Promise<TransactionResult>;
 
   // Read operations can optionally take connection
-  async getSendFee(
-    connection?: PublicClient | Connection
-  ): Promise<bigint>;
+  async getSendFee(connection?: PublicClient | Connection): Promise<bigint>;
 
   async getDelegation(
     address: string,
@@ -304,7 +300,7 @@ await contract.connect(signer).transfer(to, amount);
 // Actions take config as parameter
 await sendTransaction(config, {
   to: '0x...',
-  value: parseEther('1')
+  value: parseEther('1'),
 });
 ```
 

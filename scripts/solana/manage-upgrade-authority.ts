@@ -24,7 +24,11 @@ async function getProgramUpgradeAuthority(
 ): Promise<PublicKey | null> {
   // Get the program account
   const programAccount = await connection.getAccountInfo(programId);
-  if (!programAccount || programAccount.owner.toString() !== BPF_LOADER_UPGRADEABLE_PROGRAM_ID.toString()) {
+  if (
+    !programAccount ||
+    programAccount.owner.toString() !==
+      BPF_LOADER_UPGRADEABLE_PROGRAM_ID.toString()
+  ) {
     throw new Error('Program is not upgradeable or does not exist');
   }
 
@@ -34,7 +38,8 @@ async function getProgramUpgradeAuthority(
     BPF_LOADER_UPGRADEABLE_PROGRAM_ID
   );
 
-  const programDataAccount = await connection.getAccountInfo(programDataAddress);
+  const programDataAccount =
+    await connection.getAccountInfo(programDataAddress);
   if (!programDataAccount) {
     return null;
   }
@@ -69,7 +74,10 @@ async function showUpgradeAuthority(
   console.log('Cluster:', cluster);
 
   const connection = new Connection(
-    rpcUrl || (cluster === 'devnet' ? 'https://api.devnet.solana.com' : 'http://localhost:8899'),
+    rpcUrl ||
+      (cluster === 'devnet'
+        ? 'https://api.devnet.solana.com'
+        : 'http://localhost:8899'),
     'confirmed'
   );
 
@@ -106,7 +114,9 @@ async function transferUpgradeAuthority(
 
   if (!programIdStr || !newAuthorityStr) {
     console.error('❌ Missing required environment variables');
-    console.error('Usage: PROGRAM_ID=<id> NEW_AUTHORITY=<pubkey> ts-node scripts/solana/manage-upgrade-authority.ts transfer');
+    console.error(
+      'Usage: PROGRAM_ID=<id> NEW_AUTHORITY=<pubkey> ts-node scripts/solana/manage-upgrade-authority.ts transfer'
+    );
     process.exit(1);
   }
 
@@ -118,12 +128,16 @@ async function transferUpgradeAuthority(
   console.log('Cluster:', cluster);
 
   const connection = new Connection(
-    rpcUrl || (cluster === 'devnet' ? 'https://api.devnet.solana.com' : 'http://localhost:8899'),
+    rpcUrl ||
+      (cluster === 'devnet'
+        ? 'https://api.devnet.solana.com'
+        : 'http://localhost:8899'),
     'confirmed'
   );
 
   // Load current authority keypair
-  const kpPath = keypairPath || path.join(process.env.HOME || '~', '.config/solana/id.json');
+  const kpPath =
+    keypairPath || path.join(process.env.HOME || '~', '.config/solana/id.json');
   if (!fs.existsSync(kpPath)) {
     console.error(`❌ Keypair not found at: ${kpPath}`);
     process.exit(1);
@@ -134,7 +148,10 @@ async function transferUpgradeAuthority(
   console.log('Current Authority:', currentAuthority.publicKey.toString());
 
   // Verify current authority
-  const onChainAuthority = await getProgramUpgradeAuthority(connection, programId);
+  const onChainAuthority = await getProgramUpgradeAuthority(
+    connection,
+    programId
+  );
   if (!onChainAuthority) {
     console.error('❌ Program upgrades are frozen (no authority)');
     process.exit(1);
@@ -160,8 +177,10 @@ async function transferUpgradeAuthority(
       'program',
       'set-upgrade-authority',
       programId.toString(),
-      '--new-upgrade-authority', newAuthority.toString(),
-      '--upgrade-authority', kpPath
+      '--new-upgrade-authority',
+      newAuthority.toString(),
+      '--upgrade-authority',
+      kpPath,
     ];
 
     if (rpcUrl) {
@@ -180,7 +199,6 @@ async function transferUpgradeAuthority(
     console.log('Old Authority:', currentAuthority.publicKey.toString());
     console.log('New Authority:', newAuthority.toString());
     console.log('='.repeat(50));
-
   } catch (error) {
     console.error('❌ Transfer failed:', error);
     process.exit(1);
@@ -219,7 +237,9 @@ async function freezeUpgrades(
   // For now, we'll just exit and require manual confirmation
   console.log('\n❌ Freezing requires manual confirmation');
   console.log('To freeze upgrades, run:');
-  console.log(`   solana program set-upgrade-authority ${programId.toString()} --final --upgrade-authority <path>`);
+  console.log(
+    `   solana program set-upgrade-authority ${programId.toString()} --final --upgrade-authority <path>`
+  );
   process.exit(0);
 }
 
@@ -248,8 +268,12 @@ async function main() {
         console.log('  transfer  - Transfer upgrade authority');
         console.log('  freeze    - Freeze upgrades (irreversible!)');
         console.log('\nExamples:');
-        console.log('  PROGRAM_ID=<id> ts-node manage-upgrade-authority.ts show devnet');
-        console.log('  PROGRAM_ID=<id> NEW_AUTHORITY=<pubkey> ts-node manage-upgrade-authority.ts transfer devnet');
+        console.log(
+          '  PROGRAM_ID=<id> ts-node manage-upgrade-authority.ts show devnet'
+        );
+        console.log(
+          '  PROGRAM_ID=<id> NEW_AUTHORITY=<pubkey> ts-node manage-upgrade-authority.ts transfer devnet'
+        );
         process.exit(1);
     }
   } catch (error) {

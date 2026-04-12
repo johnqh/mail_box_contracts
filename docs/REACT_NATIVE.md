@@ -106,7 +106,10 @@ AppRegistry.registerComponent(appName, () => App);
 ### Step 2: Use the client
 
 ```typescript
-import { OnchainMailerClient, verifyPolyfills } from '@sudobility/contracts/react-native';
+import {
+  OnchainMailerClient,
+  verifyPolyfills,
+} from '@sudobility/contracts/react-native';
 import { RpcHelpers } from '@sudobility/configs';
 import { Chain } from '@sudobility/types';
 
@@ -203,7 +206,7 @@ import { OnchainMailerClient } from '@sudobility/contracts/react-native';
 
 const client = new OnchainMailerClient();
 
-await transact(async (wallet) => {
+await transact(async wallet => {
   await client.sendMessage(
     { wallet, connection },
     chainInfo,

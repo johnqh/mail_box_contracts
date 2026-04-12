@@ -10,7 +10,7 @@ import {
   createPublicClient,
   http,
   type WalletClient,
-  type PublicClient
+  type PublicClient,
 } from 'viem';
 import { mainnet, sepolia } from 'viem/chains';
 import { privateKeyToAccount } from 'viem/accounts';
@@ -25,12 +25,12 @@ async function main() {
   const walletClient: WalletClient = createWalletClient({
     account,
     chain: sepolia,
-    transport: http('https://eth-sepolia.g.alchemy.com/v2/YOUR-API-KEY')
+    transport: http('https://eth-sepolia.g.alchemy.com/v2/YOUR-API-KEY'),
   });
 
   const publicClient: PublicClient = createPublicClient({
     chain: sepolia,
-    transport: http('https://eth-sepolia.g.alchemy.com/v2/YOUR-API-KEY')
+    transport: http('https://eth-sepolia.g.alchemy.com/v2/YOUR-API-KEY'),
   });
 
   // Option 2: Using window.ethereum (browser)
@@ -58,7 +58,7 @@ async function main() {
     console.log('\n📨 Sending message...');
     const result = await mailerClient.sendMessage(
       '0xRecipientAddress', // to
-      'Hello from wagmi!',  // subject
+      'Hello from wagmi!', // subject
       'This message was sent using wagmi integration', // body
       true, // priority (true = full fee with revenue share)
       false // resolveSenderToName

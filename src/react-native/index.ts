@@ -12,10 +12,7 @@
  */
 
 // Re-export unified client (main entry point)
-export {
-  OnchainMailerClient,
-  WalletDetector,
-} from '../unified/index.js';
+export { OnchainMailerClient, WalletDetector } from '../unified/index.js';
 
 // Re-export unified types
 export type {
@@ -48,10 +45,7 @@ export type {
   ComputeUnitOptions,
   TransactionResult as SolanaTransactionResult,
 } from '../solana/solana-mailer-client.js';
-export type {
-  ClaimableInfo,
-  MailerFees,
-} from '../solana/types.js';
+export type { ClaimableInfo, MailerFees } from '../solana/types.js';
 
 // Re-export utilities
 export * from '../utils/index.js';

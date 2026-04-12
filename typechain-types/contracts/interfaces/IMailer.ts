@@ -11,61 +11,61 @@ import type {
   ContractRunner,
   ContractMethod,
   Listener,
-} from "ethers";
+} from 'ethers';
 import type {
   TypedContractEvent,
   TypedDeferredTopicFilter,
   TypedEventLog,
   TypedListener,
   TypedContractMethod,
-} from "../../common";
+} from '../../common';
 
 export interface IMailerInterface extends Interface {
   getFunction(
     nameOrSignature:
-      | "send"
-      | "sendPrepared"
-      | "sendPreparedToEmailAddress"
-      | "sendThroughWebhook"
-      | "sendToEmailAddress"
+      | 'send'
+      | 'sendPrepared'
+      | 'sendPreparedToEmailAddress'
+      | 'sendThroughWebhook'
+      | 'sendToEmailAddress'
   ): FunctionFragment;
 
   encodeFunctionData(
-    functionFragment: "send",
+    functionFragment: 'send',
     values: [AddressLike, string, string, AddressLike, boolean, boolean]
   ): string;
   encodeFunctionData(
-    functionFragment: "sendPrepared",
+    functionFragment: 'sendPrepared',
     values: [AddressLike, string, AddressLike, boolean, boolean]
   ): string;
   encodeFunctionData(
-    functionFragment: "sendPreparedToEmailAddress",
+    functionFragment: 'sendPreparedToEmailAddress',
     values: [string, string, AddressLike]
   ): string;
   encodeFunctionData(
-    functionFragment: "sendThroughWebhook",
+    functionFragment: 'sendThroughWebhook',
     values: [AddressLike, string, AddressLike, boolean, boolean]
   ): string;
   encodeFunctionData(
-    functionFragment: "sendToEmailAddress",
+    functionFragment: 'sendToEmailAddress',
     values: [string, string, string, AddressLike]
   ): string;
 
-  decodeFunctionResult(functionFragment: "send", data: BytesLike): Result;
+  decodeFunctionResult(functionFragment: 'send', data: BytesLike): Result;
   decodeFunctionResult(
-    functionFragment: "sendPrepared",
+    functionFragment: 'sendPrepared',
     data: BytesLike
   ): Result;
   decodeFunctionResult(
-    functionFragment: "sendPreparedToEmailAddress",
+    functionFragment: 'sendPreparedToEmailAddress',
     data: BytesLike
   ): Result;
   decodeFunctionResult(
-    functionFragment: "sendThroughWebhook",
+    functionFragment: 'sendThroughWebhook',
     data: BytesLike
   ): Result;
   decodeFunctionResult(
-    functionFragment: "sendToEmailAddress",
+    functionFragment: 'sendToEmailAddress',
     data: BytesLike
   ): Result;
 }
@@ -120,10 +120,10 @@ export interface IMailer extends BaseContract {
       body: string,
       payer: AddressLike,
       revenueShareToReceiver: boolean,
-      resolveSenderToName: boolean
+      resolveSenderToName: boolean,
     ],
     [void],
-    "nonpayable"
+    'nonpayable'
   >;
 
   sendPrepared: TypedContractMethod<
@@ -132,16 +132,16 @@ export interface IMailer extends BaseContract {
       mailId: string,
       payer: AddressLike,
       revenueShareToReceiver: boolean,
-      resolveSenderToName: boolean
+      resolveSenderToName: boolean,
     ],
     [void],
-    "nonpayable"
+    'nonpayable'
   >;
 
   sendPreparedToEmailAddress: TypedContractMethod<
     [toEmail: string, mailId: string, payer: AddressLike],
     [void],
-    "nonpayable"
+    'nonpayable'
   >;
 
   sendThroughWebhook: TypedContractMethod<
@@ -150,16 +150,16 @@ export interface IMailer extends BaseContract {
       webhookId: string,
       payer: AddressLike,
       revenueShareToReceiver: boolean,
-      resolveSenderToName: boolean
+      resolveSenderToName: boolean,
     ],
     [void],
-    "nonpayable"
+    'nonpayable'
   >;
 
   sendToEmailAddress: TypedContractMethod<
     [toEmail: string, subject: string, body: string, payer: AddressLike],
     [void],
-    "nonpayable"
+    'nonpayable'
   >;
 
   getFunction<T extends ContractMethod = ContractMethod>(
@@ -167,7 +167,7 @@ export interface IMailer extends BaseContract {
   ): T;
 
   getFunction(
-    nameOrSignature: "send"
+    nameOrSignature: 'send'
   ): TypedContractMethod<
     [
       to: AddressLike,
@@ -175,50 +175,50 @@ export interface IMailer extends BaseContract {
       body: string,
       payer: AddressLike,
       revenueShareToReceiver: boolean,
-      resolveSenderToName: boolean
+      resolveSenderToName: boolean,
     ],
     [void],
-    "nonpayable"
+    'nonpayable'
   >;
   getFunction(
-    nameOrSignature: "sendPrepared"
+    nameOrSignature: 'sendPrepared'
   ): TypedContractMethod<
     [
       to: AddressLike,
       mailId: string,
       payer: AddressLike,
       revenueShareToReceiver: boolean,
-      resolveSenderToName: boolean
+      resolveSenderToName: boolean,
     ],
     [void],
-    "nonpayable"
+    'nonpayable'
   >;
   getFunction(
-    nameOrSignature: "sendPreparedToEmailAddress"
+    nameOrSignature: 'sendPreparedToEmailAddress'
   ): TypedContractMethod<
     [toEmail: string, mailId: string, payer: AddressLike],
     [void],
-    "nonpayable"
+    'nonpayable'
   >;
   getFunction(
-    nameOrSignature: "sendThroughWebhook"
+    nameOrSignature: 'sendThroughWebhook'
   ): TypedContractMethod<
     [
       to: AddressLike,
       webhookId: string,
       payer: AddressLike,
       revenueShareToReceiver: boolean,
-      resolveSenderToName: boolean
+      resolveSenderToName: boolean,
     ],
     [void],
-    "nonpayable"
+    'nonpayable'
   >;
   getFunction(
-    nameOrSignature: "sendToEmailAddress"
+    nameOrSignature: 'sendToEmailAddress'
   ): TypedContractMethod<
     [toEmail: string, subject: string, body: string, payer: AddressLike],
     [void],
-    "nonpayable"
+    'nonpayable'
   >;
 
   filters: {};

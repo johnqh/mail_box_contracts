@@ -35,7 +35,11 @@ async function getProgramUpgradeAuthority(
 ): Promise<PublicKey | null> {
   // Get the program data account
   const programAccount = await connection.getAccountInfo(programId);
-  if (!programAccount || programAccount.owner.toString() !== BPF_LOADER_UPGRADEABLE_PROGRAM_ID.toString()) {
+  if (
+    !programAccount ||
+    programAccount.owner.toString() !==
+      BPF_LOADER_UPGRADEABLE_PROGRAM_ID.toString()
+  ) {
     throw new Error('Program is not upgradeable or does not exist');
   }
 
@@ -45,7 +49,8 @@ async function getProgramUpgradeAuthority(
     BPF_LOADER_UPGRADEABLE_PROGRAM_ID
   );
 
-  const programDataAccount = await connection.getAccountInfo(programDataAddress);
+  const programDataAccount =
+    await connection.getAccountInfo(programDataAddress);
   if (!programDataAccount) {
     return null;
   }
@@ -74,7 +79,9 @@ async function upgradeProgram(
   const programIdStr = process.env.PROGRAM_ID;
   if (!programIdStr) {
     console.error('❌ PROGRAM_ID environment variable not set');
-    console.error('Usage: PROGRAM_ID=<program_id> ts-node scripts/solana/upgrade.ts');
+    console.error(
+      'Usage: PROGRAM_ID=<program_id> ts-node scripts/solana/upgrade.ts'
+    );
     process.exit(1);
   }
 
@@ -84,13 +91,17 @@ async function upgradeProgram(
 
   // Setup connection
   const connection = new Connection(
-    rpcUrl || (cluster === 'devnet' ? 'https://api.devnet.solana.com' : 'http://localhost:8899'),
+    rpcUrl ||
+      (cluster === 'devnet'
+        ? 'https://api.devnet.solana.com'
+        : 'http://localhost:8899'),
     'confirmed'
   );
 
   // Setup keypair
   let upgradeAuthority: Keypair;
-  const kpPath = keypairPath || path.join(process.env.HOME || '~', '.config/solana/id.json');
+  const kpPath =
+    keypairPath || path.join(process.env.HOME || '~', '.config/solana/id.json');
 
   if (!fs.existsSync(kpPath)) {
     console.error(`❌ Keypair not found at: ${kpPath}`);
@@ -104,7 +115,10 @@ async function upgradeProgram(
 
   // Verify upgrade authority
   console.log('\n🔍 Verifying upgrade authority...');
-  const currentAuthority = await getProgramUpgradeAuthority(connection, programId);
+  const currentAuthority = await getProgramUpgradeAuthority(
+    connection,
+    programId
+  );
 
   if (!currentAuthority) {
     console.error('❌ Program upgrades are frozen (no upgrade authority)');
@@ -112,9 +126,14 @@ async function upgradeProgram(
   }
 
   if (!currentAuthority.equals(upgradeAuthority.publicKey)) {
-    console.error('❌ Current upgrade authority does not match provided keypair');
+    console.error(
+      '❌ Current upgrade authority does not match provided keypair'
+    );
     console.error('   Current authority:', currentAuthority.toString());
-    console.error('   Provided keypair:', upgradeAuthority.publicKey.toString());
+    console.error(
+      '   Provided keypair:',
+      upgradeAuthority.publicKey.toString()
+    );
     process.exit(1);
   }
 
@@ -125,12 +144,19 @@ async function upgradeProgram(
   console.log('Authority balance:', balance / 1e9, 'SOL');
 
   if (balance < 2e9) {
-    console.warn('⚠️  Low SOL balance. You need at least 2 SOL for program upgrade.');
+    console.warn(
+      '⚠️  Low SOL balance. You need at least 2 SOL for program upgrade.'
+    );
     console.warn('   (Buffer rent + transaction fees)');
   }
 
   // Find the compiled program file
-  const programPath = path.join(__dirname, '..', '..', 'target/deploy/mailer.so');
+  const programPath = path.join(
+    __dirname,
+    '..',
+    '..',
+    'target/deploy/mailer.so'
+  );
   if (!fs.existsSync(programPath)) {
     console.error(`❌ Compiled program not found at: ${programPath}`);
     console.error('   Please run: anchor build or cargo build-sbf');
@@ -155,9 +181,11 @@ async function upgradeProgram(
       'solana',
       'program',
       'deploy',
-      '--program-id', programId.toString(),
-      '--upgrade-authority', kpPath,
-      programPath
+      '--program-id',
+      programId.toString(),
+      '--upgrade-authority',
+      kpPath,
+      programPath,
     ];
 
     if (rpcUrl) {
@@ -193,10 +221,12 @@ async function upgradeProgram(
       fs.mkdirSync(deploymentDir, { recursive: true });
     }
 
-    const upgradeFile = path.join(deploymentDir, `${cluster}-upgrade-${Date.now()}.json`);
+    const upgradeFile = path.join(
+      deploymentDir,
+      `${cluster}-upgrade-${Date.now()}.json`
+    );
     fs.writeFileSync(upgradeFile, JSON.stringify(upgradeInfo, null, 2));
     console.log('📄 Upgrade info saved:', upgradeFile);
-
   } catch (error) {
     console.error('❌ Upgrade failed:', error);
     process.exit(1);

@@ -6,30 +6,30 @@ import {
   ContractFactory,
   ContractTransactionResponse,
   Interface,
-} from "ethers";
-import type { Signer, ContractDeployTransaction, ContractRunner } from "ethers";
-import type { NonPayableOverrides } from "../../../../common";
+} from 'ethers';
+import type { Signer, ContractDeployTransaction, ContractRunner } from 'ethers';
+import type { NonPayableOverrides } from '../../../../common';
 import type {
   Address,
   AddressInterface,
-} from "../../../../@openzeppelin/contracts/utils/Address";
+} from '../../../../@openzeppelin/contracts/utils/Address';
 
 const _abi = [
   {
     inputs: [
       {
-        internalType: "address",
-        name: "target",
-        type: "address",
+        internalType: 'address',
+        name: 'target',
+        type: 'address',
       },
     ],
-    name: "AddressEmptyCode",
-    type: "error",
+    name: 'AddressEmptyCode',
+    type: 'error',
   },
 ] as const;
 
 const _bytecode =
-  "0x60566037600b82828239805160001a607314602a57634e487b7160e01b600052600060045260246000fd5b30600052607381538281f3fe73000000000000000000000000000000000000000030146080604052600080fdfea2646970667358221220ceb427b58d6be86075c859cfcb19f1a1a4919378f6ccde5b819117ea6bcba9a964736f6c63430008180033";
+  '0x60566037600b82828239805160001a607314602a57634e487b7160e01b600052600060045260246000fd5b30600052607381538281f3fe73000000000000000000000000000000000000000030146080604052600080fdfea2646970667358221220ceb427b58d6be86075c859cfcb19f1a1a4919378f6ccde5b819117ea6bcba9a964736f6c63430008180033';
 
 type AddressConstructorParams =
   | [signer?: Signer]

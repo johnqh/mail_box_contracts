@@ -3,14 +3,6 @@
   "compilerOptions": {
     "outDir": "dist/solana"
   },
-  "include": [
-    "src/solana/**/*",
-    "target/types/**/*"
-  ],
-  "exclude": [
-    "node_modules",
-    "dist",
-    "src/evm",
-    "src/unified"
-  ]
+  "include": ["src/solana/**/*", "target/types/**/*"],
+  "exclude": ["node_modules", "dist", "src/evm", "src/unified"]
 }

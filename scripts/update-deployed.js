@@ -10,7 +10,12 @@ const path = require('path');
 
 const DEPLOYED_FILE = path.join(__dirname, '../DEPLOYED.json');
 
-function updateDeployedFile(network, contractName, address, additionalInfo = {}) {
+function updateDeployedFile(
+  network,
+  contractName,
+  address,
+  additionalInfo = {}
+) {
   // Read existing DEPLOYED.json
   let deployedData;
   try {
@@ -28,21 +33,30 @@ function updateDeployedFile(network, contractName, address, additionalInfo = {})
   const versionData = deployedData.versions[latestVersion];
 
   // Determine if this is EVM or Solana based on network
-  const isSolana = network.includes('solana') || network.includes('devnet') || network.includes('mainnet-beta');
-  
+  const isSolana =
+    network.includes('solana') ||
+    network.includes('devnet') ||
+    network.includes('mainnet-beta');
+
   if (isSolana) {
     // Handle Solana program deployment
     if (!versionData.networks[network]) {
       versionData.networks[network] = {
-        cluster: network.includes('devnet') ? 'devnet' : network.includes('mainnet') ? 'mainnet-beta' : 'localnet',
-        rpcUrl: network.includes('devnet') ? 'https://api.devnet.solana.com' : 
-                network.includes('mainnet') ? 'https://api.mainnet-beta.solana.com' : 
-                'http://127.0.0.1:8899',
+        cluster: network.includes('devnet')
+          ? 'devnet'
+          : network.includes('mainnet')
+            ? 'mainnet-beta'
+            : 'localnet',
+        rpcUrl: network.includes('devnet')
+          ? 'https://api.devnet.solana.com'
+          : network.includes('mainnet')
+            ? 'https://api.mainnet-beta.solana.com'
+            : 'http://127.0.0.1:8899',
         deploymentDate: new Date().toISOString().split('T')[0],
         programs: {},
         deploymentCosts: {},
         wallet: additionalInfo.wallet || {},
-        programSettings: {}
+        programSettings: {},
       };
     }
 
@@ -54,13 +68,13 @@ function updateDeployedFile(network, contractName, address, additionalInfo = {})
       dataLength: additionalInfo.dataLength,
       deploymentSlot: additionalInfo.deploymentSlot,
       status: 'deployed',
-      ...additionalInfo
+      ...additionalInfo,
     };
 
     if (additionalInfo.deploymentCost) {
-      versionData.networks[network].deploymentCosts[contractName] = additionalInfo.deploymentCost;
+      versionData.networks[network].deploymentCosts[contractName] =
+        additionalInfo.deploymentCost;
     }
-
   } else {
     // Handle EVM contract deployment
     if (!versionData.networks[network]) {
@@ -70,15 +84,16 @@ function updateDeployedFile(network, contractName, address, additionalInfo = {})
         contracts: {},
         transactions: {},
         contractSettings: {},
-        usdc: additionalInfo.usdc || {}
+        usdc: additionalInfo.usdc || {},
       };
     }
 
     // Update contract information
     versionData.networks[network].contracts[contractName] = address;
-    
+
     if (additionalInfo.transactionHash) {
-      versionData.networks[network].transactions[`${contractName}_deployment`] = additionalInfo.transactionHash;
+      versionData.networks[network].transactions[`${contractName}_deployment`] =
+        additionalInfo.transactionHash;
     }
   }
 
@@ -100,22 +115,28 @@ function updateDeployedFile(network, contractName, address, additionalInfo = {})
 // CLI Usage
 if (require.main === module) {
   const args = process.argv.slice(2);
-  
+
   if (args.length < 3) {
-    console.log('Usage: node scripts/update-deployed.js <network> <contract/program> <address> [json-additional-info]');
+    console.log(
+      'Usage: node scripts/update-deployed.js <network> <contract/program> <address> [json-additional-info]'
+    );
     console.log('');
     console.log('Examples:');
     console.log('  # EVM deployment');
-    console.log('  node scripts/update-deployed.js sepolia Mailer 0x123...abc \'{"chainId": 11155111, "transactionHash": "0x456...def"}\'');
+    console.log(
+      '  node scripts/update-deployed.js sepolia Mailer 0x123...abc \'{"chainId": 11155111, "transactionHash": "0x456...def"}\''
+    );
     console.log('');
-    console.log('  # Solana deployment'); 
-    console.log('  node scripts/update-deployed.js solana-devnet mail_service 99U2sAJ1ESKFk5Jz5WYjBWUzdnNyGUc2KLfpaXs5dqi3 \'{"deploymentSlot": 405475148}\'');
+    console.log('  # Solana deployment');
+    console.log(
+      '  node scripts/update-deployed.js solana-devnet mail_service 99U2sAJ1ESKFk5Jz5WYjBWUzdnNyGUc2KLfpaXs5dqi3 \'{"deploymentSlot": 405475148}\''
+    );
     process.exit(1);
   }
 
   const [network, contractName, address, additionalInfoJson] = args;
   let additionalInfo = {};
-  
+
   if (additionalInfoJson) {
     try {
       additionalInfo = JSON.parse(additionalInfoJson);

@@ -12,79 +12,79 @@ import type {
   ContractRunner,
   ContractMethod,
   Listener,
-} from "ethers";
+} from 'ethers';
 import type {
   TypedContractEvent,
   TypedDeferredTopicFilter,
   TypedEventLog,
   TypedListener,
   TypedContractMethod,
-} from "../common";
+} from '../common';
 
 export interface MockUSDCInterface extends Interface {
   getFunction(
     nameOrSignature:
-      | "allowance"
-      | "approve"
-      | "balanceOf"
-      | "decimals"
-      | "mint"
-      | "name"
-      | "owner"
-      | "symbol"
-      | "totalSupply"
-      | "transfer"
-      | "transferFrom"
+      | 'allowance'
+      | 'approve'
+      | 'balanceOf'
+      | 'decimals'
+      | 'mint'
+      | 'name'
+      | 'owner'
+      | 'symbol'
+      | 'totalSupply'
+      | 'transfer'
+      | 'transferFrom'
   ): FunctionFragment;
 
   encodeFunctionData(
-    functionFragment: "allowance",
+    functionFragment: 'allowance',
     values: [AddressLike, AddressLike]
   ): string;
   encodeFunctionData(
-    functionFragment: "approve",
+    functionFragment: 'approve',
     values: [AddressLike, BigNumberish]
   ): string;
   encodeFunctionData(
-    functionFragment: "balanceOf",
+    functionFragment: 'balanceOf',
     values: [AddressLike]
   ): string;
-  encodeFunctionData(functionFragment: "decimals", values?: undefined): string;
+  encodeFunctionData(functionFragment: 'decimals', values?: undefined): string;
   encodeFunctionData(
-    functionFragment: "mint",
+    functionFragment: 'mint',
     values: [AddressLike, BigNumberish]
   ): string;
-  encodeFunctionData(functionFragment: "name", values?: undefined): string;
-  encodeFunctionData(functionFragment: "owner", values?: undefined): string;
-  encodeFunctionData(functionFragment: "symbol", values?: undefined): string;
+  encodeFunctionData(functionFragment: 'name', values?: undefined): string;
+  encodeFunctionData(functionFragment: 'owner', values?: undefined): string;
+  encodeFunctionData(functionFragment: 'symbol', values?: undefined): string;
   encodeFunctionData(
-    functionFragment: "totalSupply",
+    functionFragment: 'totalSupply',
     values?: undefined
   ): string;
   encodeFunctionData(
-    functionFragment: "transfer",
+    functionFragment: 'transfer',
     values: [AddressLike, BigNumberish]
   ): string;
   encodeFunctionData(
-    functionFragment: "transferFrom",
+    functionFragment: 'transferFrom',
     values: [AddressLike, AddressLike, BigNumberish]
   ): string;
 
-  decodeFunctionResult(functionFragment: "allowance", data: BytesLike): Result;
-  decodeFunctionResult(functionFragment: "approve", data: BytesLike): Result;
-  decodeFunctionResult(functionFragment: "balanceOf", data: BytesLike): Result;
-  decodeFunctionResult(functionFragment: "decimals", data: BytesLike): Result;
-  decodeFunctionResult(functionFragment: "mint", data: BytesLike): Result;
-  decodeFunctionResult(functionFragment: "name", data: BytesLike): Result;
-  decodeFunctionResult(functionFragment: "owner", data: BytesLike): Result;
-  decodeFunctionResult(functionFragment: "symbol", data: BytesLike): Result;
+  decodeFunctionResult(functionFragment: 'allowance', data: BytesLike): Result;
+  decodeFunctionResult(functionFragment: 'approve', data: BytesLike): Result;
+  decodeFunctionResult(functionFragment: 'balanceOf', data: BytesLike): Result;
+  decodeFunctionResult(functionFragment: 'decimals', data: BytesLike): Result;
+  decodeFunctionResult(functionFragment: 'mint', data: BytesLike): Result;
+  decodeFunctionResult(functionFragment: 'name', data: BytesLike): Result;
+  decodeFunctionResult(functionFragment: 'owner', data: BytesLike): Result;
+  decodeFunctionResult(functionFragment: 'symbol', data: BytesLike): Result;
   decodeFunctionResult(
-    functionFragment: "totalSupply",
+    functionFragment: 'totalSupply',
     data: BytesLike
   ): Result;
-  decodeFunctionResult(functionFragment: "transfer", data: BytesLike): Result;
+  decodeFunctionResult(functionFragment: 'transfer', data: BytesLike): Result;
   decodeFunctionResult(
-    functionFragment: "transferFrom",
+    functionFragment: 'transferFrom',
     data: BytesLike
   ): Result;
 }
@@ -135,43 +135,43 @@ export interface MockUSDC extends BaseContract {
   allowance: TypedContractMethod<
     [arg0: AddressLike, arg1: AddressLike],
     [bigint],
-    "view"
+    'view'
   >;
 
   approve: TypedContractMethod<
     [spender: AddressLike, amount: BigNumberish],
     [boolean],
-    "nonpayable"
+    'nonpayable'
   >;
 
-  balanceOf: TypedContractMethod<[arg0: AddressLike], [bigint], "view">;
+  balanceOf: TypedContractMethod<[arg0: AddressLike], [bigint], 'view'>;
 
-  decimals: TypedContractMethod<[], [bigint], "view">;
+  decimals: TypedContractMethod<[], [bigint], 'view'>;
 
   mint: TypedContractMethod<
     [to: AddressLike, amount: BigNumberish],
     [void],
-    "nonpayable"
+    'nonpayable'
   >;
 
-  name: TypedContractMethod<[], [string], "view">;
+  name: TypedContractMethod<[], [string], 'view'>;
 
-  owner: TypedContractMethod<[], [string], "view">;
+  owner: TypedContractMethod<[], [string], 'view'>;
 
-  symbol: TypedContractMethod<[], [string], "view">;
+  symbol: TypedContractMethod<[], [string], 'view'>;
 
-  totalSupply: TypedContractMethod<[], [bigint], "view">;
+  totalSupply: TypedContractMethod<[], [bigint], 'view'>;
 
   transfer: TypedContractMethod<
     [to: AddressLike, amount: BigNumberish],
     [boolean],
-    "nonpayable"
+    'nonpayable'
   >;
 
   transferFrom: TypedContractMethod<
     [from: AddressLike, to: AddressLike, amount: BigNumberish],
     [boolean],
-    "nonpayable"
+    'nonpayable'
   >;
 
   getFunction<T extends ContractMethod = ContractMethod>(
@@ -179,57 +179,57 @@ export interface MockUSDC extends BaseContract {
   ): T;
 
   getFunction(
-    nameOrSignature: "allowance"
+    nameOrSignature: 'allowance'
   ): TypedContractMethod<
     [arg0: AddressLike, arg1: AddressLike],
     [bigint],
-    "view"
+    'view'
   >;
   getFunction(
-    nameOrSignature: "approve"
+    nameOrSignature: 'approve'
   ): TypedContractMethod<
     [spender: AddressLike, amount: BigNumberish],
     [boolean],
-    "nonpayable"
+    'nonpayable'
   >;
   getFunction(
-    nameOrSignature: "balanceOf"
-  ): TypedContractMethod<[arg0: AddressLike], [bigint], "view">;
+    nameOrSignature: 'balanceOf'
+  ): TypedContractMethod<[arg0: AddressLike], [bigint], 'view'>;
   getFunction(
-    nameOrSignature: "decimals"
-  ): TypedContractMethod<[], [bigint], "view">;
+    nameOrSignature: 'decimals'
+  ): TypedContractMethod<[], [bigint], 'view'>;
   getFunction(
-    nameOrSignature: "mint"
+    nameOrSignature: 'mint'
   ): TypedContractMethod<
     [to: AddressLike, amount: BigNumberish],
     [void],
-    "nonpayable"
+    'nonpayable'
   >;
   getFunction(
-    nameOrSignature: "name"
-  ): TypedContractMethod<[], [string], "view">;
+    nameOrSignature: 'name'
+  ): TypedContractMethod<[], [string], 'view'>;
   getFunction(
-    nameOrSignature: "owner"
-  ): TypedContractMethod<[], [string], "view">;
+    nameOrSignature: 'owner'
+  ): TypedContractMethod<[], [string], 'view'>;
   getFunction(
-    nameOrSignature: "symbol"
-  ): TypedContractMethod<[], [string], "view">;
+    nameOrSignature: 'symbol'
+  ): TypedContractMethod<[], [string], 'view'>;
   getFunction(
-    nameOrSignature: "totalSupply"
-  ): TypedContractMethod<[], [bigint], "view">;
+    nameOrSignature: 'totalSupply'
+  ): TypedContractMethod<[], [bigint], 'view'>;
   getFunction(
-    nameOrSignature: "transfer"
+    nameOrSignature: 'transfer'
   ): TypedContractMethod<
     [to: AddressLike, amount: BigNumberish],
     [boolean],
-    "nonpayable"
+    'nonpayable'
   >;
   getFunction(
-    nameOrSignature: "transferFrom"
+    nameOrSignature: 'transferFrom'
   ): TypedContractMethod<
     [from: AddressLike, to: AddressLike, amount: BigNumberish],
     [boolean],
-    "nonpayable"
+    'nonpayable'
   >;
 
   filters: {};

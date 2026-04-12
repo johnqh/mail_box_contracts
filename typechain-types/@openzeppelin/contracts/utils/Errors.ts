@@ -8,13 +8,13 @@ import type {
   ContractRunner,
   ContractMethod,
   Listener,
-} from "ethers";
+} from 'ethers';
 import type {
   TypedContractEvent,
   TypedDeferredTopicFilter,
   TypedEventLog,
   TypedListener,
-} from "../../../common";
+} from '../../../common';
 
 export interface ErrorsInterface extends Interface {}
 

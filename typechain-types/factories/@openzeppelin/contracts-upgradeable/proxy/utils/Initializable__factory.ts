@@ -2,35 +2,35 @@
 /* tslint:disable */
 /* eslint-disable */
 
-import { Contract, Interface, type ContractRunner } from "ethers";
+import { Contract, Interface, type ContractRunner } from 'ethers';
 import type {
   Initializable,
   InitializableInterface,
-} from "../../../../../@openzeppelin/contracts-upgradeable/proxy/utils/Initializable";
+} from '../../../../../@openzeppelin/contracts-upgradeable/proxy/utils/Initializable';
 
 const _abi = [
   {
     inputs: [],
-    name: "InvalidInitialization",
-    type: "error",
+    name: 'InvalidInitialization',
+    type: 'error',
   },
   {
     inputs: [],
-    name: "NotInitializing",
-    type: "error",
+    name: 'NotInitializing',
+    type: 'error',
   },
   {
     anonymous: false,
     inputs: [
       {
         indexed: false,
-        internalType: "uint64",
-        name: "version",
-        type: "uint64",
+        internalType: 'uint64',
+        name: 'version',
+        type: 'uint64',
       },
     ],
-    name: "Initialized",
-    type: "event",
+    name: 'Initialized',
+    type: 'event',
   },
 ] as const;
 

@@ -10,25 +10,25 @@ import type {
   ContractRunner,
   ContractMethod,
   Listener,
-} from "ethers";
+} from 'ethers';
 import type {
   TypedContractEvent,
   TypedDeferredTopicFilter,
   TypedEventLog,
   TypedListener,
   TypedContractMethod,
-} from "../../../../common";
+} from '../../../../common';
 
 export interface IBeaconInterface extends Interface {
-  getFunction(nameOrSignature: "implementation"): FunctionFragment;
+  getFunction(nameOrSignature: 'implementation'): FunctionFragment;
 
   encodeFunctionData(
-    functionFragment: "implementation",
+    functionFragment: 'implementation',
     values?: undefined
   ): string;
 
   decodeFunctionResult(
-    functionFragment: "implementation",
+    functionFragment: 'implementation',
     data: BytesLike
   ): Result;
 }
@@ -76,15 +76,15 @@ export interface IBeacon extends BaseContract {
     event?: TCEvent
   ): Promise<this>;
 
-  implementation: TypedContractMethod<[], [string], "view">;
+  implementation: TypedContractMethod<[], [string], 'view'>;
 
   getFunction<T extends ContractMethod = ContractMethod>(
     key: string | FunctionFragment
   ): T;
 
   getFunction(
-    nameOrSignature: "implementation"
-  ): TypedContractMethod<[], [string], "view">;
+    nameOrSignature: 'implementation'
+  ): TypedContractMethod<[], [string], 'view'>;
 
   filters: {};
 }

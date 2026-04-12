@@ -109,11 +109,11 @@ pragma solidity ^0.8.24;
 contract ContractName {
     /// @notice Public state variable documentation
     uint256 public stateVariable;
-    
+
     /// @notice Event documentation
     /// @param param1 Parameter description
     event EventName(address indexed param1);
-    
+
     /// @notice Function documentation
     /// @dev Implementation details
     /// @param param Parameter description
@@ -168,25 +168,25 @@ open coverage/index.html
 #### Testing Standards
 
 ```typescript
-describe("FeatureName", function () {
-  describe("when condition", function () {
+describe('FeatureName', function () {
+  describe('when condition', function () {
     beforeEach(async function () {
       // Setup specific to this condition
     });
 
-    it("should handle normal case", async function () {
+    it('should handle normal case', async function () {
       // Test normal operation
     });
 
-    it("should handle edge case", async function () {
+    it('should handle edge case', async function () {
       // Test edge conditions
     });
 
-    it("should revert on invalid input", async function () {
+    it('should revert on invalid input', async function () {
       // Test error conditions
       await expect(
         contract.function(invalidInput)
-      ).to.be.revertedWithCustomError(contract, "ErrorName");
+      ).to.be.revertedWithCustomError(contract, 'ErrorName');
     });
   });
 });
@@ -411,24 +411,28 @@ npm install --save-dev @typechain/hardhat@latest
 
 ### Documentation Standards
 
-```markdown
+````markdown
 # Use clear headers
+
 ## Section
+
 ### Subsection
 
 # Include code examples
+
 ```solidity
 contract Example {
     // Clear, commented code
 }
 ```
+````
 
 ## Use checklists for procedures
 
 - [ ] Step 1
 - [ ] Step 2
 
-```
+````
 
 ## Collaboration Guidelines
 
@@ -465,6 +469,6 @@ jobs:
       - run: npm run compile
       - run: npm test
       - run: npm run coverage
-```
+````
 
 This workflow ensures consistent, high-quality development while maintaining security and performance standards.

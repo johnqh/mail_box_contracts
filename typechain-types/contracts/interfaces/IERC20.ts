@@ -12,42 +12,42 @@ import type {
   ContractRunner,
   ContractMethod,
   Listener,
-} from "ethers";
+} from 'ethers';
 import type {
   TypedContractEvent,
   TypedDeferredTopicFilter,
   TypedEventLog,
   TypedListener,
   TypedContractMethod,
-} from "../../common";
+} from '../../common';
 
 export interface IERC20Interface extends Interface {
   getFunction(
-    nameOrSignature: "approve" | "balanceOf" | "transfer" | "transferFrom"
+    nameOrSignature: 'approve' | 'balanceOf' | 'transfer' | 'transferFrom'
   ): FunctionFragment;
 
   encodeFunctionData(
-    functionFragment: "approve",
+    functionFragment: 'approve',
     values: [AddressLike, BigNumberish]
   ): string;
   encodeFunctionData(
-    functionFragment: "balanceOf",
+    functionFragment: 'balanceOf',
     values: [AddressLike]
   ): string;
   encodeFunctionData(
-    functionFragment: "transfer",
+    functionFragment: 'transfer',
     values: [AddressLike, BigNumberish]
   ): string;
   encodeFunctionData(
-    functionFragment: "transferFrom",
+    functionFragment: 'transferFrom',
     values: [AddressLike, AddressLike, BigNumberish]
   ): string;
 
-  decodeFunctionResult(functionFragment: "approve", data: BytesLike): Result;
-  decodeFunctionResult(functionFragment: "balanceOf", data: BytesLike): Result;
-  decodeFunctionResult(functionFragment: "transfer", data: BytesLike): Result;
+  decodeFunctionResult(functionFragment: 'approve', data: BytesLike): Result;
+  decodeFunctionResult(functionFragment: 'balanceOf', data: BytesLike): Result;
+  decodeFunctionResult(functionFragment: 'transfer', data: BytesLike): Result;
   decodeFunctionResult(
-    functionFragment: "transferFrom",
+    functionFragment: 'transferFrom',
     data: BytesLike
   ): Result;
 }
@@ -98,21 +98,21 @@ export interface IERC20 extends BaseContract {
   approve: TypedContractMethod<
     [spender: AddressLike, amount: BigNumberish],
     [boolean],
-    "nonpayable"
+    'nonpayable'
   >;
 
-  balanceOf: TypedContractMethod<[account: AddressLike], [bigint], "view">;
+  balanceOf: TypedContractMethod<[account: AddressLike], [bigint], 'view'>;
 
   transfer: TypedContractMethod<
     [to: AddressLike, amount: BigNumberish],
     [boolean],
-    "nonpayable"
+    'nonpayable'
   >;
 
   transferFrom: TypedContractMethod<
     [from: AddressLike, to: AddressLike, amount: BigNumberish],
     [boolean],
-    "nonpayable"
+    'nonpayable'
   >;
 
   getFunction<T extends ContractMethod = ContractMethod>(
@@ -120,28 +120,28 @@ export interface IERC20 extends BaseContract {
   ): T;
 
   getFunction(
-    nameOrSignature: "approve"
+    nameOrSignature: 'approve'
   ): TypedContractMethod<
     [spender: AddressLike, amount: BigNumberish],
     [boolean],
-    "nonpayable"
+    'nonpayable'
   >;
   getFunction(
-    nameOrSignature: "balanceOf"
-  ): TypedContractMethod<[account: AddressLike], [bigint], "view">;
+    nameOrSignature: 'balanceOf'
+  ): TypedContractMethod<[account: AddressLike], [bigint], 'view'>;
   getFunction(
-    nameOrSignature: "transfer"
+    nameOrSignature: 'transfer'
   ): TypedContractMethod<
     [to: AddressLike, amount: BigNumberish],
     [boolean],
-    "nonpayable"
+    'nonpayable'
   >;
   getFunction(
-    nameOrSignature: "transferFrom"
+    nameOrSignature: 'transferFrom'
   ): TypedContractMethod<
     [from: AddressLike, to: AddressLike, amount: BigNumberish],
     [boolean],
-    "nonpayable"
+    'nonpayable'
   >;
 
   filters: {};

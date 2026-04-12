@@ -54,7 +54,7 @@ describe('Stateless OnchainMailerClient', () => {
         Chain.POLYGON_MAINNET,
         Chain.ARBITRUM_MAINNET,
         Chain.OPTIMISM_MAINNET,
-        Chain.SOLANA_MAINNET
+        Chain.SOLANA_MAINNET,
       ];
 
       chains.forEach(chain => {
@@ -100,7 +100,10 @@ describe('Stateless OnchainMailerClient', () => {
 
   describe('Error handling', () => {
     it('should validate message subject', async () => {
-      const mockWallet = { walletClient: {}, publicClient: {} } as unknown as Wallet;
+      const mockWallet = {
+        walletClient: {},
+        publicClient: {},
+      } as unknown as Wallet;
       const mockChainInfo = RpcHelpers.getChainInfo(Chain.ETH_MAINNET);
 
       // Subject too long
@@ -116,7 +119,10 @@ describe('Stateless OnchainMailerClient', () => {
     });
 
     it('should validate message body', async () => {
-      const mockWallet = { walletClient: {}, publicClient: {} } as unknown as Wallet;
+      const mockWallet = {
+        walletClient: {},
+        publicClient: {},
+      } as unknown as Wallet;
       const mockChainInfo = RpcHelpers.getChainInfo(Chain.ETH_MAINNET);
 
       // Body too long
@@ -132,10 +138,13 @@ describe('Stateless OnchainMailerClient', () => {
     });
 
     it('should throw error for unsupported chain type', async () => {
-      const mockWallet = { walletClient: {}, publicClient: {} } as unknown as Wallet;
+      const mockWallet = {
+        walletClient: {},
+        publicClient: {},
+      } as unknown as Wallet;
       const invalidChainInfo = {
         ...RpcHelpers.getChainInfo(Chain.ETH_MAINNET),
-        chainType: 'INVALID' as any
+        chainType: 'INVALID' as any,
       };
 
       await expect(
@@ -163,7 +172,7 @@ describe('Stateless OnchainMailerClient', () => {
       const chains = [
         Chain.ETH_MAINNET,
         Chain.POLYGON_MAINNET,
-        Chain.ARBITRUM_MAINNET
+        Chain.ARBITRUM_MAINNET,
       ].map(chain => RpcHelpers.getChainInfo(chain));
 
       // These would all run concurrently with different chain info

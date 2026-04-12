@@ -164,11 +164,11 @@ unchecked {
 
 **Cost Comparison:**
 
-| Network | Cost | Time to Deploy |
-|---------|------|----------------|
-| Polygon (Recommended) | $1-4 | Same |
-| Base | $5-17 | Same |
-| Ethereum | $412-1,675 | Same |
+| Network               | Cost       | Time to Deploy |
+| --------------------- | ---------- | -------------- |
+| Polygon (Recommended) | $1-4       | Same           |
+| Base                  | $5-17      | Same           |
+| Ethereum              | $412-1,675 | Same           |
 
 **Strategy:**
 
@@ -415,24 +415,24 @@ Unlike EVM, Solana deployment cost is fixed (rent-based), but:
 
 ## EVM Quick Wins (Already Applied)
 
-| Optimization | Status | Savings |
-|--------------|--------|---------|
-| Compiler (runs: 1, viaIR) | ✅ Applied | 10-15% |
-| Storage packing | ✅ Already done | ~$75-150 |
-| Custom errors | ✅ Already done | ~$25-50 |
-| Deploy on L2 | 🔄 Your choice | 95%+ |
-| Deploy low gas period | 🔄 Your choice | 40-70% |
+| Optimization              | Status          | Savings  |
+| ------------------------- | --------------- | -------- |
+| Compiler (runs: 1, viaIR) | ✅ Applied      | 10-15%   |
+| Storage packing           | ✅ Already done | ~$75-150 |
+| Custom errors             | ✅ Already done | ~$25-50  |
+| Deploy on L2              | 🔄 Your choice  | 95%+     |
+| Deploy low gas period     | 🔄 Your choice  | 40-70%   |
 
 **Total potential savings: $400-1,600 on mainnet**
 
 ## Solana Quick Wins (TO DO)
 
-| Optimization | Status | Savings |
-|--------------|--------|---------|
-| Cargo profile optimization | ❌ Add this | $140-280 |
-| Remove unused features | ❌ Review | $20-40 |
-| Deploy when SOL is cheaper | 🔄 Monitor | Variable |
-| Use devnet for testing | ✅ Already have | FREE |
+| Optimization               | Status          | Savings  |
+| -------------------------- | --------------- | -------- |
+| Cargo profile optimization | ❌ Add this     | $140-280 |
+| Remove unused features     | ❌ Review       | $20-40   |
+| Deploy when SOL is cheaper | 🔄 Monitor      | Variable |
+| Use devnet for testing     | ✅ Already have | FREE     |
 
 **Total potential savings: $160-320**
 

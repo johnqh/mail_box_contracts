@@ -267,10 +267,7 @@ function encodeSendToEmail(
   return data;
 }
 
-function encodeSendPreparedToEmail(
-  toEmail: string,
-  mailId: string
-): Buffer {
+function encodeSendPreparedToEmail(toEmail: string, mailId: string): Buffer {
   const emailBytes = Buffer.from(toEmail, 'utf8');
   const mailIdBytes = Buffer.from(mailId, 'utf8');
   const data = Buffer.alloc(1 + 4 + emailBytes.length + 4 + mailIdBytes.length);
@@ -322,7 +319,10 @@ function encodeRejectDelegation(): Buffer {
   return data;
 }
 
-function encodeSetCustomFeePercentage(account: PublicKey, percentage: number): Buffer {
+function encodeSetCustomFeePercentage(
+  account: PublicKey,
+  percentage: number
+): Buffer {
   if (percentage < 0 || percentage > 100) {
     throw new Error('Percentage must be between 0 and 100');
   }
@@ -386,9 +386,9 @@ export class SolanaMailerClient {
 
   // Priority fee recommendations based on network congestion
   private readonly priorityFeeRecommendations = {
-    low: 1000,      // 1,000 microLamports - for low priority transactions
-    normal: 10000,  // 10,000 microLamports - for normal priority
-    high: 50000,    // 50,000 microLamports - for high priority
+    low: 1000, // 1,000 microLamports - for low priority transactions
+    normal: 10000, // 10,000 microLamports - for normal priority
+    high: 50000, // 50,000 microLamports - for high priority
     urgent: 100000, // 100,000 microLamports - for urgent transactions
   };
 
@@ -470,45 +470,61 @@ export class SolanaMailerClient {
       while (retryCount <= maxRetries) {
         try {
           // Set a high limit for simulation
-          const simTransaction = new Transaction().add(...transaction.instructions);
+          const simTransaction = new Transaction().add(
+            ...transaction.instructions
+          );
           simTransaction.add(
             ComputeBudgetProgram.setComputeUnitLimit({
               units: 1_400_000, // Max for simulation
             })
           );
-          simTransaction.recentBlockhash = (await connection.getLatestBlockhash()).blockhash;
+          simTransaction.recentBlockhash = (
+            await connection.getLatestBlockhash()
+          ).blockhash;
           simTransaction.feePayer = wallet.publicKey;
 
-          const simulation = await connection.simulateTransaction(simTransaction);
+          const simulation =
+            await connection.simulateTransaction(simTransaction);
 
           if (simulation.value.err === null && simulation.value.unitsConsumed) {
             simulatedUnits = simulation.value.unitsConsumed;
-            const multiplier = options.computeUnitMultiplier ?? this.defaultComputeUnitMultiplier;
+            const multiplier =
+              options.computeUnitMultiplier ??
+              this.defaultComputeUnitMultiplier;
             let estimatedLimit = Math.ceil(simulatedUnits * multiplier);
 
             // If we have a default and the estimate is suspiciously low, use the default
             // This handles cases where simulation returns incorrect low values
             if (defaultComputeUnits && estimatedLimit < defaultComputeUnits) {
-              console.warn(`Estimated compute units ${estimatedLimit} is below default ${defaultComputeUnits}, using default`);
+              console.warn(
+                `Estimated compute units ${estimatedLimit} is below default ${defaultComputeUnits}, using default`
+              );
               estimatedLimit = defaultComputeUnits;
             }
 
             computeUnitLimit = Math.min(estimatedLimit, 1_400_000);
             break; // Success
           } else if (simulation.value.err) {
-            throw new Error(`Simulation failed: ${JSON.stringify(simulation.value.err)}`);
+            throw new Error(
+              `Simulation failed: ${JSON.stringify(simulation.value.err)}`
+            );
           }
         } catch (error) {
           retryCount++;
           if (retryCount > maxRetries) {
-            console.warn(`Failed to auto-optimize compute units after ${maxRetries} retries:`, error);
+            console.warn(
+              `Failed to auto-optimize compute units after ${maxRetries} retries:`,
+              error
+            );
             // Use default if provided
             if (defaultComputeUnits) {
               computeUnitLimit = defaultComputeUnits;
             }
           } else {
             // Wait before retry
-            await new Promise(resolve => setTimeout(resolve, 1000 * retryCount));
+            await new Promise(resolve =>
+              setTimeout(resolve, 1000 * retryCount)
+            );
           }
         }
       }
@@ -532,8 +548,11 @@ export class SolanaMailerClient {
     }
 
     // Add priority fee if specified (or use recommended normal priority)
-    const priorityFee = options?.computeUnitPrice ??
-                       (options?.autoOptimize ? this.priorityFeeRecommendations.normal : undefined);
+    const priorityFee =
+      options?.computeUnitPrice ??
+      (options?.autoOptimize
+        ? this.priorityFeeRecommendations.normal
+        : undefined);
     if (priorityFee) {
       optimizedTx.add(
         ComputeBudgetProgram.setComputeUnitPrice({
@@ -563,13 +582,14 @@ export class SolanaMailerClient {
     defaultComputeUnits?: number
   ): Promise<TransactionResult> {
     // Optimize compute units
-    const { transaction: optimizedTx, simulatedUnits } = await this.optimizeComputeUnits(
-      transaction,
-      wallet,
-      connection,
-      computeOptions,
-      defaultComputeUnits
-    );
+    const { transaction: optimizedTx, simulatedUnits } =
+      await this.optimizeComputeUnits(
+        transaction,
+        wallet,
+        connection,
+        computeOptions,
+        defaultComputeUnits
+      );
 
     // Get latest blockhash
     const { blockhash } = await connection.getLatestBlockhash();
@@ -585,7 +605,10 @@ export class SolanaMailerClient {
       preflightCommitment: options?.preflightCommitment ?? 'confirmed',
     });
 
-    await connection.confirmTransaction(signature, options?.commitment ?? 'confirmed');
+    await connection.confirmTransaction(
+      signature,
+      options?.commitment ?? 'confirmed'
+    );
 
     return {
       signature,
@@ -604,7 +627,10 @@ export class SolanaMailerClient {
     chainInfo: ChainInfo,
     computeOptions?: ComputeUnitOptions
   ): Promise<TransactionResult> {
-    const connection = await this.getOrCreateConnection(chainInfo, connectedWallet.connection);
+    const connection = await this.getOrCreateConnection(
+      chainInfo,
+      connectedWallet.connection
+    );
     const { programId, mailerStatePda } = this.getProgramAddresses(chainInfo);
 
     if (!chainInfo.usdcAddress) {
@@ -616,7 +642,11 @@ export class SolanaMailerClient {
     const instruction = new TransactionInstruction({
       programId,
       keys: [
-        { pubkey: connectedWallet.wallet.publicKey, isSigner: true, isWritable: true },
+        {
+          pubkey: connectedWallet.wallet.publicKey,
+          isSigner: true,
+          isWritable: true,
+        },
         { pubkey: mailerStatePda, isSigner: false, isWritable: true },
         { pubkey: SystemProgram.programId, isSigner: false, isWritable: false },
       ],
@@ -647,7 +677,10 @@ export class SolanaMailerClient {
     resolveSenderToName: boolean = false,
     computeOptions?: ComputeUnitOptions
   ): Promise<TransactionResult> {
-    const connection = await this.getOrCreateConnection(chainInfo, connectedWallet.connection);
+    const connection = await this.getOrCreateConnection(
+      chainInfo,
+      connectedWallet.connection
+    );
     const { programId, mailerStatePda } = this.getProgramAddresses(chainInfo);
 
     if (!chainInfo.usdcAddress) {
@@ -682,7 +715,11 @@ export class SolanaMailerClient {
     );
 
     const keys = [
-      { pubkey: connectedWallet.wallet.publicKey, isSigner: true, isWritable: true },
+      {
+        pubkey: connectedWallet.wallet.publicKey,
+        isSigner: true,
+        isWritable: true,
+      },
       { pubkey: recipientClaimPda, isSigner: false, isWritable: true },
       { pubkey: mailerStatePda, isSigner: false, isWritable: true },
       { pubkey: senderTokenAccount, isSigner: false, isWritable: true },
@@ -695,7 +732,13 @@ export class SolanaMailerClient {
     const instruction = new TransactionInstruction({
       programId,
       keys,
-      data: encodeSend(toPubkey, subject, body, revenueShareToReceiver, resolveSenderToName),
+      data: encodeSend(
+        toPubkey,
+        subject,
+        body,
+        revenueShareToReceiver,
+        resolveSenderToName
+      ),
     });
 
     const transaction = new Transaction().add(instruction);
@@ -734,7 +777,10 @@ export class SolanaMailerClient {
     resolveSenderToName: boolean = false,
     computeOptions?: ComputeUnitOptions
   ): Promise<TransactionResult> {
-    const connection = await this.getOrCreateConnection(chainInfo, connectedWallet.connection);
+    const connection = await this.getOrCreateConnection(
+      chainInfo,
+      connectedWallet.connection
+    );
     const { programId, mailerStatePda } = this.getProgramAddresses(chainInfo);
 
     if (!chainInfo.usdcAddress) {
@@ -769,7 +815,11 @@ export class SolanaMailerClient {
     );
 
     const keys = [
-      { pubkey: connectedWallet.wallet.publicKey, isSigner: true, isWritable: true },
+      {
+        pubkey: connectedWallet.wallet.publicKey,
+        isSigner: true,
+        isWritable: true,
+      },
       { pubkey: recipientClaimPda, isSigner: false, isWritable: true },
       { pubkey: mailerStatePda, isSigner: false, isWritable: true },
       { pubkey: senderTokenAccount, isSigner: false, isWritable: true },
@@ -782,7 +832,12 @@ export class SolanaMailerClient {
     const instruction = new TransactionInstruction({
       programId,
       keys,
-      data: encodeSendPrepared(toPubkey, mailId, revenueShareToReceiver, resolveSenderToName),
+      data: encodeSendPrepared(
+        toPubkey,
+        mailId,
+        revenueShareToReceiver,
+        resolveSenderToName
+      ),
     });
 
     const transaction = new Transaction().add(instruction);
@@ -821,7 +876,10 @@ export class SolanaMailerClient {
     resolveSenderToName: boolean = false,
     computeOptions?: ComputeUnitOptions
   ): Promise<TransactionResult> {
-    const connection = await this.getOrCreateConnection(chainInfo, connectedWallet.connection);
+    const connection = await this.getOrCreateConnection(
+      chainInfo,
+      connectedWallet.connection
+    );
     const { programId, mailerStatePda } = this.getProgramAddresses(chainInfo);
 
     if (!chainInfo.usdcAddress) {
@@ -856,7 +914,11 @@ export class SolanaMailerClient {
     );
 
     const keys = [
-      { pubkey: connectedWallet.wallet.publicKey, isSigner: true, isWritable: true },
+      {
+        pubkey: connectedWallet.wallet.publicKey,
+        isSigner: true,
+        isWritable: true,
+      },
       { pubkey: recipientClaimPda, isSigner: false, isWritable: true },
       { pubkey: mailerStatePda, isSigner: false, isWritable: true },
       { pubkey: senderTokenAccount, isSigner: false, isWritable: true },
@@ -913,7 +975,10 @@ export class SolanaMailerClient {
     chainInfo: ChainInfo,
     computeOptions?: ComputeUnitOptions
   ): Promise<TransactionResult> {
-    const connection = await this.getOrCreateConnection(chainInfo, connectedWallet.connection);
+    const connection = await this.getOrCreateConnection(
+      chainInfo,
+      connectedWallet.connection
+    );
     const { programId, mailerStatePda } = this.getProgramAddresses(chainInfo);
 
     if (!chainInfo.usdcAddress) {
@@ -942,7 +1007,11 @@ export class SolanaMailerClient {
     );
 
     const keys = [
-      { pubkey: connectedWallet.wallet.publicKey, isSigner: true, isWritable: true },
+      {
+        pubkey: connectedWallet.wallet.publicKey,
+        isSigner: true,
+        isWritable: true,
+      },
       { pubkey: mailerStatePda, isSigner: false, isWritable: true },
       { pubkey: senderTokenAccount, isSigner: false, isWritable: true },
       { pubkey: mailerTokenAccount, isSigner: false, isWritable: true },
@@ -991,7 +1060,10 @@ export class SolanaMailerClient {
     chainInfo: ChainInfo,
     computeOptions?: ComputeUnitOptions
   ): Promise<TransactionResult> {
-    const connection = await this.getOrCreateConnection(chainInfo, connectedWallet.connection);
+    const connection = await this.getOrCreateConnection(
+      chainInfo,
+      connectedWallet.connection
+    );
     const { programId, mailerStatePda } = this.getProgramAddresses(chainInfo);
 
     if (!chainInfo.usdcAddress) {
@@ -1020,7 +1092,11 @@ export class SolanaMailerClient {
     );
 
     const keys = [
-      { pubkey: connectedWallet.wallet.publicKey, isSigner: true, isWritable: true },
+      {
+        pubkey: connectedWallet.wallet.publicKey,
+        isSigner: true,
+        isWritable: true,
+      },
       { pubkey: mailerStatePda, isSigner: false, isWritable: true },
       { pubkey: senderTokenAccount, isSigner: false, isWritable: true },
       { pubkey: mailerTokenAccount, isSigner: false, isWritable: true },
@@ -1065,7 +1141,10 @@ export class SolanaMailerClient {
     chainInfo: ChainInfo,
     computeOptions?: ComputeUnitOptions
   ): Promise<TransactionResult> {
-    const connection = await this.getOrCreateConnection(chainInfo, connectedWallet.connection);
+    const connection = await this.getOrCreateConnection(
+      chainInfo,
+      connectedWallet.connection
+    );
     const { programId, mailerStatePda } = this.getProgramAddresses(chainInfo);
 
     if (!chainInfo.usdcAddress) {
@@ -1094,7 +1173,11 @@ export class SolanaMailerClient {
     );
 
     const keys = [
-      { pubkey: connectedWallet.wallet.publicKey, isSigner: true, isWritable: true },
+      {
+        pubkey: connectedWallet.wallet.publicKey,
+        isSigner: true,
+        isWritable: true,
+      },
       { pubkey: recipientClaimPda, isSigner: false, isWritable: true },
       { pubkey: mailerStatePda, isSigner: false, isWritable: true },
       { pubkey: recipientTokenAccount, isSigner: false, isWritable: true },
@@ -1127,7 +1210,10 @@ export class SolanaMailerClient {
     chainInfo: ChainInfo,
     computeOptions?: ComputeUnitOptions
   ): Promise<TransactionResult> {
-    const connection = await this.getOrCreateConnection(chainInfo, connectedWallet.connection);
+    const connection = await this.getOrCreateConnection(
+      chainInfo,
+      connectedWallet.connection
+    );
     const { programId, mailerStatePda } = this.getProgramAddresses(chainInfo);
 
     if (!chainInfo.usdcAddress) {
@@ -1151,7 +1237,11 @@ export class SolanaMailerClient {
     );
 
     const keys = [
-      { pubkey: connectedWallet.wallet.publicKey, isSigner: true, isWritable: true },
+      {
+        pubkey: connectedWallet.wallet.publicKey,
+        isSigner: true,
+        isWritable: true,
+      },
       { pubkey: mailerStatePda, isSigner: false, isWritable: true },
       { pubkey: ownerTokenAccount, isSigner: false, isWritable: true },
       { pubkey: mailerTokenAccount, isSigner: false, isWritable: true },
@@ -1184,10 +1274,14 @@ export class SolanaMailerClient {
     recipient: string | PublicKey,
     computeOptions?: ComputeUnitOptions
   ): Promise<TransactionResult> {
-    const connection = await this.getOrCreateConnection(chainInfo, connectedWallet.connection);
+    const connection = await this.getOrCreateConnection(
+      chainInfo,
+      connectedWallet.connection
+    );
     const { programId, mailerStatePda } = this.getProgramAddresses(chainInfo);
 
-    const recipientPubkey = typeof recipient === 'string' ? new PublicKey(recipient) : recipient;
+    const recipientPubkey =
+      typeof recipient === 'string' ? new PublicKey(recipient) : recipient;
 
     const [recipientClaimPda] = PublicKey.findProgramAddressSync(
       [CLAIM_PDA_SEED, recipientPubkey.toBuffer()],
@@ -1195,7 +1289,11 @@ export class SolanaMailerClient {
     );
 
     const keys = [
-      { pubkey: connectedWallet.wallet.publicKey, isSigner: true, isWritable: true },
+      {
+        pubkey: connectedWallet.wallet.publicKey,
+        isSigner: true,
+        isWritable: true,
+      },
       { pubkey: mailerStatePda, isSigner: false, isWritable: true },
       { pubkey: recipientClaimPda, isSigner: false, isWritable: true },
     ];
@@ -1226,7 +1324,10 @@ export class SolanaMailerClient {
     delegate: Optional<string | PublicKey>,
     computeOptions?: ComputeUnitOptions
   ): Promise<TransactionResult> {
-    const connection = await this.getOrCreateConnection(chainInfo, connectedWallet.connection);
+    const connection = await this.getOrCreateConnection(
+      chainInfo,
+      connectedWallet.connection
+    );
     const { programId, mailerStatePda } = this.getProgramAddresses(chainInfo);
 
     if (!chainInfo.usdcAddress) {
@@ -1236,7 +1337,9 @@ export class SolanaMailerClient {
     const usdcMint = new PublicKey(chainInfo.usdcAddress);
 
     const delegatePubkey = delegate
-      ? (typeof delegate === 'string' ? new PublicKey(delegate) : delegate)
+      ? typeof delegate === 'string'
+        ? new PublicKey(delegate)
+        : delegate
       : null;
 
     const senderTokenAccount = getAssociatedTokenAddressSync(
@@ -1259,7 +1362,11 @@ export class SolanaMailerClient {
     );
 
     const keys = [
-      { pubkey: connectedWallet.wallet.publicKey, isSigner: true, isWritable: true },
+      {
+        pubkey: connectedWallet.wallet.publicKey,
+        isSigner: true,
+        isWritable: true,
+      },
       { pubkey: delegationPda, isSigner: false, isWritable: true },
       { pubkey: mailerStatePda, isSigner: false, isWritable: true },
       { pubkey: senderTokenAccount, isSigner: false, isWritable: true },
@@ -1306,10 +1413,16 @@ export class SolanaMailerClient {
     delegatingAddress: string | PublicKey,
     computeOptions?: ComputeUnitOptions
   ): Promise<TransactionResult> {
-    const connection = await this.getOrCreateConnection(chainInfo, connectedWallet.connection);
+    const connection = await this.getOrCreateConnection(
+      chainInfo,
+      connectedWallet.connection
+    );
     const { programId, mailerStatePda } = this.getProgramAddresses(chainInfo);
 
-    const delegatorPubkey = typeof delegatingAddress === 'string' ? new PublicKey(delegatingAddress) : delegatingAddress;
+    const delegatorPubkey =
+      typeof delegatingAddress === 'string'
+        ? new PublicKey(delegatingAddress)
+        : delegatingAddress;
 
     const [delegationPda] = PublicKey.findProgramAddressSync(
       [DELEGATION_PDA_SEED, delegatorPubkey.toBuffer()],
@@ -1317,7 +1430,11 @@ export class SolanaMailerClient {
     );
 
     const keys = [
-      { pubkey: connectedWallet.wallet.publicKey, isSigner: true, isWritable: false },
+      {
+        pubkey: connectedWallet.wallet.publicKey,
+        isSigner: true,
+        isWritable: false,
+      },
       { pubkey: delegationPda, isSigner: false, isWritable: true },
       { pubkey: mailerStatePda, isSigner: false, isWritable: false },
     ];
@@ -1349,7 +1466,10 @@ export class SolanaMailerClient {
     delegationFee: number | bigint,
     computeOptions?: ComputeUnitOptions
   ): Promise<TransactionResult> {
-    const connection = await this.getOrCreateConnection(chainInfo, connectedWallet.connection);
+    const connection = await this.getOrCreateConnection(
+      chainInfo,
+      connectedWallet.connection
+    );
     const { programId, mailerStatePda } = this.getProgramAddresses(chainInfo);
 
     const ownerKey = connectedWallet.wallet.publicKey;
@@ -1393,10 +1513,14 @@ export class SolanaMailerClient {
     chainInfo: ChainInfo,
     computeOptions?: ComputeUnitOptions
   ): Promise<TransactionResult> {
-    const connection = await this.getOrCreateConnection(chainInfo, connectedWallet.connection);
+    const connection = await this.getOrCreateConnection(
+      chainInfo,
+      connectedWallet.connection
+    );
     const { programId, mailerStatePda } = this.getProgramAddresses(chainInfo);
 
-    const accountPubkey = typeof account === 'string' ? new PublicKey(account) : account;
+    const accountPubkey =
+      typeof account === 'string' ? new PublicKey(account) : account;
 
     const [discountPda] = PublicKey.findProgramAddressSync(
       [DISCOUNT_PDA_SEED, accountPubkey.toBuffer()],
@@ -1440,10 +1564,14 @@ export class SolanaMailerClient {
     chainInfo: ChainInfo,
     computeOptions?: ComputeUnitOptions
   ): Promise<TransactionResult> {
-    const connection = await this.getOrCreateConnection(chainInfo, connectedWallet.connection);
+    const connection = await this.getOrCreateConnection(
+      chainInfo,
+      connectedWallet.connection
+    );
     const { programId, mailerStatePda } = this.getProgramAddresses(chainInfo);
 
-    const accountPubkey = typeof account === 'string' ? new PublicKey(account) : account;
+    const accountPubkey =
+      typeof account === 'string' ? new PublicKey(account) : account;
 
     const [discountPda] = PublicKey.findProgramAddressSync(
       [DISCOUNT_PDA_SEED, accountPubkey.toBuffer()],
@@ -1451,7 +1579,11 @@ export class SolanaMailerClient {
     );
 
     const keys = [
-      { pubkey: connectedWallet.wallet.publicKey, isSigner: true, isWritable: false },
+      {
+        pubkey: connectedWallet.wallet.publicKey,
+        isSigner: true,
+        isWritable: false,
+      },
       { pubkey: mailerStatePda, isSigner: false, isWritable: false },
       { pubkey: discountPda, isSigner: false, isWritable: true },
     ];
@@ -1481,7 +1613,10 @@ export class SolanaMailerClient {
     chainInfo: ChainInfo,
     computeOptions?: ComputeUnitOptions
   ): Promise<TransactionResult> {
-    const connection = await this.getOrCreateConnection(chainInfo, connectedWallet.connection);
+    const connection = await this.getOrCreateConnection(
+      chainInfo,
+      connectedWallet.connection
+    );
     const { programId, mailerStatePda } = this.getProgramAddresses(chainInfo);
 
     if (!chainInfo.usdcAddress) {
@@ -1531,7 +1666,11 @@ export class SolanaMailerClient {
     }
 
     const keys = [
-      { pubkey: connectedWallet.wallet.publicKey, isSigner: true, isWritable: false },
+      {
+        pubkey: connectedWallet.wallet.publicKey,
+        isSigner: true,
+        isWritable: false,
+      },
       { pubkey: mailerStatePda, isSigner: false, isWritable: true },
       { pubkey: ownerTokenAccount, isSigner: false, isWritable: true },
       { pubkey: mailerTokenAccount, isSigner: false, isWritable: true },
@@ -1563,11 +1702,18 @@ export class SolanaMailerClient {
     chainInfo: ChainInfo,
     computeOptions?: ComputeUnitOptions
   ): Promise<TransactionResult> {
-    const connection = await this.getOrCreateConnection(chainInfo, connectedWallet.connection);
+    const connection = await this.getOrCreateConnection(
+      chainInfo,
+      connectedWallet.connection
+    );
     const { programId, mailerStatePda } = this.getProgramAddresses(chainInfo);
 
     const keys = [
-      { pubkey: connectedWallet.wallet.publicKey, isSigner: true, isWritable: false },
+      {
+        pubkey: connectedWallet.wallet.publicKey,
+        isSigner: true,
+        isWritable: false,
+      },
       { pubkey: mailerStatePda, isSigner: false, isWritable: true },
     ];
 
@@ -1596,11 +1742,18 @@ export class SolanaMailerClient {
     chainInfo: ChainInfo,
     computeOptions?: ComputeUnitOptions
   ): Promise<TransactionResult> {
-    const connection = await this.getOrCreateConnection(chainInfo, connectedWallet.connection);
+    const connection = await this.getOrCreateConnection(
+      chainInfo,
+      connectedWallet.connection
+    );
     const { programId, mailerStatePda } = this.getProgramAddresses(chainInfo);
 
     const keys = [
-      { pubkey: connectedWallet.wallet.publicKey, isSigner: true, isWritable: false },
+      {
+        pubkey: connectedWallet.wallet.publicKey,
+        isSigner: true,
+        isWritable: false,
+      },
       { pubkey: mailerStatePda, isSigner: false, isWritable: true },
     ];
 
@@ -1630,11 +1783,18 @@ export class SolanaMailerClient {
     chainInfo: ChainInfo,
     computeOptions?: ComputeUnitOptions
   ): Promise<TransactionResult> {
-    const connection = await this.getOrCreateConnection(chainInfo, connectedWallet.connection);
+    const connection = await this.getOrCreateConnection(
+      chainInfo,
+      connectedWallet.connection
+    );
     const { programId, mailerStatePda } = this.getProgramAddresses(chainInfo);
 
     const keys = [
-      { pubkey: connectedWallet.wallet.publicKey, isSigner: true, isWritable: false },
+      {
+        pubkey: connectedWallet.wallet.publicKey,
+        isSigner: true,
+        isWritable: false,
+      },
       { pubkey: mailerStatePda, isSigner: false, isWritable: true },
     ];
 
@@ -1664,7 +1824,10 @@ export class SolanaMailerClient {
     recipients: (string | PublicKey)[],
     computeOptions?: ComputeUnitOptions
   ): Promise<TransactionResult> {
-    const connection = await this.getOrCreateConnection(chainInfo, connectedWallet.connection);
+    const connection = await this.getOrCreateConnection(
+      chainInfo,
+      connectedWallet.connection
+    );
     const { programId, mailerStatePda } = this.getProgramAddresses(chainInfo);
 
     if (!chainInfo.usdcAddress) {
@@ -1710,7 +1873,9 @@ export class SolanaMailerClient {
         TOKEN_PROGRAM_ID
       );
 
-      const recipientTokenInfo = await connection.getAccountInfo(recipientTokenAccount);
+      const recipientTokenInfo = await connection.getAccountInfo(
+        recipientTokenAccount
+      );
       if (!recipientTokenInfo) {
         transaction.add(
           createAssociatedTokenAccountInstruction(
@@ -1726,10 +1891,18 @@ export class SolanaMailerClient {
         new TransactionInstruction({
           programId,
           keys: [
-            { pubkey: connectedWallet.wallet.publicKey, isSigner: true, isWritable: false },
+            {
+              pubkey: connectedWallet.wallet.publicKey,
+              isSigner: true,
+              isWritable: false,
+            },
             { pubkey: mailerStatePda, isSigner: false, isWritable: true },
             { pubkey: recipientClaimPda, isSigner: false, isWritable: true },
-            { pubkey: recipientTokenAccount, isSigner: false, isWritable: true },
+            {
+              pubkey: recipientTokenAccount,
+              isSigner: false,
+              isWritable: true,
+            },
             { pubkey: mailerTokenAccount, isSigner: false, isWritable: true },
             { pubkey: TOKEN_PROGRAM_ID, isSigner: false, isWritable: false },
           ],
@@ -1752,7 +1925,10 @@ export class SolanaMailerClient {
   /**
    * Get fees configuration
    */
-  async getFees(chainInfo: ChainInfo, connection?: Connection): Promise<MailerFees> {
+  async getFees(
+    chainInfo: ChainInfo,
+    connection?: Connection
+  ): Promise<MailerFees> {
     const conn = await this.getOrCreateConnection(chainInfo, connection);
     const { mailerStatePda } = this.getProgramAddresses(chainInfo);
 
@@ -1775,7 +1951,10 @@ export class SolanaMailerClient {
   /**
    * Get send fee only
    */
-  async getSendFee(chainInfo: ChainInfo, connection?: Connection): Promise<bigint> {
+  async getSendFee(
+    chainInfo: ChainInfo,
+    connection?: Connection
+  ): Promise<bigint> {
     const fees = await this.getFees(chainInfo, connection);
     return fees.sendFee;
   }
@@ -1783,7 +1962,10 @@ export class SolanaMailerClient {
   /**
    * Get delegation fee only
    */
-  async getDelegationFee(chainInfo: ChainInfo, connection?: Connection): Promise<bigint> {
+  async getDelegationFee(
+    chainInfo: ChainInfo,
+    connection?: Connection
+  ): Promise<bigint> {
     const fees = await this.getFees(chainInfo, connection);
     return fees.delegationFee;
   }
@@ -1799,7 +1981,8 @@ export class SolanaMailerClient {
     const conn = await this.getOrCreateConnection(chainInfo, connection);
     const { programId } = this.getProgramAddresses(chainInfo);
 
-    const recipientPubkey = typeof recipient === 'string' ? new PublicKey(recipient) : recipient;
+    const recipientPubkey =
+      typeof recipient === 'string' ? new PublicKey(recipient) : recipient;
 
     const [recipientClaimPda] = PublicKey.findProgramAddressSync(
       [CLAIM_PDA_SEED, recipientPubkey.toBuffer()],
@@ -1823,7 +2006,8 @@ export class SolanaMailerClient {
       amount: Number(amount),
       timestamp,
       expiresAt,
-      recipient: recipient instanceof PublicKey ? recipient.toBase58() : recipient,
+      recipient:
+        recipient instanceof PublicKey ? recipient.toBase58() : recipient,
       isExpired,
     };
   }
@@ -1831,7 +2015,10 @@ export class SolanaMailerClient {
   /**
    * Get owner claimable amount
    */
-  async getOwnerClaimable(chainInfo: ChainInfo, connection?: Connection): Promise<number> {
+  async getOwnerClaimable(
+    chainInfo: ChainInfo,
+    connection?: Connection
+  ): Promise<number> {
     const conn = await this.getOrCreateConnection(chainInfo, connection);
     const { mailerStatePda } = this.getProgramAddresses(chainInfo);
 
@@ -1858,7 +2045,8 @@ export class SolanaMailerClient {
     const conn = await this.getOrCreateConnection(chainInfo, connection);
     const { programId } = this.getProgramAddresses(chainInfo);
 
-    const addressPubkey = typeof address === 'string' ? new PublicKey(address) : address;
+    const addressPubkey =
+      typeof address === 'string' ? new PublicKey(address) : address;
 
     const [delegationPda] = PublicKey.findProgramAddressSync(
       [DELEGATION_PDA_SEED, addressPubkey.toBuffer()],
@@ -1894,7 +2082,8 @@ export class SolanaMailerClient {
     const conn = await this.getOrCreateConnection(chainInfo, connection);
     const { programId } = this.getProgramAddresses(chainInfo);
 
-    const accountPubkey = typeof account === 'string' ? new PublicKey(account) : account;
+    const accountPubkey =
+      typeof account === 'string' ? new PublicKey(account) : account;
 
     const [discountPda] = PublicKey.findProgramAddressSync(
       [DISCOUNT_PDA_SEED, accountPubkey.toBuffer()],
@@ -1916,7 +2105,10 @@ export class SolanaMailerClient {
   /**
    * Check if the program is paused
    */
-  async isPaused(chainInfo: ChainInfo, connection?: Connection): Promise<boolean> {
+  async isPaused(
+    chainInfo: ChainInfo,
+    connection?: Connection
+  ): Promise<boolean> {
     const conn = await this.getOrCreateConnection(chainInfo, connection);
     const { mailerStatePda } = this.getProgramAddresses(chainInfo);
 
@@ -1935,7 +2127,10 @@ export class SolanaMailerClient {
   /**
    * Get the contract owner
    */
-  async getOwner(chainInfo: ChainInfo, connection?: Connection): Promise<PublicKey> {
+  async getOwner(
+    chainInfo: ChainInfo,
+    connection?: Connection
+  ): Promise<PublicKey> {
     const conn = await this.getOrCreateConnection(chainInfo, connection);
     const { mailerStatePda } = this.getProgramAddresses(chainInfo);
 

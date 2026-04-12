@@ -59,7 +59,7 @@ Relates to # (issue number)
 
 - [ ] Hardhat local network
 - [ ] Ethereum Sepolia testnet
-- [ ] Other: ________________
+- [ ] Other: ******\_\_\_\_******
 
 ## 🎯 Breaking Changes
 
@@ -91,7 +91,7 @@ Any additional information that reviewers should know:
 - [ ] Contract documentation updated
 - [ ] Changelog entry added
 
-### Security & Testing  
+### Security & Testing
 
 - [ ] All tests pass locally
 - [ ] New functionality has test coverage

@@ -10,18 +10,18 @@ import type {
   ContractRunner,
   ContractMethod,
   Listener,
-} from "ethers";
+} from 'ethers';
 import type {
   TypedContractEvent,
   TypedDeferredTopicFilter,
   TypedEventLog,
   TypedLogDescription,
   TypedListener,
-} from "../../../common";
+} from '../../../common';
 
 export interface IERC1967Interface extends Interface {
   getEvent(
-    nameOrSignatureOrTopic: "AdminChanged" | "BeaconUpgraded" | "Upgraded"
+    nameOrSignatureOrTopic: 'AdminChanged' | 'BeaconUpgraded' | 'Upgraded'
   ): EventFragment;
 }
 
@@ -110,21 +110,21 @@ export interface IERC1967 extends BaseContract {
   ): T;
 
   getEvent(
-    key: "AdminChanged"
+    key: 'AdminChanged'
   ): TypedContractEvent<
     AdminChangedEvent.InputTuple,
     AdminChangedEvent.OutputTuple,
     AdminChangedEvent.OutputObject
   >;
   getEvent(
-    key: "BeaconUpgraded"
+    key: 'BeaconUpgraded'
   ): TypedContractEvent<
     BeaconUpgradedEvent.InputTuple,
     BeaconUpgradedEvent.OutputTuple,
     BeaconUpgradedEvent.OutputObject
   >;
   getEvent(
-    key: "Upgraded"
+    key: 'Upgraded'
   ): TypedContractEvent<
     UpgradedEvent.InputTuple,
     UpgradedEvent.OutputTuple,
@@ -132,7 +132,7 @@ export interface IERC1967 extends BaseContract {
   >;
 
   filters: {
-    "AdminChanged(address,address)": TypedContractEvent<
+    'AdminChanged(address,address)': TypedContractEvent<
       AdminChangedEvent.InputTuple,
       AdminChangedEvent.OutputTuple,
       AdminChangedEvent.OutputObject
@@ -143,7 +143,7 @@ export interface IERC1967 extends BaseContract {
       AdminChangedEvent.OutputObject
     >;
 
-    "BeaconUpgraded(address)": TypedContractEvent<
+    'BeaconUpgraded(address)': TypedContractEvent<
       BeaconUpgradedEvent.InputTuple,
       BeaconUpgradedEvent.OutputTuple,
       BeaconUpgradedEvent.OutputObject
@@ -154,7 +154,7 @@ export interface IERC1967 extends BaseContract {
       BeaconUpgradedEvent.OutputObject
     >;
 
-    "Upgraded(address)": TypedContractEvent<
+    'Upgraded(address)': TypedContractEvent<
       UpgradedEvent.InputTuple,
       UpgradedEvent.OutputTuple,
       UpgradedEvent.OutputObject

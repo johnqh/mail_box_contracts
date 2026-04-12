@@ -1,4 +1,9 @@
-import { ChainType, Optional, isEvmAddress, isSolanaAddress } from '@sudobility/types';
+import {
+  ChainType,
+  Optional,
+  isEvmAddress,
+  isSolanaAddress,
+} from '@sudobility/types';
 
 export class WalletDetector {
   /**
@@ -24,11 +29,17 @@ export class WalletDetector {
     }
 
     // Check for specific Solana wallet adapters
-    if (wallet.adapter && typeof wallet.adapter === 'object' && 'name' in wallet.adapter) {
+    if (
+      wallet.adapter &&
+      typeof wallet.adapter === 'object' &&
+      'name' in wallet.adapter
+    ) {
       return ChainType.SOLANA;
     }
-    
-    throw new Error('Unsupported wallet type - unable to detect EVM or Solana interface');
+
+    throw new Error(
+      'Unsupported wallet type - unable to detect EVM or Solana interface'
+    );
   }
 
   /**

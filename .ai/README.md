@@ -87,9 +87,9 @@ const client = new OnchainMailerClient(anyWallet, config);
 
 ```typescript
 // Same methods work on all chains - implementation differs internally
-await client.sendMessage(subject, body, priority);  // Works on EVM and Solana
-await client.delegateTo(address);  // Address validated per chain
-await client.claimRevenue();  // Chain-specific implementation
+await client.sendMessage(subject, body, priority); // Works on EVM and Solana
+await client.delegateTo(address); // Address validated per chain
+await client.claimRevenue(); // Chain-specific implementation
 ```
 
 ## 🛠️ Development Workflow for AI

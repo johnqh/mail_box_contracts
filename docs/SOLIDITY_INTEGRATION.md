@@ -473,33 +473,36 @@ See [`contracts/examples/MailerIntegrationExample.sol`](../contracts/examples/Ma
 ### Hardhat Test Example
 
 ```javascript
-const { expect } = require("chai");
-const { ethers } = require("hardhat");
+const { expect } = require('chai');
+const { ethers } = require('hardhat');
 
-describe("MyContract", function() {
+describe('MyContract', function () {
   let mailer, myContract, usdc;
 
-  beforeEach(async function() {
+  beforeEach(async function () {
     // Deploy MockUSDC
-    const MockUSDC = await ethers.getContractFactory("MockUSDC");
+    const MockUSDC = await ethers.getContractFactory('MockUSDC');
     usdc = await MockUSDC.deploy();
 
     // Deploy Mailer
-    const Mailer = await ethers.getContractFactory("Mailer");
+    const Mailer = await ethers.getContractFactory('Mailer');
     mailer = await Mailer.deploy(usdc.address);
 
     // Deploy your contract
-    const MyContract = await ethers.getContractFactory("MyContract");
+    const MyContract = await ethers.getContractFactory('MyContract');
     myContract = await MyContract.deploy(mailer.address, usdc.address);
 
     // Setup: Mint USDC and approve
-    await usdc.mint(addr1.address, ethers.parseUnits("100", 6));
-    await usdc.connect(addr1).approve(mailer.address, ethers.parseUnits("100", 6));
+    await usdc.mint(addr1.address, ethers.parseUnits('100', 6));
+    await usdc
+      .connect(addr1)
+      .approve(mailer.address, ethers.parseUnits('100', 6));
   });
 
-  it("Should send notification", async function() {
-    await expect(myContract.connect(addr1).sendNotification(addr2.address, "Hello"))
-      .to.emit(mailer, "MailSent");
+  it('Should send notification', async function () {
+    await expect(
+      myContract.connect(addr1).sendNotification(addr2.address, 'Hello')
+    ).to.emit(mailer, 'MailSent');
   });
 });
 ```

@@ -15,7 +15,9 @@ function createWallet(keypair: Keypair): Wallet {
       tx.partialSign(keypair);
       return tx;
     },
-    signAllTransactions: async <T extends Transaction>(txs: T[]): Promise<T[]> => {
+    signAllTransactions: async <T extends Transaction>(
+      txs: T[]
+    ): Promise<T[]> => {
       txs.forEach(tx => tx.partialSign(keypair));
       return txs;
     },
@@ -29,22 +31,29 @@ const wallet = createWallet(keypair);
 const usdcMint = new PublicKey('4zMMC9srt5Ri5X14GAgXhaHii3GnPAEERYPJgZJDncDU'); // Devnet USDC
 
 // Example program ID (replace with actual deployed program ID)
-const MAILER_PROGRAM_ID = new PublicKey('9FLkBDGpZBcR8LMsQ7MwwV6X9P4TDFgN3DeRh5qYyHJF');
+const MAILER_PROGRAM_ID = new PublicKey(
+  '9FLkBDGpZBcR8LMsQ7MwwV6X9P4TDFgN3DeRh5qYyHJF'
+);
 
 async function solanaUsageExamples() {
   console.log('🚀 Mailer Solana Contracts - Usage Examples');
   console.log('Wallet address:', wallet.publicKey.toString());
-  
+
   // ===== EXAMPLE 1: Initialize Clients =====
   console.log('\n📦 Example 1: Initializing Solana Clients');
-  
-  const mailerClient = new MailerClient(connection, wallet, MAILER_PROGRAM_ID, usdcMint);
-  
+
+  const mailerClient = new MailerClient(
+    connection,
+    wallet,
+    MAILER_PROGRAM_ID,
+    usdcMint
+  );
+
   console.log('✅ Clients initialized successfully');
 
   // ===== EXAMPLE 2: Send Messages =====
   console.log('\n📧 Example 2: Sending Messages');
-  
+
   try {
     // Send priority message (with revenue sharing)
     console.log('Sending priority message...');
@@ -65,43 +74,51 @@ async function solanaUsageExamples() {
     console.log('✅ Standard message sent:', standardTx);
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : String(error);
-    console.log('⚠️ Message sending failed (likely due to insufficient USDC):', errorMessage);
+    console.log(
+      '⚠️ Message sending failed (likely due to insufficient USDC):',
+      errorMessage
+    );
   }
 
   // ===== EXAMPLE 3: Delegation Management =====
   console.log('\n👥 Example 3: Delegation Management');
-  
+
   try {
     const delegateKey = Keypair.generate().publicKey;
     console.log('Delegating to:', delegateKey.toString());
-    
+
     const delegationTx = await mailerClient.delegateTo(delegateKey);
     console.log('✅ Delegation set:', delegationTx);
-    
+
     // Check delegation status
     const delegation = await mailerClient.getDelegation(wallet.publicKey);
     if (delegation) {
       console.log('📋 Current delegation:', {
         delegator: delegation.delegator.toString(),
-        delegate: delegation.delegate?.toString() || 'None'
+        delegate: delegation.delegate?.toString() || 'None',
       });
     }
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : String(error);
-    console.log('⚠️ Delegation failed (likely due to insufficient USDC):', errorMessage);
+    console.log(
+      '⚠️ Delegation failed (likely due to insufficient USDC):',
+      errorMessage
+    );
   }
 
   // ===== EXAMPLE 4: Revenue Claims =====
   console.log('\n💰 Example 4: Revenue Claiming');
-  
+
   try {
     // Check claimable amount
-    const claimableInfo = await mailerClient.getRecipientClaimable(wallet.publicKey);
+    const claimableInfo = await mailerClient.getRecipientClaimable(
+      wallet.publicKey
+    );
     if (claimableInfo) {
       console.log('📊 Claimable revenue:', {
         amount: `${claimableInfo.amount / 1_000_000} USDC`,
         timestamp: new Date(claimableInfo.timestamp * 1000).toISOString(),
-        isExpired: claimableInfo.isExpired
+        isExpired: claimableInfo.isExpired,
       });
 
       if (!claimableInfo.isExpired && claimableInfo.amount > 0) {
@@ -118,17 +135,17 @@ async function solanaUsageExamples() {
 
   // ===== EXAMPLE 5: Fee Information =====
   console.log('\n💳 Example 5: Fee Information');
-  
+
   try {
     const mailerFees = await mailerClient.getFees();
     console.log('📊 Mailer fees:', {
-      sendFee: `${mailerFees.sendFee / 1_000_000} USDC`
+      sendFee: `${mailerFees.sendFee / 1_000_000} USDC`,
     });
 
     const serviceFees = await mailerClient.getFees();
     console.log('📊 Service fees:', {
       sendFee: `${serviceFees.sendFee / 1_000_000} USDC`,
-      delegationFee: `${serviceFees.delegationFee / 1_000_000} USDC`
+      delegationFee: `${serviceFees.delegationFee / 1_000_000} USDC`,
     });
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : String(error);

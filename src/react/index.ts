@@ -32,7 +32,11 @@
  */
 
 // Context and Provider
-export { MailerProvider, useMailerClient, useMailerContext } from './context/MailerProvider';
+export {
+  MailerProvider,
+  useMailerClient,
+  useMailerContext,
+} from './context/MailerProvider';
 
 // Grouped Query Hooks (Preferred - no context dependency)
 export {
@@ -85,4 +89,8 @@ export {
 } from './hooks/useMailerMutations';
 
 // Re-export types from unified client
-export type { ChainConfig, MessageResult, UnifiedTransaction } from '../unified/types';
+export type {
+  ChainConfig,
+  MessageResult,
+  UnifiedTransaction,
+} from '../unified/types';

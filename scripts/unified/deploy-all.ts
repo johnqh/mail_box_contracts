@@ -45,12 +45,10 @@ async function deployEVM(network: string): Promise<DeploymentAddresses['evm']> {
 
   console.log('EVM deployer address:', deployer.account.address);
 
-  const balance = await publicClient.getBalance({ address: deployer.account.address });
-  console.log(
-    'EVM deployer balance:',
-    formatEther(balance),
-    'ETH'
-  );
+  const balance = await publicClient.getBalance({
+    address: deployer.account.address,
+  });
+  console.log('EVM deployer balance:', formatEther(balance), 'ETH');
 
   // Get network configuration
   const networkConfig = NETWORK_CONFIGS[network];
@@ -69,7 +67,10 @@ async function deployEVM(network: string): Promise<DeploymentAddresses['evm']> {
 
   // Deploy Mailer (with integrated delegation functionality)
   console.log('Deploying Mailer with integrated delegation management...');
-  const mailer = await hre.viem.deployContract('Mailer', [usdcAddress, deployer.account.address]);
+  const mailer = await hre.viem.deployContract('Mailer', [
+    usdcAddress,
+    deployer.account.address,
+  ]);
   const mailerAddress = mailer.address;
   console.log('✅ Mailer deployed to:', mailerAddress);
 
@@ -165,17 +166,15 @@ async function main() {
 
   // Parse command line arguments
   const args = process.argv.slice(2);
-  const evmNetwork = args
-    .find((arg) => arg.startsWith('--evm='))
-    ?.split('=')[1];
+  const evmNetwork = args.find(arg => arg.startsWith('--evm='))?.split('=')[1];
   const solanaNetwork = args
-    .find((arg) => arg.startsWith('--solana='))
+    .find(arg => arg.startsWith('--solana='))
     ?.split('=')[1];
   const keypairPath = args
-    .find((arg) => arg.startsWith('--keypair='))
+    .find(arg => arg.startsWith('--keypair='))
     ?.split('=')[1];
   const outputPath =
-    args.find((arg) => arg.startsWith('--output='))?.split('=')[1] ||
+    args.find(arg => arg.startsWith('--output='))?.split('=')[1] ||
     './deployment-addresses.json';
 
   if (!evmNetwork && !solanaNetwork) {
@@ -184,11 +183,11 @@ async function main() {
     );
     console.log(
       '\nSupported EVM networks:',
-      Object.keys(NETWORK_CONFIGS).filter((n) => NETWORK_CONFIGS[n].chainId)
+      Object.keys(NETWORK_CONFIGS).filter(n => NETWORK_CONFIGS[n].chainId)
     );
     console.log(
       'Supported Solana networks:',
-      Object.keys(NETWORK_CONFIGS).filter((n) => NETWORK_CONFIGS[n].usdcMint)
+      Object.keys(NETWORK_CONFIGS).filter(n => NETWORK_CONFIGS[n].usdcMint)
     );
     process.exit(1);
   }

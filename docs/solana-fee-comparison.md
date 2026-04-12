@@ -18,13 +18,13 @@
 
 ## Key Differences
 
-| Aspect | EVM | Solana |
-|--------|-----|--------|
-| Base Fee | Variable | Fixed (~5000 lamports) |
-| Estimation Need | Critical | Optional but beneficial |
-| Failure Mode | Out of gas | Exceeds compute units |
-| Priority Mechanism | Higher gas price | Priority fees |
-| Fee Predictability | Low | High |
+| Aspect             | EVM              | Solana                  |
+| ------------------ | ---------------- | ----------------------- |
+| Base Fee           | Variable         | Fixed (~5000 lamports)  |
+| Estimation Need    | Critical         | Optional but beneficial |
+| Failure Mode       | Out of gas       | Exceeds compute units   |
+| Priority Mechanism | Higher gas price | Priority fees           |
+| Fee Predictability | Low              | High                    |
 
 ## What Solana Needs Instead of "Gas Estimation"
 

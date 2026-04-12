@@ -13,7 +13,7 @@ This directory will contain documentation for the unified multi-chain Mailer cli
 ## Key Features (Planned)
 
 - **Automatic Chain Detection**: Detects EVM vs Solana wallets
-- **Unified API**: Same interface for both chains  
+- **Unified API**: Same interface for both chains
 - **Seamless Migration**: Easy transition from single-chain usage
 - **Configuration Management**: Centralized multi-chain config
 

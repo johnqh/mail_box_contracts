@@ -109,17 +109,19 @@ try {
 describe('NewFeature', () => {
   let contract: NewContract;
   let mockUSDC: MockUSDC;
-  
+
   beforeEach(async () => {
     // Deploy contracts
     mockUSDC = await deployMockUSDC();
     contract = await deployNewContract(mockUSDC.address);
-    
+
     // Fund test accounts
-    await mockUSDC.mint(addr1.address, ethers.parseUnits("100", 6));
-    await mockUSDC.connect(addr1).approve(contract.address, ethers.parseUnits("100", 6));
+    await mockUSDC.mint(addr1.address, ethers.parseUnits('100', 6));
+    await mockUSDC
+      .connect(addr1)
+      .approve(contract.address, ethers.parseUnits('100', 6));
   });
-  
+
   it('Should perform operation correctly', async () => {
     await expect(contract.connect(addr1).newFunction(123))
       .to.emit(contract, 'NewEvent')
@@ -135,7 +137,7 @@ describe('UnifiedClient - NewFeature', () => {
   it('should route to appropriate chain implementation', async () => {
     const evmClient = new OnchainMailerClient(evmWallet, testConfig);
     const solanaClient = new OnchainMailerClient(solanaWallet, testConfig);
-    
+
     expect(evmClient.getChainType()).to.equal('evm');
     expect(solanaClient.getChainType()).to.equal('solana');
   });
@@ -237,9 +239,9 @@ interface ChainConfig {
 // Always add timeouts to network calls
 const result = await Promise.race([
   networkOperation(),
-  new Promise((_, reject) => 
+  new Promise((_, reject) =>
     setTimeout(() => reject(new Error('Timeout')), 10000)
-  )
+  ),
 ]);
 ```
 
@@ -305,13 +307,13 @@ const result = await Promise.race([
 
 ### Function Documentation
 
-```typescript
+````typescript
 /**
  * @description Clear description of what the function does
  * @param param1 - Description of parameter with type info
  * @returns Promise resolving to result description
  * @throws Error description of when errors occur
- * 
+ *
  * @example
  * ```typescript
  * const result = await client.method('param1');
@@ -321,7 +323,7 @@ const result = await Promise.race([
 async method(param1: string): Promise<Result> {
   // Implementation
 }
-```
+````
 
 ## 🎯 AI-Specific Guidelines
 
@@ -341,7 +343,9 @@ import { SolanaClient } from '../solana/client';
 
 ```typescript
 // ✅ Good: Specific, actionable error messages
-throw new Error('Insufficient USDC balance. Required: 0.1 USDC, Available: 0.05 USDC');
+throw new Error(
+  'Insufficient USDC balance. Required: 0.1 USDC, Available: 0.05 USDC'
+);
 
 // ❌ Avoid: Generic error messages
 throw new Error('Transaction failed');

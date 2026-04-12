@@ -13,7 +13,7 @@ import type {
   ContractRunner,
   ContractMethod,
   Listener,
-} from "ethers";
+} from 'ethers';
 import type {
   TypedContractEvent,
   TypedDeferredTopicFilter,
@@ -21,106 +21,106 @@ import type {
   TypedLogDescription,
   TypedListener,
   TypedContractMethod,
-} from "../../common";
+} from '../../common';
 
 export interface MailerIntegrationExampleInterface extends Interface {
   getFunction(
     nameOrSignature:
-      | "approveUSDCForMailer"
-      | "authorizeWithMailer"
-      | "mailer"
-      | "owner"
-      | "sendEmailNotification"
-      | "sendNotification"
-      | "sendNotificationContractPays"
-      | "sendPreparedContent"
-      | "sendPriorityMessage"
-      | "sendViaWebhook"
-      | "usdcToken"
-      | "withdrawUSDC"
+      | 'approveUSDCForMailer'
+      | 'authorizeWithMailer'
+      | 'mailer'
+      | 'owner'
+      | 'sendEmailNotification'
+      | 'sendNotification'
+      | 'sendNotificationContractPays'
+      | 'sendPreparedContent'
+      | 'sendPriorityMessage'
+      | 'sendViaWebhook'
+      | 'usdcToken'
+      | 'withdrawUSDC'
   ): FunctionFragment;
 
   getEvent(
-    nameOrSignatureOrTopic: "EmailNotificationSent" | "NotificationSent"
+    nameOrSignatureOrTopic: 'EmailNotificationSent' | 'NotificationSent'
   ): EventFragment;
 
   encodeFunctionData(
-    functionFragment: "approveUSDCForMailer",
+    functionFragment: 'approveUSDCForMailer',
     values: [BigNumberish]
   ): string;
   encodeFunctionData(
-    functionFragment: "authorizeWithMailer",
+    functionFragment: 'authorizeWithMailer',
     values?: undefined
   ): string;
-  encodeFunctionData(functionFragment: "mailer", values?: undefined): string;
-  encodeFunctionData(functionFragment: "owner", values?: undefined): string;
+  encodeFunctionData(functionFragment: 'mailer', values?: undefined): string;
+  encodeFunctionData(functionFragment: 'owner', values?: undefined): string;
   encodeFunctionData(
-    functionFragment: "sendEmailNotification",
+    functionFragment: 'sendEmailNotification',
     values: [string, string, string]
   ): string;
   encodeFunctionData(
-    functionFragment: "sendNotification",
+    functionFragment: 'sendNotification',
     values: [AddressLike, string]
   ): string;
   encodeFunctionData(
-    functionFragment: "sendNotificationContractPays",
+    functionFragment: 'sendNotificationContractPays',
     values: [AddressLike, string]
   ): string;
   encodeFunctionData(
-    functionFragment: "sendPreparedContent",
+    functionFragment: 'sendPreparedContent',
     values: [AddressLike, string]
   ): string;
   encodeFunctionData(
-    functionFragment: "sendPriorityMessage",
+    functionFragment: 'sendPriorityMessage',
     values: [AddressLike, string, string]
   ): string;
   encodeFunctionData(
-    functionFragment: "sendViaWebhook",
+    functionFragment: 'sendViaWebhook',
     values: [AddressLike, string]
   ): string;
-  encodeFunctionData(functionFragment: "usdcToken", values?: undefined): string;
+  encodeFunctionData(functionFragment: 'usdcToken', values?: undefined): string;
   encodeFunctionData(
-    functionFragment: "withdrawUSDC",
+    functionFragment: 'withdrawUSDC',
     values?: undefined
   ): string;
 
   decodeFunctionResult(
-    functionFragment: "approveUSDCForMailer",
+    functionFragment: 'approveUSDCForMailer',
     data: BytesLike
   ): Result;
   decodeFunctionResult(
-    functionFragment: "authorizeWithMailer",
+    functionFragment: 'authorizeWithMailer',
     data: BytesLike
   ): Result;
-  decodeFunctionResult(functionFragment: "mailer", data: BytesLike): Result;
-  decodeFunctionResult(functionFragment: "owner", data: BytesLike): Result;
+  decodeFunctionResult(functionFragment: 'mailer', data: BytesLike): Result;
+  decodeFunctionResult(functionFragment: 'owner', data: BytesLike): Result;
   decodeFunctionResult(
-    functionFragment: "sendEmailNotification",
-    data: BytesLike
-  ): Result;
-  decodeFunctionResult(
-    functionFragment: "sendNotification",
+    functionFragment: 'sendEmailNotification',
     data: BytesLike
   ): Result;
   decodeFunctionResult(
-    functionFragment: "sendNotificationContractPays",
+    functionFragment: 'sendNotification',
     data: BytesLike
   ): Result;
   decodeFunctionResult(
-    functionFragment: "sendPreparedContent",
+    functionFragment: 'sendNotificationContractPays',
     data: BytesLike
   ): Result;
   decodeFunctionResult(
-    functionFragment: "sendPriorityMessage",
+    functionFragment: 'sendPreparedContent',
     data: BytesLike
   ): Result;
   decodeFunctionResult(
-    functionFragment: "sendViaWebhook",
+    functionFragment: 'sendPriorityMessage',
     data: BytesLike
   ): Result;
-  decodeFunctionResult(functionFragment: "usdcToken", data: BytesLike): Result;
   decodeFunctionResult(
-    functionFragment: "withdrawUSDC",
+    functionFragment: 'sendViaWebhook',
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(functionFragment: 'usdcToken', data: BytesLike): Result;
+  decodeFunctionResult(
+    functionFragment: 'withdrawUSDC',
     data: BytesLike
   ): Result;
 }
@@ -197,129 +197,129 @@ export interface MailerIntegrationExample extends BaseContract {
   approveUSDCForMailer: TypedContractMethod<
     [amount: BigNumberish],
     [void],
-    "nonpayable"
+    'nonpayable'
   >;
 
-  authorizeWithMailer: TypedContractMethod<[], [void], "nonpayable">;
+  authorizeWithMailer: TypedContractMethod<[], [void], 'nonpayable'>;
 
-  mailer: TypedContractMethod<[], [string], "view">;
+  mailer: TypedContractMethod<[], [string], 'view'>;
 
-  owner: TypedContractMethod<[], [string], "view">;
+  owner: TypedContractMethod<[], [string], 'view'>;
 
   sendEmailNotification: TypedContractMethod<
     [email: string, subject: string, body: string],
     [void],
-    "nonpayable"
+    'nonpayable'
   >;
 
   sendNotification: TypedContractMethod<
     [recipient: AddressLike, message: string],
     [void],
-    "nonpayable"
+    'nonpayable'
   >;
 
   sendNotificationContractPays: TypedContractMethod<
     [recipient: AddressLike, message: string],
     [void],
-    "nonpayable"
+    'nonpayable'
   >;
 
   sendPreparedContent: TypedContractMethod<
     [recipient: AddressLike, mailId: string],
     [void],
-    "nonpayable"
+    'nonpayable'
   >;
 
   sendPriorityMessage: TypedContractMethod<
     [recipient: AddressLike, subject: string, body: string],
     [void],
-    "nonpayable"
+    'nonpayable'
   >;
 
   sendViaWebhook: TypedContractMethod<
     [recipient: AddressLike, webhookId: string],
     [void],
-    "nonpayable"
+    'nonpayable'
   >;
 
-  usdcToken: TypedContractMethod<[], [string], "view">;
+  usdcToken: TypedContractMethod<[], [string], 'view'>;
 
-  withdrawUSDC: TypedContractMethod<[], [void], "nonpayable">;
+  withdrawUSDC: TypedContractMethod<[], [void], 'nonpayable'>;
 
   getFunction<T extends ContractMethod = ContractMethod>(
     key: string | FunctionFragment
   ): T;
 
   getFunction(
-    nameOrSignature: "approveUSDCForMailer"
-  ): TypedContractMethod<[amount: BigNumberish], [void], "nonpayable">;
+    nameOrSignature: 'approveUSDCForMailer'
+  ): TypedContractMethod<[amount: BigNumberish], [void], 'nonpayable'>;
   getFunction(
-    nameOrSignature: "authorizeWithMailer"
-  ): TypedContractMethod<[], [void], "nonpayable">;
+    nameOrSignature: 'authorizeWithMailer'
+  ): TypedContractMethod<[], [void], 'nonpayable'>;
   getFunction(
-    nameOrSignature: "mailer"
-  ): TypedContractMethod<[], [string], "view">;
+    nameOrSignature: 'mailer'
+  ): TypedContractMethod<[], [string], 'view'>;
   getFunction(
-    nameOrSignature: "owner"
-  ): TypedContractMethod<[], [string], "view">;
+    nameOrSignature: 'owner'
+  ): TypedContractMethod<[], [string], 'view'>;
   getFunction(
-    nameOrSignature: "sendEmailNotification"
+    nameOrSignature: 'sendEmailNotification'
   ): TypedContractMethod<
     [email: string, subject: string, body: string],
     [void],
-    "nonpayable"
+    'nonpayable'
   >;
   getFunction(
-    nameOrSignature: "sendNotification"
+    nameOrSignature: 'sendNotification'
   ): TypedContractMethod<
     [recipient: AddressLike, message: string],
     [void],
-    "nonpayable"
+    'nonpayable'
   >;
   getFunction(
-    nameOrSignature: "sendNotificationContractPays"
+    nameOrSignature: 'sendNotificationContractPays'
   ): TypedContractMethod<
     [recipient: AddressLike, message: string],
     [void],
-    "nonpayable"
+    'nonpayable'
   >;
   getFunction(
-    nameOrSignature: "sendPreparedContent"
+    nameOrSignature: 'sendPreparedContent'
   ): TypedContractMethod<
     [recipient: AddressLike, mailId: string],
     [void],
-    "nonpayable"
+    'nonpayable'
   >;
   getFunction(
-    nameOrSignature: "sendPriorityMessage"
+    nameOrSignature: 'sendPriorityMessage'
   ): TypedContractMethod<
     [recipient: AddressLike, subject: string, body: string],
     [void],
-    "nonpayable"
+    'nonpayable'
   >;
   getFunction(
-    nameOrSignature: "sendViaWebhook"
+    nameOrSignature: 'sendViaWebhook'
   ): TypedContractMethod<
     [recipient: AddressLike, webhookId: string],
     [void],
-    "nonpayable"
+    'nonpayable'
   >;
   getFunction(
-    nameOrSignature: "usdcToken"
-  ): TypedContractMethod<[], [string], "view">;
+    nameOrSignature: 'usdcToken'
+  ): TypedContractMethod<[], [string], 'view'>;
   getFunction(
-    nameOrSignature: "withdrawUSDC"
-  ): TypedContractMethod<[], [void], "nonpayable">;
+    nameOrSignature: 'withdrawUSDC'
+  ): TypedContractMethod<[], [void], 'nonpayable'>;
 
   getEvent(
-    key: "EmailNotificationSent"
+    key: 'EmailNotificationSent'
   ): TypedContractEvent<
     EmailNotificationSentEvent.InputTuple,
     EmailNotificationSentEvent.OutputTuple,
     EmailNotificationSentEvent.OutputObject
   >;
   getEvent(
-    key: "NotificationSent"
+    key: 'NotificationSent'
   ): TypedContractEvent<
     NotificationSentEvent.InputTuple,
     NotificationSentEvent.OutputTuple,
@@ -327,7 +327,7 @@ export interface MailerIntegrationExample extends BaseContract {
   >;
 
   filters: {
-    "EmailNotificationSent(string,string)": TypedContractEvent<
+    'EmailNotificationSent(string,string)': TypedContractEvent<
       EmailNotificationSentEvent.InputTuple,
       EmailNotificationSentEvent.OutputTuple,
       EmailNotificationSentEvent.OutputObject
@@ -338,7 +338,7 @@ export interface MailerIntegrationExample extends BaseContract {
       EmailNotificationSentEvent.OutputObject
     >;
 
-    "NotificationSent(address,string)": TypedContractEvent<
+    'NotificationSent(address,string)': TypedContractEvent<
       NotificationSentEvent.InputTuple,
       NotificationSentEvent.OutputTuple,
       NotificationSentEvent.OutputObject

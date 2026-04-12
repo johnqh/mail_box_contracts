@@ -15,15 +15,20 @@
 
 ```typescript
 // Single constructor trying to handle all wallet types
-new OnchainMailerClient(anyWallet, config)
+new OnchainMailerClient(anyWallet, config);
 ```
 
 #### New Approach
 
 ```typescript
 // Specific factory methods for each chain
-OnchainMailerClient.forEVM(walletClient, publicClient, mailerAddress, usdcAddress)
-OnchainMailerClient.forSolana(wallet, connection, programId, usdcMint)
+OnchainMailerClient.forEVM(
+  walletClient,
+  publicClient,
+  mailerAddress,
+  usdcAddress
+);
+OnchainMailerClient.forSolana(wallet, connection, programId, usdcMint);
 ```
 
 ### 3. Files Modified

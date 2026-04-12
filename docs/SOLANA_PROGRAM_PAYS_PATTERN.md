@@ -252,49 +252,49 @@ await userContract.connect(user).sendNotification(recipient, subject, body);
 ```javascript
 // Setup (Program Owner):
 const [treasury] = PublicKey.findProgramAddressSync(
-    [Buffer.from("treasury")],
-    program.programId
+  [Buffer.from('treasury')],
+  program.programId
 );
 
 // 1. Initialize program with treasury
 await program.methods
-    .initialize()
-    .accounts({
-        owner: ownerWallet.publicKey,
-        treasury: treasury,
-        usdcMint: USDC_MINT,
-        // ...
-    })
-    .signers([ownerWallet])
-    .rpc();
+  .initialize()
+  .accounts({
+    owner: ownerWallet.publicKey,
+    treasury: treasury,
+    usdcMint: USDC_MINT,
+    // ...
+  })
+  .signers([ownerWallet])
+  .rpc();
 
 // 2. Fund treasury with USDC
 await program.methods
-    .fundTreasury(new BN(1000_000000))  // 1000 USDC
-    .accounts({
-        owner: ownerWallet.publicKey,
-        ownerUsdc: ownerUsdcAccount,
-        treasuryUsdc: treasuryUsdcAccount,
-        // ...
-    })
-    .signers([ownerWallet])
-    .rpc();
+  .fundTreasury(new BN(1000_000000)) // 1000 USDC
+  .accounts({
+    owner: ownerWallet.publicKey,
+    ownerUsdc: ownerUsdcAccount,
+    treasuryUsdc: treasuryUsdcAccount,
+    // ...
+  })
+  .signers([ownerWallet])
+  .rpc();
 
 // User Interaction:
 // User calls program (doesn't need USDC!)
 await program.methods
-    .sendNotification(recipient, "Alert", "You have a notification")
-    .accounts({
-        user: userWallet.publicKey,         // User signs
-        treasury: treasury,                  // Program's PDA
-        treasuryUsdc: treasuryUsdcAccount,  // Program's USDC
-        mailerProgram: MAILER_PROGRAM_ID,
-        mailerState: mailerState,
-        mailerUsdc: mailerUsdcAccount,
-        // ...
-    })
-    .signers([userWallet])  // User signs, but treasury pays!
-    .rpc();
+  .sendNotification(recipient, 'Alert', 'You have a notification')
+  .accounts({
+    user: userWallet.publicKey, // User signs
+    treasury: treasury, // Program's PDA
+    treasuryUsdc: treasuryUsdcAccount, // Program's USDC
+    mailerProgram: MAILER_PROGRAM_ID,
+    mailerState: mailerState,
+    mailerUsdc: mailerUsdcAccount,
+    // ...
+  })
+  .signers([userWallet]) // User signs, but treasury pays!
+  .rpc();
 
 // What happens:
 // 1. User signs transaction to UserProgram
@@ -418,15 +418,15 @@ pub fn send_dao_notification(
 
 ## Solana Advantages Summary
 
-| Aspect | EVM Permission System | Solana Treasury PDA |
-|--------|----------------------|---------------------|
-| **Fund Location** | Owner's personal wallet | Dedicated treasury account |
-| **Approval Risk** | Unlimited approval required | No approvals needed |
-| **System Complexity** | Permission mapping + approvals | PDA seeds only |
-| **Transparency** | Hidden permission lookup | Explicit in tx accounts |
-| **Separation** | Mixed funds | Clear separation |
-| **Security** | Owner wallet always exposed | Treasury isolated |
-| **Revocation** | Must track and revoke | Just stop funding treasury |
+| Aspect                | EVM Permission System          | Solana Treasury PDA        |
+| --------------------- | ------------------------------ | -------------------------- |
+| **Fund Location**     | Owner's personal wallet        | Dedicated treasury account |
+| **Approval Risk**     | Unlimited approval required    | No approvals needed        |
+| **System Complexity** | Permission mapping + approvals | PDA seeds only             |
+| **Transparency**      | Hidden permission lookup       | Explicit in tx accounts    |
+| **Separation**        | Mixed funds                    | Clear separation           |
+| **Security**          | Owner wallet always exposed    | Treasury isolated          |
+| **Revocation**        | Must track and revoke          | Just stop funding treasury |
 
 ## Code Comparison Side-by-Side
 

@@ -127,7 +127,7 @@ invoke_signed(
 
 ```javascript
 // Step 1: User approves (one time)
-await usdc.approve(mailer, ethers.MaxUint256);  // Unlimited approval!
+await usdc.approve(mailer, ethers.MaxUint256); // Unlimited approval!
 
 // Step 2: User sends message
 await mailer.send(to, subject, body);
@@ -141,14 +141,14 @@ await mailer.send(to, subject, body);
 ```javascript
 // Send message (no prior approval needed)
 await program.methods
-    .send(to, subject, body)
-    .accounts({
-        sender: userWallet.publicKey,
-        senderUsdc: userUsdcAccount,  // Explicit account reference
-        mailerUsdc: mailerUsdcAccount,
-        tokenProgram: TOKEN_PROGRAM_ID,
-    })
-    .rpc();
+  .send(to, subject, body)
+  .accounts({
+    sender: userWallet.publicKey,
+    senderUsdc: userUsdcAccount, // Explicit account reference
+    mailerUsdc: mailerUsdcAccount,
+    tokenProgram: TOKEN_PROGRAM_ID,
+  })
+  .rpc();
 
 // ✅ User signs THIS specific transaction
 // ✅ Transaction explicitly states which accounts involved
@@ -197,15 +197,15 @@ program.methods
 
 ## Security Properties Comparison
 
-| Property | EVM (Approval) | Solana (No Approval) |
-|----------|----------------|----------------------|
-| **Authorization Method** | Pre-approve spending limits | Sign each transaction explicitly |
-| **Forgotten Permissions** | ❌ Approvals linger forever | ✅ No lingering permissions |
-| **Visibility** | ❌ Hard to track approvals | ✅ Clear in each transaction |
-| **Phishing Risk** | ❌ Users approve max amounts | ✅ Users see exact amount each time |
-| **Frontrunning** | ❌ Approval changes exploitable | ✅ No approval mechanism to exploit |
-| **Hacked Contract Risk** | ❌ Can drain all past approvers | ✅ Only affects active signers |
-| **Transaction Clarity** | ⚠️ Implicit (via approvals) | ✅ Explicit (accounts listed) |
+| Property                  | EVM (Approval)                  | Solana (No Approval)                |
+| ------------------------- | ------------------------------- | ----------------------------------- |
+| **Authorization Method**  | Pre-approve spending limits     | Sign each transaction explicitly    |
+| **Forgotten Permissions** | ❌ Approvals linger forever     | ✅ No lingering permissions         |
+| **Visibility**            | ❌ Hard to track approvals      | ✅ Clear in each transaction        |
+| **Phishing Risk**         | ❌ Users approve max amounts    | ✅ Users see exact amount each time |
+| **Frontrunning**          | ❌ Approval changes exploitable | ✅ No approval mechanism to exploit |
+| **Hacked Contract Risk**  | ❌ Can drain all past approvers | ✅ Only affects active signers      |
+| **Transaction Clarity**   | ⚠️ Implicit (via approvals)     | ✅ Explicit (accounts listed)       |
 
 ## Real-World Attack Scenarios
 

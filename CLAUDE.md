@@ -109,14 +109,14 @@ mail_box_contracts/
 
 The package exposes multiple entry points via the `exports` field in package.json:
 
-| Entry point | Import path | Contents |
-|---|---|---|
-| Default / Node / Browser | `@sudobility/contracts` | `OnchainMailerClient`, `WalletDetector`, unified types |
-| EVM | `@sudobility/contracts/evm` | `EVMMailerClient`, `Mailer__factory`, `Mailer` type |
-| Solana | `@sudobility/contracts/solana` | `SolanaMailerClient`, `SolanaWallet`, Solana types |
-| React | `@sudobility/contracts/react` | `MailerProvider`, query hooks, mutation hooks |
-| React Native | `@sudobility/contracts/react-native` | Same as unified + polyfills |
-| Web | `@sudobility/contracts/web` | Same as unified |
+| Entry point              | Import path                          | Contents                                               |
+| ------------------------ | ------------------------------------ | ------------------------------------------------------ |
+| Default / Node / Browser | `@sudobility/contracts`              | `OnchainMailerClient`, `WalletDetector`, unified types |
+| EVM                      | `@sudobility/contracts/evm`          | `EVMMailerClient`, `Mailer__factory`, `Mailer` type    |
+| Solana                   | `@sudobility/contracts/solana`       | `SolanaMailerClient`, `SolanaWallet`, Solana types     |
+| React                    | `@sudobility/contracts/react`        | `MailerProvider`, query hooks, mutation hooks          |
+| React Native             | `@sudobility/contracts/react-native` | Same as unified + polyfills                            |
+| Web                      | `@sudobility/contracts/web`          | Same as unified                                        |
 
 ### OnchainMailerClient (unified)
 
@@ -161,16 +161,19 @@ Stateless multi-chain client. No constructor config needed. Uses dynamic imports
 - Compiler: solc 0.8.24, optimizer 200 runs
 
 **Storage layout** (gas-optimized, 2 slots for all scalars):
+
 - Slot 0: `sendFee` (uint128, default 100000 = 0.1 USDC) + `delegationFee` (uint128, default 10000000 = 10 USDC)
 - Slot 1: `ownerClaimable` (uint128) + `_status` (uint8) + `paused` (bool) + `feePaused` (bool)
 - `ClaimableAmount` struct: `amount` (uint192) + `timestamp` (uint64) = 1 slot
 
 **Mappings**:
+
 - `recipientClaims`: address => ClaimableAmount (90% revenue shares)
 - `customFeeDiscount`: address => uint8 (0-100 discount percentage)
 - `permissions`: address => address => bool (contract-to-wallet authorization)
 
 **Fee model**:
+
 - Priority (revenueShareToReceiver=true): payer pays full `sendFee` (0.1 USDC), receiver gets 90% claimable within 60 days
 - Standard (revenueShareToReceiver=false): payer pays 10% of `sendFee` (0.01 USDC), no revenue share
 - Delegation: 10 USDC flat fee
@@ -179,6 +182,7 @@ Stateless multi-chain client. No constructor config needed. Uses dynamic imports
 **Soft-fail behavior**: `send`, `sendPrepared`, `sendToEmailAddress`, `sendPreparedToEmailAddress`, `sendThroughWebhook` do NOT revert on fee payment failure. They emit the event with `feePaid=false`. This enables composability with other contracts.
 
 **Key functions**:
+
 - `initialize(address _usdcToken, address _owner)` -- proxy initializer
 - `send(to, subject, body, payer, revenueShareToReceiver, resolveSenderToName)`
 - `sendPrepared(to, mailId, payer, revenueShareToReceiver, resolveSenderToName)`
@@ -200,6 +204,7 @@ Stateless multi-chain client. No constructor config needed. Uses dynamic imports
 **Architecture**: Native Solana program (no Anchor framework), uses Borsh serialization.
 
 **Program state accounts** (PDAs):
+
 - `MailerState` [seed: `b"mailer"`]: owner, usdc_mint, send_fee, delegation_fee, owner_claimable, paused, fee_paused, bump (91 bytes)
 - `RecipientClaim` [seed: `b"claim", &[1], recipient`]: recipient, amount, timestamp, bump (49 bytes)
 - `Delegation` [seed: `b"delegation", &[1], delegator`]: delegator, delegate (Option), bump (66 bytes)
@@ -208,6 +213,7 @@ Stateless multi-chain client. No constructor config needed. Uses dynamic imports
 PDA version byte (`PDA_VERSION = 1`) used for forward compatibility.
 
 **Instructions** (enum `MailerInstruction`):
+
 - `Initialize { usdc_mint }` -- set up program state
 - `Send { to, subject, _body, revenue_share_to_receiver, resolve_sender_to_name }` -- inline message
 - `SendPrepared { to, mail_id, revenue_share_to_receiver, resolve_sender_to_name }` -- prepared message
@@ -299,6 +305,7 @@ bash scripts/check-contract-size.sh
 ### Multi-chain stateless client
 
 `OnchainMailerClient` is fully stateless -- no constructor config, no stored wallet references. Every method receives `(wallet, chainInfo, ...)` as parameters. Internally it lazy-loads `EVMMailerClient` or `SolanaMailerClient` via dynamic `import()` and caches them as static class properties. This pattern:
+
 - Avoids bundling both chain implementations when only one is needed
 - Supports tree-shaking in bundlers
 - Makes the client safe for server-side and multi-tenant usage
@@ -306,6 +313,7 @@ bash scripts/check-contract-size.sh
 ### Wallet type detection
 
 `WalletDetector.detectWalletType(wallet)` inspects the wallet object shape to determine EVM vs Solana:
+
 - Solana: has `publicKey` + `signTransaction`, no `address`
 - EVM: has `address` + `request`, no `publicKey`
 - Also detects from address format: `isEVMAddress()` / `isSolanaAddress()`
@@ -325,6 +333,7 @@ Contracts deploy behind ERC1967 proxies. The proxy address is stable; the implem
 ### React integration
 
 React hooks are built on TanStack React Query v5. Two patterns:
+
 1. **Grouped hooks** (preferred): `useFees()`, `useClaimableAmounts()`, `useDelegationAndPermissions()`, `useContractState()`, `useMessaging()`, `useClaims()`, `useDelegation()`, `usePermissions()`, `useContractControl()`, `useOwnerOperations()`
 2. **Legacy individual hooks** (deprecated): `useGetSendFee()`, `useSendMessage()`, etc.
 
@@ -333,6 +342,7 @@ React hooks are built on TanStack React Query v5. Two patterns:
 ### React Native support
 
 Dedicated build target with polyfills for `Buffer`, `URL`, and `crypto.getRandomValues`. Import polyfills before any other imports:
+
 ```typescript
 import '@sudobility/contracts/react-native/polyfills';
 import { OnchainMailerClient } from '@sudobility/contracts/react-native';
@@ -393,13 +403,28 @@ Smart contracts can send messages through the Mailer. A wallet calls `setPermiss
 
 ```typescript
 // Fund test accounts with MockUSDC
-await mockUSDC.mint(addr1.address, ethers.parseUnits("100", 6));
-await mockUSDC.connect(addr1).approve(contractAddress, ethers.parseUnits("100", 6));
+await mockUSDC.mint(addr1.address, ethers.parseUnits('100', 6));
+await mockUSDC
+  .connect(addr1)
+  .approve(contractAddress, ethers.parseUnits('100', 6));
 
 // Test with event verification
-await expect(contract.connect(addr1).send(to, "subject", "body", addr1.address, true, false))
-  .to.emit(contract, "MailSent")
-  .withArgs(addr1.address, addr1.address, to, "subject", "body", true, false, true);
+await expect(
+  contract
+    .connect(addr1)
+    .send(to, 'subject', 'body', addr1.address, true, false)
+)
+  .to.emit(contract, 'MailSent')
+  .withArgs(
+    addr1.address,
+    addr1.address,
+    to,
+    'subject',
+    'body',
+    true,
+    false,
+    true
+  );
 
 // Fee calculation verification
 const initialBalance = await mockUSDC.balanceOf(contractAddress);
@@ -412,43 +437,43 @@ expect(finalBalance - initialBalance).to.equal(expectedFee);
 
 ### Runtime (dependencies)
 
-| Package | Purpose |
-|---|---|
-| `@openzeppelin/contracts` ^5.4.0 | ERC20, upgradeable base contracts |
-| `@sudobility/configs` ^0.0.63 | Chain configuration, RPC helpers, ChainInfo type |
-| `@sudobility/types` ^1.9.51 | Shared types: ChainType, Chain enum, validation functions |
+| Package                          | Purpose                                                   |
+| -------------------------------- | --------------------------------------------------------- |
+| `@openzeppelin/contracts` ^5.4.0 | ERC20, upgradeable base contracts                         |
+| `@sudobility/configs` ^0.0.63    | Chain configuration, RPC helpers, ChainInfo type          |
+| `@sudobility/types` ^1.9.51      | Shared types: ChainType, Chain enum, validation functions |
 
 ### Peer dependencies (optional, consumer-provided)
 
-| Package | Purpose |
-|---|---|
-| `viem` >=2.0.0 | EVM blockchain interaction (used by EVMMailerClient) |
-| `@solana/web3.js` >=1.95.0 | Solana interaction (used by SolanaMailerClient) |
-| `@solana/spl-token` >=0.4.0 | SPL token operations (USDC transfers on Solana) |
-| `@sudobility/mail_box_types` ^1.0.10 | Response types: MessageSendResponse, etc. |
-| `react` ^18 or ^19 | React hooks integration |
-| `@tanstack/react-query` >=5.0.0 | React Query hooks |
-| `react-native` >=0.70.0 | React Native support |
+| Package                              | Purpose                                              |
+| ------------------------------------ | ---------------------------------------------------- |
+| `viem` >=2.0.0                       | EVM blockchain interaction (used by EVMMailerClient) |
+| `@solana/web3.js` >=1.95.0           | Solana interaction (used by SolanaMailerClient)      |
+| `@solana/spl-token` >=0.4.0          | SPL token operations (USDC transfers on Solana)      |
+| `@sudobility/mail_box_types` ^1.0.10 | Response types: MessageSendResponse, etc.            |
+| `react` ^18 or ^19                   | React hooks integration                              |
+| `@tanstack/react-query` >=5.0.0      | React Query hooks                                    |
+| `react-native` >=0.70.0              | React Native support                                 |
 
 ### Dev dependencies (key ones)
 
-| Package | Purpose |
-|---|---|
-| `hardhat` ^2.26.3 | EVM development framework |
-| `@nomicfoundation/hardhat-viem` ^2.0.0 | Hardhat viem plugin |
-| `@openzeppelin/hardhat-upgrades` ^3.9.1 | UUPS proxy deployment/upgrades |
-| `@typechain/hardhat` ^9.1.0 | TypeScript type generation from ABIs |
-| `ethers` ^6.16.0 | Used by Hardhat tests (not the client library) |
-| `typescript` ^5.9.3 | TypeScript compiler |
-| `mocha` ^11.7.4 | Test runner (unified tests) |
-| `chai` ^4.5.0 | Assertion library |
-| `tsx` ^4.21.0 | TypeScript execution for Hardhat tests |
+| Package                                 | Purpose                                        |
+| --------------------------------------- | ---------------------------------------------- |
+| `hardhat` ^2.26.3                       | EVM development framework                      |
+| `@nomicfoundation/hardhat-viem` ^2.0.0  | Hardhat viem plugin                            |
+| `@openzeppelin/hardhat-upgrades` ^3.9.1 | UUPS proxy deployment/upgrades                 |
+| `@typechain/hardhat` ^9.1.0             | TypeScript type generation from ABIs           |
+| `ethers` ^6.16.0                        | Used by Hardhat tests (not the client library) |
+| `typescript` ^5.9.3                     | TypeScript compiler                            |
+| `mocha` ^11.7.4                         | Test runner (unified tests)                    |
+| `chai` ^4.5.0                           | Assertion library                              |
+| `tsx` ^4.21.0                           | TypeScript execution for Hardhat tests         |
 
 ### Solana program dependencies (Cargo.toml)
 
-| Crate | Version | Purpose |
-|---|---|---|
-| `solana-program` | 1.16 | Solana runtime interface |
-| `spl-token` | 3.5 | SPL token program interface |
-| `borsh` | 1.5 | Binary serialization |
-| `thiserror` | 1.0 | Error derive macros |
+| Crate            | Version | Purpose                     |
+| ---------------- | ------- | --------------------------- |
+| `solana-program` | 1.16    | Solana runtime interface    |
+| `spl-token`      | 3.5     | SPL token program interface |
+| `borsh`          | 1.5     | Binary serialization        |
+| `thiserror`      | 1.0     | Error derive macros         |

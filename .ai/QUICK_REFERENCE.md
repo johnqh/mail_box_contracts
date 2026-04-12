@@ -7,7 +7,7 @@
 npm run compile         # Compile EVM contracts + generate TypeScript types
 npm run build          # Build all TypeScript clients (EVM + Solana + Unified)
 
-# 🧪 Testing  
+# 🧪 Testing
 npm test              # Run all tests (105 EVM + unified client tests)
 npm run test:evm      # Run EVM contract tests only (105 tests)
 npm run test:unified  # Run unified client tests only
@@ -19,14 +19,14 @@ npm run deploy:unified   # Deploy to both EVM and Solana (specify networks)
 
 ## 📁 Key Files & Their Purpose
 
-| File | Purpose | When to Modify |
-|------|---------|----------------|
-| `src/unified/mailbox-client.ts` | Main unified client - single API for all chains | Adding new features to unified API |
-| `src/unified/wallet-detector.ts` | Automatic chain detection logic | Adding new chain support |
-| `src/evm/mailer-client.ts` | EVM-specific client implementation | EVM contract changes |
-| `src/solana/mailer-client.ts` | Solana-specific client implementation | Solana program changes |
-| `src/utils/chain-config.ts` | Network configurations for all chains | Adding new networks |
-| `examples/unified-usage.ts` | Complete usage examples | After API changes |
+| File                             | Purpose                                         | When to Modify                     |
+| -------------------------------- | ----------------------------------------------- | ---------------------------------- |
+| `src/unified/mailbox-client.ts`  | Main unified client - single API for all chains | Adding new features to unified API |
+| `src/unified/wallet-detector.ts` | Automatic chain detection logic                 | Adding new chain support           |
+| `src/evm/mailer-client.ts`       | EVM-specific client implementation              | EVM contract changes               |
+| `src/solana/mailer-client.ts`    | Solana-specific client implementation           | Solana program changes             |
+| `src/utils/chain-config.ts`      | Network configurations for all chains           | Adding new networks                |
+| `examples/unified-usage.ts`      | Complete usage examples                         | After API changes                  |
 
 ## 🧠 Core Concepts
 
@@ -42,17 +42,17 @@ console.log(client.getChainType()); // 'evm' | 'solana'
 
 ```typescript
 // Chain-specific code loaded only when needed
-const evmModules = await import('../evm');  // Only loads for EVM wallets
-const solanaModules = await import('../solana');  // Only loads for Solana wallets
+const evmModules = await import('../evm'); // Only loads for EVM wallets
+const solanaModules = await import('../solana'); // Only loads for Solana wallets
 ```
 
 ### Unified API Pattern
 
 ```typescript
 // Same methods work on all chains
-await client.sendMessage(subject, body, priority);  // Routes automatically
-await client.delegateTo(address);  // Address format validated per chain
-await client.claimRevenue();  // Chain-specific implementation
+await client.sendMessage(subject, body, priority); // Routes automatically
+await client.delegateTo(address); // Address format validated per chain
+await client.claimRevenue(); // Chain-specific implementation
 ```
 
 ## 🛠️ Common Development Tasks
@@ -75,7 +75,7 @@ interface NewFeatureResult {
 // EVM: src/evm/client.ts
 async newEVMFeature(): Promise<NewFeatureResult> { /* ... */ }
 
-// Solana: src/solana/client.ts  
+// Solana: src/solana/client.ts
 async newSolanaFeature(): Promise<NewFeatureResult> { /* ... */ }
 ```
 
@@ -83,7 +83,7 @@ async newSolanaFeature(): Promise<NewFeatureResult> { /* ... */ }
 
 ```typescript
 async newFeature(): Promise<NewFeatureResult> {
-  return this.chainType === 'evm' ? 
+  return this.chainType === 'evm' ?
     this.newEVMFeature() : this.newSolanaFeature();
 }
 ```
@@ -137,8 +137,8 @@ npm run test:unified    # Focus on unified client tests
 
 ```typescript
 // Use relative imports consistently
-import { Client } from '../evm/client';          // ✅ Good
-import { Client } from '@/evm/client';           // ❌ Avoid absolute paths
+import { Client } from '../evm/client'; // ✅ Good
+import { Client } from '@/evm/client'; // ❌ Avoid absolute paths
 ```
 
 ### Wallet Detection Issues
@@ -175,9 +175,9 @@ try {
 // ALWAYS add timeouts to network operations
 const result = await Promise.race([
   networkOperation(),
-  new Promise((_, reject) => 
+  new Promise((_, reject) =>
     setTimeout(() => reject(new Error('Operation timeout')), 10000)
-  )
+  ),
 ]);
 ```
 
@@ -187,7 +187,9 @@ const result = await Promise.race([
 // ALWAYS validate addresses before operations
 const chainType = WalletDetector.detectChainFromAddress(address);
 if (chainType !== this.chainType) {
-  throw new Error(`Address format doesn't match wallet chain (${this.chainType})`);
+  throw new Error(
+    `Address format doesn't match wallet chain (${this.chainType})`
+  );
 }
 ```
 
@@ -210,7 +212,7 @@ private async getModules() {
 ### When Everything is Working
 
 - ✅ `npm run compile` completes without errors
-- ✅ `npm run build` builds all TypeScript successfully  
+- ✅ `npm run build` builds all TypeScript successfully
 - ✅ `npm run test:evm` shows 105/105 tests passing
 - ✅ `npm run test:unified` shows unified tests passing
 - ✅ Wallet detection works for all wallet types

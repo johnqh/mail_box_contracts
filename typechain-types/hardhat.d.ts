@@ -2,287 +2,287 @@
 /* tslint:disable */
 /* eslint-disable */
 
-import { ethers } from "ethers";
+import { ethers } from 'ethers';
 import {
   DeployContractOptions,
   FactoryOptions,
   HardhatEthersHelpers as HardhatEthersHelpersBase,
-} from "@nomicfoundation/hardhat-ethers/types";
+} from '@nomicfoundation/hardhat-ethers/types';
 
-import * as Contracts from ".";
+import * as Contracts from '.';
 
-declare module "hardhat/types/runtime" {
+declare module 'hardhat/types/runtime' {
   interface HardhatEthersHelpers extends HardhatEthersHelpersBase {
     getContractFactory(
-      name: "OwnableUpgradeable",
+      name: 'OwnableUpgradeable',
       signerOrOptions?: ethers.Signer | FactoryOptions
     ): Promise<Contracts.OwnableUpgradeable__factory>;
     getContractFactory(
-      name: "Initializable",
+      name: 'Initializable',
       signerOrOptions?: ethers.Signer | FactoryOptions
     ): Promise<Contracts.Initializable__factory>;
     getContractFactory(
-      name: "UUPSUpgradeable",
+      name: 'UUPSUpgradeable',
       signerOrOptions?: ethers.Signer | FactoryOptions
     ): Promise<Contracts.UUPSUpgradeable__factory>;
     getContractFactory(
-      name: "ContextUpgradeable",
+      name: 'ContextUpgradeable',
       signerOrOptions?: ethers.Signer | FactoryOptions
     ): Promise<Contracts.ContextUpgradeable__factory>;
     getContractFactory(
-      name: "IERC1822Proxiable",
+      name: 'IERC1822Proxiable',
       signerOrOptions?: ethers.Signer | FactoryOptions
     ): Promise<Contracts.IERC1822Proxiable__factory>;
     getContractFactory(
-      name: "IERC1967",
+      name: 'IERC1967',
       signerOrOptions?: ethers.Signer | FactoryOptions
     ): Promise<Contracts.IERC1967__factory>;
     getContractFactory(
-      name: "IBeacon",
+      name: 'IBeacon',
       signerOrOptions?: ethers.Signer | FactoryOptions
     ): Promise<Contracts.IBeacon__factory>;
     getContractFactory(
-      name: "ERC1967Utils",
+      name: 'ERC1967Utils',
       signerOrOptions?: ethers.Signer | FactoryOptions
     ): Promise<Contracts.ERC1967Utils__factory>;
     getContractFactory(
-      name: "Address",
+      name: 'Address',
       signerOrOptions?: ethers.Signer | FactoryOptions
     ): Promise<Contracts.Address__factory>;
     getContractFactory(
-      name: "Errors",
+      name: 'Errors',
       signerOrOptions?: ethers.Signer | FactoryOptions
     ): Promise<Contracts.Errors__factory>;
     getContractFactory(
-      name: "MailerIntegrationExample",
+      name: 'MailerIntegrationExample',
       signerOrOptions?: ethers.Signer | FactoryOptions
     ): Promise<Contracts.MailerIntegrationExample__factory>;
     getContractFactory(
-      name: "IERC20",
+      name: 'IERC20',
       signerOrOptions?: ethers.Signer | FactoryOptions
     ): Promise<Contracts.IERC20__factory>;
     getContractFactory(
-      name: "IMailer",
+      name: 'IMailer',
       signerOrOptions?: ethers.Signer | FactoryOptions
     ): Promise<Contracts.IMailer__factory>;
     getContractFactory(
-      name: "Mailer",
+      name: 'Mailer',
       signerOrOptions?: ethers.Signer | FactoryOptions
     ): Promise<Contracts.Mailer__factory>;
     getContractFactory(
-      name: "MockUSDC",
+      name: 'MockUSDC',
       signerOrOptions?: ethers.Signer | FactoryOptions
     ): Promise<Contracts.MockUSDC__factory>;
 
     getContractAt(
-      name: "OwnableUpgradeable",
+      name: 'OwnableUpgradeable',
       address: string | ethers.Addressable,
       signer?: ethers.Signer
     ): Promise<Contracts.OwnableUpgradeable>;
     getContractAt(
-      name: "Initializable",
+      name: 'Initializable',
       address: string | ethers.Addressable,
       signer?: ethers.Signer
     ): Promise<Contracts.Initializable>;
     getContractAt(
-      name: "UUPSUpgradeable",
+      name: 'UUPSUpgradeable',
       address: string | ethers.Addressable,
       signer?: ethers.Signer
     ): Promise<Contracts.UUPSUpgradeable>;
     getContractAt(
-      name: "ContextUpgradeable",
+      name: 'ContextUpgradeable',
       address: string | ethers.Addressable,
       signer?: ethers.Signer
     ): Promise<Contracts.ContextUpgradeable>;
     getContractAt(
-      name: "IERC1822Proxiable",
+      name: 'IERC1822Proxiable',
       address: string | ethers.Addressable,
       signer?: ethers.Signer
     ): Promise<Contracts.IERC1822Proxiable>;
     getContractAt(
-      name: "IERC1967",
+      name: 'IERC1967',
       address: string | ethers.Addressable,
       signer?: ethers.Signer
     ): Promise<Contracts.IERC1967>;
     getContractAt(
-      name: "IBeacon",
+      name: 'IBeacon',
       address: string | ethers.Addressable,
       signer?: ethers.Signer
     ): Promise<Contracts.IBeacon>;
     getContractAt(
-      name: "ERC1967Utils",
+      name: 'ERC1967Utils',
       address: string | ethers.Addressable,
       signer?: ethers.Signer
     ): Promise<Contracts.ERC1967Utils>;
     getContractAt(
-      name: "Address",
+      name: 'Address',
       address: string | ethers.Addressable,
       signer?: ethers.Signer
     ): Promise<Contracts.Address>;
     getContractAt(
-      name: "Errors",
+      name: 'Errors',
       address: string | ethers.Addressable,
       signer?: ethers.Signer
     ): Promise<Contracts.Errors>;
     getContractAt(
-      name: "MailerIntegrationExample",
+      name: 'MailerIntegrationExample',
       address: string | ethers.Addressable,
       signer?: ethers.Signer
     ): Promise<Contracts.MailerIntegrationExample>;
     getContractAt(
-      name: "IERC20",
+      name: 'IERC20',
       address: string | ethers.Addressable,
       signer?: ethers.Signer
     ): Promise<Contracts.IERC20>;
     getContractAt(
-      name: "IMailer",
+      name: 'IMailer',
       address: string | ethers.Addressable,
       signer?: ethers.Signer
     ): Promise<Contracts.IMailer>;
     getContractAt(
-      name: "Mailer",
+      name: 'Mailer',
       address: string | ethers.Addressable,
       signer?: ethers.Signer
     ): Promise<Contracts.Mailer>;
     getContractAt(
-      name: "MockUSDC",
+      name: 'MockUSDC',
       address: string | ethers.Addressable,
       signer?: ethers.Signer
     ): Promise<Contracts.MockUSDC>;
 
     deployContract(
-      name: "OwnableUpgradeable",
+      name: 'OwnableUpgradeable',
       signerOrOptions?: ethers.Signer | DeployContractOptions
     ): Promise<Contracts.OwnableUpgradeable>;
     deployContract(
-      name: "Initializable",
+      name: 'Initializable',
       signerOrOptions?: ethers.Signer | DeployContractOptions
     ): Promise<Contracts.Initializable>;
     deployContract(
-      name: "UUPSUpgradeable",
+      name: 'UUPSUpgradeable',
       signerOrOptions?: ethers.Signer | DeployContractOptions
     ): Promise<Contracts.UUPSUpgradeable>;
     deployContract(
-      name: "ContextUpgradeable",
+      name: 'ContextUpgradeable',
       signerOrOptions?: ethers.Signer | DeployContractOptions
     ): Promise<Contracts.ContextUpgradeable>;
     deployContract(
-      name: "IERC1822Proxiable",
+      name: 'IERC1822Proxiable',
       signerOrOptions?: ethers.Signer | DeployContractOptions
     ): Promise<Contracts.IERC1822Proxiable>;
     deployContract(
-      name: "IERC1967",
+      name: 'IERC1967',
       signerOrOptions?: ethers.Signer | DeployContractOptions
     ): Promise<Contracts.IERC1967>;
     deployContract(
-      name: "IBeacon",
+      name: 'IBeacon',
       signerOrOptions?: ethers.Signer | DeployContractOptions
     ): Promise<Contracts.IBeacon>;
     deployContract(
-      name: "ERC1967Utils",
+      name: 'ERC1967Utils',
       signerOrOptions?: ethers.Signer | DeployContractOptions
     ): Promise<Contracts.ERC1967Utils>;
     deployContract(
-      name: "Address",
+      name: 'Address',
       signerOrOptions?: ethers.Signer | DeployContractOptions
     ): Promise<Contracts.Address>;
     deployContract(
-      name: "Errors",
+      name: 'Errors',
       signerOrOptions?: ethers.Signer | DeployContractOptions
     ): Promise<Contracts.Errors>;
     deployContract(
-      name: "MailerIntegrationExample",
+      name: 'MailerIntegrationExample',
       signerOrOptions?: ethers.Signer | DeployContractOptions
     ): Promise<Contracts.MailerIntegrationExample>;
     deployContract(
-      name: "IERC20",
+      name: 'IERC20',
       signerOrOptions?: ethers.Signer | DeployContractOptions
     ): Promise<Contracts.IERC20>;
     deployContract(
-      name: "IMailer",
+      name: 'IMailer',
       signerOrOptions?: ethers.Signer | DeployContractOptions
     ): Promise<Contracts.IMailer>;
     deployContract(
-      name: "Mailer",
+      name: 'Mailer',
       signerOrOptions?: ethers.Signer | DeployContractOptions
     ): Promise<Contracts.Mailer>;
     deployContract(
-      name: "MockUSDC",
+      name: 'MockUSDC',
       signerOrOptions?: ethers.Signer | DeployContractOptions
     ): Promise<Contracts.MockUSDC>;
 
     deployContract(
-      name: "OwnableUpgradeable",
+      name: 'OwnableUpgradeable',
       args: any[],
       signerOrOptions?: ethers.Signer | DeployContractOptions
     ): Promise<Contracts.OwnableUpgradeable>;
     deployContract(
-      name: "Initializable",
+      name: 'Initializable',
       args: any[],
       signerOrOptions?: ethers.Signer | DeployContractOptions
     ): Promise<Contracts.Initializable>;
     deployContract(
-      name: "UUPSUpgradeable",
+      name: 'UUPSUpgradeable',
       args: any[],
       signerOrOptions?: ethers.Signer | DeployContractOptions
     ): Promise<Contracts.UUPSUpgradeable>;
     deployContract(
-      name: "ContextUpgradeable",
+      name: 'ContextUpgradeable',
       args: any[],
       signerOrOptions?: ethers.Signer | DeployContractOptions
     ): Promise<Contracts.ContextUpgradeable>;
     deployContract(
-      name: "IERC1822Proxiable",
+      name: 'IERC1822Proxiable',
       args: any[],
       signerOrOptions?: ethers.Signer | DeployContractOptions
     ): Promise<Contracts.IERC1822Proxiable>;
     deployContract(
-      name: "IERC1967",
+      name: 'IERC1967',
       args: any[],
       signerOrOptions?: ethers.Signer | DeployContractOptions
     ): Promise<Contracts.IERC1967>;
     deployContract(
-      name: "IBeacon",
+      name: 'IBeacon',
       args: any[],
       signerOrOptions?: ethers.Signer | DeployContractOptions
     ): Promise<Contracts.IBeacon>;
     deployContract(
-      name: "ERC1967Utils",
+      name: 'ERC1967Utils',
       args: any[],
       signerOrOptions?: ethers.Signer | DeployContractOptions
     ): Promise<Contracts.ERC1967Utils>;
     deployContract(
-      name: "Address",
+      name: 'Address',
       args: any[],
       signerOrOptions?: ethers.Signer | DeployContractOptions
     ): Promise<Contracts.Address>;
     deployContract(
-      name: "Errors",
+      name: 'Errors',
       args: any[],
       signerOrOptions?: ethers.Signer | DeployContractOptions
     ): Promise<Contracts.Errors>;
     deployContract(
-      name: "MailerIntegrationExample",
+      name: 'MailerIntegrationExample',
       args: any[],
       signerOrOptions?: ethers.Signer | DeployContractOptions
     ): Promise<Contracts.MailerIntegrationExample>;
     deployContract(
-      name: "IERC20",
+      name: 'IERC20',
       args: any[],
       signerOrOptions?: ethers.Signer | DeployContractOptions
     ): Promise<Contracts.IERC20>;
     deployContract(
-      name: "IMailer",
+      name: 'IMailer',
       args: any[],
       signerOrOptions?: ethers.Signer | DeployContractOptions
     ): Promise<Contracts.IMailer>;
     deployContract(
-      name: "Mailer",
+      name: 'Mailer',
       args: any[],
       signerOrOptions?: ethers.Signer | DeployContractOptions
     ): Promise<Contracts.Mailer>;
     deployContract(
-      name: "MockUSDC",
+      name: 'MockUSDC',
       args: any[],
       signerOrOptions?: ethers.Signer | DeployContractOptions
     ): Promise<Contracts.MockUSDC>;

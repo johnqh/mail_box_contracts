@@ -1,4 +1,8 @@
-import { useQuery, UseQueryOptions, UseQueryResult } from '@tanstack/react-query';
+import {
+  useQuery,
+  UseQueryOptions,
+  UseQueryResult,
+} from '@tanstack/react-query';
 import { ChainType } from '@sudobility/types';
 import type { ChainInfo } from '@sudobility/configs';
 import type { OnchainMailerClient } from '../../unified/onchain-mailer-client';
@@ -13,12 +17,19 @@ export const mailerQueryKeys = {
   all: ['mailer'] as const,
   sendFee: () => [...mailerQueryKeys.all, 'sendFee'] as const,
   delegationFee: () => [...mailerQueryKeys.all, 'delegationFee'] as const,
-  claimableAmount: (address?: string) => [...mailerQueryKeys.all, 'claimableAmount', address] as const,
+  claimableAmount: (address?: string) =>
+    [...mailerQueryKeys.all, 'claimableAmount', address] as const,
   ownerClaimable: () => [...mailerQueryKeys.all, 'ownerClaimable'] as const,
-  delegation: (address?: string) => [...mailerQueryKeys.all, 'delegation', address] as const,
+  delegation: (address?: string) =>
+    [...mailerQueryKeys.all, 'delegation', address] as const,
   isPaused: () => [...mailerQueryKeys.all, 'isPaused'] as const,
   permissions: (contractAddress?: string, walletAddress?: string) =>
-    [...mailerQueryKeys.all, 'permissions', contractAddress, walletAddress] as const,
+    [
+      ...mailerQueryKeys.all,
+      'permissions',
+      contractAddress,
+      walletAddress,
+    ] as const,
 };
 
 /**
@@ -46,16 +57,26 @@ export function useFees(
   publicClientOrConnection?: PublicClient | Connection,
   options?: {
     sendFee?: Omit<UseQueryOptions<bigint, Error>, 'queryKey' | 'queryFn'>;
-    delegationFee?: Omit<UseQueryOptions<bigint, Error>, 'queryKey' | 'queryFn'>;
+    delegationFee?: Omit<
+      UseQueryOptions<bigint, Error>,
+      'queryKey' | 'queryFn'
+    >;
   }
 ) {
   const sendFee = useQuery({
     queryKey: mailerQueryKeys.sendFee(),
     queryFn: () => {
       if (chainInfo.chainType === ChainType.EVM) {
-        return client.getSendFee(chainInfo, publicClientOrConnection as PublicClient | undefined);
+        return client.getSendFee(
+          chainInfo,
+          publicClientOrConnection as PublicClient | undefined
+        );
       } else {
-        return client.getSendFee(chainInfo, undefined, publicClientOrConnection as Connection | undefined);
+        return client.getSendFee(
+          chainInfo,
+          undefined,
+          publicClientOrConnection as Connection | undefined
+        );
       }
     },
     staleTime: 5 * 60 * 1000, // 5 minutes - fees don't change often
@@ -66,9 +87,16 @@ export function useFees(
     queryKey: mailerQueryKeys.delegationFee(),
     queryFn: () => {
       if (chainInfo.chainType === ChainType.EVM) {
-        return client.getDelegationFee(chainInfo, publicClientOrConnection as PublicClient | undefined);
+        return client.getDelegationFee(
+          chainInfo,
+          publicClientOrConnection as PublicClient | undefined
+        );
       } else {
-        return client.getDelegationFee(chainInfo, undefined, publicClientOrConnection as Connection | undefined);
+        return client.getDelegationFee(
+          chainInfo,
+          undefined,
+          publicClientOrConnection as Connection | undefined
+        );
       }
     },
     staleTime: 5 * 60 * 1000,
@@ -108,8 +136,14 @@ export function useClaimableAmounts(
   address?: string,
   publicClientOrConnection?: PublicClient | Connection,
   options?: {
-    claimableAmount?: Omit<UseQueryOptions<bigint, Error>, 'queryKey' | 'queryFn'>;
-    ownerClaimable?: Omit<UseQueryOptions<bigint, Error>, 'queryKey' | 'queryFn'>;
+    claimableAmount?: Omit<
+      UseQueryOptions<bigint, Error>,
+      'queryKey' | 'queryFn'
+    >;
+    ownerClaimable?: Omit<
+      UseQueryOptions<bigint, Error>,
+      'queryKey' | 'queryFn'
+    >;
   }
 ) {
   const claimableAmount = useQuery({
@@ -118,9 +152,18 @@ export function useClaimableAmounts(
       if (!address) return BigInt(0);
       let result;
       if (chainInfo.chainType === ChainType.EVM) {
-        result = await client.getRecipientClaimable(address, chainInfo, publicClientOrConnection as PublicClient | undefined);
+        result = await client.getRecipientClaimable(
+          address,
+          chainInfo,
+          publicClientOrConnection as PublicClient | undefined
+        );
       } else {
-        result = await client.getRecipientClaimable(address, chainInfo, undefined, publicClientOrConnection as Connection | undefined);
+        result = await client.getRecipientClaimable(
+          address,
+          chainInfo,
+          undefined,
+          publicClientOrConnection as Connection | undefined
+        );
       }
       // Extract just the amount from the result
       return result ? result.amount : BigInt(0);
@@ -134,9 +177,16 @@ export function useClaimableAmounts(
     queryKey: mailerQueryKeys.ownerClaimable(),
     queryFn: () => {
       if (chainInfo.chainType === ChainType.EVM) {
-        return client.getOwnerClaimable(chainInfo, publicClientOrConnection as PublicClient | undefined);
+        return client.getOwnerClaimable(
+          chainInfo,
+          publicClientOrConnection as PublicClient | undefined
+        );
       } else {
-        return client.getOwnerClaimable(chainInfo, undefined, publicClientOrConnection as Connection | undefined);
+        return client.getOwnerClaimable(
+          chainInfo,
+          undefined,
+          publicClientOrConnection as Connection | undefined
+        );
       }
     },
     staleTime: 30 * 1000,
@@ -184,8 +234,14 @@ export function useDelegationAndPermissions(
   },
   publicClientOrConnection?: PublicClient | Connection,
   options?: {
-    delegation?: Omit<UseQueryOptions<string | null, Error>, 'queryKey' | 'queryFn'>;
-    hasPermission?: Omit<UseQueryOptions<boolean, Error>, 'queryKey' | 'queryFn'>;
+    delegation?: Omit<
+      UseQueryOptions<string | null, Error>,
+      'queryKey' | 'queryFn'
+    >;
+    hasPermission?: Omit<
+      UseQueryOptions<boolean, Error>,
+      'queryKey' | 'queryFn'
+    >;
   }
 ) {
   const delegation = useQuery({
@@ -193,9 +249,18 @@ export function useDelegationAndPermissions(
     queryFn: async () => {
       if (!params?.delegationAddress) return null;
       if (chainInfo.chainType === ChainType.EVM) {
-        return client.getDelegation(params.delegationAddress, chainInfo, publicClientOrConnection as PublicClient | undefined);
+        return client.getDelegation(
+          params.delegationAddress,
+          chainInfo,
+          publicClientOrConnection as PublicClient | undefined
+        );
       } else {
-        return client.getDelegation(params.delegationAddress, chainInfo, undefined, publicClientOrConnection as Connection | undefined);
+        return client.getDelegation(
+          params.delegationAddress,
+          chainInfo,
+          undefined,
+          publicClientOrConnection as Connection | undefined
+        );
       }
     },
     enabled: Boolean(params?.delegationAddress),
@@ -204,7 +269,10 @@ export function useDelegationAndPermissions(
   });
 
   const hasPermission = useQuery({
-    queryKey: mailerQueryKeys.permissions(params?.contractAddress, params?.walletAddress),
+    queryKey: mailerQueryKeys.permissions(
+      params?.contractAddress,
+      params?.walletAddress
+    ),
     queryFn: async () => {
       if (!params?.contractAddress || !params?.walletAddress) {
         return false;
@@ -255,9 +323,16 @@ export function useContractState(
     queryKey: mailerQueryKeys.isPaused(),
     queryFn: () => {
       if (chainInfo.chainType === ChainType.EVM) {
-        return client.isPaused(chainInfo, publicClientOrConnection as PublicClient | undefined);
+        return client.isPaused(
+          chainInfo,
+          publicClientOrConnection as PublicClient | undefined
+        );
       } else {
-        return client.isPaused(chainInfo, undefined, publicClientOrConnection as Connection | undefined);
+        return client.isPaused(
+          chainInfo,
+          undefined,
+          publicClientOrConnection as Connection | undefined
+        );
       }
     },
     staleTime: 30 * 1000,
@@ -323,7 +398,9 @@ export function useGetSendFee(
   options?: Omit<UseQueryOptions<bigint, Error>, 'queryKey' | 'queryFn'>
 ): UseQueryResult<bigint, Error> {
   const { client, chainInfo } = useMailerContext();
-  const { sendFee } = useFees(client, chainInfo, undefined, { sendFee: options });
+  const { sendFee } = useFees(client, chainInfo, undefined, {
+    sendFee: options,
+  });
   return sendFee;
 }
 
@@ -334,7 +411,9 @@ export function useGetDelegationFee(
   options?: Omit<UseQueryOptions<bigint, Error>, 'queryKey' | 'queryFn'>
 ): UseQueryResult<bigint, Error> {
   const { client, chainInfo } = useMailerContext();
-  const { delegationFee } = useFees(client, chainInfo, undefined, { delegationFee: options });
+  const { delegationFee } = useFees(client, chainInfo, undefined, {
+    delegationFee: options,
+  });
   return delegationFee;
 }
 
@@ -346,7 +425,13 @@ export function useGetClaimableAmount(
   options?: Omit<UseQueryOptions<bigint, Error>, 'queryKey' | 'queryFn'>
 ): UseQueryResult<bigint, Error> {
   const { client, chainInfo } = useMailerContext();
-  const { claimableAmount } = useClaimableAmounts(client, chainInfo, address, undefined, { claimableAmount: options });
+  const { claimableAmount } = useClaimableAmounts(
+    client,
+    chainInfo,
+    address,
+    undefined,
+    { claimableAmount: options }
+  );
   return claimableAmount;
 }
 
@@ -357,7 +442,13 @@ export function useGetOwnerClaimable(
   options?: Omit<UseQueryOptions<bigint, Error>, 'queryKey' | 'queryFn'>
 ): UseQueryResult<bigint, Error> {
   const { client, chainInfo } = useMailerContext();
-  const { ownerClaimable } = useClaimableAmounts(client, chainInfo, undefined, undefined, { ownerClaimable: options });
+  const { ownerClaimable } = useClaimableAmounts(
+    client,
+    chainInfo,
+    undefined,
+    undefined,
+    { ownerClaimable: options }
+  );
   return ownerClaimable;
 }
 
@@ -386,7 +477,9 @@ export function useIsPaused(
   options?: Omit<UseQueryOptions<boolean, Error>, 'queryKey' | 'queryFn'>
 ): UseQueryResult<boolean, Error> {
   const { client, chainInfo } = useMailerContext();
-  const { isPaused } = useContractState(client, chainInfo, undefined, { isPaused: options });
+  const { isPaused } = useContractState(client, chainInfo, undefined, {
+    isPaused: options,
+  });
   return isPaused;
 }
 

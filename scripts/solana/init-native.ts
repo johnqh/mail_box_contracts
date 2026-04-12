@@ -42,15 +42,15 @@ const DEFAULT_PROGRAM_ID = 'yW7AiuUVdtSDUvExyNtjQDLMLsccnbgAqgZHJYYsqCW';
 // USDC mint addresses per cluster
 const USDC_MINTS: Record<string, string> = {
   'mainnet-beta': 'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v',
-  'devnet': '4zMMC9srt5Ri5X14GAgXhaHii3GnPAEERYPJgZJDncDU',
-  'testnet': '4zMMC9srt5Ri5X14GAgXhaHii3GnPAEERYPJgZJDncDU',
+  devnet: '4zMMC9srt5Ri5X14GAgXhaHii3GnPAEERYPJgZJDncDU',
+  testnet: '4zMMC9srt5Ri5X14GAgXhaHii3GnPAEERYPJgZJDncDU',
 };
 
 // Default RPC URLs per cluster
 const RPC_URLS: Record<string, string> = {
   'mainnet-beta': 'https://api.mainnet-beta.solana.com',
-  'devnet': 'https://api.devnet.solana.com',
-  'testnet': 'https://api.testnet.solana.com',
+  devnet: 'https://api.devnet.solana.com',
+  testnet: 'https://api.testnet.solana.com',
 };
 
 /**
@@ -61,7 +61,9 @@ async function loadKeypair(): Promise<Keypair> {
   const keyString = process.env.SOLANA_PRIVATE_KEY?.trim();
 
   if (!keyString) {
-    throw new Error('SOLANA_PRIVATE_KEY not found in environment. Set it in .env.local');
+    throw new Error(
+      'SOLANA_PRIVATE_KEY not found in environment. Set it in .env.local'
+    );
   }
 
   let secretKey: Uint8Array;
@@ -82,10 +84,7 @@ async function loadKeypair(): Promise<Keypair> {
  * Derive the mailer PDA
  */
 function getMailerPDA(programId: PublicKey): [PublicKey, number] {
-  return PublicKey.findProgramAddressSync(
-    [Buffer.from('mailer')],
-    programId
-  );
+  return PublicKey.findProgramAddressSync([Buffer.from('mailer')], programId);
 }
 
 /**
@@ -110,7 +109,10 @@ function createInitializeInstructionData(usdcMint: PublicKey): Buffer {
 /**
  * Check if mailer is already initialized
  */
-async function isMailerInitialized(connection: Connection, mailerPda: PublicKey): Promise<boolean> {
+async function isMailerInitialized(
+  connection: Connection,
+  mailerPda: PublicKey
+): Promise<boolean> {
   const accountInfo = await connection.getAccountInfo(mailerPda);
   return accountInfo !== null && accountInfo.data.length > 0;
 }
@@ -140,8 +142,8 @@ async function initializeMailer(
 
   const instruction = new TransactionInstruction({
     keys: [
-      { pubkey: payer.publicKey, isSigner: true, isWritable: true },  // owner
-      { pubkey: mailerPda, isSigner: false, isWritable: true },       // mailer PDA
+      { pubkey: payer.publicKey, isSigner: true, isWritable: true }, // owner
+      { pubkey: mailerPda, isSigner: false, isWritable: true }, // mailer PDA
       { pubkey: SystemProgram.programId, isSigner: false, isWritable: false }, // system program
     ],
     programId: programId,
@@ -169,7 +171,9 @@ async function main() {
   const programIdArg = args[2] || DEFAULT_PROGRAM_ID;
 
   if (!rpcUrl) {
-    throw new Error(`Unknown cluster: ${cluster}. Use devnet, testnet, or mainnet-beta`);
+    throw new Error(
+      `Unknown cluster: ${cluster}. Use devnet, testnet, or mainnet-beta`
+    );
   }
 
   const usdcMintAddress = USDC_MINTS[cluster];
@@ -205,7 +209,12 @@ async function main() {
 
   // Initialize
   const usdcMint = new PublicKey(usdcMintAddress);
-  const signature = await initializeMailer(connection, payer, usdcMint, programId);
+  const signature = await initializeMailer(
+    connection,
+    payer,
+    usdcMint,
+    programId
+  );
 
   const [mailerPda] = getMailerPDA(programId);
 
@@ -220,18 +229,24 @@ async function main() {
 
   // Output JSON for easy copy
   console.log('\nDeployment info (JSON):');
-  console.log(JSON.stringify({
-    cluster,
-    programId: programId.toString(),
-    mailerPda: mailerPda.toString(),
-    owner: payer.publicKey.toString(),
-    usdcMint: usdcMintAddress,
-    initSignature: signature,
-    timestamp: new Date().toISOString(),
-  }, null, 2));
+  console.log(
+    JSON.stringify(
+      {
+        cluster,
+        programId: programId.toString(),
+        mailerPda: mailerPda.toString(),
+        owner: payer.publicKey.toString(),
+        usdcMint: usdcMintAddress,
+        initSignature: signature,
+        timestamp: new Date().toISOString(),
+      },
+      null,
+      2
+    )
+  );
 }
 
-main().catch((error) => {
+main().catch(error => {
   console.error('Error:', error.message || error);
   process.exit(1);
 });

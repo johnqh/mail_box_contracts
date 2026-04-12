@@ -10,25 +10,25 @@ import type {
   ContractRunner,
   ContractMethod,
   Listener,
-} from "ethers";
+} from 'ethers';
 import type {
   TypedContractEvent,
   TypedDeferredTopicFilter,
   TypedEventLog,
   TypedListener,
   TypedContractMethod,
-} from "../../../../common";
+} from '../../../../common';
 
 export interface IERC1822ProxiableInterface extends Interface {
-  getFunction(nameOrSignature: "proxiableUUID"): FunctionFragment;
+  getFunction(nameOrSignature: 'proxiableUUID'): FunctionFragment;
 
   encodeFunctionData(
-    functionFragment: "proxiableUUID",
+    functionFragment: 'proxiableUUID',
     values?: undefined
   ): string;
 
   decodeFunctionResult(
-    functionFragment: "proxiableUUID",
+    functionFragment: 'proxiableUUID',
     data: BytesLike
   ): Result;
 }
@@ -76,15 +76,15 @@ export interface IERC1822Proxiable extends BaseContract {
     event?: TCEvent
   ): Promise<this>;
 
-  proxiableUUID: TypedContractMethod<[], [string], "view">;
+  proxiableUUID: TypedContractMethod<[], [string], 'view'>;
 
   getFunction<T extends ContractMethod = ContractMethod>(
     key: string | FunctionFragment
   ): T;
 
   getFunction(
-    nameOrSignature: "proxiableUUID"
-  ): TypedContractMethod<[], [string], "view">;
+    nameOrSignature: 'proxiableUUID'
+  ): TypedContractMethod<[], [string], 'view'>;
 
   filters: {};
 }

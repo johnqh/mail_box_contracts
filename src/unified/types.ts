@@ -11,8 +11,12 @@ import type { ChainInfo } from '@sudobility/configs';
 // For Solana, we'll use a minimal wallet interface matching what's needed
 interface SolanaWalletInterfaceLocal {
   publicKey?: { toString(): string } | null;
-  signTransaction<T extends { serialize(): Buffer }>(transaction: T): Promise<T>;
-  signAllTransactions?<T extends { serialize(): Buffer }>(transactions: T[]): Promise<T[]>;
+  signTransaction<T extends { serialize(): Buffer }>(
+    transaction: T
+  ): Promise<T>;
+  signAllTransactions?<T extends { serialize(): Buffer }>(
+    transactions: T[]
+  ): Promise<T[]>;
   connected?: boolean;
 }
 

@@ -7,13 +7,13 @@ export * from './unified/index';
 export {
   EVMMailerClient,
   type EVMWallet,
-  type GasOptions
+  type GasOptions,
 } from './evm/evm-mailer-client';
 
 export {
   SolanaMailerClient,
   type SolanaWallet,
-  type ComputeUnitOptions
+  type ComputeUnitOptions,
 } from './solana/solana-mailer-client';
 
 // Export utilities with explicit names
@@ -22,5 +22,5 @@ export {
   validateAddress,
   validateMessage,
   validateDomain,
-  validateAmount
+  validateAmount,
 } from './utils/index';

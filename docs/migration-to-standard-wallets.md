@@ -49,12 +49,12 @@ import { OnchainMailerClient } from '@johnqh/mail_box_contracts';
 const unifiedWallet = {
   address: window.ethereum.selectedAddress,
   chainType: 'evm',
-  signTransaction: async (tx) => {
+  signTransaction: async tx => {
     return window.ethereum.request({
       method: 'eth_sendTransaction',
-      params: [tx]
+      params: [tx],
     });
-  }
+  },
 };
 
 const client = new OnchainMailerClient(unifiedWallet, config);
@@ -70,12 +70,12 @@ import { OnchainMailerClient } from '@johnqh/mail_box_contracts';
 // New: Use standard wagmi clients
 const walletClient = createWalletClient({
   chain: mainnet,
-  transport: http()
+  transport: http(),
 });
 
 const publicClient = createPublicClient({
   chain: mainnet,
-  transport: http()
+  transport: http(),
 });
 
 const client = OnchainMailerClient.forEVM(
@@ -98,7 +98,7 @@ const unifiedWallet = {
   address: window.solana.publicKey.toString(),
   chainType: 'solana',
   publicKey: window.solana.publicKey.toString(),
-  signTransaction: async (tx) => window.solana.signTransaction(tx)
+  signTransaction: async tx => window.solana.signTransaction(tx),
 };
 
 const client = new OnchainMailerClient(unifiedWallet, config);

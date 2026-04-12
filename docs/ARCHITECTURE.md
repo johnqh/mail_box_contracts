@@ -80,12 +80,12 @@ uint256 public ownerClaimable;
 
 ### Fee Structure
 
-| Operation | Fee | Revenue Share | Claim Period |
-|-----------|-----|---------------|--------------|
-| Domain Registration | 100 USDC | 0% | N/A |
-| Delegation | 10 USDC | 0% | N/A |
-| Priority Message | 0.1 USDC | 90% to sender | 60 days |
-| Standard Message | 0.01 USDC | 0% | N/A |
+| Operation           | Fee       | Revenue Share | Claim Period |
+| ------------------- | --------- | ------------- | ------------ |
+| Domain Registration | 100 USDC  | 0%            | N/A          |
+| Delegation          | 10 USDC   | 0%            | N/A          |
+| Priority Message    | 0.1 USDC  | 90% to sender | 60 days      |
+| Standard Message    | 0.01 USDC | 0%            | N/A          |
 
 ### Revenue Sharing Flow
 
@@ -210,11 +210,15 @@ Delegate → [Reject] → Clear Mapping
 ```typescript
 // Type-safe contract interactions
 const mailService = MailService__factory.connect(address, signer);
-const result = await mailerClient.delegateTo(delegateAddress, walletClient, account);
+const result = await mailerClient.delegateTo(
+  delegateAddress,
+  walletClient,
+  account
+);
 
 // Event listening
-mailerClient.getContract().on("DelegationSet", (delegator, delegate, event) => {
-    // Handle delegation change
+mailerClient.getContract().on('DelegationSet', (delegator, delegate, event) => {
+  // Handle delegation change
 });
 ```
 
@@ -222,12 +226,12 @@ mailerClient.getContract().on("DelegationSet", (delegator, delegate, event) => {
 
 ```typescript
 // Standard test setup
-await mockUSDC.mint(user.address, ethers.parseUnits("100", 6));
+await mockUSDC.mint(user.address, ethers.parseUnits('100', 6));
 await mockUSDC.connect(user).approve(contractAddress, amount);
 
 // Event testing
 await expect(contract.function(...args))
-  .to.emit(contract, "EventName")
+  .to.emit(contract, 'EventName')
   .withArgs(...expectedArgs);
 ```
 

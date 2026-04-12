@@ -12,12 +12,24 @@ async function main() {
   console.log('🚀 Solana Compute Unit Optimization Demo\n');
 
   // Setup (replace with your actual values)
-  const connection = new Connection('https://api.devnet.solana.com', 'confirmed');
+  const connection = new Connection(
+    'https://api.devnet.solana.com',
+    'confirmed'
+  );
   const wallet = Keypair.generate(); // Use your actual keypair
-  const programId = new PublicKey('9FLkBDGpZBcR8LMsQ7MwwV6X9P4TDFgN3DeRh5qYyHJF');
-  const usdcMint = new PublicKey('4zMMC9srt5Ri5X14GAgXhaHii3GnPAEERYPJgZJDncDU'); // USDC on devnet
+  const programId = new PublicKey(
+    '9FLkBDGpZBcR8LMsQ7MwwV6X9P4TDFgN3DeRh5qYyHJF'
+  );
+  const usdcMint = new PublicKey(
+    '4zMMC9srt5Ri5X14GAgXhaHii3GnPAEERYPJgZJDncDU'
+  ); // USDC on devnet
 
-  const client = new MailerClient(connection, MailerClient.createWallet(wallet), programId, usdcMint);
+  const client = new MailerClient(
+    connection,
+    MailerClient.createWallet(wallet),
+    programId,
+    usdcMint
+  );
 
   console.log('📊 Compute Unit Examples:\n');
 
@@ -78,7 +90,9 @@ async function main() {
     );
     console.log(`   ✅ Sent! Signature: ${result.signature.slice(0, 20)}...`);
     console.log(`   ⚡ Compute units: ${result.computeUnitLimit}`);
-    console.log(`   💰 Priority fee: ${result.computeUnitPrice} micro-lamports/unit`);
+    console.log(
+      `   💰 Priority fee: ${result.computeUnitPrice} micro-lamports/unit`
+    );
     console.log(`   📈 Total priority cost: ${(250_000 * 1_000) / 1e9} SOL\n`);
   } catch (error) {
     console.log(`   ⚠️ Send failed: ${error}\n`);
@@ -103,8 +117,12 @@ async function main() {
     );
     console.log(`   ✅ Sent! Signature: ${result.signature.slice(0, 20)}...`);
     console.log(`   🔬 Simulated units: ${result.simulatedUnits}`);
-    console.log(`   ⚡ Applied limit: ${result.computeUnitLimit} (with 30% buffer)`);
-    console.log(`   💰 Priority fee: ${result.computeUnitPrice} micro-lamports/unit\n`);
+    console.log(
+      `   ⚡ Applied limit: ${result.computeUnitLimit} (with 30% buffer)`
+    );
+    console.log(
+      `   💰 Priority fee: ${result.computeUnitPrice} micro-lamports/unit\n`
+    );
   } catch (error) {
     console.log(`   ⚠️ Send failed: ${error}\n`);
   }
@@ -127,8 +145,12 @@ async function main() {
       highPriorityOptions
     );
     console.log(`   ✅ Sent! Signature: ${result.signature.slice(0, 20)}...`);
-    console.log(`   🚨 High priority: ${result.computeUnitPrice} micro-lamports/unit`);
-    console.log(`   💸 Estimated priority cost: ${((result.computeUnitLimit || 200_000) * 10_000) / 1e9} SOL\n`);
+    console.log(
+      `   🚨 High priority: ${result.computeUnitPrice} micro-lamports/unit`
+    );
+    console.log(
+      `   💸 Estimated priority cost: ${((result.computeUnitLimit || 200_000) * 10_000) / 1e9} SOL\n`
+    );
   } catch (error) {
     console.log(`   ⚠️ Send failed: ${error}\n`);
   }
@@ -155,9 +177,15 @@ async function main() {
   }
 
   console.log('📈 Compute Unit Optimization Summary:');
-  console.log('   • Default: 200,000 compute units (may fail for complex transactions)');
-  console.log('   • Fixed limit: Set specific limit when you know requirements');
-  console.log('   • Priority fees: Pay more for faster inclusion (1-10,000 micro-lamports)');
+  console.log(
+    '   • Default: 200,000 compute units (may fail for complex transactions)'
+  );
+  console.log(
+    '   • Fixed limit: Set specific limit when you know requirements'
+  );
+  console.log(
+    '   • Priority fees: Pay more for faster inclusion (1-10,000 micro-lamports)'
+  );
   console.log('   • Auto-optimize: Simulate first, apply buffer (RECOMMENDED)');
   console.log('   • Max units: 1,400,000 (Solana limit)');
   console.log('\n💡 Best Practices:');
@@ -169,12 +197,15 @@ async function main() {
 }
 
 // Helper to estimate costs
-function estimatePriorityCost(computeUnits: number, microLamportsPerUnit: number): number {
+function estimatePriorityCost(
+  computeUnits: number,
+  microLamportsPerUnit: number
+): number {
   return (computeUnits * microLamportsPerUnit) / 1e9; // Convert to SOL
 }
 
 // Run the demo
-main().catch((error) => {
+main().catch(error => {
   console.error('Demo failed:', error);
   process.exit(1);
 });

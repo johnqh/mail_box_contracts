@@ -21,9 +21,9 @@ export default [
       'examples/stateless-client-usage.ts',
       'examples/stateless-usage.ts',
       'src/react/**',
-    ]
+    ],
   },
-  
+
   // JavaScript files
   {
     ...js.configs.recommended,
@@ -48,10 +48,10 @@ export default [
       'no-console': 'off', // Allow console.log for development
       'prefer-const': 'error',
       'no-var': 'error',
-      
+
       // Style preferences for AI development
-      'quotes': ['error', 'single', { avoidEscape: true }],
-      'semi': ['error', 'always'],
+      quotes: ['error', 'single', { avoidEscape: true }],
+      semi: ['error', 'always'],
     },
   },
 
@@ -69,13 +69,16 @@ export default [
     rules: {
       ...tsPlugin.configs.recommended.rules,
       'no-console': 'off',
-      '@typescript-eslint/no-unused-vars': ['error', { argsIgnorePattern: '^_' }],
+      '@typescript-eslint/no-unused-vars': [
+        'error',
+        { argsIgnorePattern: '^_' },
+      ],
       '@typescript-eslint/explicit-function-return-type': 'off',
       '@typescript-eslint/no-explicit-any': 'warn',
       '@typescript-eslint/no-non-null-assertion': 'off',
     },
   },
-  
+
   {
     files: ['**/*.test.ts', '**/*.spec.ts'],
     rules: {

@@ -10,57 +10,57 @@ This report analyzes all dependencies in package.json to determine which are nec
 
 These packages are correctly placed and **should remain** in `dependencies`:
 
-| Package | Usage | Location | Status |
-|---------|-------|----------|--------|
-| `@solana/web3.js` | ✅ Used | `src/solana/mailer-client.ts`, `src/types/common.ts` | **KEEP** |
-| `@solana/spl-token` | ✅ Used | `src/solana/mailer-client.ts` | **KEEP** |
+| Package             | Usage   | Location                                                   | Status   |
+| ------------------- | ------- | ---------------------------------------------------------- | -------- |
+| `@solana/web3.js`   | ✅ Used | `src/solana/mailer-client.ts`, `src/types/common.ts`       | **KEEP** |
+| `@solana/spl-token` | ✅ Used | `src/solana/mailer-client.ts`                              | **KEEP** |
 | `@sudobility/types` | ✅ Used | Multiple files in `src/` (validation, types, chain-config) | **KEEP** |
-| `viem` | ✅ Used | `src/evm/mailer-client.ts`, test files | **KEEP** |
+| `viem`              | ✅ Used | `src/evm/mailer-client.ts`, test files                     | **KEEP** |
 
 ### ❌ REMOVE: dependencies (Not Used in Runtime Code)
 
 These packages are in `dependencies` but **should be removed or moved**:
 
-| Package | Issue | Recommendation |
-|---------|-------|----------------|
-| `@coral-xyz/anchor-cli` | ❌ NOT used in `src/` code | **REMOVE** - Only needed for CLI, not library runtime |
-| `@coral-xyz/borsh` | ❌ NOT used (comment in code: "Removed borsh import") | **REMOVE** - No longer used |
-| `@types/axios` | ❌ NOT used | **REMOVE** - axios itself not used |
-| `axios` | ❌ NOT used in `src/` code | **REMOVE** - No HTTP calls in runtime code |
-| `dotenv` | ❌ Only in hardhat.config (dev) | **MOVE to devDependencies** |
+| Package                 | Issue                                                 | Recommendation                                        |
+| ----------------------- | ----------------------------------------------------- | ----------------------------------------------------- |
+| `@coral-xyz/anchor-cli` | ❌ NOT used in `src/` code                            | **REMOVE** - Only needed for CLI, not library runtime |
+| `@coral-xyz/borsh`      | ❌ NOT used (comment in code: "Removed borsh import") | **REMOVE** - No longer used                           |
+| `@types/axios`          | ❌ NOT used                                           | **REMOVE** - axios itself not used                    |
+| `axios`                 | ❌ NOT used in `src/` code                            | **REMOVE** - No HTTP calls in runtime code            |
+| `dotenv`                | ❌ Only in hardhat.config (dev)                       | **MOVE to devDependencies**                           |
 
 ### devDependencies (Development & Testing)
 
 Current devDependencies analysis:
 
-| Package | Usage | Status |
-|---------|-------|--------|
-| `@coral-xyz/anchor` | ✅ Used in tests, examples, deployment scripts | **KEEP** |
-| `@nomicfoundation/hardhat-toolbox` | ✅ Used for EVM testing/deployment | **KEEP** |
-| `@types/chai` | ✅ Used in test files | **KEEP** |
-| `@types/mocha` | ✅ Used in test files | **KEEP** |
-| `@types/node` | ✅ Used throughout | **KEEP** |
-| `@types/react` | ✅ Needed for React integration | **KEEP** |
-| `@tanstack/react-query-devtools` | ✅ Useful dev tool for React users | **KEEP** |
-| `@typescript-eslint/*` | ✅ Used for linting | **KEEP** |
-| `chai` | ✅ Used in tests | **KEEP** |
-| `chai-as-promised` | ✅ Used in tests | **KEEP** |
-| `eslint` | ✅ Used for linting | **KEEP** |
-| `hardhat` | ✅ Used for EVM development/testing | **KEEP** |
-| `mocha` | ✅ Used for testing | **KEEP** |
-| `prettier` | ✅ Used for formatting | **KEEP** |
-| `ts-mocha` | ✅ Used for TypeScript testing | **KEEP** |
-| `ts-node` | ✅ Used for running TS scripts | **KEEP** |
-| `typescript` | ✅ Core development dependency | **KEEP** |
+| Package                            | Usage                                          | Status   |
+| ---------------------------------- | ---------------------------------------------- | -------- |
+| `@coral-xyz/anchor`                | ✅ Used in tests, examples, deployment scripts | **KEEP** |
+| `@nomicfoundation/hardhat-toolbox` | ✅ Used for EVM testing/deployment             | **KEEP** |
+| `@types/chai`                      | ✅ Used in test files                          | **KEEP** |
+| `@types/mocha`                     | ✅ Used in test files                          | **KEEP** |
+| `@types/node`                      | ✅ Used throughout                             | **KEEP** |
+| `@types/react`                     | ✅ Needed for React integration                | **KEEP** |
+| `@tanstack/react-query-devtools`   | ✅ Useful dev tool for React users             | **KEEP** |
+| `@typescript-eslint/*`             | ✅ Used for linting                            | **KEEP** |
+| `chai`                             | ✅ Used in tests                               | **KEEP** |
+| `chai-as-promised`                 | ✅ Used in tests                               | **KEEP** |
+| `eslint`                           | ✅ Used for linting                            | **KEEP** |
+| `hardhat`                          | ✅ Used for EVM development/testing            | **KEEP** |
+| `mocha`                            | ✅ Used for testing                            | **KEEP** |
+| `prettier`                         | ✅ Used for formatting                         | **KEEP** |
+| `ts-mocha`                         | ✅ Used for TypeScript testing                 | **KEEP** |
+| `ts-node`                          | ✅ Used for running TS scripts                 | **KEEP** |
+| `typescript`                       | ✅ Core development dependency                 | **KEEP** |
 
 ### ✅ CORRECT: peerDependencies (Optional Framework Integration)
 
 Newly added peer dependencies are correctly configured:
 
-| Package | Status | Notes |
-|---------|--------|-------|
+| Package                 | Status           | Notes                              |
+| ----------------------- | ---------------- | ---------------------------------- |
 | `@tanstack/react-query` | ✅ Optional peer | Correctly optional for React users |
-| `react` | ✅ Optional peer | Correctly optional for React users |
+| `react`                 | ✅ Optional peer | Correctly optional for React users |
 
 Both marked as optional via `peerDependenciesMeta` ✅
 
@@ -156,7 +156,7 @@ grep -r "from ['\""]@types/axios" src/           # NO RESULTS
 
 ```typescript
 // dotenv - Only in hardhat.config.cts
-import 'dotenv/config';  // Development environment only
+import 'dotenv/config'; // Development environment only
 ```
 
 ## Verification Commands

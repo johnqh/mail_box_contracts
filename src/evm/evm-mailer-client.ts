@@ -103,37 +103,41 @@ export class EVMMailerClient {
   // Default gas limits for common operations to use as fallbacks
   // Updated after contract optimizations (storage packing, uint128/uint8, delete vs zero, caching)
   private readonly defaultGasLimits = {
-    send: BigInt(135000),                      // Reduced ~10% (optimized storage + permission check)
-    sendPriority: BigInt(180000),              // Reduced ~10% (optimized _recordShares)
-    sendPrepared: BigInt(110000),              // Reduced ~8% (optimized storage)
-    sendPriorityPrepared: BigInt(135000),      // Reduced ~10% (optimized _recordShares)
-    sendThroughWebhook: BigInt(110000),        // Reduced ~8% (optimized storage)
-    sendToEmailAddress: BigInt(110000),        // Reduced ~8% (optimized storage)
-    sendPreparedToEmailAddress: BigInt(110000),// Reduced ~8% (optimized storage)
-    claimRevenue: BigInt(85000),               // Reduced ~15% (delete optimization + gas refund)
-    claimOwnerShare: BigInt(85000),            // Reduced ~15% (uint128 + caching)
-    delegateTo: BigInt(70000),                 // Reduced ~12% (uint128 delegation fee)
-    rejectDelegation: BigInt(70000),           // Reduced ~12% (optimized storage)
-    setFee: BigInt(50000),                     // Reduced ~17% (uint128)
-    setFeePaused: BigInt(50000),               // Reduced ~17% (bool packing)
-    setDelegationFee: BigInt(50000),           // Reduced ~17% (uint128)
-    setCustomFeePercentage: BigInt(50000),     // Reduced ~17% (uint8)
-    clearCustomFeePercentage: BigInt(50000),   // Reduced ~17% (uint8)
-    setPermission: BigInt(50000),              // Reduced ~17% (optimized modifier)
-    removePermission: BigInt(50000),           // Reduced ~17% (optimized modifier)
-    pause: BigInt(45000),                      // Reduced ~10% (caching)
-    unpause: BigInt(45000),                    // Reduced ~10% (simple state change)
-    emergencyUnpause: BigInt(45000),           // Reduced ~10% (simple state change)
-    distributeClaimableFunds: BigInt(85000),   // Reduced ~15% (delete optimization)
-    deploy: BigInt(2800000),                   // Reduced ~7% (optimized contract size)
+    send: BigInt(135000), // Reduced ~10% (optimized storage + permission check)
+    sendPriority: BigInt(180000), // Reduced ~10% (optimized _recordShares)
+    sendPrepared: BigInt(110000), // Reduced ~8% (optimized storage)
+    sendPriorityPrepared: BigInt(135000), // Reduced ~10% (optimized _recordShares)
+    sendThroughWebhook: BigInt(110000), // Reduced ~8% (optimized storage)
+    sendToEmailAddress: BigInt(110000), // Reduced ~8% (optimized storage)
+    sendPreparedToEmailAddress: BigInt(110000), // Reduced ~8% (optimized storage)
+    claimRevenue: BigInt(85000), // Reduced ~15% (delete optimization + gas refund)
+    claimOwnerShare: BigInt(85000), // Reduced ~15% (uint128 + caching)
+    delegateTo: BigInt(70000), // Reduced ~12% (uint128 delegation fee)
+    rejectDelegation: BigInt(70000), // Reduced ~12% (optimized storage)
+    setFee: BigInt(50000), // Reduced ~17% (uint128)
+    setFeePaused: BigInt(50000), // Reduced ~17% (bool packing)
+    setDelegationFee: BigInt(50000), // Reduced ~17% (uint128)
+    setCustomFeePercentage: BigInt(50000), // Reduced ~17% (uint8)
+    clearCustomFeePercentage: BigInt(50000), // Reduced ~17% (uint8)
+    setPermission: BigInt(50000), // Reduced ~17% (optimized modifier)
+    removePermission: BigInt(50000), // Reduced ~17% (optimized modifier)
+    pause: BigInt(45000), // Reduced ~10% (caching)
+    unpause: BigInt(45000), // Reduced ~10% (simple state change)
+    emergencyUnpause: BigInt(45000), // Reduced ~10% (simple state change)
+    distributeClaimableFunds: BigInt(85000), // Reduced ~15% (delete optimization)
+    deploy: BigInt(2800000), // Reduced ~7% (optimized contract size)
   };
 
   /**
    * Ensure publicClient is provided
    */
-  private ensurePublicClient(publicClient: PublicClient | undefined): PublicClient {
+  private ensurePublicClient(
+    publicClient: PublicClient | undefined
+  ): PublicClient {
     if (!publicClient) {
-      throw new Error('PublicClient is required for this operation. Please provide it in the EVMWallet.');
+      throw new Error(
+        'PublicClient is required for this operation. Please provide it in the EVMWallet.'
+      );
     }
     return publicClient;
   }
@@ -152,7 +156,7 @@ export class EVMMailerClient {
         // Request chain switch
         await walletClient.request({
           method: 'wallet_switchEthereumChain',
-          params: [{ chainId: `0x${targetChainId.toString(16)}` }]
+          params: [{ chainId: `0x${targetChainId.toString(16)}` }],
         });
       }
     } catch (error) {
@@ -189,7 +193,9 @@ export class EVMMailerClient {
         // If we've exhausted retries, use fallback or throw
         if (retryCount > maxRetries) {
           if (fallbackGasLimit) {
-            console.warn(`Gas estimation failed after ${maxRetries} retries, using fallback: ${fallbackGasLimit}`);
+            console.warn(
+              `Gas estimation failed after ${maxRetries} retries, using fallback: ${fallbackGasLimit}`
+            );
             estimatedGas = fallbackGasLimit;
           } else if (error instanceof EstimateGasExecutionError) {
             throw new Error(`Gas estimation failed: ${error.message}`);
@@ -210,13 +216,17 @@ export class EVMMailerClient {
     // If we have a fallback and the estimated gas is suspiciously low, use the fallback
     // This handles cases where RPC returns incorrect low estimates (e.g., Sepolia returning 26,897)
     if (fallbackGasLimit && gasWithBuffer < fallbackGasLimit) {
-      console.warn(`Estimated gas ${gasWithBuffer} is below fallback ${fallbackGasLimit}, using fallback`);
+      console.warn(
+        `Estimated gas ${gasWithBuffer} is below fallback ${fallbackGasLimit}, using fallback`
+      );
       gasWithBuffer = fallbackGasLimit;
     }
 
     // Apply max gas limit if specified
     if (gasOptions?.maxGasLimit) {
-      return gasWithBuffer > gasOptions.maxGasLimit ? gasOptions.maxGasLimit : gasWithBuffer;
+      return gasWithBuffer > gasOptions.maxGasLimit
+        ? gasOptions.maxGasLimit
+        : gasWithBuffer;
     }
 
     return gasWithBuffer;
@@ -225,7 +235,10 @@ export class EVMMailerClient {
   /**
    * Helper method to build transaction parameters with gas options
    */
-  private buildTxParams(gasLimit: bigint, gasOptions?: GasOptions): {
+  private buildTxParams(
+    gasLimit: bigint,
+    gasOptions?: GasOptions
+  ): {
     gas: bigint;
     maxFeePerGas?: bigint;
     maxPriorityFeePerGas?: bigint;
@@ -261,14 +274,19 @@ export class EVMMailerClient {
     }
 
     // Switch chain if needed
-    await this.switchChainIfNeeded(connectedWallet.walletClient, chainInfo.chainId);
+    await this.switchChainIfNeeded(
+      connectedWallet.walletClient,
+      chainInfo.chainId
+    );
 
     const [account] = await connectedWallet.walletClient.getAddresses();
 
     // For deployment, use a reasonable default gas
     const estimatedGas = BigInt(3000000);
     const multiplier = gasOptions?.gasMultiplier ?? 1.5;
-    const gasLimit = gasOptions?.gasLimit ?? BigInt(Math.ceil(Number(estimatedGas) * multiplier));
+    const gasLimit =
+      gasOptions?.gasLimit ??
+      BigInt(Math.ceil(Number(estimatedGas) * multiplier));
 
     const hash = await connectedWallet.walletClient.deployContract({
       abi: MAILER_ABI,
@@ -278,8 +296,12 @@ export class EVMMailerClient {
       account,
       chain: connectedWallet.walletClient.chain,
       gas: gasLimit,
-      ...(gasOptions?.maxFeePerGas && { maxFeePerGas: gasOptions.maxFeePerGas }),
-      ...(gasOptions?.maxPriorityFeePerGas && { maxPriorityFeePerGas: gasOptions.maxPriorityFeePerGas }),
+      ...(gasOptions?.maxFeePerGas && {
+        maxFeePerGas: gasOptions.maxFeePerGas,
+      }),
+      ...(gasOptions?.maxPriorityFeePerGas && {
+        maxPriorityFeePerGas: gasOptions.maxPriorityFeePerGas,
+      }),
     });
 
     return { hash, estimatedGas, gasLimit };
@@ -304,7 +326,10 @@ export class EVMMailerClient {
     }
 
     // Switch chain if needed
-    await this.switchChainIfNeeded(connectedWallet.walletClient, chainInfo.chainId);
+    await this.switchChainIfNeeded(
+      connectedWallet.walletClient,
+      chainInfo.chainId
+    );
 
     const publicClient = this.ensurePublicClient(connectedWallet.publicClient);
     const [account] = await connectedWallet.walletClient.getAddresses();
@@ -312,20 +337,21 @@ export class EVMMailerClient {
 
     // Estimate gas for the transaction
     const gasLimit = await this.estimateGasWithBuffer(
-      () => publicClient.estimateContractGas({
-        address: contractAddress,
-        abi: MAILER_ABI,
-        functionName: 'send',
-        args: [
-          normalizeAddress(to),
-          subject,
-          body,
-          normalizeAddress(payer),
-          revenueShareToReceiver,
-          resolveSenderToName,
-        ],
-        account,
-      }),
+      () =>
+        publicClient.estimateContractGas({
+          address: contractAddress,
+          abi: MAILER_ABI,
+          functionName: 'send',
+          args: [
+            normalizeAddress(to),
+            subject,
+            body,
+            normalizeAddress(payer),
+            revenueShareToReceiver,
+            resolveSenderToName,
+          ],
+          account,
+        }),
       gasOptions,
       this.defaultGasLimits.send
     );
@@ -367,25 +393,29 @@ export class EVMMailerClient {
       throw new Error(`No mailer contract deployed on ${chainInfo.name}`);
     }
 
-    await this.switchChainIfNeeded(connectedWallet.walletClient, chainInfo.chainId);
+    await this.switchChainIfNeeded(
+      connectedWallet.walletClient,
+      chainInfo.chainId
+    );
     const publicClient = this.ensurePublicClient(connectedWallet.publicClient);
     const [account] = await connectedWallet.walletClient.getAddresses();
     const contractAddress = normalizeAddress(chainInfo.mailerAddress);
 
     const gasLimit = await this.estimateGasWithBuffer(
-      () => publicClient.estimateContractGas({
-        address: contractAddress,
-        abi: MAILER_ABI,
-        functionName: 'sendPrepared',
-        args: [
-          normalizeAddress(to),
-          mailId,
-          normalizeAddress(payer),
-          revenueShareToReceiver,
-          resolveSenderToName,
-        ],
-        account,
-      }),
+      () =>
+        publicClient.estimateContractGas({
+          address: contractAddress,
+          abi: MAILER_ABI,
+          functionName: 'sendPrepared',
+          args: [
+            normalizeAddress(to),
+            mailId,
+            normalizeAddress(payer),
+            revenueShareToReceiver,
+            resolveSenderToName,
+          ],
+          account,
+        }),
       gasOptions,
       this.defaultGasLimits.sendPrepared
     );
@@ -426,25 +456,29 @@ export class EVMMailerClient {
       throw new Error(`No mailer contract deployed on ${chainInfo.name}`);
     }
 
-    await this.switchChainIfNeeded(connectedWallet.walletClient, chainInfo.chainId);
+    await this.switchChainIfNeeded(
+      connectedWallet.walletClient,
+      chainInfo.chainId
+    );
     const publicClient = this.ensurePublicClient(connectedWallet.publicClient);
     const [account] = await connectedWallet.walletClient.getAddresses();
     const contractAddress = normalizeAddress(chainInfo.mailerAddress);
 
     const gasLimit = await this.estimateGasWithBuffer(
-      () => publicClient.estimateContractGas({
-        address: contractAddress,
-        abi: MAILER_ABI,
-        functionName: 'sendThroughWebhook',
-        args: [
-          normalizeAddress(to),
-          webhookId,
-          normalizeAddress(payer),
-          revenueShareToReceiver,
-          resolveSenderToName,
-        ],
-        account,
-      }),
+      () =>
+        publicClient.estimateContractGas({
+          address: contractAddress,
+          abi: MAILER_ABI,
+          functionName: 'sendThroughWebhook',
+          args: [
+            normalizeAddress(to),
+            webhookId,
+            normalizeAddress(payer),
+            revenueShareToReceiver,
+            resolveSenderToName,
+          ],
+          account,
+        }),
       gasOptions,
       this.defaultGasLimits.sendThroughWebhook
     );
@@ -484,19 +518,23 @@ export class EVMMailerClient {
       throw new Error(`No mailer contract deployed on ${chainInfo.name}`);
     }
 
-    await this.switchChainIfNeeded(connectedWallet.walletClient, chainInfo.chainId);
+    await this.switchChainIfNeeded(
+      connectedWallet.walletClient,
+      chainInfo.chainId
+    );
     const publicClient = this.ensurePublicClient(connectedWallet.publicClient);
     const [account] = await connectedWallet.walletClient.getAddresses();
     const contractAddress = normalizeAddress(chainInfo.mailerAddress);
 
     const gasLimit = await this.estimateGasWithBuffer(
-      () => publicClient.estimateContractGas({
-        address: contractAddress,
-        abi: MAILER_ABI,
-        functionName: 'sendToEmailAddress',
-        args: [toEmail, subject, body, normalizeAddress(payer)],
-        account,
-      }),
+      () =>
+        publicClient.estimateContractGas({
+          address: contractAddress,
+          abi: MAILER_ABI,
+          functionName: 'sendToEmailAddress',
+          args: [toEmail, subject, body, normalizeAddress(payer)],
+          account,
+        }),
       gasOptions,
       this.defaultGasLimits.sendToEmailAddress
     );
@@ -529,19 +567,23 @@ export class EVMMailerClient {
       throw new Error(`No mailer contract deployed on ${chainInfo.name}`);
     }
 
-    await this.switchChainIfNeeded(connectedWallet.walletClient, chainInfo.chainId);
+    await this.switchChainIfNeeded(
+      connectedWallet.walletClient,
+      chainInfo.chainId
+    );
     const publicClient = this.ensurePublicClient(connectedWallet.publicClient);
     const [account] = await connectedWallet.walletClient.getAddresses();
     const contractAddress = normalizeAddress(chainInfo.mailerAddress);
 
     const gasLimit = await this.estimateGasWithBuffer(
-      () => publicClient.estimateContractGas({
-        address: contractAddress,
-        abi: MAILER_ABI,
-        functionName: 'sendPreparedToEmailAddress',
-        args: [toEmail, mailId, normalizeAddress(payer)],
-        account,
-      }),
+      () =>
+        publicClient.estimateContractGas({
+          address: contractAddress,
+          abi: MAILER_ABI,
+          functionName: 'sendPreparedToEmailAddress',
+          args: [toEmail, mailId, normalizeAddress(payer)],
+          account,
+        }),
       gasOptions,
       this.defaultGasLimits.sendPreparedToEmailAddress
     );
@@ -562,7 +604,10 @@ export class EVMMailerClient {
   /**
    * Get the current send fee
    */
-  async getSendFee(chainInfo: ChainInfo, publicClient?: PublicClient): Promise<bigint> {
+  async getSendFee(
+    chainInfo: ChainInfo,
+    publicClient?: PublicClient
+  ): Promise<bigint> {
     if (!chainInfo.mailerAddress) {
       throw new Error(`No mailer contract deployed on ${chainInfo.name}`);
     }
@@ -590,19 +635,23 @@ export class EVMMailerClient {
       throw new Error(`No mailer contract deployed on ${chainInfo.name}`);
     }
 
-    await this.switchChainIfNeeded(connectedWallet.walletClient, chainInfo.chainId);
+    await this.switchChainIfNeeded(
+      connectedWallet.walletClient,
+      chainInfo.chainId
+    );
     const publicClient = this.ensurePublicClient(connectedWallet.publicClient);
     const [account] = await connectedWallet.walletClient.getAddresses();
     const contractAddress = normalizeAddress(chainInfo.mailerAddress);
 
     const gasLimit = await this.estimateGasWithBuffer(
-      () => publicClient.estimateContractGas({
-        address: contractAddress,
-        abi: MAILER_ABI,
-        functionName: 'setFee',
-        args: [BigInt(usdcAmount)],
-        account,
-      }),
+      () =>
+        publicClient.estimateContractGas({
+          address: contractAddress,
+          abi: MAILER_ABI,
+          functionName: 'setFee',
+          args: [BigInt(usdcAmount)],
+          account,
+        }),
       gasOptions,
       this.defaultGasLimits.setFee
     );
@@ -633,19 +682,23 @@ export class EVMMailerClient {
       throw new Error(`No mailer contract deployed on ${chainInfo.name}`);
     }
 
-    await this.switchChainIfNeeded(connectedWallet.walletClient, chainInfo.chainId);
+    await this.switchChainIfNeeded(
+      connectedWallet.walletClient,
+      chainInfo.chainId
+    );
     const publicClient = this.ensurePublicClient(connectedWallet.publicClient);
     const [account] = await connectedWallet.walletClient.getAddresses();
     const contractAddress = normalizeAddress(chainInfo.mailerAddress);
 
     const gasLimit = await this.estimateGasWithBuffer(
-      () => publicClient.estimateContractGas({
-        address: contractAddress,
-        abi: MAILER_ABI,
-        functionName: 'setFeePaused',
-        args: [feePaused],
-        account,
-      }),
+      () =>
+        publicClient.estimateContractGas({
+          address: contractAddress,
+          abi: MAILER_ABI,
+          functionName: 'setFeePaused',
+          args: [feePaused],
+          account,
+        }),
       gasOptions,
       this.defaultGasLimits.setFeePaused
     );
@@ -666,7 +719,10 @@ export class EVMMailerClient {
   /**
    * Get USDC token address
    */
-  async getUsdcToken(chainInfo: ChainInfo, publicClient?: PublicClient): Promise<Address> {
+  async getUsdcToken(
+    chainInfo: ChainInfo,
+    publicClient?: PublicClient
+  ): Promise<Address> {
     if (!chainInfo.mailerAddress) {
       throw new Error(`No mailer contract deployed on ${chainInfo.name}`);
     }
@@ -684,7 +740,10 @@ export class EVMMailerClient {
   /**
    * Get contract owner
    */
-  async getOwner(chainInfo: ChainInfo, publicClient?: PublicClient): Promise<Address> {
+  async getOwner(
+    chainInfo: ChainInfo,
+    publicClient?: PublicClient
+  ): Promise<Address> {
     if (!chainInfo.mailerAddress) {
       throw new Error(`No mailer contract deployed on ${chainInfo.name}`);
     }
@@ -711,19 +770,23 @@ export class EVMMailerClient {
       throw new Error(`No mailer contract deployed on ${chainInfo.name}`);
     }
 
-    await this.switchChainIfNeeded(connectedWallet.walletClient, chainInfo.chainId);
+    await this.switchChainIfNeeded(
+      connectedWallet.walletClient,
+      chainInfo.chainId
+    );
     const publicClient = this.ensurePublicClient(connectedWallet.publicClient);
     const [account] = await connectedWallet.walletClient.getAddresses();
     const contractAddress = normalizeAddress(chainInfo.mailerAddress);
 
     const gasLimit = await this.estimateGasWithBuffer(
-      () => publicClient.estimateContractGas({
-        address: contractAddress,
-        abi: MAILER_ABI,
-        functionName: 'claimRecipientShare',
-        args: [],
-        account,
-      }),
+      () =>
+        publicClient.estimateContractGas({
+          address: contractAddress,
+          abi: MAILER_ABI,
+          functionName: 'claimRecipientShare',
+          args: [],
+          account,
+        }),
       gasOptions,
       this.defaultGasLimits.claimRevenue
     );
@@ -753,19 +816,23 @@ export class EVMMailerClient {
       throw new Error(`No mailer contract deployed on ${chainInfo.name}`);
     }
 
-    await this.switchChainIfNeeded(connectedWallet.walletClient, chainInfo.chainId);
+    await this.switchChainIfNeeded(
+      connectedWallet.walletClient,
+      chainInfo.chainId
+    );
     const publicClient = this.ensurePublicClient(connectedWallet.publicClient);
     const [account] = await connectedWallet.walletClient.getAddresses();
     const contractAddress = normalizeAddress(chainInfo.mailerAddress);
 
     const gasLimit = await this.estimateGasWithBuffer(
-      () => publicClient.estimateContractGas({
-        address: contractAddress,
-        abi: MAILER_ABI,
-        functionName: 'claimOwnerShare',
-        args: [],
-        account,
-      }),
+      () =>
+        publicClient.estimateContractGas({
+          address: contractAddress,
+          abi: MAILER_ABI,
+          functionName: 'claimOwnerShare',
+          args: [],
+          account,
+        }),
       gasOptions
     );
 
@@ -795,19 +862,23 @@ export class EVMMailerClient {
       throw new Error(`No mailer contract deployed on ${chainInfo.name}`);
     }
 
-    await this.switchChainIfNeeded(connectedWallet.walletClient, chainInfo.chainId);
+    await this.switchChainIfNeeded(
+      connectedWallet.walletClient,
+      chainInfo.chainId
+    );
     const publicClient = this.ensurePublicClient(connectedWallet.publicClient);
     const [account] = await connectedWallet.walletClient.getAddresses();
     const contractAddress = normalizeAddress(chainInfo.mailerAddress);
 
     const gasLimit = await this.estimateGasWithBuffer(
-      () => publicClient.estimateContractGas({
-        address: contractAddress,
-        abi: MAILER_ABI,
-        functionName: 'claimExpiredShares',
-        args: [normalizeAddress(recipient)],
-        account,
-      }),
+      () =>
+        publicClient.estimateContractGas({
+          address: contractAddress,
+          abi: MAILER_ABI,
+          functionName: 'claimExpiredShares',
+          args: [normalizeAddress(recipient)],
+          account,
+        }),
       gasOptions
     );
 
@@ -839,12 +910,12 @@ export class EVMMailerClient {
     const client = this.ensurePublicClient(publicClient);
     const contractAddress = normalizeAddress(chainInfo.mailerAddress);
 
-    const result = await client.readContract({
+    const result = (await client.readContract({
       address: contractAddress,
       abi: MAILER_ABI,
       functionName: 'getRecipientClaimable',
       args: [normalizeAddress(recipient)],
-    }) as readonly [bigint, bigint, boolean];
+    })) as readonly [bigint, bigint, boolean];
 
     return {
       amount: result[0],
@@ -856,7 +927,10 @@ export class EVMMailerClient {
   /**
    * Get owner claimable amount
    */
-  async getOwnerClaimable(chainInfo: ChainInfo, publicClient?: PublicClient): Promise<bigint> {
+  async getOwnerClaimable(
+    chainInfo: ChainInfo,
+    publicClient?: PublicClient
+  ): Promise<bigint> {
     if (!chainInfo.mailerAddress) {
       throw new Error(`No mailer contract deployed on ${chainInfo.name}`);
     }
@@ -884,21 +958,27 @@ export class EVMMailerClient {
       throw new Error(`No mailer contract deployed on ${chainInfo.name}`);
     }
 
-    await this.switchChainIfNeeded(connectedWallet.walletClient, chainInfo.chainId);
+    await this.switchChainIfNeeded(
+      connectedWallet.walletClient,
+      chainInfo.chainId
+    );
     const publicClient = this.ensurePublicClient(connectedWallet.publicClient);
     const [account] = await connectedWallet.walletClient.getAddresses();
     const contractAddress = normalizeAddress(chainInfo.mailerAddress);
 
-    const delegateAddress = delegate ? normalizeAddress(delegate) : '0x0000000000000000000000000000000000000000';
+    const delegateAddress = delegate
+      ? normalizeAddress(delegate)
+      : '0x0000000000000000000000000000000000000000';
 
     const gasLimit = await this.estimateGasWithBuffer(
-      () => publicClient.estimateContractGas({
-        address: contractAddress,
-        abi: MAILER_ABI,
-        functionName: 'delegateTo',
-        args: [delegateAddress],
-        account,
-      }),
+      () =>
+        publicClient.estimateContractGas({
+          address: contractAddress,
+          abi: MAILER_ABI,
+          functionName: 'delegateTo',
+          args: [delegateAddress],
+          account,
+        }),
       gasOptions,
       this.defaultGasLimits.delegateTo
     );
@@ -929,19 +1009,23 @@ export class EVMMailerClient {
       throw new Error(`No mailer contract deployed on ${chainInfo.name}`);
     }
 
-    await this.switchChainIfNeeded(connectedWallet.walletClient, chainInfo.chainId);
+    await this.switchChainIfNeeded(
+      connectedWallet.walletClient,
+      chainInfo.chainId
+    );
     const publicClient = this.ensurePublicClient(connectedWallet.publicClient);
     const [account] = await connectedWallet.walletClient.getAddresses();
     const contractAddress = normalizeAddress(chainInfo.mailerAddress);
 
     const gasLimit = await this.estimateGasWithBuffer(
-      () => publicClient.estimateContractGas({
-        address: contractAddress,
-        abi: MAILER_ABI,
-        functionName: 'rejectDelegation',
-        args: [normalizeAddress(delegatingAddress)],
-        account,
-      }),
+      () =>
+        publicClient.estimateContractGas({
+          address: contractAddress,
+          abi: MAILER_ABI,
+          functionName: 'rejectDelegation',
+          args: [normalizeAddress(delegatingAddress)],
+          account,
+        }),
       gasOptions,
       this.defaultGasLimits.rejectDelegation
     );
@@ -962,7 +1046,10 @@ export class EVMMailerClient {
   /**
    * Get delegation fee
    */
-  async getDelegationFee(chainInfo: ChainInfo, publicClient?: PublicClient): Promise<bigint> {
+  async getDelegationFee(
+    chainInfo: ChainInfo,
+    publicClient?: PublicClient
+  ): Promise<bigint> {
     if (!chainInfo.mailerAddress) {
       throw new Error(`No mailer contract deployed on ${chainInfo.name}`);
     }
@@ -990,19 +1077,23 @@ export class EVMMailerClient {
       throw new Error(`No mailer contract deployed on ${chainInfo.name}`);
     }
 
-    await this.switchChainIfNeeded(connectedWallet.walletClient, chainInfo.chainId);
+    await this.switchChainIfNeeded(
+      connectedWallet.walletClient,
+      chainInfo.chainId
+    );
     const publicClient = this.ensurePublicClient(connectedWallet.publicClient);
     const [account] = await connectedWallet.walletClient.getAddresses();
     const contractAddress = normalizeAddress(chainInfo.mailerAddress);
 
     const gasLimit = await this.estimateGasWithBuffer(
-      () => publicClient.estimateContractGas({
-        address: contractAddress,
-        abi: MAILER_ABI,
-        functionName: 'setDelegationFee',
-        args: [BigInt(usdcAmount)],
-        account,
-      }),
+      () =>
+        publicClient.estimateContractGas({
+          address: contractAddress,
+          abi: MAILER_ABI,
+          functionName: 'setDelegationFee',
+          args: [BigInt(usdcAmount)],
+          account,
+        }),
       gasOptions,
       this.defaultGasLimits.setDelegationFee
     );
@@ -1038,19 +1129,23 @@ export class EVMMailerClient {
       throw new Error('Percentage must be between 0 and 100');
     }
 
-    await this.switchChainIfNeeded(connectedWallet.walletClient, chainInfo.chainId);
+    await this.switchChainIfNeeded(
+      connectedWallet.walletClient,
+      chainInfo.chainId
+    );
     const publicClient = this.ensurePublicClient(connectedWallet.publicClient);
     const [senderAccount] = await connectedWallet.walletClient.getAddresses();
     const contractAddress = normalizeAddress(chainInfo.mailerAddress);
 
     const gasLimit = await this.estimateGasWithBuffer(
-      () => publicClient.estimateContractGas({
-        address: contractAddress,
-        abi: MAILER_ABI,
-        functionName: 'setCustomFeePercentage',
-        args: [normalizeAddress(account), BigInt(percentage)],
-        account: senderAccount,
-      }),
+      () =>
+        publicClient.estimateContractGas({
+          address: contractAddress,
+          abi: MAILER_ABI,
+          functionName: 'setCustomFeePercentage',
+          args: [normalizeAddress(account), BigInt(percentage)],
+          account: senderAccount,
+        }),
       gasOptions,
       this.defaultGasLimits.setCustomFeePercentage
     );
@@ -1081,19 +1176,23 @@ export class EVMMailerClient {
       throw new Error(`No mailer contract deployed on ${chainInfo.name}`);
     }
 
-    await this.switchChainIfNeeded(connectedWallet.walletClient, chainInfo.chainId);
+    await this.switchChainIfNeeded(
+      connectedWallet.walletClient,
+      chainInfo.chainId
+    );
     const publicClient = this.ensurePublicClient(connectedWallet.publicClient);
     const [senderAccount] = await connectedWallet.walletClient.getAddresses();
     const contractAddress = normalizeAddress(chainInfo.mailerAddress);
 
     const gasLimit = await this.estimateGasWithBuffer(
-      () => publicClient.estimateContractGas({
-        address: contractAddress,
-        abi: MAILER_ABI,
-        functionName: 'clearCustomFeePercentage',
-        args: [normalizeAddress(account)],
-        account: senderAccount,
-      }),
+      () =>
+        publicClient.estimateContractGas({
+          address: contractAddress,
+          abi: MAILER_ABI,
+          functionName: 'clearCustomFeePercentage',
+          args: [normalizeAddress(account)],
+          account: senderAccount,
+        }),
       gasOptions,
       this.defaultGasLimits.clearCustomFeePercentage
     );
@@ -1149,19 +1248,23 @@ export class EVMMailerClient {
       throw new Error(`No mailer contract deployed on ${chainInfo.name}`);
     }
 
-    await this.switchChainIfNeeded(connectedWallet.walletClient, chainInfo.chainId);
+    await this.switchChainIfNeeded(
+      connectedWallet.walletClient,
+      chainInfo.chainId
+    );
     const publicClient = this.ensurePublicClient(connectedWallet.publicClient);
     const [account] = await connectedWallet.walletClient.getAddresses();
     const mailerAddress = normalizeAddress(chainInfo.mailerAddress);
 
     const gasLimit = await this.estimateGasWithBuffer(
-      () => publicClient.estimateContractGas({
-        address: mailerAddress,
-        abi: MAILER_ABI,
-        functionName: 'setPermission',
-        args: [normalizeAddress(contractAddress)],
-        account,
-      }),
+      () =>
+        publicClient.estimateContractGas({
+          address: mailerAddress,
+          abi: MAILER_ABI,
+          functionName: 'setPermission',
+          args: [normalizeAddress(contractAddress)],
+          account,
+        }),
       gasOptions,
       this.defaultGasLimits.setPermission
     );
@@ -1192,19 +1295,23 @@ export class EVMMailerClient {
       throw new Error(`No mailer contract deployed on ${chainInfo.name}`);
     }
 
-    await this.switchChainIfNeeded(connectedWallet.walletClient, chainInfo.chainId);
+    await this.switchChainIfNeeded(
+      connectedWallet.walletClient,
+      chainInfo.chainId
+    );
     const publicClient = this.ensurePublicClient(connectedWallet.publicClient);
     const [account] = await connectedWallet.walletClient.getAddresses();
     const mailerAddress = normalizeAddress(chainInfo.mailerAddress);
 
     const gasLimit = await this.estimateGasWithBuffer(
-      () => publicClient.estimateContractGas({
-        address: mailerAddress,
-        abi: MAILER_ABI,
-        functionName: 'removePermission',
-        args: [normalizeAddress(contractAddress)],
-        account,
-      }),
+      () =>
+        publicClient.estimateContractGas({
+          address: mailerAddress,
+          abi: MAILER_ABI,
+          functionName: 'removePermission',
+          args: [normalizeAddress(contractAddress)],
+          account,
+        }),
       gasOptions,
       this.defaultGasLimits.removePermission
     );
@@ -1258,19 +1365,23 @@ export class EVMMailerClient {
       throw new Error(`No mailer contract deployed on ${chainInfo.name}`);
     }
 
-    await this.switchChainIfNeeded(connectedWallet.walletClient, chainInfo.chainId);
+    await this.switchChainIfNeeded(
+      connectedWallet.walletClient,
+      chainInfo.chainId
+    );
     const publicClient = this.ensurePublicClient(connectedWallet.publicClient);
     const [account] = await connectedWallet.walletClient.getAddresses();
     const contractAddress = normalizeAddress(chainInfo.mailerAddress);
 
     const gasLimit = await this.estimateGasWithBuffer(
-      () => publicClient.estimateContractGas({
-        address: contractAddress,
-        abi: MAILER_ABI,
-        functionName: 'pause',
-        args: [],
-        account,
-      }),
+      () =>
+        publicClient.estimateContractGas({
+          address: contractAddress,
+          abi: MAILER_ABI,
+          functionName: 'pause',
+          args: [],
+          account,
+        }),
       gasOptions,
       this.defaultGasLimits.pause
     );
@@ -1300,19 +1411,23 @@ export class EVMMailerClient {
       throw new Error(`No mailer contract deployed on ${chainInfo.name}`);
     }
 
-    await this.switchChainIfNeeded(connectedWallet.walletClient, chainInfo.chainId);
+    await this.switchChainIfNeeded(
+      connectedWallet.walletClient,
+      chainInfo.chainId
+    );
     const publicClient = this.ensurePublicClient(connectedWallet.publicClient);
     const [account] = await connectedWallet.walletClient.getAddresses();
     const contractAddress = normalizeAddress(chainInfo.mailerAddress);
 
     const gasLimit = await this.estimateGasWithBuffer(
-      () => publicClient.estimateContractGas({
-        address: contractAddress,
-        abi: MAILER_ABI,
-        functionName: 'unpause',
-        args: [],
-        account,
-      }),
+      () =>
+        publicClient.estimateContractGas({
+          address: contractAddress,
+          abi: MAILER_ABI,
+          functionName: 'unpause',
+          args: [],
+          account,
+        }),
       gasOptions,
       this.defaultGasLimits.unpause
     );
@@ -1342,19 +1457,23 @@ export class EVMMailerClient {
       throw new Error(`No mailer contract deployed on ${chainInfo.name}`);
     }
 
-    await this.switchChainIfNeeded(connectedWallet.walletClient, chainInfo.chainId);
+    await this.switchChainIfNeeded(
+      connectedWallet.walletClient,
+      chainInfo.chainId
+    );
     const publicClient = this.ensurePublicClient(connectedWallet.publicClient);
     const [account] = await connectedWallet.walletClient.getAddresses();
     const contractAddress = normalizeAddress(chainInfo.mailerAddress);
 
     const gasLimit = await this.estimateGasWithBuffer(
-      () => publicClient.estimateContractGas({
-        address: contractAddress,
-        abi: MAILER_ABI,
-        functionName: 'emergencyUnpause',
-        args: [],
-        account,
-      }),
+      () =>
+        publicClient.estimateContractGas({
+          address: contractAddress,
+          abi: MAILER_ABI,
+          functionName: 'emergencyUnpause',
+          args: [],
+          account,
+        }),
       gasOptions,
       this.defaultGasLimits.emergencyUnpause
     );
@@ -1375,7 +1494,10 @@ export class EVMMailerClient {
   /**
    * Check if contract is paused
    */
-  async isPaused(chainInfo: ChainInfo, publicClient?: PublicClient): Promise<boolean> {
+  async isPaused(
+    chainInfo: ChainInfo,
+    publicClient?: PublicClient
+  ): Promise<boolean> {
     if (!chainInfo.mailerAddress) {
       throw new Error(`No mailer contract deployed on ${chainInfo.name}`);
     }
@@ -1403,19 +1525,23 @@ export class EVMMailerClient {
       throw new Error(`No mailer contract deployed on ${chainInfo.name}`);
     }
 
-    await this.switchChainIfNeeded(connectedWallet.walletClient, chainInfo.chainId);
+    await this.switchChainIfNeeded(
+      connectedWallet.walletClient,
+      chainInfo.chainId
+    );
     const publicClient = this.ensurePublicClient(connectedWallet.publicClient);
     const [account] = await connectedWallet.walletClient.getAddresses();
     const contractAddress = normalizeAddress(chainInfo.mailerAddress);
 
     const gasLimit = await this.estimateGasWithBuffer(
-      () => publicClient.estimateContractGas({
-        address: contractAddress,
-        abi: MAILER_ABI,
-        functionName: 'distributeClaimableFunds',
-        args: [normalizeAddress(recipient)],
-        account,
-      }),
+      () =>
+        publicClient.estimateContractGas({
+          address: contractAddress,
+          abi: MAILER_ABI,
+          functionName: 'distributeClaimableFunds',
+          args: [normalizeAddress(recipient)],
+          account,
+        }),
       gasOptions,
       this.defaultGasLimits.distributeClaimableFunds
     );
@@ -1432,5 +1558,4 @@ export class EVMMailerClient {
 
     return { hash, estimatedGas: gasLimit, gasLimit };
   }
-
 }

@@ -18,10 +18,10 @@ Both EVM and Solana clients have been enhanced with fee optimization features ap
 
 ```typescript
 interface GasOptions {
-  gasMultiplier?: number;       // Buffer multiplier (default: 1.2)
-  maxGasLimit?: bigint;         // Maximum gas limit
-  gasLimit?: bigint;            // Fixed gas limit (skips estimation)
-  maxFeePerGas?: bigint;        // EIP-1559 max fee
+  gasMultiplier?: number; // Buffer multiplier (default: 1.2)
+  maxGasLimit?: bigint; // Maximum gas limit
+  gasLimit?: bigint; // Fixed gas limit (skips estimation)
+  maxFeePerGas?: bigint; // EIP-1559 max fee
   maxPriorityFeePerGas?: bigint; // EIP-1559 priority fee
 }
 ```
@@ -30,8 +30,14 @@ interface GasOptions {
 
 ```typescript
 const result = await mailerClient.send(
-  to, subject, body, payer, false, false,
-  walletClient, account,
+  to,
+  subject,
+  body,
+  payer,
+  false,
+  false,
+  walletClient,
+  account,
   { gasMultiplier: 1.3, maxGasLimit: BigInt(500000) }
 );
 ```
@@ -49,38 +55,35 @@ const result = await mailerClient.send(
 
 ```typescript
 interface ComputeUnitOptions {
-  computeUnitLimit?: number;      // Compute unit limit (max: 1.4M)
-  computeUnitPrice?: number;       // Priority fee in micro-lamports
-  autoOptimize?: boolean;          // Simulate first (recommended)
-  computeUnitMultiplier?: number;  // Buffer multiplier (default: 1.2)
-  skipComputeUnits?: boolean;      // Use Solana defaults
+  computeUnitLimit?: number; // Compute unit limit (max: 1.4M)
+  computeUnitPrice?: number; // Priority fee in micro-lamports
+  autoOptimize?: boolean; // Simulate first (recommended)
+  computeUnitMultiplier?: number; // Buffer multiplier (default: 1.2)
+  skipComputeUnits?: boolean; // Use Solana defaults
 }
 ```
 
 ### Usage Example
 
 ```typescript
-const result = await client.send(
-  recipient, subject, body, false, false,
-  {
-    autoOptimize: true,
-    computeUnitMultiplier: 1.3,
-    computeUnitPrice: 1000  // Priority fee
-  }
-);
+const result = await client.send(recipient, subject, body, false, false, {
+  autoOptimize: true,
+  computeUnitMultiplier: 1.3,
+  computeUnitPrice: 1000, // Priority fee
+});
 ```
 
 ## Key Differences
 
-| Feature | EVM | Solana |
-|---------|-----|--------|
-| **Base Fee** | Variable (network dependent) | Fixed (~5000 lamports) |
-| **Optimization Type** | Gas estimation | Compute unit budget |
-| **Priority Mechanism** | Higher gas price | Priority fees (micro-lamports) |
-| **Default Limit** | Varies by operation | 200,000 compute units |
-| **Maximum Limit** | Block gas limit | 1,400,000 compute units |
-| **Simulation** | estimateGas() | simulateTransaction() |
-| **Buffer Default** | 20% (1.2x) | 20% (1.2x) |
+| Feature                | EVM                          | Solana                         |
+| ---------------------- | ---------------------------- | ------------------------------ |
+| **Base Fee**           | Variable (network dependent) | Fixed (~5000 lamports)         |
+| **Optimization Type**  | Gas estimation               | Compute unit budget            |
+| **Priority Mechanism** | Higher gas price             | Priority fees (micro-lamports) |
+| **Default Limit**      | Varies by operation          | 200,000 compute units          |
+| **Maximum Limit**      | Block gas limit              | 1,400,000 compute units        |
+| **Simulation**         | estimateGas()                | simulateTransaction()          |
+| **Buffer Default**     | 20% (1.2x)                   | 20% (1.2x)                     |
 
 ## Benefits
 
@@ -138,10 +141,10 @@ const result = await client.send(
 ```typescript
 // Production recommendation
 const gasOptions = {
-  gasMultiplier: 1.2,      // 20% buffer
+  gasMultiplier: 1.2, // 20% buffer
   maxGasLimit: BigInt(1e6), // Cap at 1M gas
   // Add EIP-1559 during congestion
-  maxFeePerGas: await getGasPrice() * 2n
+  maxFeePerGas: (await getGasPrice()) * 2n,
 };
 ```
 
@@ -150,9 +153,9 @@ const gasOptions = {
 ```typescript
 // Production recommendation
 const computeOptions = {
-  autoOptimize: true,       // Simulate first
+  autoOptimize: true, // Simulate first
   computeUnitMultiplier: 1.3, // 30% buffer
-  computeUnitPrice: 1000    // Moderate priority
+  computeUnitPrice: 1000, // Moderate priority
 };
 ```
 

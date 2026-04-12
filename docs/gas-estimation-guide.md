@@ -19,18 +19,18 @@ All EVM contract calls in the Mailer TypeScript client now include automatic gas
 ```typescript
 // Gas configuration options
 interface GasOptions {
-  gasMultiplier?: number;        // Buffer multiplier (default: 1.2)
-  maxGasLimit?: bigint;          // Maximum gas limit
-  gasLimit?: bigint;             // Fixed gas limit (skips estimation)
-  maxFeePerGas?: bigint;         // EIP-1559 max fee
+  gasMultiplier?: number; // Buffer multiplier (default: 1.2)
+  maxGasLimit?: bigint; // Maximum gas limit
+  gasLimit?: bigint; // Fixed gas limit (skips estimation)
+  maxFeePerGas?: bigint; // EIP-1559 max fee
   maxPriorityFeePerGas?: bigint; // EIP-1559 priority fee
 }
 
 // Transaction result with gas details
 interface TransactionResult {
-  hash: Hash;                     // Transaction hash
-  estimatedGas?: bigint;          // Estimated gas amount
-  gasLimit?: bigint;              // Actual gas limit used
+  hash: Hash; // Transaction hash
+  estimatedGas?: bigint; // Estimated gas amount
+  gasLimit?: bigint; // Actual gas limit used
 }
 ```
 
@@ -133,7 +133,7 @@ const result = await mailerClient.send(
   false,
   walletClient,
   account,
-  { gasMultiplier: 1.5 }  // 50% buffer
+  { gasMultiplier: 1.5 } // 50% buffer
 );
 ```
 
@@ -144,7 +144,7 @@ const result = await mailerClient.send(
 const result = await mailerClient.claimRecipientShare(
   walletClient,
   account,
-  { gasLimit: BigInt(300000) }  // Fixed 300k gas
+  { gasLimit: BigInt(300000) } // Fixed 300k gas
 );
 ```
 
@@ -158,7 +158,7 @@ const result = await mailerClient.delegateTo(
   account,
   {
     gasMultiplier: 1.3,
-    maxGasLimit: BigInt(500000)  // Cap at 500k gas
+    maxGasLimit: BigInt(500000), // Cap at 500k gas
   }
 );
 ```
@@ -178,8 +178,8 @@ const result = await mailerClient.send(
   account,
   {
     gasMultiplier: 1.2,
-    maxFeePerGas: parseUnits('50', 9),      // 50 gwei
-    maxPriorityFeePerGas: parseUnits('2', 9) // 2 gwei tip
+    maxFeePerGas: parseUnits('50', 9), // 50 gwei
+    maxPriorityFeePerGas: parseUnits('2', 9), // 2 gwei tip
   }
 );
 ```
@@ -242,7 +242,7 @@ try {
 ```typescript
 const userGasOptions = {
   gasMultiplier: 1.2,
-  maxGasLimit: BigInt(1000000)  // 1M gas max
+  maxGasLimit: BigInt(1000000), // 1M gas max
 };
 ```
 
@@ -262,7 +262,7 @@ const isPeakTime = gasPrice > parseUnits('100', 9);
 
 const gasOptions = {
   gasMultiplier: isPeakTime ? 1.5 : 1.2,
-  maxFeePerGas: isPeakTime ? gasPrice * 2n : gasPrice
+  maxFeePerGas: isPeakTime ? gasPrice * 2n : gasPrice,
 };
 ```
 
@@ -281,7 +281,7 @@ const { client, result } = await MailerClient.deploy(
   account,
   usdcAddress,
   ownerAddress,
-  { gasMultiplier: 2.0 }  // Extra safe for deployment
+  { gasMultiplier: 2.0 } // Extra safe for deployment
 );
 ```
 

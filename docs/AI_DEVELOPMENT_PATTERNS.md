@@ -81,22 +81,25 @@ npm run test:unified:direct
 
 ```javascript
 // Always test both success and failure cases
-describe("Contract Function", () => {
-  it("should succeed with valid inputs", async () => {
+describe('Contract Function', () => {
+  it('should succeed with valid inputs', async () => {
     // Setup test data
-    await mockUSDC.mint(user.address, ethers.parseUnits("100", 6));
-    await mockUSDC.connect(user).approve(contract.address, ethers.parseUnits("10", 6));
-    
+    await mockUSDC.mint(user.address, ethers.parseUnits('100', 6));
+    await mockUSDC
+      .connect(user)
+      .approve(contract.address, ethers.parseUnits('10', 6));
+
     // Execute and verify
     await expect(contract.connect(user).someFunction())
-      .to.emit(contract, "SomeEvent")
+      .to.emit(contract, 'SomeEvent')
       .withArgs(expectedArgs);
   });
-  
-  it("should fail with insufficient balance", async () => {
+
+  it('should fail with insufficient balance', async () => {
     // Test error conditions
-    await expect(contract.connect(user).someFunction())
-      .to.be.revertedWithCustomError(contract, "InsufficientFunds");
+    await expect(
+      contract.connect(user).someFunction()
+    ).to.be.revertedWithCustomError(contract, 'InsufficientFunds');
   });
 });
 ```
@@ -116,14 +119,14 @@ contract MyContract {
      * @dev Function description with business logic explanation
      * @param paramName Description of the parameter and its constraints
      * @return returnName Description of what is returned
-     * 
+     *
      * Requirements:
      * - param must be non-zero
      * - caller must have sufficient balance
-     * 
+     *
      * Emits:
      * - SomeEvent when successful
-     * 
+     *
      * @custom:security This function has reentrancy protection
      */
     function someFunction(uint256 paramName) external returns (bool returnName) {
@@ -134,16 +137,16 @@ contract MyContract {
 
 ### 2. TypeScript Documentation
 
-```typescript
+````typescript
 /**
  * Class description with usage examples
- * 
+ *
  * @example Basic Usage
  * ```typescript
  * const instance = new MyClass(config);
  * const result = await instance.method();
  * ```
- * 
+ *
  * @example Error Handling
  * ```typescript
  * try {
@@ -154,23 +157,23 @@ contract MyContract {
  * ```
  */
 export class MyClass {
-    /**
-     * Method description with parameter details
-     * 
-     * @param param1 - Description and constraints
-     * @param param2 - Optional parameter with default
-     * @returns Promise resolving to result description
-     * 
-     * @throws {Error} When validation fails
-     * @throws {NetworkError} When RPC connection fails
-     * 
-     * @since 1.0.0
-     */
-    async method(param1: string, param2: boolean = false): Promise<Result> {
-        // Implementation with inline comments for complex logic
-    }
+  /**
+   * Method description with parameter details
+   *
+   * @param param1 - Description and constraints
+   * @param param2 - Optional parameter with default
+   * @returns Promise resolving to result description
+   *
+   * @throws {Error} When validation fails
+   * @throws {NetworkError} When RPC connection fails
+   *
+   * @since 1.0.0
+   */
+  async method(param1: string, param2: boolean = false): Promise<Result> {
+    // Implementation with inline comments for complex logic
+  }
 }
-```
+````
 
 ## 🔍 Common Development Scenarios
 
@@ -231,8 +234,8 @@ export const NETWORK_CONFIGS = {
   newNetwork: {
     rpc: 'https://rpc.newnetwork.com',
     chainId: 12345,
-    usdc: '0x...'
-  }
+    usdc: '0x...',
+  },
 };
 
 // 2. Update types if needed
@@ -263,22 +266,26 @@ function someFunction() external {
 ```typescript
 // Comprehensive error handling with specific error types
 async function riskyOperation(): Promise<Result> {
-    try {
-        const result = await chainOperation();
-        return result;
-    } catch (error) {
-        // Handle specific error types
-        if (error.message.includes('insufficient funds')) {
-            throw new Error(`Insufficient USDC balance. Please add funds to continue.`);
-        } else if (error.message.includes('user rejected')) {
-            throw new Error(`Transaction was rejected by user. Please try again.`);
-        } else if (error.code === 'NETWORK_ERROR') {
-            throw new Error(`Network connection failed. Please check your internet connection.`);
-        } else {
-            // Re-throw with context
-            throw new Error(`Operation failed: ${error.message}`);
-        }
+  try {
+    const result = await chainOperation();
+    return result;
+  } catch (error) {
+    // Handle specific error types
+    if (error.message.includes('insufficient funds')) {
+      throw new Error(
+        `Insufficient USDC balance. Please add funds to continue.`
+      );
+    } else if (error.message.includes('user rejected')) {
+      throw new Error(`Transaction was rejected by user. Please try again.`);
+    } else if (error.code === 'NETWORK_ERROR') {
+      throw new Error(
+        `Network connection failed. Please check your internet connection.`
+      );
+    } else {
+      // Re-throw with context
+      throw new Error(`Operation failed: ${error.message}`);
     }
+  }
 }
 ```
 
@@ -301,25 +308,25 @@ npm test -- --grep "specific test" --reporter spec
 
 ```typescript
 // Add detailed logging for debugging
-console.log('🔍 Debug: Operation starting', { 
-    chainType: this.chainType, 
-    walletAddress: this.wallet.address,
-    config: this.config 
+console.log('🔍 Debug: Operation starting', {
+  chainType: this.chainType,
+  walletAddress: this.wallet.address,
+  config: this.config,
 });
 
 // Use try-catch with detailed error context
 try {
-    const result = await operation();
-    console.log('✅ Success:', result);
-    return result;
+  const result = await operation();
+  console.log('✅ Success:', result);
+  return result;
 } catch (error) {
-    console.error('❌ Error details:', {
-        operation: 'sendMessage',
-        error: error.message,
-        stack: error.stack,
-        context: { subject, body, priority }
-    });
-    throw error;
+  console.error('❌ Error details:', {
+    operation: 'sendMessage',
+    error: error.message,
+    stack: error.stack,
+    context: { subject, body, priority },
+  });
+  throw error;
 }
 ```
 
@@ -328,26 +335,26 @@ try {
 ### 1. Test Organization
 
 ```javascript
-describe("Contract Name", () => {
-    describe("Function Name", () => {
-        describe("Success Cases", () => {
-            it("should handle valid input", async () => {
-                // Test implementation
-            });
-        });
-        
-        describe("Error Cases", () => {
-            it("should revert with invalid input", async () => {
-                // Error test implementation
-            });
-        });
-        
-        describe("Edge Cases", () => {
-            it("should handle boundary conditions", async () => {
-                // Edge case testing
-            });
-        });
+describe('Contract Name', () => {
+  describe('Function Name', () => {
+    describe('Success Cases', () => {
+      it('should handle valid input', async () => {
+        // Test implementation
+      });
     });
+
+    describe('Error Cases', () => {
+      it('should revert with invalid input', async () => {
+        // Error test implementation
+      });
+    });
+
+    describe('Edge Cases', () => {
+      it('should handle boundary conditions', async () => {
+        // Edge case testing
+      });
+    });
+  });
 });
 ```
 
@@ -356,30 +363,32 @@ describe("Contract Name", () => {
 ```javascript
 // Consistent test data setup
 const testAddresses = {
-    owner: '0x1234567890123456789012345678901234567890',
-    user1: '0x2345678901234567890123456789012345678901',
-    user2: '0x3456789012345678901234567890123456789012'
+  owner: '0x1234567890123456789012345678901234567890',
+  user1: '0x2345678901234567890123456789012345678901',
+  user2: '0x3456789012345678901234567890123456789012',
 };
 
 const testAmounts = {
-    smallAmount: ethers.parseUnits("1", 6),    // 1 USDC
-    normalAmount: ethers.parseUnits("100", 6),  // 100 USDC  
-    largeAmount: ethers.parseUnits("1000", 6)   // 1000 USDC
+  smallAmount: ethers.parseUnits('1', 6), // 1 USDC
+  normalAmount: ethers.parseUnits('100', 6), // 100 USDC
+  largeAmount: ethers.parseUnits('1000', 6), // 1000 USDC
 };
 
 // Reusable setup functions
 async function setupTestEnvironment() {
-    const [owner, user1, user2] = await ethers.getSigners();
-    
-    // Deploy contracts
-    const mockUSDC = await deployContract("MockUSDC");
-    const mailer = await deployContract("Mailer", [mockUSDC.address]);
-    
-    // Fund test accounts
-    await mockUSDC.mint(user1.address, testAmounts.normalAmount);
-    await mockUSDC.connect(user1).approve(mailer.address, testAmounts.normalAmount);
-    
-    return { owner, user1, user2, mockUSDC, mailer };
+  const [owner, user1, user2] = await ethers.getSigners();
+
+  // Deploy contracts
+  const mockUSDC = await deployContract('MockUSDC');
+  const mailer = await deployContract('Mailer', [mockUSDC.address]);
+
+  // Fund test accounts
+  await mockUSDC.mint(user1.address, testAmounts.normalAmount);
+  await mockUSDC
+    .connect(user1)
+    .approve(mailer.address, testAmounts.normalAmount);
+
+  return { owner, user1, user2, mockUSDC, mailer };
 }
 ```
 
@@ -399,7 +408,7 @@ struct Message {
 // Use events for data that doesn't need on-chain storage
 event MessageSent(
     address indexed sender,
-    address indexed recipient, 
+    address indexed recipient,
     string subject,
     uint256 fee
 );
@@ -410,15 +419,15 @@ event MessageSent(
 ```typescript
 // Cache expensive operations
 class OnchainMailerClient {
-    private static moduleCache = new Map();
-    
-    private async loadModule(name: string) {
-        if (!OnchainMailerClient.moduleCache.has(name)) {
-            const module = await import(name);
-            OnchainMailerClient.moduleCache.set(name, module);
-        }
-        return OnchainMailerClient.moduleCache.get(name);
+  private static moduleCache = new Map();
+
+  private async loadModule(name: string) {
+    if (!OnchainMailerClient.moduleCache.has(name)) {
+      const module = await import(name);
+      OnchainMailerClient.moduleCache.set(name, module);
     }
+    return OnchainMailerClient.moduleCache.get(name);
+  }
 }
 ```
 
@@ -443,7 +452,7 @@ A successful AI development session should result in:
 
 - ✅ All tests passing (116+ tests)
 - ✅ Zero TypeScript errors
-- ✅ Zero ESLint warnings/errors  
+- ✅ Zero ESLint warnings/errors
 - ✅ Clean git status
 - ✅ Updated documentation
 - ✅ Proper error handling

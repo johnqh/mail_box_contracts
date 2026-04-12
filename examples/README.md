@@ -85,16 +85,16 @@ Comprehensive examples covering all major functionality:
 ### Basic Message Sending
 
 ```typescript
-import { MailerClient } from "../src/mailer-client";
-import { ethers } from "ethers";
+import { MailerClient } from '../src/mailer-client';
+import { ethers } from 'ethers';
 
 // Connect to contract
-const provider = new ethers.JsonRpcProvider("http://localhost:8545");
-const mailer = new MailerClient("CONTRACT_ADDRESS", provider);
+const provider = new ethers.JsonRpcProvider('http://localhost:8545');
+const mailer = new MailerClient('CONTRACT_ADDRESS', provider);
 
 // Send priority message (with revenue sharing)
-const signer = new ethers.Wallet("PRIVATE_KEY", provider);
-await mailer.connect(signer).sendPriority("Subject", "Message body");
+const signer = new ethers.Wallet('PRIVATE_KEY', provider);
+await mailer.connect(signer).sendPriority('Subject', 'Message body');
 
 // Claim your 90% revenue share
 await mailer.claimRecipientShare();
@@ -103,32 +103,38 @@ await mailer.claimRecipientShare();
 ### Domain Registration and Delegation
 
 ```typescript
-import { MailerClient } from "../src/evm/mailer-client";
+import { MailerClient } from '../src/evm/mailer-client';
 
-const mailer = new MailerClient("CONTRACT_ADDRESS", provider);
+const mailer = new MailerClient('CONTRACT_ADDRESS', provider);
 
 // Delegate to another address (costs 10 USDC by default)
 // MailerClient includes delegation functionality
-await mailer.delegateTo("0x123...", walletClient, account);
+await mailer.delegateTo('0x123...', walletClient, account);
 ```
 
 ### Individual Client Usage
 
 ```typescript
-import { MailerClient } from "../src/evm/mailer-client";
+import { MailerClient } from '../src/evm/mailer-client';
 
 // Deploy MailerClient (includes both messaging and delegation functionality)
 const mailerClient = await MailerClient.deploy(
   walletClient,
   publicClient,
   account,
-  "USDC_ADDRESS", 
-  "OWNER_ADDRESS"
+  'USDC_ADDRESS',
+  'OWNER_ADDRESS'
 );
 
 // Use MailerClient for both messaging and delegation
-await mailerClient.sendPriority("0xRecipient", "Subject", "Body", walletClient, account);
-await mailerClient.delegateTo("0xDelegate", walletClient, account);
+await mailerClient.sendPriority(
+  '0xRecipient',
+  'Subject',
+  'Body',
+  walletClient,
+  account
+);
+await mailerClient.delegateTo('0xDelegate', walletClient, account);
 ```
 
 ## 💡 Key Concepts for Examples
@@ -137,11 +143,11 @@ await mailerClient.delegateTo("0xDelegate", walletClient, account);
 
 ```typescript
 // Priority message: Pay 0.1 USDC, get 0.09 USDC back (claimable within 60 days)
-await mailer.sendPriority("Subject", "Body");  // Costs 0.1 USDC
-await mailer.claimRecipientShare();            // Get 0.09 USDC back
+await mailer.sendPriority('Subject', 'Body'); // Costs 0.1 USDC
+await mailer.claimRecipientShare(); // Get 0.09 USDC back
 
 // Standard message: Pay 0.01 USDC, no revenue share
-await mailer.send("Subject", "Body");          // Costs 0.01 USDC only
+await mailer.send('Subject', 'Body'); // Costs 0.01 USDC only
 ```
 
 ### Self-Messaging System
@@ -155,21 +161,21 @@ await mailer.send("Subject", "Body");          // Costs 0.01 USDC only
 
 ### Fee Structure
 
-| Operation | Cost | Notes |
-|-----------|------|-------|
-| Domain Registration | 100 USDC | 1-year registration |
-| Delegation | 10 USDC | Can be cleared for free |
-| Priority Message | 0.1 USDC | 90% revenue share |
-| Standard Message | 0.01 USDC | No revenue share |
+| Operation           | Cost      | Notes                   |
+| ------------------- | --------- | ----------------------- |
+| Domain Registration | 100 USDC  | 1-year registration     |
+| Delegation          | 10 USDC   | Can be cleared for free |
+| Priority Message    | 0.1 USDC  | 90% revenue share       |
+| Standard Message    | 0.01 USDC | No revenue share        |
 
 ### Time-Based Claims
 
 ```typescript
 // Priority messages create claimable revenue
 const claimInfo = await mailer.getRecipientClaimable(address);
-console.log("Amount:", claimInfo.amount);     // Claimable amount
-console.log("Expires:", claimInfo.expiresAt); // 60 days from first message
-console.log("Expired:", claimInfo.isExpired); // Whether claim period ended
+console.log('Amount:', claimInfo.amount); // Claimable amount
+console.log('Expires:', claimInfo.expiresAt); // 60 days from first message
+console.log('Expired:', claimInfo.isExpired); // Whether claim period ended
 ```
 
 ## 🔧 Development Tips
@@ -181,20 +187,20 @@ console.log("Expired:", claimInfo.isExpired); // Whether claim period ended
 const mockUSDC = await MockUSDC__factory.connect(address, signer);
 
 // Fund test accounts
-await mockUSDC.mint(testAddress, ethers.parseUnits("1000", 6));
+await mockUSDC.mint(testAddress, ethers.parseUnits('1000', 6));
 
 // Approve contract spending
-await mockUSDC.approve(contractAddress, ethers.parseUnits("100", 6));
+await mockUSDC.approve(contractAddress, ethers.parseUnits('100', 6));
 ```
 
 ### Error Handling
 
 ```typescript
 try {
-  await mailer.sendPriority("Subject", "Body");
+  await mailer.sendPriority('Subject', 'Body');
 } catch (error) {
-  if (error.reason === "FeePaymentRequired") {
-    console.log("Need to fund account or approve USDC spending");
+  if (error.reason === 'FeePaymentRequired') {
+    console.log('Need to fund account or approve USDC spending');
   }
 }
 ```
@@ -203,12 +209,12 @@ try {
 
 ```typescript
 // Listen for messages
-mailer.getContract().on("MailSent", (from, to, subject, body) => {
+mailer.getContract().on('MailSent', (from, to, subject, body) => {
   console.log(`New message from ${from}: ${subject}`);
 });
 
 // Listen for delegations (MailerClient handles delegation now)
-mailerClient.getContract().on("DelegationSet", (delegator, delegate) => {
+mailerClient.getContract().on('DelegationSet', (delegator, delegate) => {
   console.log(`${delegator} delegated to ${delegate}`);
 });
 ```
@@ -258,7 +264,7 @@ USDC balance after claim: 899.09 USDC
 ## 🎯 Next Steps
 
 1. **Run the Examples**: Start with `basic-usage.ts` to understand core functionality
-2. **Modify Parameters**: Change addresses, amounts, and messages to see how the system responds  
+2. **Modify Parameters**: Change addresses, amounts, and messages to see how the system responds
 3. **Build Your App**: Use these patterns as building blocks for your own application
 4. **Test Edge Cases**: Try error scenarios like insufficient balances or invalid addresses
 5. **Monitor Events**: Set up event listeners to build reactive applications

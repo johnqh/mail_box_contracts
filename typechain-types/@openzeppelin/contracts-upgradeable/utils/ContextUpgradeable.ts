@@ -10,17 +10,17 @@ import type {
   ContractRunner,
   ContractMethod,
   Listener,
-} from "ethers";
+} from 'ethers';
 import type {
   TypedContractEvent,
   TypedDeferredTopicFilter,
   TypedEventLog,
   TypedLogDescription,
   TypedListener,
-} from "../../../common";
+} from '../../../common';
 
 export interface ContextUpgradeableInterface extends Interface {
-  getEvent(nameOrSignatureOrTopic: "Initialized"): EventFragment;
+  getEvent(nameOrSignatureOrTopic: 'Initialized'): EventFragment;
 }
 
 export namespace InitializedEvent {
@@ -83,7 +83,7 @@ export interface ContextUpgradeable extends BaseContract {
   ): T;
 
   getEvent(
-    key: "Initialized"
+    key: 'Initialized'
   ): TypedContractEvent<
     InitializedEvent.InputTuple,
     InitializedEvent.OutputTuple,
@@ -91,7 +91,7 @@ export interface ContextUpgradeable extends BaseContract {
   >;
 
   filters: {
-    "Initialized(uint64)": TypedContractEvent<
+    'Initialized(uint64)': TypedContractEvent<
       InitializedEvent.InputTuple,
       InitializedEvent.OutputTuple,
       InitializedEvent.OutputObject

@@ -70,7 +70,7 @@ npm run ai:workflow
 ```bash
 # Adding features across both chains
 1. Implement in contracts/Mailer.sol (EVM)
-2. Implement in programs/mailer/ (Solana)  
+2. Implement in programs/mailer/ (Solana)
 3. Update src/evm/mailer-client.ts
 4. Update src/solana/mailer-client.ts
 5. Update src/unified/onchain-mailer-client.ts
@@ -80,7 +80,7 @@ npm run ai:workflow
 
 ### Pattern 3: Client Library Enhancement
 
-```typescript
+````typescript
 // Follow this pattern when adding methods to MailerClient
 
 /**
@@ -104,56 +104,56 @@ async newMethod(param1: Type1, param2: Type2): Promise<ReturnType> {
         args: [param1, param2],
     }) as ReturnType;
 }
-```
+````
 
 ### Pattern 4: Comprehensive Testing
 
 ```typescript
 // Follow this testing pattern for all new features
 
-describe("New Feature", function () {
-    let mockUSDC: MockUSDC;
-    let mailerClient: MailerClient;
-    let owner: SignerWithAddress;
-    let addr1: SignerWithAddress;
+describe('New Feature', function () {
+  let mockUSDC: MockUSDC;
+  let mailerClient: MailerClient;
+  let owner: SignerWithAddress;
+  let addr1: SignerWithAddress;
 
-    beforeEach(async function () {
-        // Setup accounts
-        [owner, addr1] = await ethers.getSigners();
-        
-        // Deploy and fund MockUSDC (ALWAYS required)
-        const MockUSDCFactory = await ethers.getContractFactory("MockUSDC");
-        mockUSDC = await MockUSDCFactory.deploy();
-        await mockUSDC.waitForDeployment();
-        
-        // Deploy MailerClient
-        mailerClient = await MailerClient.deploy(/*...*/);
-        
-        // Fund test accounts (CRITICAL step)
-        await mockUSDC.mint(addr1.address, ethers.parseUnits("1000", 6));
-        await mockUSDC.connect(addr1).approve(
-            await mailerClient.getAddress(), 
-            ethers.parseUnits("1000", 6)
-        );
-    });
+  beforeEach(async function () {
+    // Setup accounts
+    [owner, addr1] = await ethers.getSigners();
 
-    it("Should handle success case with exact verification", async function () {
-        // Test successful execution
-        const balanceBefore = await mockUSDC.balanceOf(contractAddress);
-        
-        await expect(mailerClient.connect(addr1).newFeature(params))
-            .to.emit(mailerClient, "ExpectedEvent")
-            .withArgs(expectedParam1, expectedParam2);
-            
-        const balanceAfter = await mockUSDC.balanceOf(contractAddress);
-        expect(balanceAfter - balanceBefore).to.equal(expectedFeeAmount);
-    });
+    // Deploy and fund MockUSDC (ALWAYS required)
+    const MockUSDCFactory = await ethers.getContractFactory('MockUSDC');
+    mockUSDC = await MockUSDCFactory.deploy();
+    await mockUSDC.waitForDeployment();
 
-    it("Should handle error cases with specific messages", async function () {
-        // Test error conditions
-        await expect(mailerClient.newFeature(invalidParams))
-            .to.be.revertedWith("SpecificErrorMessage");
-    });
+    // Deploy MailerClient
+    mailerClient = await MailerClient.deploy(/*...*/);
+
+    // Fund test accounts (CRITICAL step)
+    await mockUSDC.mint(addr1.address, ethers.parseUnits('1000', 6));
+    await mockUSDC
+      .connect(addr1)
+      .approve(await mailerClient.getAddress(), ethers.parseUnits('1000', 6));
+  });
+
+  it('Should handle success case with exact verification', async function () {
+    // Test successful execution
+    const balanceBefore = await mockUSDC.balanceOf(contractAddress);
+
+    await expect(mailerClient.connect(addr1).newFeature(params))
+      .to.emit(mailerClient, 'ExpectedEvent')
+      .withArgs(expectedParam1, expectedParam2);
+
+    const balanceAfter = await mockUSDC.balanceOf(contractAddress);
+    expect(balanceAfter - balanceBefore).to.equal(expectedFeeAmount);
+  });
+
+  it('Should handle error cases with specific messages', async function () {
+    // Test error conditions
+    await expect(mailerClient.newFeature(invalidParams)).to.be.revertedWith(
+      'SpecificErrorMessage'
+    );
+  });
 });
 ```
 
@@ -165,9 +165,9 @@ describe("New Feature", function () {
 // tsconfig.json optimized for AI development
 {
   "compilerOptions": {
-    "strict": true,           // Catch all type issues
+    "strict": true, // Catch all type issues
     "noImplicitReturns": true, // Require explicit returns
-    "noImplicitAny": true,    // No implicit any types
+    "noImplicitAny": true, // No implicit any types
     "exactOptionalPropertyTypes": true // Precise optional types
   }
 }
@@ -180,7 +180,7 @@ describe("New Feature", function () {
 {
   "rules": {
     "@typescript-eslint/explicit-function-return-type": "error",
-    "@typescript-eslint/explicit-module-boundary-types": "error",  
+    "@typescript-eslint/explicit-module-boundary-types": "error",
     "@typescript-eslint/no-explicit-any": "error",
     "prefer-const": "error",
     "no-var": "error"
@@ -209,28 +209,28 @@ describe("New Feature", function () {
 // Test categories to always include:
 
 // ✅ Success cases with exact values
-it("Should execute successfully with expected outputs", async function () {
-    // Test successful paths with precise assertions
+it('Should execute successfully with expected outputs', async function () {
+  // Test successful paths with precise assertions
 });
 
-// ✅ Error cases with specific messages  
-it("Should fail with specific error for invalid input", async function () {
-    // Test all error conditions
+// ✅ Error cases with specific messages
+it('Should fail with specific error for invalid input', async function () {
+  // Test all error conditions
 });
 
 // ✅ Edge cases and boundary conditions
-it("Should handle edge case (zero amounts, max values)", async function () {
-    // Test boundary conditions
+it('Should handle edge case (zero amounts, max values)', async function () {
+  // Test boundary conditions
 });
 
 // ✅ Event emissions with exact parameters
-it("Should emit events with correct parameters", async function () {
-    // Verify all events and their parameters
+it('Should emit events with correct parameters', async function () {
+  // Verify all events and their parameters
 });
 
 // ✅ State changes with before/after verification
-it("Should update contract state correctly", async function () {
-    // Verify state changes are correct
+it('Should update contract state correctly', async function () {
+  // Verify state changes are correct
 });
 ```
 
@@ -238,7 +238,7 @@ it("Should update contract state correctly", async function () {
 
 ```bash
 # Ensure feature works across all chains
-npm run test:evm     # Test EVM implementation  
+npm run test:evm     # Test EVM implementation
 npm run test:solana  # Test Solana implementation
 npm run test:unified # Test unified client routing
 npm run ai:examples  # Test examples compile
@@ -255,7 +255,7 @@ AI_ASSISTANT_QUICKSTART.md  # Quick start for new AIs
 .ai-config.json             # Project metadata
 README.md                   # User-facing documentation
 
-# Core implementation files  
+# Core implementation files
 src/evm/mailer-client.ts           # EVM client (viem-based)
 src/solana/mailer-client.ts        # Solana client (Anchor-based)
 src/unified/onchain-mailer-client.ts # Multi-chain client
@@ -272,7 +272,7 @@ test/solana/               # 8 Solana integration tests
 
 # Working examples
 examples/evm-usage.ts      # Complete EVM example
-examples/solana-usage.ts   # Complete Solana example  
+examples/solana-usage.ts   # Complete Solana example
 examples/unified-usage.ts  # Multi-chain example
 ```
 
@@ -281,7 +281,7 @@ examples/unified-usage.ts  # Multi-chain example
 ```typescript
 // Current architecture (post-simplification)
 ✅ MailerClient (EVM)        - Handles messaging + delegation
-✅ MailerClient (Solana)     - Handles messaging + delegation  
+✅ MailerClient (Solana)     - Handles messaging + delegation
 ✅ OnchainMailerClient       - Unified multi-chain interface
 ❌ MailerClient             - REMOVED (was wrapper)
 ❌ MailServiceClient         - REMOVED (merged into MailerClient)
@@ -300,7 +300,7 @@ await mailerClient.claimRecipientShare(walletClient, account);
 
 ```bash
 ❌ Modifying contracts without running npm run compile
-❌ Using removed classes (MailerClient, MailServiceClient)  
+❌ Using removed classes (MailerClient, MailServiceClient)
 ❌ Forgetting to fund test accounts with MockUSDC
 ❌ Not approving USDC spending before contract operations
 ❌ Mixing ethers and viem APIs incorrectly
@@ -310,7 +310,7 @@ await mailerClient.claimRecipientShare(walletClient, account);
 
 ✅ Always compile after contract changes
 ✅ Use only MailerClient for chain-specific operations
-✅ Fund and approve USDC for all tests  
+✅ Fund and approve USDC for all tests
 ✅ Follow existing patterns in similar code
 ✅ Test both success and error scenarios
 ✅ Verify all event emissions and state changes
@@ -349,7 +349,7 @@ await mailerClient.claimRecipientShare(walletClient, account);
 
 ```bash
 ✅ npm run ai:status shows clean git status
-✅ npm run ai:test shows 124+ tests passing  
+✅ npm run ai:test shows 124+ tests passing
 ✅ npm run ai:check passes all validation
 ✅ npm run ai:examples compiles all examples
 ✅ Code follows established patterns

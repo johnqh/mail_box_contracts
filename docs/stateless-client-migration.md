@@ -30,7 +30,7 @@ const result = await client.sendMessage(subject, body, priority);
 // Only configuration in constructor
 const client = new OnchainMailerClient({
   evm: { mailerAddress: '0x...', usdcAddress: '0x...' },
-  solana: { programId: '...', usdcMint: '...' }
+  solana: { programId: '...', usdcMint: '...' },
 });
 
 // Wallet passed to methods
@@ -78,8 +78,8 @@ import { OnchainMailerClient } from '@sudobility/contracts';
 const client = new OnchainMailerClient({
   evm: {
     mailerAddress: '0x...',
-    usdcAddress: '0x...'
-  }
+    usdcAddress: '0x...',
+  },
 });
 
 // Send message with wallet
@@ -91,10 +91,10 @@ const result = await client.sendMessage(
 );
 
 // Delegate with wallet
-const delegation = await client.delegateTo(
-  '0xDelegate',
-  { walletClient: wallet, publicClient }
-);
+const delegation = await client.delegateTo('0xDelegate', {
+  walletClient: wallet,
+  publicClient,
+});
 ```
 
 ### Solana Migration
@@ -131,8 +131,8 @@ import { OnchainMailerClient } from '@sudobility/contracts';
 const client = new OnchainMailerClient({
   solana: {
     programId: '...',
-    usdcMint: '...'
-  }
+    usdcMint: '...',
+  },
 });
 
 // Send message with wallet
@@ -210,7 +210,7 @@ One of the key benefits is supporting multiple wallets with the same client:
 
 ```typescript
 const client = new OnchainMailerClient({
-  evm: { mailerAddress: '0x...', usdcAddress: '0x...' }
+  evm: { mailerAddress: '0x...', usdcAddress: '0x...' },
 });
 
 // Use with wallet 1

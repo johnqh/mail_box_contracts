@@ -4,7 +4,7 @@ export {
   type SolanaWallet,
   type Wallet,
   type ComputeUnitOptions,
-  type TransactionResult
+  type TransactionResult,
 } from './solana-mailer-client';
 
 export * from './types';

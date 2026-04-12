@@ -14,5 +14,5 @@ export type {
   DelegationResult,
   Wallet,
   EVMWallet,
-  SolanaWallet
+  SolanaWallet,
 } from './types';

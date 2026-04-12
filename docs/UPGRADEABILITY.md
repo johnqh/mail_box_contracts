@@ -125,7 +125,8 @@ contract Mailer is Initializable, OwnableUpgradeable, UUPSUpgradeable {
 import { upgrades } from 'hardhat';
 
 // Get implementation address from proxy
-const implementation = await upgrades.erc1967.getImplementationAddress(proxyAddress);
+const implementation =
+  await upgrades.erc1967.getImplementationAddress(proxyAddress);
 
 // Get admin address (for UUPS, this is encoded in implementation)
 const admin = await upgrades.erc1967.getAdminAddress(proxyAddress);
@@ -331,7 +332,7 @@ Track upgrades in `deployments/<network>-upgradeable.json`:
 {
   "contracts": {
     "mailerProxy": "0x...",
-    "mailerImplementation": "0x..."  // Current
+    "mailerImplementation": "0x..." // Current
   },
   "upgrades": [
     {

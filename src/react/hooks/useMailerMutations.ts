@@ -1,6 +1,16 @@
-import { useMutation, UseMutationOptions, UseMutationResult, useQueryClient } from '@tanstack/react-query';
+import {
+  useMutation,
+  UseMutationOptions,
+  UseMutationResult,
+  useQueryClient,
+} from '@tanstack/react-query';
 import { mailerQueryKeys } from './useMailerQueries';
-import type { MessageResult, UnifiedTransaction, DelegationResult, Wallet } from '../../unified/types';
+import type {
+  MessageResult,
+  UnifiedTransaction,
+  DelegationResult,
+  Wallet,
+} from '../../unified/types';
 import type { ChainInfo } from '@sudobility/configs';
 import type { OnchainMailerClient } from '../../unified/onchain-mailer-client';
 
@@ -34,28 +44,70 @@ export function useMessaging(
   connectedWallet: Wallet,
   chainInfo: ChainInfo,
   options?: {
-    sendMessage?: UseMutationOptions<MessageResult, Error, { subject: string; body: string; priority?: boolean; resolveSenderToName?: boolean }>;
-    sendPrepared?: UseMutationOptions<MessageResult, Error, { to: string; mailId: string; priority?: boolean; resolveSenderToName?: boolean }>;
+    sendMessage?: UseMutationOptions<
+      MessageResult,
+      Error,
+      {
+        subject: string;
+        body: string;
+        priority?: boolean;
+        resolveSenderToName?: boolean;
+      }
+    >;
+    sendPrepared?: UseMutationOptions<
+      MessageResult,
+      Error,
+      {
+        to: string;
+        mailId: string;
+        priority?: boolean;
+        resolveSenderToName?: boolean;
+      }
+    >;
   }
 ) {
   const queryClient = useQueryClient();
 
   const sendMessage = useMutation({
-    mutationFn: async ({ subject, body, priority = false, resolveSenderToName = false }) =>
-      client.sendMessage(connectedWallet, chainInfo, subject, body, { priority, resolveSenderToName }),
+    mutationFn: async ({
+      subject,
+      body,
+      priority = false,
+      resolveSenderToName = false,
+    }) =>
+      client.sendMessage(connectedWallet, chainInfo, subject, body, {
+        priority,
+        resolveSenderToName,
+      }),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: mailerQueryKeys.claimableAmount() });
-      queryClient.invalidateQueries({ queryKey: mailerQueryKeys.ownerClaimable() });
+      queryClient.invalidateQueries({
+        queryKey: mailerQueryKeys.claimableAmount(),
+      });
+      queryClient.invalidateQueries({
+        queryKey: mailerQueryKeys.ownerClaimable(),
+      });
     },
     ...options?.sendMessage,
   });
 
   const sendPrepared = useMutation({
-    mutationFn: async ({ to, mailId, priority = false, resolveSenderToName = false }) =>
-      client.sendPrepared(connectedWallet, chainInfo, to, mailId, { priority, resolveSenderToName }),
+    mutationFn: async ({
+      to,
+      mailId,
+      priority = false,
+      resolveSenderToName = false,
+    }) =>
+      client.sendPrepared(connectedWallet, chainInfo, to, mailId, {
+        priority,
+        resolveSenderToName,
+      }),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: mailerQueryKeys.claimableAmount() });
-      queryClient.invalidateQueries({ queryKey: mailerQueryKeys.ownerClaimable() });
+      queryClient.invalidateQueries({
+        queryKey: mailerQueryKeys.claimableAmount(),
+      });
+      queryClient.invalidateQueries({
+        queryKey: mailerQueryKeys.ownerClaimable(),
+      });
     },
     ...options?.sendPrepared,
   });
@@ -94,7 +146,11 @@ export function useClaims(
   options?: {
     claimRevenue?: UseMutationOptions<UnifiedTransaction, Error, void>;
     claimOwnerShare?: UseMutationOptions<UnifiedTransaction, Error, void>;
-    claimExpiredShares?: UseMutationOptions<UnifiedTransaction, Error, { recipient: string }>;
+    claimExpiredShares?: UseMutationOptions<
+      UnifiedTransaction,
+      Error,
+      { recipient: string }
+    >;
   }
 ) {
   const queryClient = useQueryClient();
@@ -102,7 +158,9 @@ export function useClaims(
   const claimRevenue = useMutation({
     mutationFn: () => client.claimRevenue(connectedWallet, chainInfo),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: mailerQueryKeys.claimableAmount() });
+      queryClient.invalidateQueries({
+        queryKey: mailerQueryKeys.claimableAmount(),
+      });
     },
     ...options?.claimRevenue,
   });
@@ -110,16 +168,23 @@ export function useClaims(
   const claimOwnerShare = useMutation({
     mutationFn: () => client.claimOwnerShare(connectedWallet, chainInfo),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: mailerQueryKeys.ownerClaimable() });
+      queryClient.invalidateQueries({
+        queryKey: mailerQueryKeys.ownerClaimable(),
+      });
     },
     ...options?.claimOwnerShare,
   });
 
   const claimExpiredShares = useMutation({
-    mutationFn: async ({ recipient }) => client.claimExpiredShares(connectedWallet, chainInfo, recipient),
+    mutationFn: async ({ recipient }) =>
+      client.claimExpiredShares(connectedWallet, chainInfo, recipient),
     onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({ queryKey: mailerQueryKeys.claimableAmount(variables.recipient) });
-      queryClient.invalidateQueries({ queryKey: mailerQueryKeys.ownerClaimable() });
+      queryClient.invalidateQueries({
+        queryKey: mailerQueryKeys.claimableAmount(variables.recipient),
+      });
+      queryClient.invalidateQueries({
+        queryKey: mailerQueryKeys.ownerClaimable(),
+      });
     },
     ...options?.claimExpiredShares,
   });
@@ -157,14 +222,23 @@ export function useDelegation(
   connectedWallet: Wallet,
   chainInfo: ChainInfo,
   options?: {
-    delegateTo?: UseMutationOptions<DelegationResult, Error, { delegate: string }>;
-    rejectDelegation?: UseMutationOptions<UnifiedTransaction, Error, { delegatorAddress: string }>;
+    delegateTo?: UseMutationOptions<
+      DelegationResult,
+      Error,
+      { delegate: string }
+    >;
+    rejectDelegation?: UseMutationOptions<
+      UnifiedTransaction,
+      Error,
+      { delegatorAddress: string }
+    >;
   }
 ) {
   const queryClient = useQueryClient();
 
   const delegateTo = useMutation({
-    mutationFn: async ({ delegate }) => client.delegateTo(connectedWallet, chainInfo, delegate),
+    mutationFn: async ({ delegate }) =>
+      client.delegateTo(connectedWallet, chainInfo, delegate),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: mailerQueryKeys.delegation() });
     },
@@ -172,7 +246,8 @@ export function useDelegation(
   });
 
   const rejectDelegation = useMutation({
-    mutationFn: async ({ delegatorAddress }) => client.rejectDelegation(connectedWallet, chainInfo, delegatorAddress),
+    mutationFn: async ({ delegatorAddress }) =>
+      client.rejectDelegation(connectedWallet, chainInfo, delegatorAddress),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: mailerQueryKeys.delegation() });
     },
@@ -211,24 +286,38 @@ export function usePermissions(
   connectedWallet: Wallet,
   chainInfo: ChainInfo,
   options?: {
-    setPermission?: UseMutationOptions<UnifiedTransaction, Error, { contractAddress: string }>;
-    removePermission?: UseMutationOptions<UnifiedTransaction, Error, { contractAddress: string }>;
+    setPermission?: UseMutationOptions<
+      UnifiedTransaction,
+      Error,
+      { contractAddress: string }
+    >;
+    removePermission?: UseMutationOptions<
+      UnifiedTransaction,
+      Error,
+      { contractAddress: string }
+    >;
   }
 ) {
   const queryClient = useQueryClient();
 
   const setPermission = useMutation({
-    mutationFn: async ({ contractAddress }) => client.setPermission(connectedWallet, chainInfo, contractAddress),
+    mutationFn: async ({ contractAddress }) =>
+      client.setPermission(connectedWallet, chainInfo, contractAddress),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: mailerQueryKeys.permissions() });
+      queryClient.invalidateQueries({
+        queryKey: mailerQueryKeys.permissions(),
+      });
     },
     ...options?.setPermission,
   });
 
   const removePermission = useMutation({
-    mutationFn: async ({ contractAddress }) => client.removePermission(connectedWallet, chainInfo, contractAddress),
+    mutationFn: async ({ contractAddress }) =>
+      client.removePermission(connectedWallet, chainInfo, contractAddress),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: mailerQueryKeys.permissions() });
+      queryClient.invalidateQueries({
+        queryKey: mailerQueryKeys.permissions(),
+      });
     },
     ...options?.removePermission,
   });
@@ -273,7 +362,9 @@ export function useContractControl(
     mutationFn: () => client.pause(connectedWallet, chainInfo),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: mailerQueryKeys.isPaused() });
-      queryClient.invalidateQueries({ queryKey: mailerQueryKeys.ownerClaimable() });
+      queryClient.invalidateQueries({
+        queryKey: mailerQueryKeys.ownerClaimable(),
+      });
     },
     ...options?.pause,
   });
@@ -327,25 +418,39 @@ export function useOwnerOperations(
   connectedWallet: Wallet,
   chainInfo: ChainInfo,
   options?: {
-    setFees?: UseMutationOptions<UnifiedTransaction, Error, { sendFee: bigint; delegationFee: bigint }>;
-    distributeClaimableFunds?: UseMutationOptions<UnifiedTransaction, Error, { recipient: string }>;
+    setFees?: UseMutationOptions<
+      UnifiedTransaction,
+      Error,
+      { sendFee: bigint; delegationFee: bigint }
+    >;
+    distributeClaimableFunds?: UseMutationOptions<
+      UnifiedTransaction,
+      Error,
+      { recipient: string }
+    >;
   }
 ) {
   const queryClient = useQueryClient();
 
   const setFees = useMutation({
-    mutationFn: async ({ sendFee, delegationFee }) => client.setFees(connectedWallet, chainInfo, sendFee, delegationFee),
+    mutationFn: async ({ sendFee, delegationFee }) =>
+      client.setFees(connectedWallet, chainInfo, sendFee, delegationFee),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: mailerQueryKeys.sendFee() });
-      queryClient.invalidateQueries({ queryKey: mailerQueryKeys.delegationFee() });
+      queryClient.invalidateQueries({
+        queryKey: mailerQueryKeys.delegationFee(),
+      });
     },
     ...options?.setFees,
   });
 
   const distributeClaimableFunds = useMutation({
-    mutationFn: async ({ recipient }) => client.distributeClaimableFunds(connectedWallet, chainInfo, recipient),
+    mutationFn: async ({ recipient }) =>
+      client.distributeClaimableFunds(connectedWallet, chainInfo, recipient),
     onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({ queryKey: mailerQueryKeys.claimableAmount(variables.recipient) });
+      queryClient.invalidateQueries({
+        queryKey: mailerQueryKeys.claimableAmount(variables.recipient),
+      });
     },
     ...options?.distributeClaimableFunds,
   });
@@ -368,15 +473,27 @@ export function useSendMessage(
   options?: UseMutationOptions<
     MessageResult,
     Error,
-    { subject: string; body: string; priority?: boolean; resolveSenderToName?: boolean }
+    {
+      subject: string;
+      body: string;
+      priority?: boolean;
+      resolveSenderToName?: boolean;
+    }
   >
 ): UseMutationResult<
   MessageResult,
   Error,
-  { subject: string; body: string; priority?: boolean; resolveSenderToName?: boolean }
+  {
+    subject: string;
+    body: string;
+    priority?: boolean;
+    resolveSenderToName?: boolean;
+  }
 > {
   const { client, wallet, chainInfo } = useMailerContext();
-  const { sendMessage } = useMessaging(client, wallet, chainInfo, { sendMessage: options });
+  const { sendMessage } = useMessaging(client, wallet, chainInfo, {
+    sendMessage: options,
+  });
   return sendMessage;
 }
 
@@ -387,15 +504,27 @@ export function useSendPrepared(
   options?: UseMutationOptions<
     MessageResult,
     Error,
-    { to: string; mailId: string; priority?: boolean; resolveSenderToName?: boolean }
+    {
+      to: string;
+      mailId: string;
+      priority?: boolean;
+      resolveSenderToName?: boolean;
+    }
   >
 ): UseMutationResult<
   MessageResult,
   Error,
-  { to: string; mailId: string; priority?: boolean; resolveSenderToName?: boolean }
+  {
+    to: string;
+    mailId: string;
+    priority?: boolean;
+    resolveSenderToName?: boolean;
+  }
 > {
   const { client, wallet, chainInfo } = useMailerContext();
-  const { sendPrepared } = useMessaging(client, wallet, chainInfo, { sendPrepared: options });
+  const { sendPrepared } = useMessaging(client, wallet, chainInfo, {
+    sendPrepared: options,
+  });
   return sendPrepared;
 }
 
@@ -406,7 +535,9 @@ export function useClaimRevenue(
   options?: UseMutationOptions<UnifiedTransaction, Error, void>
 ): UseMutationResult<UnifiedTransaction, Error, void> {
   const { client, wallet, chainInfo } = useMailerContext();
-  const { claimRevenue } = useClaims(client, wallet, chainInfo, { claimRevenue: options });
+  const { claimRevenue } = useClaims(client, wallet, chainInfo, {
+    claimRevenue: options,
+  });
   return claimRevenue;
 }
 
@@ -417,7 +548,9 @@ export function useClaimOwnerShare(
   options?: UseMutationOptions<UnifiedTransaction, Error, void>
 ): UseMutationResult<UnifiedTransaction, Error, void> {
   const { client, wallet, chainInfo } = useMailerContext();
-  const { claimOwnerShare } = useClaims(client, wallet, chainInfo, { claimOwnerShare: options });
+  const { claimOwnerShare } = useClaims(client, wallet, chainInfo, {
+    claimOwnerShare: options,
+  });
   return claimOwnerShare;
 }
 
@@ -428,7 +561,9 @@ export function useClaimExpiredShares(
   options?: UseMutationOptions<UnifiedTransaction, Error, { recipient: string }>
 ): UseMutationResult<UnifiedTransaction, Error, { recipient: string }> {
   const { client, wallet, chainInfo } = useMailerContext();
-  const { claimExpiredShares } = useClaims(client, wallet, chainInfo, { claimExpiredShares: options });
+  const { claimExpiredShares } = useClaims(client, wallet, chainInfo, {
+    claimExpiredShares: options,
+  });
   return claimExpiredShares;
 }
 
@@ -439,7 +574,9 @@ export function useDelegateTo(
   options?: UseMutationOptions<DelegationResult, Error, { delegate: string }>
 ): UseMutationResult<DelegationResult, Error, { delegate: string }> {
   const { client, wallet, chainInfo } = useMailerContext();
-  const { delegateTo } = useDelegation(client, wallet, chainInfo, { delegateTo: options });
+  const { delegateTo } = useDelegation(client, wallet, chainInfo, {
+    delegateTo: options,
+  });
   return delegateTo;
 }
 
@@ -447,10 +584,16 @@ export function useDelegateTo(
  * @deprecated Use useDelegation() instead
  */
 export function useRejectDelegation(
-  options?: UseMutationOptions<UnifiedTransaction, Error, { delegatorAddress: string }>
+  options?: UseMutationOptions<
+    UnifiedTransaction,
+    Error,
+    { delegatorAddress: string }
+  >
 ): UseMutationResult<UnifiedTransaction, Error, { delegatorAddress: string }> {
   const { client, wallet, chainInfo } = useMailerContext();
-  const { rejectDelegation } = useDelegation(client, wallet, chainInfo, { rejectDelegation: options });
+  const { rejectDelegation } = useDelegation(client, wallet, chainInfo, {
+    rejectDelegation: options,
+  });
   return rejectDelegation;
 }
 
@@ -458,10 +601,16 @@ export function useRejectDelegation(
  * @deprecated Use usePermissions() instead
  */
 export function useSetPermission(
-  options?: UseMutationOptions<UnifiedTransaction, Error, { contractAddress: string }>
+  options?: UseMutationOptions<
+    UnifiedTransaction,
+    Error,
+    { contractAddress: string }
+  >
 ): UseMutationResult<UnifiedTransaction, Error, { contractAddress: string }> {
   const { client, wallet, chainInfo } = useMailerContext();
-  const { setPermission } = usePermissions(client, wallet, chainInfo, { setPermission: options });
+  const { setPermission } = usePermissions(client, wallet, chainInfo, {
+    setPermission: options,
+  });
   return setPermission;
 }
 
@@ -469,10 +618,16 @@ export function useSetPermission(
  * @deprecated Use usePermissions() instead
  */
 export function useRemovePermission(
-  options?: UseMutationOptions<UnifiedTransaction, Error, { contractAddress: string }>
+  options?: UseMutationOptions<
+    UnifiedTransaction,
+    Error,
+    { contractAddress: string }
+  >
 ): UseMutationResult<UnifiedTransaction, Error, { contractAddress: string }> {
   const { client, wallet, chainInfo } = useMailerContext();
-  const { removePermission } = usePermissions(client, wallet, chainInfo, { removePermission: options });
+  const { removePermission } = usePermissions(client, wallet, chainInfo, {
+    removePermission: options,
+  });
   return removePermission;
 }
 
@@ -480,10 +635,20 @@ export function useRemovePermission(
  * @deprecated Use useOwnerOperations() instead
  */
 export function useSetFees(
-  options?: UseMutationOptions<UnifiedTransaction, Error, { sendFee: bigint; delegationFee: bigint }>
-): UseMutationResult<UnifiedTransaction, Error, { sendFee: bigint; delegationFee: bigint }> {
+  options?: UseMutationOptions<
+    UnifiedTransaction,
+    Error,
+    { sendFee: bigint; delegationFee: bigint }
+  >
+): UseMutationResult<
+  UnifiedTransaction,
+  Error,
+  { sendFee: bigint; delegationFee: bigint }
+> {
   const { client, wallet, chainInfo } = useMailerContext();
-  const { setFees } = useOwnerOperations(client, wallet, chainInfo, { setFees: options });
+  const { setFees } = useOwnerOperations(client, wallet, chainInfo, {
+    setFees: options,
+  });
   return setFees;
 }
 
@@ -494,7 +659,9 @@ export function usePause(
   options?: UseMutationOptions<UnifiedTransaction, Error, void>
 ): UseMutationResult<UnifiedTransaction, Error, void> {
   const { client, wallet, chainInfo } = useMailerContext();
-  const { pause } = useContractControl(client, wallet, chainInfo, { pause: options });
+  const { pause } = useContractControl(client, wallet, chainInfo, {
+    pause: options,
+  });
   return pause;
 }
 
@@ -505,7 +672,9 @@ export function useUnpause(
   options?: UseMutationOptions<UnifiedTransaction, Error, void>
 ): UseMutationResult<UnifiedTransaction, Error, void> {
   const { client, wallet, chainInfo } = useMailerContext();
-  const { unpause } = useContractControl(client, wallet, chainInfo, { unpause: options });
+  const { unpause } = useContractControl(client, wallet, chainInfo, {
+    unpause: options,
+  });
   return unpause;
 }
 
@@ -516,7 +685,9 @@ export function useEmergencyUnpause(
   options?: UseMutationOptions<UnifiedTransaction, Error, void>
 ): UseMutationResult<UnifiedTransaction, Error, void> {
   const { client, wallet, chainInfo } = useMailerContext();
-  const { emergencyUnpause } = useContractControl(client, wallet, chainInfo, { emergencyUnpause: options });
+  const { emergencyUnpause } = useContractControl(client, wallet, chainInfo, {
+    emergencyUnpause: options,
+  });
   return emergencyUnpause;
 }
 
@@ -527,6 +698,11 @@ export function useDistributeClaimableFunds(
   options?: UseMutationOptions<UnifiedTransaction, Error, { recipient: string }>
 ): UseMutationResult<UnifiedTransaction, Error, { recipient: string }> {
   const { client, wallet, chainInfo } = useMailerContext();
-  const { distributeClaimableFunds } = useOwnerOperations(client, wallet, chainInfo, { distributeClaimableFunds: options });
+  const { distributeClaimableFunds } = useOwnerOperations(
+    client,
+    wallet,
+    chainInfo,
+    { distributeClaimableFunds: options }
+  );
   return distributeClaimableFunds;
 }

@@ -2,19 +2,15 @@
 // @ts-nocheck - Suppress false TypeScript errors with ESNext modules accessing class properties
 import { ChainType } from '@sudobility/types';
 import { ChainInfo } from '@sudobility/configs';
-import type {
-  EVMWallet,
-} from '../evm/evm-mailer-client';
-import type {
-  SolanaWallet,
-} from '../solana/solana-mailer-client';
+import type { EVMWallet } from '../evm/evm-mailer-client';
+import type { SolanaWallet } from '../solana/solana-mailer-client';
 
 import {
   MessageResult,
   DomainResult,
   DelegationResult,
   UnifiedTransaction,
-  Wallet
+  Wallet,
 } from './types';
 
 /**
@@ -91,7 +87,8 @@ export class OnchainMailerClient {
 
   private async getSolanaClient() {
     if (!OnchainMailerClient.solanaClient) {
-      const { SolanaMailerClient } = await import('../solana/solana-mailer-client.js');
+      const { SolanaMailerClient } =
+        await import('../solana/solana-mailer-client.js');
       OnchainMailerClient.solanaClient = new SolanaMailerClient();
     }
     return OnchainMailerClient.solanaClient;
@@ -155,7 +152,7 @@ export class OnchainMailerClient {
         fee: BigInt(priority ? '100000' : '10000'),
         gasUsed: result.gasUsed,
         isPriority: priority,
-        success: true
+        success: true,
       };
     } else if (chainInfo.chainType === ChainType.SOLANA) {
       const solanaClient = await this.getSolanaClient();
@@ -181,7 +178,7 @@ export class OnchainMailerClient {
         chainType: ChainType.SOLANA,
         fee: BigInt(priority ? '100000' : '10000'),
         isPriority: priority,
-        success: true
+        success: true,
       };
     } else {
       throw new Error(`Unsupported chain type: ${chainInfo.chainType}`);
@@ -228,7 +225,7 @@ export class OnchainMailerClient {
         fee: BigInt(priority ? '100000' : '10000'),
         gasUsed: result.gasUsed,
         isPriority: priority,
-        success: true
+        success: true,
       };
     } else if (chainInfo.chainType === ChainType.SOLANA) {
       const solanaClient = await this.getSolanaClient();
@@ -251,7 +248,7 @@ export class OnchainMailerClient {
         chainType: ChainType.SOLANA,
         fee: BigInt(priority ? '100000' : '10000'),
         isPriority: priority,
-        success: true
+        success: true,
       };
     } else {
       throw new Error(`Unsupported chain type: ${chainInfo.chainType}`);
@@ -296,7 +293,7 @@ export class OnchainMailerClient {
         fee: BigInt(priority ? '100000' : '10000'),
         gasUsed: result.gasUsed,
         isPriority: priority,
-        success: true
+        success: true,
       };
     } else if (chainInfo.chainType === ChainType.SOLANA) {
       const solanaClient = await this.getSolanaClient();
@@ -318,7 +315,7 @@ export class OnchainMailerClient {
         chainType: ChainType.SOLANA,
         fee: BigInt(priority ? '100000' : '10000'),
         isPriority: priority,
-        success: true
+        success: true,
       };
     } else {
       throw new Error(`Unsupported chain type: ${chainInfo.chainType}`);
@@ -368,7 +365,7 @@ export class OnchainMailerClient {
         fee: BigInt('10000'), // Email sends use standard fee
         gasUsed: result.gasUsed,
         isPriority: false,
-        success: true
+        success: true,
       };
     } else if (chainInfo.chainType === ChainType.SOLANA) {
       const solanaClient = await this.getSolanaClient();
@@ -390,7 +387,7 @@ export class OnchainMailerClient {
         chainType: ChainType.SOLANA,
         fee: BigInt('10000'),
         isPriority: false,
-        success: true
+        success: true,
       };
     } else {
       throw new Error(`Unsupported chain type: ${chainInfo.chainType}`);
@@ -430,7 +427,7 @@ export class OnchainMailerClient {
         fee: BigInt('10000'),
         gasUsed: result.gasUsed,
         isPriority: false,
-        success: true
+        success: true,
       };
     } else if (chainInfo.chainType === ChainType.SOLANA) {
       const solanaClient = await this.getSolanaClient();
@@ -451,7 +448,7 @@ export class OnchainMailerClient {
         chainType: ChainType.SOLANA,
         fee: BigInt('10000'),
         isPriority: false,
-        success: true
+        success: true,
       };
     } else {
       throw new Error(`Unsupported chain type: ${chainInfo.chainType}`);
@@ -487,7 +484,7 @@ export class OnchainMailerClient {
         transactionHash: result.hash,
         chainType: ChainType.EVM,
         delegate,
-        success: true
+        success: true,
       };
     } else if (chainInfo.chainType === ChainType.SOLANA) {
       const solanaClient = await this.getSolanaClient();
@@ -502,7 +499,7 @@ export class OnchainMailerClient {
         transactionHash: result.transactionHash,
         chainType: ChainType.SOLANA,
         delegate,
-        success: true
+        success: true,
       };
     } else {
       throw new Error(`Unsupported chain type: ${chainInfo.chainType}`);
@@ -532,7 +529,7 @@ export class OnchainMailerClient {
 
       return {
         hash: result.hash,
-        chainType: ChainType.EVM
+        chainType: ChainType.EVM,
       };
     } else if (chainInfo.chainType === ChainType.SOLANA) {
       const solanaClient = await this.getSolanaClient();
@@ -545,7 +542,7 @@ export class OnchainMailerClient {
 
       return {
         hash: result.transactionHash,
-        chainType: ChainType.SOLANA
+        chainType: ChainType.SOLANA,
       };
     } else {
       throw new Error(`Unsupported chain type: ${chainInfo.chainType}`);
@@ -576,7 +573,7 @@ export class OnchainMailerClient {
 
       return {
         hash: result.hash,
-        chainType: ChainType.EVM
+        chainType: ChainType.EVM,
       };
     } else if (chainInfo.chainType === ChainType.SOLANA) {
       const solanaClient = await this.getSolanaClient();
@@ -588,7 +585,7 @@ export class OnchainMailerClient {
 
       return {
         hash: result.transactionHash,
-        chainType: ChainType.SOLANA
+        chainType: ChainType.SOLANA,
       };
     } else {
       throw new Error(`Unsupported chain type: ${chainInfo.chainType}`);
@@ -616,7 +613,7 @@ export class OnchainMailerClient {
 
       return {
         hash: result.hash,
-        chainType: ChainType.EVM
+        chainType: ChainType.EVM,
       };
     } else if (chainInfo.chainType === ChainType.SOLANA) {
       const solanaClient = await this.getSolanaClient();
@@ -628,7 +625,7 @@ export class OnchainMailerClient {
 
       return {
         hash: result.transactionHash,
-        chainType: ChainType.SOLANA
+        chainType: ChainType.SOLANA,
       };
     } else {
       throw new Error(`Unsupported chain type: ${chainInfo.chainType}`);
@@ -658,7 +655,7 @@ export class OnchainMailerClient {
 
       return {
         hash: result.hash,
-        chainType: ChainType.EVM
+        chainType: ChainType.EVM,
       };
     } else if (chainInfo.chainType === ChainType.SOLANA) {
       const solanaClient = await this.getSolanaClient();
@@ -671,7 +668,7 @@ export class OnchainMailerClient {
 
       return {
         hash: result.transactionHash,
-        chainType: ChainType.SOLANA
+        chainType: ChainType.SOLANA,
       };
     } else {
       throw new Error(`Unsupported chain type: ${chainInfo.chainType}`);
@@ -711,7 +708,7 @@ export class OnchainMailerClient {
 
       return {
         hash: result2.hash, // Return last transaction
-        chainType: ChainType.EVM
+        chainType: ChainType.EVM,
       };
     } else if (chainInfo.chainType === ChainType.SOLANA) {
       const solanaClient = await this.getSolanaClient();
@@ -725,7 +722,7 @@ export class OnchainMailerClient {
 
       return {
         hash: result.transactionHash,
-        chainType: ChainType.SOLANA
+        chainType: ChainType.SOLANA,
       };
     } else {
       throw new Error(`Unsupported chain type: ${chainInfo.chainType}`);
@@ -755,7 +752,7 @@ export class OnchainMailerClient {
 
       return {
         hash: result.hash,
-        chainType: ChainType.EVM
+        chainType: ChainType.EVM,
       };
     } else if (chainInfo.chainType === ChainType.SOLANA) {
       const solanaClient = await this.getSolanaClient();
@@ -768,7 +765,7 @@ export class OnchainMailerClient {
 
       return {
         hash: result.transactionHash,
-        chainType: ChainType.SOLANA
+        chainType: ChainType.SOLANA,
       };
     } else {
       throw new Error(`Unsupported chain type: ${chainInfo.chainType}`);
@@ -800,7 +797,7 @@ export class OnchainMailerClient {
 
       return {
         hash: result.hash,
-        chainType: ChainType.EVM
+        chainType: ChainType.EVM,
       };
     } else if (chainInfo.chainType === ChainType.SOLANA) {
       const solanaClient = await this.getSolanaClient();
@@ -814,7 +811,7 @@ export class OnchainMailerClient {
 
       return {
         hash: result.transactionHash,
-        chainType: ChainType.SOLANA
+        chainType: ChainType.SOLANA,
       };
     } else {
       throw new Error(`Unsupported chain type: ${chainInfo.chainType}`);
@@ -844,7 +841,7 @@ export class OnchainMailerClient {
 
       return {
         hash: result.hash,
-        chainType: ChainType.EVM
+        chainType: ChainType.EVM,
       };
     } else if (chainInfo.chainType === ChainType.SOLANA) {
       const solanaClient = await this.getSolanaClient();
@@ -857,7 +854,7 @@ export class OnchainMailerClient {
 
       return {
         hash: result.transactionHash,
-        chainType: ChainType.SOLANA
+        chainType: ChainType.SOLANA,
       };
     } else {
       throw new Error(`Unsupported chain type: ${chainInfo.chainType}`);
@@ -885,7 +882,7 @@ export class OnchainMailerClient {
 
       return {
         hash: result.hash,
-        chainType: ChainType.EVM
+        chainType: ChainType.EVM,
       };
     } else if (chainInfo.chainType === ChainType.SOLANA) {
       const solanaClient = await this.getSolanaClient();
@@ -897,7 +894,7 @@ export class OnchainMailerClient {
 
       return {
         hash: result.transactionHash,
-        chainType: ChainType.SOLANA
+        chainType: ChainType.SOLANA,
       };
     } else {
       throw new Error(`Unsupported chain type: ${chainInfo.chainType}`);
@@ -925,7 +922,7 @@ export class OnchainMailerClient {
 
       return {
         hash: result.hash,
-        chainType: ChainType.EVM
+        chainType: ChainType.EVM,
       };
     } else if (chainInfo.chainType === ChainType.SOLANA) {
       const solanaClient = await this.getSolanaClient();
@@ -937,7 +934,7 @@ export class OnchainMailerClient {
 
       return {
         hash: result.transactionHash,
-        chainType: ChainType.SOLANA
+        chainType: ChainType.SOLANA,
       };
     } else {
       throw new Error(`Unsupported chain type: ${chainInfo.chainType}`);
@@ -965,7 +962,7 @@ export class OnchainMailerClient {
 
       return {
         hash: result.hash,
-        chainType: ChainType.EVM
+        chainType: ChainType.EVM,
       };
     } else if (chainInfo.chainType === ChainType.SOLANA) {
       const solanaClient = await this.getSolanaClient();
@@ -977,7 +974,7 @@ export class OnchainMailerClient {
 
       return {
         hash: result.transactionHash,
-        chainType: ChainType.SOLANA
+        chainType: ChainType.SOLANA,
       };
     } else {
       throw new Error(`Unsupported chain type: ${chainInfo.chainType}`);
@@ -1000,7 +997,9 @@ export class OnchainMailerClient {
     if (chainInfo.chainType === ChainType.EVM) {
       const evmClient = await this.getEVMClient();
       // EVM only supports single recipient
-      const singleRecipient = Array.isArray(recipient) ? recipient[0] : recipient;
+      const singleRecipient = Array.isArray(recipient)
+        ? recipient[0]
+        : recipient;
       const result = await evmClient.distributeClaimableFunds(
         connectedWallet as EVMWallet,
         chainInfo,
@@ -1010,7 +1009,7 @@ export class OnchainMailerClient {
 
       return {
         hash: result.hash,
-        chainType: ChainType.EVM
+        chainType: ChainType.EVM,
       };
     } else if (chainInfo.chainType === ChainType.SOLANA) {
       const solanaClient = await this.getSolanaClient();
@@ -1025,7 +1024,7 @@ export class OnchainMailerClient {
 
       return {
         hash: result.transactionHash,
-        chainType: ChainType.SOLANA
+        chainType: ChainType.SOLANA,
       };
     } else {
       throw new Error(`Unsupported chain type: ${chainInfo.chainType}`);
@@ -1055,7 +1054,7 @@ export class OnchainMailerClient {
 
       return {
         hash: result.hash,
-        chainType: ChainType.EVM
+        chainType: ChainType.EVM,
       };
     } else if (chainInfo.chainType === ChainType.SOLANA) {
       throw new Error('Permission system is not supported on Solana');
@@ -1087,7 +1086,7 @@ export class OnchainMailerClient {
 
       return {
         hash: result.hash,
-        chainType: ChainType.EVM
+        chainType: ChainType.EVM,
       };
     } else if (chainInfo.chainType === ChainType.SOLANA) {
       throw new Error('Permission system is not supported on Solana');
@@ -1185,7 +1184,11 @@ export class OnchainMailerClient {
       return null;
     } else if (chainInfo.chainType === ChainType.SOLANA) {
       const solanaClient = await this.getSolanaClient();
-      const delegation = await solanaClient.getDelegation(address, chainInfo, connection);
+      const delegation = await solanaClient.getDelegation(
+        address,
+        chainInfo,
+        connection
+      );
       return delegation ? delegation.toBase58() : null;
     } else {
       throw new Error(`Unsupported chain type: ${chainInfo.chainType}`);
@@ -1203,15 +1206,23 @@ export class OnchainMailerClient {
   ): Promise<{ amount: bigint; expiresAt: bigint; isExpired: boolean } | null> {
     if (chainInfo.chainType === ChainType.EVM) {
       const evmClient = await this.getEVMClient();
-      return await evmClient.getRecipientClaimable(recipient, chainInfo, publicClient);
+      return await evmClient.getRecipientClaimable(
+        recipient,
+        chainInfo,
+        publicClient
+      );
     } else if (chainInfo.chainType === ChainType.SOLANA) {
       const solanaClient = await this.getSolanaClient();
-      const info = await solanaClient.getRecipientClaimable(recipient, chainInfo, connection);
+      const info = await solanaClient.getRecipientClaimable(
+        recipient,
+        chainInfo,
+        connection
+      );
       if (!info) return null;
       return {
         amount: BigInt(info.amount),
         expiresAt: BigInt(info.expiresAt),
-        isExpired: info.isExpired
+        isExpired: info.isExpired,
       };
     } else {
       throw new Error(`Unsupported chain type: ${chainInfo.chainType}`);
@@ -1231,7 +1242,10 @@ export class OnchainMailerClient {
       return await evmClient.getOwnerClaimable(chainInfo, publicClient);
     } else if (chainInfo.chainType === ChainType.SOLANA) {
       const solanaClient = await this.getSolanaClient();
-      const amount = await solanaClient.getOwnerClaimable(chainInfo, connection);
+      const amount = await solanaClient.getOwnerClaimable(
+        chainInfo,
+        connection
+      );
       return BigInt(amount);
     } else {
       throw new Error(`Unsupported chain type: ${chainInfo.chainType}`);
@@ -1249,10 +1263,18 @@ export class OnchainMailerClient {
   ): Promise<number> {
     if (chainInfo.chainType === ChainType.EVM) {
       const evmClient = await this.getEVMClient();
-      return await evmClient.getCustomFeePercentage(target, chainInfo, publicClient);
+      return await evmClient.getCustomFeePercentage(
+        target,
+        chainInfo,
+        publicClient
+      );
     } else if (chainInfo.chainType === ChainType.SOLANA) {
       const solanaClient = await this.getSolanaClient();
-      return await solanaClient.getCustomFeePercentage(target, chainInfo, connection);
+      return await solanaClient.getCustomFeePercentage(
+        target,
+        chainInfo,
+        connection
+      );
     } else {
       throw new Error(`Unsupported chain type: ${chainInfo.chainType}`);
     }

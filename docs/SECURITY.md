@@ -120,6 +120,6 @@ For security concerns, please:
 
 ---
 
-*Last Updated: 2025-09-02 (Comprehensive security audit completed)*
-*Next Review: 2025-10-02*
-*Status: All development-only vulnerabilities documented and assessed*
+_Last Updated: 2025-09-02 (Comprehensive security audit completed)_
+_Next Review: 2025-10-02_
+_Status: All development-only vulnerabilities documented and assessed_

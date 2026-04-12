@@ -199,7 +199,7 @@ async function executeWorkflow(
   if (!workflow) {
     console.error(`❌ Unknown workflow: ${workflowName}`);
     console.log('\nAvailable workflows:');
-    Object.keys(WORKFLOWS).forEach((name) => {
+    Object.keys(WORKFLOWS).forEach(name => {
       console.log(`  • ${name}: ${WORKFLOWS[name].description}`);
     });
     process.exit(1);
@@ -283,8 +283,8 @@ function printSummary(
   console.log('\n📊 WORKFLOW SUMMARY');
   console.log('='.repeat(50));
 
-  const successful = results.filter((r) => r.success);
-  const failed = results.filter((r) => !r.success);
+  const successful = results.filter(r => r.success);
+  const failed = results.filter(r => !r.success);
 
   console.log(`✅ Successful steps: ${successful.length}`);
   console.log(`❌ Failed steps: ${failed.length}`);
@@ -294,7 +294,7 @@ function printSummary(
 
   if (failed.length > 0) {
     console.log('\n❌ FAILED STEPS:');
-    failed.forEach((result) => {
+    failed.forEach(result => {
       console.log(`   • ${result.step}: ${result.error}`);
     });
   }
@@ -354,7 +354,7 @@ async function getProjectStatus(): Promise<void> {
 
   if (issues.length > 0) {
     console.log('\n🔧 RECOMMENDED FIXES:');
-    issues.forEach((fix) => console.log(`   • ${fix}`));
+    issues.forEach(fix => console.log(`   • ${fix}`));
     console.log('\n💡 Or run: npm run ai:workflow full-build');
   } else {
     console.log('\n🎉 Project is ready for development!');
@@ -422,7 +422,7 @@ async function main(): Promise<void> {
 
 // Execute if called directly
 if (require.main === module) {
-  main().catch((error) => {
+  main().catch(error => {
     console.error('💥 Workflow failed:', error.message);
     process.exit(1);
   });

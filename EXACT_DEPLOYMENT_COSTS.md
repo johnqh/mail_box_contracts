@@ -8,14 +8,14 @@
 
 ## 🎯 Executive Summary
 
-| Platform | Network | Exact Cost Range | Recommended |
-|----------|---------|------------------|-------------|
-| **EVM** | Polygon | **$0.00** | ✅ **START HERE** |
-| **EVM** | Base/Optimism | **$0.07** | ✅ Great choice |
-| **EVM** | Arbitrum | **$0.35** | ✅ Good choice |
-| **EVM** | Ethereum (20 gwei) | **$140.50** | ⚠️ Weekend only |
-| **EVM** | Ethereum (50 gwei) | **$351.25** | ⚠️ If necessary |
-| **Solana** | Mainnet (Optimized) | **$212** @ $200/SOL | ✅ Recommended |
+| Platform   | Network             | Exact Cost Range    | Recommended       |
+| ---------- | ------------------- | ------------------- | ----------------- |
+| **EVM**    | Polygon             | **$0.00**           | ✅ **START HERE** |
+| **EVM**    | Base/Optimism       | **$0.07**           | ✅ Great choice   |
+| **EVM**    | Arbitrum            | **$0.35**           | ✅ Good choice    |
+| **EVM**    | Ethereum (20 gwei)  | **$140.50**         | ⚠️ Weekend only   |
+| **EVM**    | Ethereum (50 gwei)  | **$351.25**         | ⚠️ If necessary   |
+| **Solana** | Mainnet (Optimized) | **$212** @ $200/SOL | ✅ Recommended    |
 
 **Cheapest Multi-Chain Deployment: $212** (Polygon + Solana Mainnet)
 
@@ -73,13 +73,13 @@ Implementation + Proxy:    2,810,000 gas
 
 ## Ethereum Mainnet
 
-| Gas Price | Implementation | Proxy | Total | When to Use |
-|-----------|----------------|-------|-------|-------------|
-| **10 gwei** | $64.00 | $6.25 | **$70.25** | Ultra low (rare) |
-| **20 gwei** | $128.00 | $12.50 | **$140.50** | ✅ **Weekends 2-6 AM UTC** |
-| **50 gwei** | $320.00 | $31.25 | **$351.25** | Normal weekday |
-| **100 gwei** | $640.00 | $62.50 | **$702.50** | Busy period |
-| **200 gwei** | $1,280.00 | $125.00 | **$1,405.00** | ⚠️ Avoid! |
+| Gas Price    | Implementation | Proxy   | Total         | When to Use                |
+| ------------ | -------------- | ------- | ------------- | -------------------------- |
+| **10 gwei**  | $64.00         | $6.25   | **$70.25**    | Ultra low (rare)           |
+| **20 gwei**  | $128.00        | $12.50  | **$140.50**   | ✅ **Weekends 2-6 AM UTC** |
+| **50 gwei**  | $320.00        | $31.25  | **$351.25**   | Normal weekday             |
+| **100 gwei** | $640.00        | $62.50  | **$702.50**   | Busy period                |
+| **200 gwei** | $1,280.00      | $125.00 | **$1,405.00** | ⚠️ Avoid!                  |
 
 **Calculation Basis:**
 
@@ -93,12 +93,12 @@ Implementation + Proxy:    2,810,000 gas
 
 ## Layer 2 Networks (EXACT)
 
-| Network | Implementation | Proxy | **Total** | Native Token | Notes |
-|---------|----------------|-------|-----------|--------------|-------|
-| **Polygon** | $0.00 | $0.00 | **$0.00** ✨ | MATIC | Effectively free! |
-| **Base** | $0.06 | $0.01 | **$0.07** | ETH | Coinbase L2, excellent |
-| **Optimism** | $0.06 | $0.01 | **$0.07** | ETH | Mature, trusted |
-| **Arbitrum** | $0.32 | $0.03 | **$0.35** | ETH | Popular, reliable |
+| Network      | Implementation | Proxy | **Total**    | Native Token | Notes                  |
+| ------------ | -------------- | ----- | ------------ | ------------ | ---------------------- |
+| **Polygon**  | $0.00          | $0.00 | **$0.00** ✨ | MATIC        | Effectively free!      |
+| **Base**     | $0.06          | $0.01 | **$0.07**    | ETH          | Coinbase L2, excellent |
+| **Optimism** | $0.06          | $0.01 | **$0.07**    | ETH          | Mature, trusted        |
+| **Arbitrum** | $0.32          | $0.03 | **$0.35**    | ETH          | Popular, reliable      |
 
 **Calculation Details:**
 
@@ -126,11 +126,11 @@ Implementation + Proxy:    2,810,000 gas
 
 All testnets are **100% FREE** - use faucets for test tokens:
 
-| Network | Faucet | Notes |
-|---------|--------|-------|
-| **Sepolia** | <https://sepoliafaucet.com> | Ethereum testnet |
-| **Mumbai** | <https://faucet.polygon.technology> | Polygon testnet |
-| **Base Sepolia** | <https://www.coinbase.com/faucets/base-ethereum-sepolia-faucet> | Base testnet |
+| Network          | Faucet                                                          | Notes            |
+| ---------------- | --------------------------------------------------------------- | ---------------- |
+| **Sepolia**      | <https://sepoliafaucet.com>                                     | Ethereum testnet |
+| **Mumbai**       | <https://faucet.polygon.technology>                             | Polygon testnet  |
+| **Base Sepolia** | <https://www.coinbase.com/faucets/base-ethereum-sepolia-faucet> | Base testnet     |
 
 ---
 
@@ -158,11 +158,11 @@ Since Solana build tools aren't currently available, costs are estimated using:
 
 ### Estimation Results
 
-| Method | Unoptimized | With `opt-level="z"` |
-|--------|-------------|----------------------|
-| **Source × Multiplier** | 176 KB | 123 KB |
-| **LOC Interpolation** | 259 KB | 181 KB |
-| **Average (Best Estimate)** | **217 KB** | **152 KB** ✅ |
+| Method                      | Unoptimized | With `opt-level="z"` |
+| --------------------------- | ----------- | -------------------- |
+| **Source × Multiplier**     | 176 KB      | 123 KB               |
+| **LOC Interpolation**       | 259 KB      | 181 KB               |
+| **Average (Best Estimate)** | **217 KB**  | **152 KB** ✅        |
 
 **Confidence Level:** 85-95% (based on 50+ Solana program comparisons)
 
@@ -181,13 +181,13 @@ SOL Required:            1.0599 SOL
 
 ### Deployment Costs at Different SOL Prices
 
-| SOL Price | Cost (USD) | Scenario |
-|-----------|------------|----------|
-| **$100** | $106.00 | Bear market |
-| **$150** | $159.00 | Conservative |
-| **$200** | **$212.00** | ✅ **Current estimate** |
-| **$250** | $265.00 | Moderate bull |
-| **$300** | $318.00 | Bull market |
+| SOL Price | Cost (USD)  | Scenario                |
+| --------- | ----------- | ----------------------- |
+| **$100**  | $106.00     | Bear market             |
+| **$150**  | $159.00     | Conservative            |
+| **$200**  | **$212.00** | ✅ **Current estimate** |
+| **$250**  | $265.00     | Moderate bull           |
+| **$300**  | $318.00     | Bull market             |
 
 **Current SOL Price Check:** <https://www.coingecko.com/en/coins/solana>
 
@@ -195,11 +195,11 @@ SOL Required:            1.0599 SOL
 
 ## Cost Range (95% Confidence)
 
-| Estimate | Size | SOL @ $200 | Notes |
-|----------|------|------------|-------|
-| **Low** | 128 KB | $179 | If highly optimized |
-| **Best** | 152 KB | **$212** | Most likely |
-| **High** | 176 KB | $245 | Conservative |
+| Estimate | Size   | SOL @ $200 | Notes               |
+| -------- | ------ | ---------- | ------------------- |
+| **Low**  | 128 KB | $179       | If highly optimized |
+| **Best** | 152 KB | **$212**   | Most likely         |
+| **High** | 176 KB | $245       | Conservative        |
 
 **Expected Actual Cost:** $190-$235 (@ $200/SOL)
 
@@ -207,11 +207,11 @@ SOL Required:            1.0599 SOL
 
 ## Solana Networks
 
-| Network | Cost | How to Deploy |
-|---------|------|---------------|
-| **Devnet** | **FREE** ✨ | Get SOL from faucet |
+| Network     | Cost        | How to Deploy       |
+| ----------- | ----------- | ------------------- |
+| **Devnet**  | **FREE** ✨ | Get SOL from faucet |
 | **Testnet** | **FREE** ✨ | Get SOL from faucet |
-| **Mainnet** | **~$212** | Real SOL required |
+| **Mainnet** | **~$212**   | Real SOL required   |
 
 ### Faucets
 
@@ -283,14 +283,14 @@ npx hardhat run scripts/evm/deploy-upgradeable.ts --network mainnet
 
 ## Multi-Chain Deployment Scenarios
 
-| Scenario | Networks | Total Cost | Use Case |
-|----------|----------|------------|----------|
-| **Testing** | Mumbai + Solana Devnet | **$0** | Development |
-| **Minimum Viable** | Polygon only | **$0** | EVM-only launch |
-| **Recommended** | Polygon + Solana | **$212** | Multi-chain launch |
-| **Full Deployment** | Polygon + Base + Solana | **$212** | Max coverage, cheap |
-| **With Ethereum** | All + Ethereum | **$352** | Premium presence |
-| **Expensive** | Ethereum only (50 gwei) | **$351** | ⚠️ Not recommended |
+| Scenario            | Networks                | Total Cost | Use Case            |
+| ------------------- | ----------------------- | ---------- | ------------------- |
+| **Testing**         | Mumbai + Solana Devnet  | **$0**     | Development         |
+| **Minimum Viable**  | Polygon only            | **$0**     | EVM-only launch     |
+| **Recommended**     | Polygon + Solana        | **$212**   | Multi-chain launch  |
+| **Full Deployment** | Polygon + Base + Solana | **$212**   | Max coverage, cheap |
+| **With Ethereum**   | All + Ethereum          | **$352**   | Premium presence    |
+| **Expensive**       | Ethereum only (50 gwei) | **$351**   | ⚠️ Not recommended  |
 
 ---
 
@@ -355,12 +355,12 @@ wc -c target/deploy/mailer.so
 
 ## Cost Optimization Wins
 
-| Optimization | Savings |
-|--------------|---------|
-| Deploy to L2 instead of Ethereum | **$140-$1,400** (95-99%) |
-| Deploy Ethereum at 20 gwei vs 100 gwei | **$562** (80%) |
-| Solana optimization flags | **$90** (30%) |
-| Use Polygon for EVM | **$140-$351** (100%!) |
+| Optimization                           | Savings                  |
+| -------------------------------------- | ------------------------ |
+| Deploy to L2 instead of Ethereum       | **$140-$1,400** (95-99%) |
+| Deploy Ethereum at 20 gwei vs 100 gwei | **$562** (80%)           |
+| Solana optimization flags              | **$90** (30%)            |
+| Use Polygon for EVM                    | **$140-$351** (100%!)    |
 
 **Total Potential Savings: $1,192-$2,002**
 
@@ -456,12 +456,12 @@ solana program deploy target/deploy/mailer.so --url mainnet-beta
 
 ## 📈 Cost Tracking
 
-| Item | Estimated | Actual | Notes |
-|------|-----------|--------|-------|
-| EVM Polygon | $0.00 | ______ | Should be ~$0 |
-| EVM Base | $0.07 | ______ | Should be < $1 |
-| Solana Mainnet | $212 | ______ | Depends on SOL price |
-| **TOTAL** | **$212** | ______ | Target budget |
+| Item           | Estimated | Actual   | Notes                |
+| -------------- | --------- | -------- | -------------------- |
+| EVM Polygon    | $0.00     | **\_\_** | Should be ~$0        |
+| EVM Base       | $0.07     | **\_\_** | Should be < $1       |
+| Solana Mainnet | $212      | **\_\_** | Depends on SOL price |
+| **TOTAL**      | **$212**  | **\_\_** | Target budget        |
 
 ---
 

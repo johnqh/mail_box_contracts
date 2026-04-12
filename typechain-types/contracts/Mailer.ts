@@ -13,7 +13,7 @@ import type {
   ContractRunner,
   ContractMethod,
   Listener,
-} from "ethers";
+} from 'ethers';
 import type {
   TypedContractEvent,
   TypedDeferredTopicFilter,
@@ -21,371 +21,371 @@ import type {
   TypedLogDescription,
   TypedListener,
   TypedContractMethod,
-} from "../common";
+} from '../common';
 
 export interface MailerInterface extends Interface {
   getFunction(
     nameOrSignature:
-      | "CLAIM_PERIOD"
-      | "UPGRADE_INTERFACE_VERSION"
-      | "claimExpiredShares"
-      | "claimOwnerShare"
-      | "claimRecipientShare"
-      | "clearCustomFeePercentage"
-      | "customFeeDiscount"
-      | "delegateTo"
-      | "delegationFee"
-      | "distributeClaimableFunds"
-      | "emergencyUnpause"
-      | "feePaused"
-      | "getCustomFeePercentage"
-      | "getDelegationFee"
-      | "getFee"
-      | "getOwnerClaimable"
-      | "getRecipientClaimable"
-      | "initialize"
-      | "isPaused"
-      | "owner"
-      | "ownerClaimable"
-      | "pause"
-      | "paused"
-      | "permissions"
-      | "proxiableUUID"
-      | "recipientClaims"
-      | "rejectDelegation"
-      | "removePermission"
-      | "renounceOwnership"
-      | "send"
-      | "sendFee"
-      | "sendPrepared"
-      | "sendPreparedToEmailAddress"
-      | "sendThroughWebhook"
-      | "sendToEmailAddress"
-      | "setCustomFeePercentage"
-      | "setDelegationFee"
-      | "setFee"
-      | "setFeePaused"
-      | "setPermission"
-      | "transferOwnership"
-      | "unpause"
-      | "upgradeToAndCall"
-      | "usdcToken"
+      | 'CLAIM_PERIOD'
+      | 'UPGRADE_INTERFACE_VERSION'
+      | 'claimExpiredShares'
+      | 'claimOwnerShare'
+      | 'claimRecipientShare'
+      | 'clearCustomFeePercentage'
+      | 'customFeeDiscount'
+      | 'delegateTo'
+      | 'delegationFee'
+      | 'distributeClaimableFunds'
+      | 'emergencyUnpause'
+      | 'feePaused'
+      | 'getCustomFeePercentage'
+      | 'getDelegationFee'
+      | 'getFee'
+      | 'getOwnerClaimable'
+      | 'getRecipientClaimable'
+      | 'initialize'
+      | 'isPaused'
+      | 'owner'
+      | 'ownerClaimable'
+      | 'pause'
+      | 'paused'
+      | 'permissions'
+      | 'proxiableUUID'
+      | 'recipientClaims'
+      | 'rejectDelegation'
+      | 'removePermission'
+      | 'renounceOwnership'
+      | 'send'
+      | 'sendFee'
+      | 'sendPrepared'
+      | 'sendPreparedToEmailAddress'
+      | 'sendThroughWebhook'
+      | 'sendToEmailAddress'
+      | 'setCustomFeePercentage'
+      | 'setDelegationFee'
+      | 'setFee'
+      | 'setFeePaused'
+      | 'setPermission'
+      | 'transferOwnership'
+      | 'unpause'
+      | 'upgradeToAndCall'
+      | 'usdcToken'
   ): FunctionFragment;
 
   getEvent(
     nameOrSignatureOrTopic:
-      | "ContractPaused"
-      | "ContractUnpaused"
-      | "CustomFeePercentageSet"
-      | "DelegationFeeUpdated"
-      | "DelegationSet"
-      | "EmergencyUnpaused"
-      | "ExpiredSharesClaimed"
-      | "FeePauseToggled"
-      | "FeeUpdated"
-      | "FundsDistributed"
-      | "Initialized"
-      | "MailSent"
-      | "MailSentToEmail"
-      | "OwnerClaimed"
-      | "OwnershipTransferred"
-      | "PermissionGranted"
-      | "PermissionRevoked"
-      | "PreparedMailSent"
-      | "PreparedMailSentToEmail"
-      | "RecipientClaimed"
-      | "SharesRecorded"
-      | "Upgraded"
-      | "WebhookMailSent"
+      | 'ContractPaused'
+      | 'ContractUnpaused'
+      | 'CustomFeePercentageSet'
+      | 'DelegationFeeUpdated'
+      | 'DelegationSet'
+      | 'EmergencyUnpaused'
+      | 'ExpiredSharesClaimed'
+      | 'FeePauseToggled'
+      | 'FeeUpdated'
+      | 'FundsDistributed'
+      | 'Initialized'
+      | 'MailSent'
+      | 'MailSentToEmail'
+      | 'OwnerClaimed'
+      | 'OwnershipTransferred'
+      | 'PermissionGranted'
+      | 'PermissionRevoked'
+      | 'PreparedMailSent'
+      | 'PreparedMailSentToEmail'
+      | 'RecipientClaimed'
+      | 'SharesRecorded'
+      | 'Upgraded'
+      | 'WebhookMailSent'
   ): EventFragment;
 
   encodeFunctionData(
-    functionFragment: "CLAIM_PERIOD",
+    functionFragment: 'CLAIM_PERIOD',
     values?: undefined
   ): string;
   encodeFunctionData(
-    functionFragment: "UPGRADE_INTERFACE_VERSION",
+    functionFragment: 'UPGRADE_INTERFACE_VERSION',
     values?: undefined
   ): string;
   encodeFunctionData(
-    functionFragment: "claimExpiredShares",
+    functionFragment: 'claimExpiredShares',
     values: [AddressLike]
   ): string;
   encodeFunctionData(
-    functionFragment: "claimOwnerShare",
+    functionFragment: 'claimOwnerShare',
     values?: undefined
   ): string;
   encodeFunctionData(
-    functionFragment: "claimRecipientShare",
+    functionFragment: 'claimRecipientShare',
     values?: undefined
   ): string;
   encodeFunctionData(
-    functionFragment: "clearCustomFeePercentage",
+    functionFragment: 'clearCustomFeePercentage',
     values: [AddressLike]
   ): string;
   encodeFunctionData(
-    functionFragment: "customFeeDiscount",
+    functionFragment: 'customFeeDiscount',
     values: [AddressLike]
   ): string;
   encodeFunctionData(
-    functionFragment: "delegateTo",
+    functionFragment: 'delegateTo',
     values: [AddressLike]
   ): string;
   encodeFunctionData(
-    functionFragment: "delegationFee",
+    functionFragment: 'delegationFee',
     values?: undefined
   ): string;
   encodeFunctionData(
-    functionFragment: "distributeClaimableFunds",
+    functionFragment: 'distributeClaimableFunds',
     values: [AddressLike]
   ): string;
   encodeFunctionData(
-    functionFragment: "emergencyUnpause",
+    functionFragment: 'emergencyUnpause',
     values?: undefined
   ): string;
-  encodeFunctionData(functionFragment: "feePaused", values?: undefined): string;
+  encodeFunctionData(functionFragment: 'feePaused', values?: undefined): string;
   encodeFunctionData(
-    functionFragment: "getCustomFeePercentage",
+    functionFragment: 'getCustomFeePercentage',
     values: [AddressLike]
   ): string;
   encodeFunctionData(
-    functionFragment: "getDelegationFee",
+    functionFragment: 'getDelegationFee',
     values?: undefined
   ): string;
-  encodeFunctionData(functionFragment: "getFee", values?: undefined): string;
+  encodeFunctionData(functionFragment: 'getFee', values?: undefined): string;
   encodeFunctionData(
-    functionFragment: "getOwnerClaimable",
+    functionFragment: 'getOwnerClaimable',
     values?: undefined
   ): string;
   encodeFunctionData(
-    functionFragment: "getRecipientClaimable",
+    functionFragment: 'getRecipientClaimable',
     values: [AddressLike]
   ): string;
   encodeFunctionData(
-    functionFragment: "initialize",
+    functionFragment: 'initialize',
     values: [AddressLike, AddressLike]
   ): string;
-  encodeFunctionData(functionFragment: "isPaused", values?: undefined): string;
-  encodeFunctionData(functionFragment: "owner", values?: undefined): string;
+  encodeFunctionData(functionFragment: 'isPaused', values?: undefined): string;
+  encodeFunctionData(functionFragment: 'owner', values?: undefined): string;
   encodeFunctionData(
-    functionFragment: "ownerClaimable",
+    functionFragment: 'ownerClaimable',
     values?: undefined
   ): string;
-  encodeFunctionData(functionFragment: "pause", values?: undefined): string;
-  encodeFunctionData(functionFragment: "paused", values?: undefined): string;
+  encodeFunctionData(functionFragment: 'pause', values?: undefined): string;
+  encodeFunctionData(functionFragment: 'paused', values?: undefined): string;
   encodeFunctionData(
-    functionFragment: "permissions",
+    functionFragment: 'permissions',
     values: [AddressLike, AddressLike]
   ): string;
   encodeFunctionData(
-    functionFragment: "proxiableUUID",
+    functionFragment: 'proxiableUUID',
     values?: undefined
   ): string;
   encodeFunctionData(
-    functionFragment: "recipientClaims",
+    functionFragment: 'recipientClaims',
     values: [AddressLike]
   ): string;
   encodeFunctionData(
-    functionFragment: "rejectDelegation",
+    functionFragment: 'rejectDelegation',
     values: [AddressLike]
   ): string;
   encodeFunctionData(
-    functionFragment: "removePermission",
+    functionFragment: 'removePermission',
     values: [AddressLike]
   ): string;
   encodeFunctionData(
-    functionFragment: "renounceOwnership",
+    functionFragment: 'renounceOwnership',
     values?: undefined
   ): string;
   encodeFunctionData(
-    functionFragment: "send",
+    functionFragment: 'send',
     values: [AddressLike, string, string, AddressLike, boolean, boolean]
   ): string;
-  encodeFunctionData(functionFragment: "sendFee", values?: undefined): string;
+  encodeFunctionData(functionFragment: 'sendFee', values?: undefined): string;
   encodeFunctionData(
-    functionFragment: "sendPrepared",
+    functionFragment: 'sendPrepared',
     values: [AddressLike, string, AddressLike, boolean, boolean]
   ): string;
   encodeFunctionData(
-    functionFragment: "sendPreparedToEmailAddress",
+    functionFragment: 'sendPreparedToEmailAddress',
     values: [string, string, AddressLike]
   ): string;
   encodeFunctionData(
-    functionFragment: "sendThroughWebhook",
+    functionFragment: 'sendThroughWebhook',
     values: [AddressLike, string, AddressLike, boolean, boolean]
   ): string;
   encodeFunctionData(
-    functionFragment: "sendToEmailAddress",
+    functionFragment: 'sendToEmailAddress',
     values: [string, string, string, AddressLike]
   ): string;
   encodeFunctionData(
-    functionFragment: "setCustomFeePercentage",
+    functionFragment: 'setCustomFeePercentage',
     values: [AddressLike, BigNumberish]
   ): string;
   encodeFunctionData(
-    functionFragment: "setDelegationFee",
+    functionFragment: 'setDelegationFee',
     values: [BigNumberish]
   ): string;
   encodeFunctionData(
-    functionFragment: "setFee",
+    functionFragment: 'setFee',
     values: [BigNumberish]
   ): string;
   encodeFunctionData(
-    functionFragment: "setFeePaused",
+    functionFragment: 'setFeePaused',
     values: [boolean]
   ): string;
   encodeFunctionData(
-    functionFragment: "setPermission",
+    functionFragment: 'setPermission',
     values: [AddressLike]
   ): string;
   encodeFunctionData(
-    functionFragment: "transferOwnership",
+    functionFragment: 'transferOwnership',
     values: [AddressLike]
   ): string;
-  encodeFunctionData(functionFragment: "unpause", values?: undefined): string;
+  encodeFunctionData(functionFragment: 'unpause', values?: undefined): string;
   encodeFunctionData(
-    functionFragment: "upgradeToAndCall",
+    functionFragment: 'upgradeToAndCall',
     values: [AddressLike, BytesLike]
   ): string;
-  encodeFunctionData(functionFragment: "usdcToken", values?: undefined): string;
+  encodeFunctionData(functionFragment: 'usdcToken', values?: undefined): string;
 
   decodeFunctionResult(
-    functionFragment: "CLAIM_PERIOD",
+    functionFragment: 'CLAIM_PERIOD',
     data: BytesLike
   ): Result;
   decodeFunctionResult(
-    functionFragment: "UPGRADE_INTERFACE_VERSION",
+    functionFragment: 'UPGRADE_INTERFACE_VERSION',
     data: BytesLike
   ): Result;
   decodeFunctionResult(
-    functionFragment: "claimExpiredShares",
+    functionFragment: 'claimExpiredShares',
     data: BytesLike
   ): Result;
   decodeFunctionResult(
-    functionFragment: "claimOwnerShare",
+    functionFragment: 'claimOwnerShare',
     data: BytesLike
   ): Result;
   decodeFunctionResult(
-    functionFragment: "claimRecipientShare",
+    functionFragment: 'claimRecipientShare',
     data: BytesLike
   ): Result;
   decodeFunctionResult(
-    functionFragment: "clearCustomFeePercentage",
+    functionFragment: 'clearCustomFeePercentage',
     data: BytesLike
   ): Result;
   decodeFunctionResult(
-    functionFragment: "customFeeDiscount",
+    functionFragment: 'customFeeDiscount',
     data: BytesLike
   ): Result;
-  decodeFunctionResult(functionFragment: "delegateTo", data: BytesLike): Result;
+  decodeFunctionResult(functionFragment: 'delegateTo', data: BytesLike): Result;
   decodeFunctionResult(
-    functionFragment: "delegationFee",
-    data: BytesLike
-  ): Result;
-  decodeFunctionResult(
-    functionFragment: "distributeClaimableFunds",
+    functionFragment: 'delegationFee',
     data: BytesLike
   ): Result;
   decodeFunctionResult(
-    functionFragment: "emergencyUnpause",
-    data: BytesLike
-  ): Result;
-  decodeFunctionResult(functionFragment: "feePaused", data: BytesLike): Result;
-  decodeFunctionResult(
-    functionFragment: "getCustomFeePercentage",
+    functionFragment: 'distributeClaimableFunds',
     data: BytesLike
   ): Result;
   decodeFunctionResult(
-    functionFragment: "getDelegationFee",
+    functionFragment: 'emergencyUnpause',
     data: BytesLike
   ): Result;
-  decodeFunctionResult(functionFragment: "getFee", data: BytesLike): Result;
+  decodeFunctionResult(functionFragment: 'feePaused', data: BytesLike): Result;
   decodeFunctionResult(
-    functionFragment: "getOwnerClaimable",
-    data: BytesLike
-  ): Result;
-  decodeFunctionResult(
-    functionFragment: "getRecipientClaimable",
-    data: BytesLike
-  ): Result;
-  decodeFunctionResult(functionFragment: "initialize", data: BytesLike): Result;
-  decodeFunctionResult(functionFragment: "isPaused", data: BytesLike): Result;
-  decodeFunctionResult(functionFragment: "owner", data: BytesLike): Result;
-  decodeFunctionResult(
-    functionFragment: "ownerClaimable",
-    data: BytesLike
-  ): Result;
-  decodeFunctionResult(functionFragment: "pause", data: BytesLike): Result;
-  decodeFunctionResult(functionFragment: "paused", data: BytesLike): Result;
-  decodeFunctionResult(
-    functionFragment: "permissions",
+    functionFragment: 'getCustomFeePercentage',
     data: BytesLike
   ): Result;
   decodeFunctionResult(
-    functionFragment: "proxiableUUID",
+    functionFragment: 'getDelegationFee',
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(functionFragment: 'getFee', data: BytesLike): Result;
+  decodeFunctionResult(
+    functionFragment: 'getOwnerClaimable',
     data: BytesLike
   ): Result;
   decodeFunctionResult(
-    functionFragment: "recipientClaims",
+    functionFragment: 'getRecipientClaimable',
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(functionFragment: 'initialize', data: BytesLike): Result;
+  decodeFunctionResult(functionFragment: 'isPaused', data: BytesLike): Result;
+  decodeFunctionResult(functionFragment: 'owner', data: BytesLike): Result;
+  decodeFunctionResult(
+    functionFragment: 'ownerClaimable',
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(functionFragment: 'pause', data: BytesLike): Result;
+  decodeFunctionResult(functionFragment: 'paused', data: BytesLike): Result;
+  decodeFunctionResult(
+    functionFragment: 'permissions',
     data: BytesLike
   ): Result;
   decodeFunctionResult(
-    functionFragment: "rejectDelegation",
+    functionFragment: 'proxiableUUID',
     data: BytesLike
   ): Result;
   decodeFunctionResult(
-    functionFragment: "removePermission",
+    functionFragment: 'recipientClaims',
     data: BytesLike
   ): Result;
   decodeFunctionResult(
-    functionFragment: "renounceOwnership",
-    data: BytesLike
-  ): Result;
-  decodeFunctionResult(functionFragment: "send", data: BytesLike): Result;
-  decodeFunctionResult(functionFragment: "sendFee", data: BytesLike): Result;
-  decodeFunctionResult(
-    functionFragment: "sendPrepared",
+    functionFragment: 'rejectDelegation',
     data: BytesLike
   ): Result;
   decodeFunctionResult(
-    functionFragment: "sendPreparedToEmailAddress",
+    functionFragment: 'removePermission',
     data: BytesLike
   ): Result;
   decodeFunctionResult(
-    functionFragment: "sendThroughWebhook",
+    functionFragment: 'renounceOwnership',
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(functionFragment: 'send', data: BytesLike): Result;
+  decodeFunctionResult(functionFragment: 'sendFee', data: BytesLike): Result;
+  decodeFunctionResult(
+    functionFragment: 'sendPrepared',
     data: BytesLike
   ): Result;
   decodeFunctionResult(
-    functionFragment: "sendToEmailAddress",
+    functionFragment: 'sendPreparedToEmailAddress',
     data: BytesLike
   ): Result;
   decodeFunctionResult(
-    functionFragment: "setCustomFeePercentage",
+    functionFragment: 'sendThroughWebhook',
     data: BytesLike
   ): Result;
   decodeFunctionResult(
-    functionFragment: "setDelegationFee",
-    data: BytesLike
-  ): Result;
-  decodeFunctionResult(functionFragment: "setFee", data: BytesLike): Result;
-  decodeFunctionResult(
-    functionFragment: "setFeePaused",
+    functionFragment: 'sendToEmailAddress',
     data: BytesLike
   ): Result;
   decodeFunctionResult(
-    functionFragment: "setPermission",
+    functionFragment: 'setCustomFeePercentage',
     data: BytesLike
   ): Result;
   decodeFunctionResult(
-    functionFragment: "transferOwnership",
+    functionFragment: 'setDelegationFee',
     data: BytesLike
   ): Result;
-  decodeFunctionResult(functionFragment: "unpause", data: BytesLike): Result;
+  decodeFunctionResult(functionFragment: 'setFee', data: BytesLike): Result;
   decodeFunctionResult(
-    functionFragment: "upgradeToAndCall",
+    functionFragment: 'setFeePaused',
     data: BytesLike
   ): Result;
-  decodeFunctionResult(functionFragment: "usdcToken", data: BytesLike): Result;
+  decodeFunctionResult(
+    functionFragment: 'setPermission',
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(
+    functionFragment: 'transferOwnership',
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(functionFragment: 'unpause', data: BytesLike): Result;
+  decodeFunctionResult(
+    functionFragment: 'upgradeToAndCall',
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(functionFragment: 'usdcToken', data: BytesLike): Result;
 }
 
 export namespace ContractPausedEvent {
@@ -529,7 +529,7 @@ export namespace MailSentEvent {
     body: string,
     revenueShareToReceiver: boolean,
     resolveSenderToName: boolean,
-    feePaid: boolean
+    feePaid: boolean,
   ];
   export type OutputTuple = [
     from: string,
@@ -539,7 +539,7 @@ export namespace MailSentEvent {
     body: string,
     revenueShareToReceiver: boolean,
     resolveSenderToName: boolean,
-    feePaid: boolean
+    feePaid: boolean,
   ];
   export interface OutputObject {
     from: string;
@@ -564,7 +564,7 @@ export namespace MailSentToEmailEvent {
     toEmail: string,
     subject: string,
     body: string,
-    feePaid: boolean
+    feePaid: boolean,
   ];
   export type OutputTuple = [
     from: string,
@@ -572,7 +572,7 @@ export namespace MailSentToEmailEvent {
     toEmail: string,
     subject: string,
     body: string,
-    feePaid: boolean
+    feePaid: boolean,
   ];
   export interface OutputObject {
     from: string;
@@ -647,7 +647,7 @@ export namespace PreparedMailSentEvent {
     mailId: string,
     revenueShareToReceiver: boolean,
     resolveSenderToName: boolean,
-    feePaid: boolean
+    feePaid: boolean,
   ];
   export type OutputTuple = [
     from: string,
@@ -656,7 +656,7 @@ export namespace PreparedMailSentEvent {
     mailId: string,
     revenueShareToReceiver: boolean,
     resolveSenderToName: boolean,
-    feePaid: boolean
+    feePaid: boolean,
   ];
   export interface OutputObject {
     from: string;
@@ -679,14 +679,14 @@ export namespace PreparedMailSentToEmailEvent {
     payer: AddressLike,
     toEmail: string,
     mailId: string,
-    feePaid: boolean
+    feePaid: boolean,
   ];
   export type OutputTuple = [
     from: string,
     payer: string,
     toEmail: string,
     mailId: string,
-    feePaid: boolean
+    feePaid: boolean,
   ];
   export interface OutputObject {
     from: string;
@@ -718,12 +718,12 @@ export namespace SharesRecordedEvent {
   export type InputTuple = [
     recipient: AddressLike,
     recipientAmount: BigNumberish,
-    ownerAmount: BigNumberish
+    ownerAmount: BigNumberish,
   ];
   export type OutputTuple = [
     recipient: string,
     recipientAmount: bigint,
-    ownerAmount: bigint
+    ownerAmount: bigint,
   ];
   export interface OutputObject {
     recipient: string;
@@ -756,7 +756,7 @@ export namespace WebhookMailSentEvent {
     webhookId: string,
     revenueShareToReceiver: boolean,
     resolveSenderToName: boolean,
-    feePaid: boolean
+    feePaid: boolean,
   ];
   export type OutputTuple = [
     from: string,
@@ -765,7 +765,7 @@ export namespace WebhookMailSentEvent {
     webhookId: string,
     revenueShareToReceiver: boolean,
     resolveSenderToName: boolean,
-    feePaid: boolean
+    feePaid: boolean,
   ];
   export interface OutputObject {
     from: string;
@@ -825,57 +825,57 @@ export interface Mailer extends BaseContract {
     event?: TCEvent
   ): Promise<this>;
 
-  CLAIM_PERIOD: TypedContractMethod<[], [bigint], "view">;
+  CLAIM_PERIOD: TypedContractMethod<[], [bigint], 'view'>;
 
-  UPGRADE_INTERFACE_VERSION: TypedContractMethod<[], [string], "view">;
+  UPGRADE_INTERFACE_VERSION: TypedContractMethod<[], [string], 'view'>;
 
   claimExpiredShares: TypedContractMethod<
     [recipient: AddressLike],
     [void],
-    "nonpayable"
+    'nonpayable'
   >;
 
-  claimOwnerShare: TypedContractMethod<[], [void], "nonpayable">;
+  claimOwnerShare: TypedContractMethod<[], [void], 'nonpayable'>;
 
-  claimRecipientShare: TypedContractMethod<[], [void], "nonpayable">;
+  claimRecipientShare: TypedContractMethod<[], [void], 'nonpayable'>;
 
   clearCustomFeePercentage: TypedContractMethod<
     [account: AddressLike],
     [void],
-    "nonpayable"
+    'nonpayable'
   >;
 
-  customFeeDiscount: TypedContractMethod<[arg0: AddressLike], [bigint], "view">;
+  customFeeDiscount: TypedContractMethod<[arg0: AddressLike], [bigint], 'view'>;
 
   delegateTo: TypedContractMethod<
     [delegate: AddressLike],
     [void],
-    "nonpayable"
+    'nonpayable'
   >;
 
-  delegationFee: TypedContractMethod<[], [bigint], "view">;
+  delegationFee: TypedContractMethod<[], [bigint], 'view'>;
 
   distributeClaimableFunds: TypedContractMethod<
     [recipient: AddressLike],
     [void],
-    "nonpayable"
+    'nonpayable'
   >;
 
-  emergencyUnpause: TypedContractMethod<[], [void], "nonpayable">;
+  emergencyUnpause: TypedContractMethod<[], [void], 'nonpayable'>;
 
-  feePaused: TypedContractMethod<[], [boolean], "view">;
+  feePaused: TypedContractMethod<[], [boolean], 'view'>;
 
   getCustomFeePercentage: TypedContractMethod<
     [account: AddressLike],
     [bigint],
-    "view"
+    'view'
   >;
 
-  getDelegationFee: TypedContractMethod<[], [bigint], "view">;
+  getDelegationFee: TypedContractMethod<[], [bigint], 'view'>;
 
-  getFee: TypedContractMethod<[], [bigint], "view">;
+  getFee: TypedContractMethod<[], [bigint], 'view'>;
 
-  getOwnerClaimable: TypedContractMethod<[], [bigint], "view">;
+  getOwnerClaimable: TypedContractMethod<[], [bigint], 'view'>;
 
   getRecipientClaimable: TypedContractMethod<
     [recipient: AddressLike],
@@ -884,54 +884,54 @@ export interface Mailer extends BaseContract {
         amount: bigint;
         expiresAt: bigint;
         isExpired: boolean;
-      }
+      },
     ],
-    "view"
+    'view'
   >;
 
   initialize: TypedContractMethod<
     [_usdcToken: AddressLike, _owner: AddressLike],
     [void],
-    "nonpayable"
+    'nonpayable'
   >;
 
-  isPaused: TypedContractMethod<[], [boolean], "view">;
+  isPaused: TypedContractMethod<[], [boolean], 'view'>;
 
-  owner: TypedContractMethod<[], [string], "view">;
+  owner: TypedContractMethod<[], [string], 'view'>;
 
-  ownerClaimable: TypedContractMethod<[], [bigint], "view">;
+  ownerClaimable: TypedContractMethod<[], [bigint], 'view'>;
 
-  pause: TypedContractMethod<[], [void], "nonpayable">;
+  pause: TypedContractMethod<[], [void], 'nonpayable'>;
 
-  paused: TypedContractMethod<[], [boolean], "view">;
+  paused: TypedContractMethod<[], [boolean], 'view'>;
 
   permissions: TypedContractMethod<
     [arg0: AddressLike, arg1: AddressLike],
     [boolean],
-    "view"
+    'view'
   >;
 
-  proxiableUUID: TypedContractMethod<[], [string], "view">;
+  proxiableUUID: TypedContractMethod<[], [string], 'view'>;
 
   recipientClaims: TypedContractMethod<
     [arg0: AddressLike],
     [[bigint, bigint] & { amount: bigint; timestamp: bigint }],
-    "view"
+    'view'
   >;
 
   rejectDelegation: TypedContractMethod<
     [delegatingAddress: AddressLike],
     [void],
-    "nonpayable"
+    'nonpayable'
   >;
 
   removePermission: TypedContractMethod<
     [contractAddress: AddressLike],
     [void],
-    "nonpayable"
+    'nonpayable'
   >;
 
-  renounceOwnership: TypedContractMethod<[], [void], "nonpayable">;
+  renounceOwnership: TypedContractMethod<[], [void], 'nonpayable'>;
 
   send: TypedContractMethod<
     [
@@ -940,13 +940,13 @@ export interface Mailer extends BaseContract {
       body: string,
       payer: AddressLike,
       revenueShareToReceiver: boolean,
-      resolveSenderToName: boolean
+      resolveSenderToName: boolean,
     ],
     [void],
-    "nonpayable"
+    'nonpayable'
   >;
 
-  sendFee: TypedContractMethod<[], [bigint], "view">;
+  sendFee: TypedContractMethod<[], [bigint], 'view'>;
 
   sendPrepared: TypedContractMethod<
     [
@@ -954,16 +954,16 @@ export interface Mailer extends BaseContract {
       mailId: string,
       payer: AddressLike,
       revenueShareToReceiver: boolean,
-      resolveSenderToName: boolean
+      resolveSenderToName: boolean,
     ],
     [void],
-    "nonpayable"
+    'nonpayable'
   >;
 
   sendPreparedToEmailAddress: TypedContractMethod<
     [toEmail: string, mailId: string, payer: AddressLike],
     [void],
-    "nonpayable"
+    'nonpayable'
   >;
 
   sendThroughWebhook: TypedContractMethod<
@@ -972,179 +972,177 @@ export interface Mailer extends BaseContract {
       webhookId: string,
       payer: AddressLike,
       revenueShareToReceiver: boolean,
-      resolveSenderToName: boolean
+      resolveSenderToName: boolean,
     ],
     [void],
-    "nonpayable"
+    'nonpayable'
   >;
 
   sendToEmailAddress: TypedContractMethod<
     [toEmail: string, subject: string, body: string, payer: AddressLike],
     [void],
-    "nonpayable"
+    'nonpayable'
   >;
 
   setCustomFeePercentage: TypedContractMethod<
     [account: AddressLike, percentage: BigNumberish],
     [void],
-    "nonpayable"
+    'nonpayable'
   >;
 
   setDelegationFee: TypedContractMethod<
     [usdcAmount: BigNumberish],
     [void],
-    "nonpayable"
+    'nonpayable'
   >;
 
-  setFee: TypedContractMethod<[usdcAmount: BigNumberish], [void], "nonpayable">;
+  setFee: TypedContractMethod<[usdcAmount: BigNumberish], [void], 'nonpayable'>;
 
   setFeePaused: TypedContractMethod<
     [_feePaused: boolean],
     [void],
-    "nonpayable"
+    'nonpayable'
   >;
 
   setPermission: TypedContractMethod<
     [contractAddress: AddressLike],
     [void],
-    "nonpayable"
+    'nonpayable'
   >;
 
   transferOwnership: TypedContractMethod<
     [newOwner: AddressLike],
     [void],
-    "nonpayable"
+    'nonpayable'
   >;
 
-  unpause: TypedContractMethod<[], [void], "nonpayable">;
+  unpause: TypedContractMethod<[], [void], 'nonpayable'>;
 
   upgradeToAndCall: TypedContractMethod<
     [newImplementation: AddressLike, data: BytesLike],
     [void],
-    "payable"
+    'payable'
   >;
 
-  usdcToken: TypedContractMethod<[], [string], "view">;
+  usdcToken: TypedContractMethod<[], [string], 'view'>;
 
   getFunction<T extends ContractMethod = ContractMethod>(
     key: string | FunctionFragment
   ): T;
 
   getFunction(
-    nameOrSignature: "CLAIM_PERIOD"
-  ): TypedContractMethod<[], [bigint], "view">;
+    nameOrSignature: 'CLAIM_PERIOD'
+  ): TypedContractMethod<[], [bigint], 'view'>;
   getFunction(
-    nameOrSignature: "UPGRADE_INTERFACE_VERSION"
-  ): TypedContractMethod<[], [string], "view">;
+    nameOrSignature: 'UPGRADE_INTERFACE_VERSION'
+  ): TypedContractMethod<[], [string], 'view'>;
   getFunction(
-    nameOrSignature: "claimExpiredShares"
-  ): TypedContractMethod<[recipient: AddressLike], [void], "nonpayable">;
+    nameOrSignature: 'claimExpiredShares'
+  ): TypedContractMethod<[recipient: AddressLike], [void], 'nonpayable'>;
   getFunction(
-    nameOrSignature: "claimOwnerShare"
-  ): TypedContractMethod<[], [void], "nonpayable">;
+    nameOrSignature: 'claimOwnerShare'
+  ): TypedContractMethod<[], [void], 'nonpayable'>;
   getFunction(
-    nameOrSignature: "claimRecipientShare"
-  ): TypedContractMethod<[], [void], "nonpayable">;
+    nameOrSignature: 'claimRecipientShare'
+  ): TypedContractMethod<[], [void], 'nonpayable'>;
   getFunction(
-    nameOrSignature: "clearCustomFeePercentage"
-  ): TypedContractMethod<[account: AddressLike], [void], "nonpayable">;
+    nameOrSignature: 'clearCustomFeePercentage'
+  ): TypedContractMethod<[account: AddressLike], [void], 'nonpayable'>;
   getFunction(
-    nameOrSignature: "customFeeDiscount"
-  ): TypedContractMethod<[arg0: AddressLike], [bigint], "view">;
+    nameOrSignature: 'customFeeDiscount'
+  ): TypedContractMethod<[arg0: AddressLike], [bigint], 'view'>;
   getFunction(
-    nameOrSignature: "delegateTo"
-  ): TypedContractMethod<[delegate: AddressLike], [void], "nonpayable">;
+    nameOrSignature: 'delegateTo'
+  ): TypedContractMethod<[delegate: AddressLike], [void], 'nonpayable'>;
   getFunction(
-    nameOrSignature: "delegationFee"
-  ): TypedContractMethod<[], [bigint], "view">;
+    nameOrSignature: 'delegationFee'
+  ): TypedContractMethod<[], [bigint], 'view'>;
   getFunction(
-    nameOrSignature: "distributeClaimableFunds"
-  ): TypedContractMethod<[recipient: AddressLike], [void], "nonpayable">;
+    nameOrSignature: 'distributeClaimableFunds'
+  ): TypedContractMethod<[recipient: AddressLike], [void], 'nonpayable'>;
   getFunction(
-    nameOrSignature: "emergencyUnpause"
-  ): TypedContractMethod<[], [void], "nonpayable">;
+    nameOrSignature: 'emergencyUnpause'
+  ): TypedContractMethod<[], [void], 'nonpayable'>;
   getFunction(
-    nameOrSignature: "feePaused"
-  ): TypedContractMethod<[], [boolean], "view">;
+    nameOrSignature: 'feePaused'
+  ): TypedContractMethod<[], [boolean], 'view'>;
   getFunction(
-    nameOrSignature: "getCustomFeePercentage"
-  ): TypedContractMethod<[account: AddressLike], [bigint], "view">;
+    nameOrSignature: 'getCustomFeePercentage'
+  ): TypedContractMethod<[account: AddressLike], [bigint], 'view'>;
   getFunction(
-    nameOrSignature: "getDelegationFee"
-  ): TypedContractMethod<[], [bigint], "view">;
+    nameOrSignature: 'getDelegationFee'
+  ): TypedContractMethod<[], [bigint], 'view'>;
   getFunction(
-    nameOrSignature: "getFee"
-  ): TypedContractMethod<[], [bigint], "view">;
+    nameOrSignature: 'getFee'
+  ): TypedContractMethod<[], [bigint], 'view'>;
   getFunction(
-    nameOrSignature: "getOwnerClaimable"
-  ): TypedContractMethod<[], [bigint], "view">;
-  getFunction(
-    nameOrSignature: "getRecipientClaimable"
-  ): TypedContractMethod<
+    nameOrSignature: 'getOwnerClaimable'
+  ): TypedContractMethod<[], [bigint], 'view'>;
+  getFunction(nameOrSignature: 'getRecipientClaimable'): TypedContractMethod<
     [recipient: AddressLike],
     [
       [bigint, bigint, boolean] & {
         amount: bigint;
         expiresAt: bigint;
         isExpired: boolean;
-      }
+      },
     ],
-    "view"
+    'view'
   >;
   getFunction(
-    nameOrSignature: "initialize"
+    nameOrSignature: 'initialize'
   ): TypedContractMethod<
     [_usdcToken: AddressLike, _owner: AddressLike],
     [void],
-    "nonpayable"
+    'nonpayable'
   >;
   getFunction(
-    nameOrSignature: "isPaused"
-  ): TypedContractMethod<[], [boolean], "view">;
+    nameOrSignature: 'isPaused'
+  ): TypedContractMethod<[], [boolean], 'view'>;
   getFunction(
-    nameOrSignature: "owner"
-  ): TypedContractMethod<[], [string], "view">;
+    nameOrSignature: 'owner'
+  ): TypedContractMethod<[], [string], 'view'>;
   getFunction(
-    nameOrSignature: "ownerClaimable"
-  ): TypedContractMethod<[], [bigint], "view">;
+    nameOrSignature: 'ownerClaimable'
+  ): TypedContractMethod<[], [bigint], 'view'>;
   getFunction(
-    nameOrSignature: "pause"
-  ): TypedContractMethod<[], [void], "nonpayable">;
+    nameOrSignature: 'pause'
+  ): TypedContractMethod<[], [void], 'nonpayable'>;
   getFunction(
-    nameOrSignature: "paused"
-  ): TypedContractMethod<[], [boolean], "view">;
+    nameOrSignature: 'paused'
+  ): TypedContractMethod<[], [boolean], 'view'>;
   getFunction(
-    nameOrSignature: "permissions"
+    nameOrSignature: 'permissions'
   ): TypedContractMethod<
     [arg0: AddressLike, arg1: AddressLike],
     [boolean],
-    "view"
+    'view'
   >;
   getFunction(
-    nameOrSignature: "proxiableUUID"
-  ): TypedContractMethod<[], [string], "view">;
+    nameOrSignature: 'proxiableUUID'
+  ): TypedContractMethod<[], [string], 'view'>;
   getFunction(
-    nameOrSignature: "recipientClaims"
+    nameOrSignature: 'recipientClaims'
   ): TypedContractMethod<
     [arg0: AddressLike],
     [[bigint, bigint] & { amount: bigint; timestamp: bigint }],
-    "view"
+    'view'
   >;
   getFunction(
-    nameOrSignature: "rejectDelegation"
+    nameOrSignature: 'rejectDelegation'
   ): TypedContractMethod<
     [delegatingAddress: AddressLike],
     [void],
-    "nonpayable"
+    'nonpayable'
   >;
   getFunction(
-    nameOrSignature: "removePermission"
-  ): TypedContractMethod<[contractAddress: AddressLike], [void], "nonpayable">;
+    nameOrSignature: 'removePermission'
+  ): TypedContractMethod<[contractAddress: AddressLike], [void], 'nonpayable'>;
   getFunction(
-    nameOrSignature: "renounceOwnership"
-  ): TypedContractMethod<[], [void], "nonpayable">;
+    nameOrSignature: 'renounceOwnership'
+  ): TypedContractMethod<[], [void], 'nonpayable'>;
   getFunction(
-    nameOrSignature: "send"
+    nameOrSignature: 'send'
   ): TypedContractMethod<
     [
       to: AddressLike,
@@ -1152,246 +1150,246 @@ export interface Mailer extends BaseContract {
       body: string,
       payer: AddressLike,
       revenueShareToReceiver: boolean,
-      resolveSenderToName: boolean
+      resolveSenderToName: boolean,
     ],
     [void],
-    "nonpayable"
+    'nonpayable'
   >;
   getFunction(
-    nameOrSignature: "sendFee"
-  ): TypedContractMethod<[], [bigint], "view">;
+    nameOrSignature: 'sendFee'
+  ): TypedContractMethod<[], [bigint], 'view'>;
   getFunction(
-    nameOrSignature: "sendPrepared"
+    nameOrSignature: 'sendPrepared'
   ): TypedContractMethod<
     [
       to: AddressLike,
       mailId: string,
       payer: AddressLike,
       revenueShareToReceiver: boolean,
-      resolveSenderToName: boolean
+      resolveSenderToName: boolean,
     ],
     [void],
-    "nonpayable"
+    'nonpayable'
   >;
   getFunction(
-    nameOrSignature: "sendPreparedToEmailAddress"
+    nameOrSignature: 'sendPreparedToEmailAddress'
   ): TypedContractMethod<
     [toEmail: string, mailId: string, payer: AddressLike],
     [void],
-    "nonpayable"
+    'nonpayable'
   >;
   getFunction(
-    nameOrSignature: "sendThroughWebhook"
+    nameOrSignature: 'sendThroughWebhook'
   ): TypedContractMethod<
     [
       to: AddressLike,
       webhookId: string,
       payer: AddressLike,
       revenueShareToReceiver: boolean,
-      resolveSenderToName: boolean
+      resolveSenderToName: boolean,
     ],
     [void],
-    "nonpayable"
+    'nonpayable'
   >;
   getFunction(
-    nameOrSignature: "sendToEmailAddress"
+    nameOrSignature: 'sendToEmailAddress'
   ): TypedContractMethod<
     [toEmail: string, subject: string, body: string, payer: AddressLike],
     [void],
-    "nonpayable"
+    'nonpayable'
   >;
   getFunction(
-    nameOrSignature: "setCustomFeePercentage"
+    nameOrSignature: 'setCustomFeePercentage'
   ): TypedContractMethod<
     [account: AddressLike, percentage: BigNumberish],
     [void],
-    "nonpayable"
+    'nonpayable'
   >;
   getFunction(
-    nameOrSignature: "setDelegationFee"
-  ): TypedContractMethod<[usdcAmount: BigNumberish], [void], "nonpayable">;
+    nameOrSignature: 'setDelegationFee'
+  ): TypedContractMethod<[usdcAmount: BigNumberish], [void], 'nonpayable'>;
   getFunction(
-    nameOrSignature: "setFee"
-  ): TypedContractMethod<[usdcAmount: BigNumberish], [void], "nonpayable">;
+    nameOrSignature: 'setFee'
+  ): TypedContractMethod<[usdcAmount: BigNumberish], [void], 'nonpayable'>;
   getFunction(
-    nameOrSignature: "setFeePaused"
-  ): TypedContractMethod<[_feePaused: boolean], [void], "nonpayable">;
+    nameOrSignature: 'setFeePaused'
+  ): TypedContractMethod<[_feePaused: boolean], [void], 'nonpayable'>;
   getFunction(
-    nameOrSignature: "setPermission"
-  ): TypedContractMethod<[contractAddress: AddressLike], [void], "nonpayable">;
+    nameOrSignature: 'setPermission'
+  ): TypedContractMethod<[contractAddress: AddressLike], [void], 'nonpayable'>;
   getFunction(
-    nameOrSignature: "transferOwnership"
-  ): TypedContractMethod<[newOwner: AddressLike], [void], "nonpayable">;
+    nameOrSignature: 'transferOwnership'
+  ): TypedContractMethod<[newOwner: AddressLike], [void], 'nonpayable'>;
   getFunction(
-    nameOrSignature: "unpause"
-  ): TypedContractMethod<[], [void], "nonpayable">;
+    nameOrSignature: 'unpause'
+  ): TypedContractMethod<[], [void], 'nonpayable'>;
   getFunction(
-    nameOrSignature: "upgradeToAndCall"
+    nameOrSignature: 'upgradeToAndCall'
   ): TypedContractMethod<
     [newImplementation: AddressLike, data: BytesLike],
     [void],
-    "payable"
+    'payable'
   >;
   getFunction(
-    nameOrSignature: "usdcToken"
-  ): TypedContractMethod<[], [string], "view">;
+    nameOrSignature: 'usdcToken'
+  ): TypedContractMethod<[], [string], 'view'>;
 
   getEvent(
-    key: "ContractPaused"
+    key: 'ContractPaused'
   ): TypedContractEvent<
     ContractPausedEvent.InputTuple,
     ContractPausedEvent.OutputTuple,
     ContractPausedEvent.OutputObject
   >;
   getEvent(
-    key: "ContractUnpaused"
+    key: 'ContractUnpaused'
   ): TypedContractEvent<
     ContractUnpausedEvent.InputTuple,
     ContractUnpausedEvent.OutputTuple,
     ContractUnpausedEvent.OutputObject
   >;
   getEvent(
-    key: "CustomFeePercentageSet"
+    key: 'CustomFeePercentageSet'
   ): TypedContractEvent<
     CustomFeePercentageSetEvent.InputTuple,
     CustomFeePercentageSetEvent.OutputTuple,
     CustomFeePercentageSetEvent.OutputObject
   >;
   getEvent(
-    key: "DelegationFeeUpdated"
+    key: 'DelegationFeeUpdated'
   ): TypedContractEvent<
     DelegationFeeUpdatedEvent.InputTuple,
     DelegationFeeUpdatedEvent.OutputTuple,
     DelegationFeeUpdatedEvent.OutputObject
   >;
   getEvent(
-    key: "DelegationSet"
+    key: 'DelegationSet'
   ): TypedContractEvent<
     DelegationSetEvent.InputTuple,
     DelegationSetEvent.OutputTuple,
     DelegationSetEvent.OutputObject
   >;
   getEvent(
-    key: "EmergencyUnpaused"
+    key: 'EmergencyUnpaused'
   ): TypedContractEvent<
     EmergencyUnpausedEvent.InputTuple,
     EmergencyUnpausedEvent.OutputTuple,
     EmergencyUnpausedEvent.OutputObject
   >;
   getEvent(
-    key: "ExpiredSharesClaimed"
+    key: 'ExpiredSharesClaimed'
   ): TypedContractEvent<
     ExpiredSharesClaimedEvent.InputTuple,
     ExpiredSharesClaimedEvent.OutputTuple,
     ExpiredSharesClaimedEvent.OutputObject
   >;
   getEvent(
-    key: "FeePauseToggled"
+    key: 'FeePauseToggled'
   ): TypedContractEvent<
     FeePauseToggledEvent.InputTuple,
     FeePauseToggledEvent.OutputTuple,
     FeePauseToggledEvent.OutputObject
   >;
   getEvent(
-    key: "FeeUpdated"
+    key: 'FeeUpdated'
   ): TypedContractEvent<
     FeeUpdatedEvent.InputTuple,
     FeeUpdatedEvent.OutputTuple,
     FeeUpdatedEvent.OutputObject
   >;
   getEvent(
-    key: "FundsDistributed"
+    key: 'FundsDistributed'
   ): TypedContractEvent<
     FundsDistributedEvent.InputTuple,
     FundsDistributedEvent.OutputTuple,
     FundsDistributedEvent.OutputObject
   >;
   getEvent(
-    key: "Initialized"
+    key: 'Initialized'
   ): TypedContractEvent<
     InitializedEvent.InputTuple,
     InitializedEvent.OutputTuple,
     InitializedEvent.OutputObject
   >;
   getEvent(
-    key: "MailSent"
+    key: 'MailSent'
   ): TypedContractEvent<
     MailSentEvent.InputTuple,
     MailSentEvent.OutputTuple,
     MailSentEvent.OutputObject
   >;
   getEvent(
-    key: "MailSentToEmail"
+    key: 'MailSentToEmail'
   ): TypedContractEvent<
     MailSentToEmailEvent.InputTuple,
     MailSentToEmailEvent.OutputTuple,
     MailSentToEmailEvent.OutputObject
   >;
   getEvent(
-    key: "OwnerClaimed"
+    key: 'OwnerClaimed'
   ): TypedContractEvent<
     OwnerClaimedEvent.InputTuple,
     OwnerClaimedEvent.OutputTuple,
     OwnerClaimedEvent.OutputObject
   >;
   getEvent(
-    key: "OwnershipTransferred"
+    key: 'OwnershipTransferred'
   ): TypedContractEvent<
     OwnershipTransferredEvent.InputTuple,
     OwnershipTransferredEvent.OutputTuple,
     OwnershipTransferredEvent.OutputObject
   >;
   getEvent(
-    key: "PermissionGranted"
+    key: 'PermissionGranted'
   ): TypedContractEvent<
     PermissionGrantedEvent.InputTuple,
     PermissionGrantedEvent.OutputTuple,
     PermissionGrantedEvent.OutputObject
   >;
   getEvent(
-    key: "PermissionRevoked"
+    key: 'PermissionRevoked'
   ): TypedContractEvent<
     PermissionRevokedEvent.InputTuple,
     PermissionRevokedEvent.OutputTuple,
     PermissionRevokedEvent.OutputObject
   >;
   getEvent(
-    key: "PreparedMailSent"
+    key: 'PreparedMailSent'
   ): TypedContractEvent<
     PreparedMailSentEvent.InputTuple,
     PreparedMailSentEvent.OutputTuple,
     PreparedMailSentEvent.OutputObject
   >;
   getEvent(
-    key: "PreparedMailSentToEmail"
+    key: 'PreparedMailSentToEmail'
   ): TypedContractEvent<
     PreparedMailSentToEmailEvent.InputTuple,
     PreparedMailSentToEmailEvent.OutputTuple,
     PreparedMailSentToEmailEvent.OutputObject
   >;
   getEvent(
-    key: "RecipientClaimed"
+    key: 'RecipientClaimed'
   ): TypedContractEvent<
     RecipientClaimedEvent.InputTuple,
     RecipientClaimedEvent.OutputTuple,
     RecipientClaimedEvent.OutputObject
   >;
   getEvent(
-    key: "SharesRecorded"
+    key: 'SharesRecorded'
   ): TypedContractEvent<
     SharesRecordedEvent.InputTuple,
     SharesRecordedEvent.OutputTuple,
     SharesRecordedEvent.OutputObject
   >;
   getEvent(
-    key: "Upgraded"
+    key: 'Upgraded'
   ): TypedContractEvent<
     UpgradedEvent.InputTuple,
     UpgradedEvent.OutputTuple,
     UpgradedEvent.OutputObject
   >;
   getEvent(
-    key: "WebhookMailSent"
+    key: 'WebhookMailSent'
   ): TypedContractEvent<
     WebhookMailSentEvent.InputTuple,
     WebhookMailSentEvent.OutputTuple,
@@ -1399,7 +1397,7 @@ export interface Mailer extends BaseContract {
   >;
 
   filters: {
-    "ContractPaused()": TypedContractEvent<
+    'ContractPaused()': TypedContractEvent<
       ContractPausedEvent.InputTuple,
       ContractPausedEvent.OutputTuple,
       ContractPausedEvent.OutputObject
@@ -1410,7 +1408,7 @@ export interface Mailer extends BaseContract {
       ContractPausedEvent.OutputObject
     >;
 
-    "ContractUnpaused()": TypedContractEvent<
+    'ContractUnpaused()': TypedContractEvent<
       ContractUnpausedEvent.InputTuple,
       ContractUnpausedEvent.OutputTuple,
       ContractUnpausedEvent.OutputObject
@@ -1421,7 +1419,7 @@ export interface Mailer extends BaseContract {
       ContractUnpausedEvent.OutputObject
     >;
 
-    "CustomFeePercentageSet(address,uint256)": TypedContractEvent<
+    'CustomFeePercentageSet(address,uint256)': TypedContractEvent<
       CustomFeePercentageSetEvent.InputTuple,
       CustomFeePercentageSetEvent.OutputTuple,
       CustomFeePercentageSetEvent.OutputObject
@@ -1432,7 +1430,7 @@ export interface Mailer extends BaseContract {
       CustomFeePercentageSetEvent.OutputObject
     >;
 
-    "DelegationFeeUpdated(uint256,uint256)": TypedContractEvent<
+    'DelegationFeeUpdated(uint256,uint256)': TypedContractEvent<
       DelegationFeeUpdatedEvent.InputTuple,
       DelegationFeeUpdatedEvent.OutputTuple,
       DelegationFeeUpdatedEvent.OutputObject
@@ -1443,7 +1441,7 @@ export interface Mailer extends BaseContract {
       DelegationFeeUpdatedEvent.OutputObject
     >;
 
-    "DelegationSet(address,address)": TypedContractEvent<
+    'DelegationSet(address,address)': TypedContractEvent<
       DelegationSetEvent.InputTuple,
       DelegationSetEvent.OutputTuple,
       DelegationSetEvent.OutputObject
@@ -1454,7 +1452,7 @@ export interface Mailer extends BaseContract {
       DelegationSetEvent.OutputObject
     >;
 
-    "EmergencyUnpaused()": TypedContractEvent<
+    'EmergencyUnpaused()': TypedContractEvent<
       EmergencyUnpausedEvent.InputTuple,
       EmergencyUnpausedEvent.OutputTuple,
       EmergencyUnpausedEvent.OutputObject
@@ -1465,7 +1463,7 @@ export interface Mailer extends BaseContract {
       EmergencyUnpausedEvent.OutputObject
     >;
 
-    "ExpiredSharesClaimed(address,uint256)": TypedContractEvent<
+    'ExpiredSharesClaimed(address,uint256)': TypedContractEvent<
       ExpiredSharesClaimedEvent.InputTuple,
       ExpiredSharesClaimedEvent.OutputTuple,
       ExpiredSharesClaimedEvent.OutputObject
@@ -1476,7 +1474,7 @@ export interface Mailer extends BaseContract {
       ExpiredSharesClaimedEvent.OutputObject
     >;
 
-    "FeePauseToggled(bool)": TypedContractEvent<
+    'FeePauseToggled(bool)': TypedContractEvent<
       FeePauseToggledEvent.InputTuple,
       FeePauseToggledEvent.OutputTuple,
       FeePauseToggledEvent.OutputObject
@@ -1487,7 +1485,7 @@ export interface Mailer extends BaseContract {
       FeePauseToggledEvent.OutputObject
     >;
 
-    "FeeUpdated(uint256,uint256)": TypedContractEvent<
+    'FeeUpdated(uint256,uint256)': TypedContractEvent<
       FeeUpdatedEvent.InputTuple,
       FeeUpdatedEvent.OutputTuple,
       FeeUpdatedEvent.OutputObject
@@ -1498,7 +1496,7 @@ export interface Mailer extends BaseContract {
       FeeUpdatedEvent.OutputObject
     >;
 
-    "FundsDistributed(address,uint256)": TypedContractEvent<
+    'FundsDistributed(address,uint256)': TypedContractEvent<
       FundsDistributedEvent.InputTuple,
       FundsDistributedEvent.OutputTuple,
       FundsDistributedEvent.OutputObject
@@ -1509,7 +1507,7 @@ export interface Mailer extends BaseContract {
       FundsDistributedEvent.OutputObject
     >;
 
-    "Initialized(uint64)": TypedContractEvent<
+    'Initialized(uint64)': TypedContractEvent<
       InitializedEvent.InputTuple,
       InitializedEvent.OutputTuple,
       InitializedEvent.OutputObject
@@ -1520,7 +1518,7 @@ export interface Mailer extends BaseContract {
       InitializedEvent.OutputObject
     >;
 
-    "MailSent(address,address,address,string,string,bool,bool,bool)": TypedContractEvent<
+    'MailSent(address,address,address,string,string,bool,bool,bool)': TypedContractEvent<
       MailSentEvent.InputTuple,
       MailSentEvent.OutputTuple,
       MailSentEvent.OutputObject
@@ -1531,7 +1529,7 @@ export interface Mailer extends BaseContract {
       MailSentEvent.OutputObject
     >;
 
-    "MailSentToEmail(address,address,string,string,string,bool)": TypedContractEvent<
+    'MailSentToEmail(address,address,string,string,string,bool)': TypedContractEvent<
       MailSentToEmailEvent.InputTuple,
       MailSentToEmailEvent.OutputTuple,
       MailSentToEmailEvent.OutputObject
@@ -1542,7 +1540,7 @@ export interface Mailer extends BaseContract {
       MailSentToEmailEvent.OutputObject
     >;
 
-    "OwnerClaimed(uint256)": TypedContractEvent<
+    'OwnerClaimed(uint256)': TypedContractEvent<
       OwnerClaimedEvent.InputTuple,
       OwnerClaimedEvent.OutputTuple,
       OwnerClaimedEvent.OutputObject
@@ -1553,7 +1551,7 @@ export interface Mailer extends BaseContract {
       OwnerClaimedEvent.OutputObject
     >;
 
-    "OwnershipTransferred(address,address)": TypedContractEvent<
+    'OwnershipTransferred(address,address)': TypedContractEvent<
       OwnershipTransferredEvent.InputTuple,
       OwnershipTransferredEvent.OutputTuple,
       OwnershipTransferredEvent.OutputObject
@@ -1564,7 +1562,7 @@ export interface Mailer extends BaseContract {
       OwnershipTransferredEvent.OutputObject
     >;
 
-    "PermissionGranted(address,address)": TypedContractEvent<
+    'PermissionGranted(address,address)': TypedContractEvent<
       PermissionGrantedEvent.InputTuple,
       PermissionGrantedEvent.OutputTuple,
       PermissionGrantedEvent.OutputObject
@@ -1575,7 +1573,7 @@ export interface Mailer extends BaseContract {
       PermissionGrantedEvent.OutputObject
     >;
 
-    "PermissionRevoked(address,address)": TypedContractEvent<
+    'PermissionRevoked(address,address)': TypedContractEvent<
       PermissionRevokedEvent.InputTuple,
       PermissionRevokedEvent.OutputTuple,
       PermissionRevokedEvent.OutputObject
@@ -1586,7 +1584,7 @@ export interface Mailer extends BaseContract {
       PermissionRevokedEvent.OutputObject
     >;
 
-    "PreparedMailSent(address,address,address,string,bool,bool,bool)": TypedContractEvent<
+    'PreparedMailSent(address,address,address,string,bool,bool,bool)': TypedContractEvent<
       PreparedMailSentEvent.InputTuple,
       PreparedMailSentEvent.OutputTuple,
       PreparedMailSentEvent.OutputObject
@@ -1597,7 +1595,7 @@ export interface Mailer extends BaseContract {
       PreparedMailSentEvent.OutputObject
     >;
 
-    "PreparedMailSentToEmail(address,address,string,string,bool)": TypedContractEvent<
+    'PreparedMailSentToEmail(address,address,string,string,bool)': TypedContractEvent<
       PreparedMailSentToEmailEvent.InputTuple,
       PreparedMailSentToEmailEvent.OutputTuple,
       PreparedMailSentToEmailEvent.OutputObject
@@ -1608,7 +1606,7 @@ export interface Mailer extends BaseContract {
       PreparedMailSentToEmailEvent.OutputObject
     >;
 
-    "RecipientClaimed(address,uint256)": TypedContractEvent<
+    'RecipientClaimed(address,uint256)': TypedContractEvent<
       RecipientClaimedEvent.InputTuple,
       RecipientClaimedEvent.OutputTuple,
       RecipientClaimedEvent.OutputObject
@@ -1619,7 +1617,7 @@ export interface Mailer extends BaseContract {
       RecipientClaimedEvent.OutputObject
     >;
 
-    "SharesRecorded(address,uint256,uint256)": TypedContractEvent<
+    'SharesRecorded(address,uint256,uint256)': TypedContractEvent<
       SharesRecordedEvent.InputTuple,
       SharesRecordedEvent.OutputTuple,
       SharesRecordedEvent.OutputObject
@@ -1630,7 +1628,7 @@ export interface Mailer extends BaseContract {
       SharesRecordedEvent.OutputObject
     >;
 
-    "Upgraded(address)": TypedContractEvent<
+    'Upgraded(address)': TypedContractEvent<
       UpgradedEvent.InputTuple,
       UpgradedEvent.OutputTuple,
       UpgradedEvent.OutputObject
@@ -1641,7 +1639,7 @@ export interface Mailer extends BaseContract {
       UpgradedEvent.OutputObject
     >;
 
-    "WebhookMailSent(address,address,address,string,bool,bool,bool)": TypedContractEvent<
+    'WebhookMailSent(address,address,address,string,bool,bool,bool)': TypedContractEvent<
       WebhookMailSentEvent.InputTuple,
       WebhookMailSentEvent.OutputTuple,
       WebhookMailSentEvent.OutputObject

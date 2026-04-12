@@ -7,7 +7,7 @@
   "languages": ["solidity", "rust", "typescript"],
   "frameworks": ["hardhat", "anchor", "ethers", "viem", "mocha"],
   "package_name": "@johnqh/mail_box_contracts",
-  
+
   "ai_development": {
     "primary_tasks": [
       "smart_contract_development",
@@ -15,14 +15,14 @@
       "testing_and_validation",
       "client_library_development"
     ],
-    
+
     "key_patterns": {
       "contract_modification": "Always compile after changes: npm run compile",
       "testing": "Run full test suite: npm test (116 tests)",
       "deployment": "Local development: npm run deploy:local",
       "debugging": "Use comprehensive logging and error handling"
     },
-    
+
     "common_workflows": {
       "new_feature": [
         "1. Modify contracts (EVM + Solana)",
@@ -47,7 +47,7 @@
         "5. Run npm run ai:test for comprehensive testing"
       ]
     },
-    
+
     "architecture": {
       "evm_contracts": {
         "location": "contracts/",
@@ -74,7 +74,7 @@
         "types": "Auto-generated in typechain-types/"
       }
     },
-    
+
     "testing_strategy": {
       "total_tests": "116",
       "test_breakdown": {
@@ -83,7 +83,11 @@
         "total_tests": 116
       },
       "categories": ["unit", "integration", "multi_chain", "error_handling"],
-      "test_files": ["test/evm/Mailer.test.ts", "test/solana/", "test/unified/"],
+      "test_files": [
+        "test/evm/Mailer.test.ts",
+        "test/solana/",
+        "test/unified/"
+      ],
       "mock_contracts": ["MockUSDC.sol"],
       "patterns": [
         "Always fund test accounts with MockUSDC before testing",
@@ -95,11 +99,15 @@
       ]
     }
   },
-  
+
   "code_style": {
     "solidity": {
       "style": "Modern Solidity with custom errors",
-      "patterns": ["reentrancy protection", "precise fee calculations", "comprehensive events"],
+      "patterns": [
+        "reentrancy protection",
+        "precise fee calculations",
+        "comprehensive events"
+      ],
       "naming": "camelCase for functions, PascalCase for contracts"
     },
     "rust": {
@@ -113,7 +121,7 @@
       "naming": "camelCase for variables, PascalCase for classes"
     }
   },
-  
+
   "quick_commands": {
     "compile": "npm run compile",
     "test": "npm test",
@@ -123,7 +131,7 @@
     "lint": "npm run lint",
     "typecheck": "npm run typecheck"
   },
-  
+
   "ai_assistance_notes": {
     "always_compile_after_contract_changes": true,
     "run_tests_before_committing": true,
@@ -135,7 +143,7 @@
   "ai_optimization": {
     "documentation_files": [
       "CLAUDE.md",
-      "docs/AI_DEVELOPMENT_PATTERNS.md", 
+      "docs/AI_DEVELOPMENT_PATTERNS.md",
       "docs/AI_QUICK_START.md",
       "docs/ai-development-patterns.md",
       "AI_DEVELOPMENT_GUIDE.md",
@@ -143,7 +151,7 @@
     ],
     "example_files": [
       "examples/basic-usage.ts",
-      "examples/evm-usage.ts", 
+      "examples/evm-usage.ts",
       "examples/solana-usage.ts",
       "examples/unified-usage.ts"
     ],
@@ -153,14 +161,8 @@
       "src/unified/onchain-mailer-client.ts",
       "src/unified/wallet-detector.ts"
     ],
-    "test_patterns": [
-      "test/evm/Mailer.test.ts",
-      "test/unified/*.test.ts"
-    ],
-    "deployment_scripts": [
-      "scripts/deploy-local.ts",
-      "scripts/evm/deploy.ts"
-    ],
+    "test_patterns": ["test/evm/Mailer.test.ts", "test/unified/*.test.ts"],
+    "deployment_scripts": ["scripts/deploy-local.ts", "scripts/evm/deploy.ts"],
     "configuration_files": [
       "hardhat.config.ts",
       "package.json",
@@ -176,21 +178,21 @@
       "Understand the specific task requirements"
     ],
     "during_coding": [
-      "Follow existing code patterns and naming conventions", 
+      "Follow existing code patterns and naming conventions",
       "Add comprehensive JSDoc comments",
       "Consider multi-chain compatibility",
       "Handle errors gracefully with specific messages"
     ],
     "after_coding": [
       "Run npm run compile after contract changes",
-      "Run npm test to ensure no regressions", 
+      "Run npm test to ensure no regressions",
       "Check npm run build for TypeScript errors",
       "Update documentation if needed",
       "Verify all edge cases are tested"
     ],
     "common_pitfalls": [
       "Forgetting to compile after contract changes",
-      "Not funding test accounts with MockUSDC", 
+      "Not funding test accounts with MockUSDC",
       "Missing error handling in async operations",
       "Not testing both EVM and Solana paths",
       "Forgetting to update TypeScript types after contract changes",

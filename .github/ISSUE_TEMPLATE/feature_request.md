@@ -51,7 +51,7 @@ If you have ideas about implementation:
 ### 📊 Impact Assessment
 
 - **Priority**: Low / Medium / High
-- **Complexity**: Low / Medium / High  
+- **Complexity**: Low / Medium / High
 - **Breaking Change**: Yes / No
 - **Network Support**: All / Specific chains
 

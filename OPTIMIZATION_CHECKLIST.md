@@ -99,15 +99,15 @@ solana program deploy target/deploy/mailer.so --url mainnet-beta
 
 ## 💰 Cost Comparison Table
 
-| Network | Without Optimization | With Optimization | Savings |
-|---------|---------------------|-------------------|---------|
-| **Ethereum Mainnet** | $412-1,675 | $165-670* | $247-1,005 |
-| **Base/Optimism** | $7-20 | $5-17 | $2-3 |
-| **Polygon** | $2-5 | $1-4 | $1 |
-| **Solana Mainnet** | $560-900 | $280-500 | $280-400 |
-| **Solana Devnet** | FREE | FREE | - |
+| Network              | Without Optimization | With Optimization | Savings    |
+| -------------------- | -------------------- | ----------------- | ---------- |
+| **Ethereum Mainnet** | $412-1,675           | $165-670\*        | $247-1,005 |
+| **Base/Optimism**    | $7-20                | $5-17             | $2-3       |
+| **Polygon**          | $2-5                 | $1-4              | $1         |
+| **Solana Mainnet**   | $560-900             | $280-500          | $280-400   |
+| **Solana Devnet**    | FREE                 | FREE              | -          |
 
-*By deploying during low gas periods
+\*By deploying during low gas periods
 
 ---
 
@@ -182,30 +182,30 @@ solana program deploy target/deploy/mailer.so --url mainnet-beta
 
 ### Conservative Estimate
 
-| Deployment | Cost |
-|------------|------|
-| EVM on Polygon | $2 |
-| EVM on Base | $10 |
-| Solana Mainnet (optimized) | $400 |
-| **Total** | **$412** |
+| Deployment                 | Cost     |
+| -------------------------- | -------- |
+| EVM on Polygon             | $2       |
+| EVM on Base                | $10      |
+| Solana Mainnet (optimized) | $400     |
+| **Total**                  | **$412** |
 
 ### High-End Estimate
 
-| Deployment | Cost |
-|------------|------|
-| EVM on Ethereum (high gas) | $1,200 |
-| EVM on Base | $15 |
-| Solana Mainnet | $500 |
-| **Total** | **$1,715** |
+| Deployment                 | Cost       |
+| -------------------------- | ---------- |
+| EVM on Ethereum (high gas) | $1,200     |
+| EVM on Base                | $15        |
+| Solana Mainnet             | $500       |
+| **Total**                  | **$1,715** |
 
 ### Recommended Approach
 
-| Deployment | Cost |
-|------------|------|
-| EVM on Polygon | $2 |
-| Solana Devnet (testing) | FREE |
-| Solana Mainnet (when ready) | $400 |
-| **Total** | **$402** |
+| Deployment                  | Cost     |
+| --------------------------- | -------- |
+| EVM on Polygon              | $2       |
+| Solana Devnet (testing)     | FREE     |
+| Solana Mainnet (when ready) | $400     |
+| **Total**                   | **$402** |
 
 ---
 

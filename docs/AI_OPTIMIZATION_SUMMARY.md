@@ -15,7 +15,7 @@ The Mailer multi-chain project has been comprehensively optimized for AI-assiste
 ```
 .ai/
 ├── README.md                    # Overview of AI resources
-├── QUICK_REFERENCE.md          # Fast lookup for commands and patterns  
+├── QUICK_REFERENCE.md          # Fast lookup for commands and patterns
 ├── context/
 │   └── project-summary.md      # High-level project context
 ├── snippets/
@@ -98,7 +98,7 @@ The Mailer multi-chain project has been comprehensively optimized for AI-assiste
 // Single client works with ANY wallet type
 const client = new OnchainMailerClient(wallet, config);
 console.log('Chain:', client.getChainType()); // Auto-detected
-await client.sendMessage("Hello!", "Multi-chain message", true);
+await client.sendMessage('Hello!', 'Multi-chain message', true);
 ```
 
 ### 2. Dynamic Import Pattern
@@ -129,7 +129,7 @@ describe('Multi-chain feature', () => {
     const evmClient = new OnchainMailerClient(evmWallet, config);
     expect(evmClient.getChainType()).to.equal('evm');
   });
-  
+
   it('should work on Solana', async () => {
     const solanaClient = new OnchainMailerClient(solanaWallet, config);
     expect(solanaClient.getChainType()).to.equal('solana');

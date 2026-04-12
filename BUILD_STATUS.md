@@ -49,13 +49,13 @@
 
 ## Key Metrics
 
-| Check | Status | Details |
-|-------|--------|---------|
-| Build | ✅ | Compiles without errors |
-| TypeScript | ✅ | No type errors |
-| Tests | ✅ | 154/154 passing |
-| Linting | ✅ | 0 errors, 0 warnings |
-| Dependencies | ✅ | All resolved |
+| Check        | Status | Details                 |
+| ------------ | ------ | ----------------------- |
+| Build        | ✅     | Compiles without errors |
+| TypeScript   | ✅     | No type errors          |
+| Tests        | ✅     | 154/154 passing         |
+| Linting      | ✅     | 0 errors, 0 warnings    |
+| Dependencies | ✅     | All resolved            |
 
 ## Commands Reference
 
@@ -105,5 +105,5 @@ All 22 write methods now support gas estimation:
 
 ---
 
-*Last verified: November 5, 2024*
-*All checks passing ✅*
+_Last verified: November 5, 2024_
+_All checks passing ✅_

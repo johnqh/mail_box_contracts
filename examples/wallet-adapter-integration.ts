@@ -62,7 +62,9 @@ async function main() {
   // ===== Delegate to another address =====
   try {
     console.log('\n🤝 Setting up delegation...');
-    const delegationResult = await mailerClient.delegateTo('DelegatePublicKeyBase58');
+    const delegationResult = await mailerClient.delegateTo(
+      'DelegatePublicKeyBase58'
+    );
 
     console.log('✅ Delegation set!');
     console.log('   Transaction signature:', delegationResult.transactionHash);

@@ -19,7 +19,7 @@ cp .env.example .env
 Ensure your deployer account has native tokens for gas fees on your target network:
 
 - **Ethereum**: ETH
-- **Polygon**: MATIC  
+- **Polygon**: MATIC
 - **Arbitrum/Optimism/Base**: ETH
 - **Avalanche**: AVAX
 - **BSC**: BNB
@@ -110,16 +110,16 @@ USDC_ADDRESS=0x...
 
 The deployment script automatically uses the correct USDC token address for each network:
 
-| Network | USDC Address |
-|---------|-------------|
-| Ethereum | `0xA0b86a33E6417a8c8df6D0e9D13A4DcF8C7d6E4b` |
-| Polygon | `0x2791Bca1f2de4661ED88A30C99A7a9449Aa84174` |
-| Arbitrum | `0xaf88d065e77c8cC2239327C5EDb3A432268e5831` |
-| Optimism | `0x0b2C639c533813f4Aa9D7837CAf62653d097Ff85` |
-| Base | `0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913` |
+| Network   | USDC Address                                 |
+| --------- | -------------------------------------------- |
+| Ethereum  | `0xA0b86a33E6417a8c8df6D0e9D13A4DcF8C7d6E4b` |
+| Polygon   | `0x2791Bca1f2de4661ED88A30C99A7a9449Aa84174` |
+| Arbitrum  | `0xaf88d065e77c8cC2239327C5EDb3A432268e5831` |
+| Optimism  | `0x0b2C639c533813f4Aa9D7837CAf62653d097Ff85` |
+| Base      | `0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913` |
 | Avalanche | `0xB97EF9Ef8734C71904D8002F8b6Bc66Dd9c48a6E` |
 
-*For testnets, MockUSDC is automatically deployed.*
+_For testnets, MockUSDC is automatically deployed._
 
 ## 📋 Deployment Process
 
@@ -161,7 +161,7 @@ Deployment info is automatically saved to `deployments/<network>.json`:
   },
   "fees": {
     "sendFee": "1.0 USDC",
-    "registrationFee": "100.0 USDC", 
+    "registrationFee": "100.0 USDC",
     "delegationFee": "10.0 USDC"
   }
 }
@@ -174,7 +174,7 @@ Deployment info is automatically saved to `deployments/<network>.json`:
 Get free API keys from:
 
 - **Etherscan**: <https://etherscan.io/apis>
-- **PolygonScan**: <https://polygonscan.com/apis>  
+- **PolygonScan**: <https://polygonscan.com/apis>
 - **Arbiscan**: <https://arbiscan.io/apis>
 - **BaseScan**: <https://basescan.org/apis>
 - **SnowTrace** (Avalanche): <https://snowtrace.io/apis>
@@ -184,7 +184,7 @@ Get free API keys from:
 ```bash
 # Verify contracts after deployment
 npm run verify:mainnet
-npm run verify:polygon  
+npm run verify:polygon
 npm run verify:arbitrum
 npm run verify:base
 # ... etc for all networks
@@ -233,7 +233,7 @@ networks: {
 ## 🚨 Security Best Practices
 
 1. **Never commit private keys** - Use environment variables
-2. **Use hardware wallets** for mainnet deployments when possible  
+2. **Use hardware wallets** for mainnet deployments when possible
 3. **Test on testnets first** before mainnet deployment
 4. **Verify contracts** on block explorers for transparency
 5. **Use multi-sig wallets** for contract ownership on mainnet
@@ -243,17 +243,17 @@ networks: {
 
 Approximate deployment costs (varies by network congestion):
 
-| Network | Total Gas | Cost (USD)* |
-|---------|-----------|-------------|
-| Ethereum | ~2.4M gas | $30-120 |
-| Polygon | ~2.4M gas | $0.05-0.20 |
-| Arbitrum | ~2.4M gas | $1-5 |
-| Optimism | ~2.4M gas | $1-5 |
-| Base | ~2.4M gas | $1-5 |
-| Avalanche | ~2.4M gas | $1-10 |
-| BSC | ~2.4M gas | $0.50-2 |
+| Network   | Total Gas | Cost (USD)\* |
+| --------- | --------- | ------------ |
+| Ethereum  | ~2.4M gas | $30-120      |
+| Polygon   | ~2.4M gas | $0.05-0.20   |
+| Arbitrum  | ~2.4M gas | $1-5         |
+| Optimism  | ~2.4M gas | $1-5         |
+| Base      | ~2.4M gas | $1-5         |
+| Avalanche | ~2.4M gas | $1-10        |
+| BSC       | ~2.4M gas | $0.50-2      |
 
-*Estimates based on typical gas prices. Actual costs may vary.*
+_Estimates based on typical gas prices. Actual costs may vary._
 
 ## 🆘 Troubleshooting
 
@@ -267,7 +267,7 @@ Approximate deployment costs (varies by network congestion):
 
 - Check your block explorer API key in `.env`
 
-**"Network connection error"**  
+**"Network connection error"**
 
 - Verify your RPC URL is correct and accessible
 
@@ -288,7 +288,7 @@ DEBUG=* npm run deploy:sepolia
 For deployment issues:
 
 1. Check network status pages
-2. Verify account balances  
+2. Verify account balances
 3. Test with testnets first
 4. Review deployment logs in `deployments/` folder
 
@@ -303,4 +303,4 @@ For deployment issues:
 
 ---
 
-*This deployment system supports 25+ EVM networks with automatic USDC detection, comprehensive verification, and detailed deployment tracking.*
+_This deployment system supports 25+ EVM networks with automatic USDC detection, comprehensive verification, and detailed deployment tracking._
