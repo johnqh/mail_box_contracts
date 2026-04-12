@@ -59,7 +59,7 @@ Relates to # (issue number)
 
 - [ ] Hardhat local network
 - [ ] Ethereum Sepolia testnet
-- [ ] Other: ******\_\_\_\_******
+- [ ] Other: **\*\***\_\_\_\_**\*\***
 
 ## 🎯 Breaking Changes
 
