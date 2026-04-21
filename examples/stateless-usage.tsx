@@ -14,7 +14,11 @@ import { RpcHelpers, ChainInfo } from '@sudobility/configs';
 import { Chain } from '@sudobility/types';
 
 // Import the stateless client
-import { OnchainMailerClient, EVMWallet, SolanaWallet } from '../src/unified/onchain-mailer-client';
+import {
+  OnchainMailerClient,
+  EVMWallet,
+  SolanaWallet,
+} from '../src/unified/onchain-mailer-client';
 
 async function evmExample() {
   console.log('\n=== EVM Example with Stateless Client ===\n');
@@ -36,25 +40,31 @@ async function evmExample() {
   const sepoliaWalletClient = createWalletClient({
     account: account1,
     chain: sepolia,
-    transport: http(sepoliaInfo.alchemyNetwork ?
-      `https://${sepoliaInfo.alchemyNetwork}.g.alchemy.com/v2/YOUR-KEY` :
-      undefined)
+    transport: http(
+      sepoliaInfo.alchemyNetwork
+        ? `https://${sepoliaInfo.alchemyNetwork}.g.alchemy.com/v2/YOUR-KEY`
+        : undefined
+    ),
   });
 
   const mainnetWalletClient = createWalletClient({
     account: account2,
     chain: mainnet,
-    transport: http(mainnetInfo.alchemyNetwork ?
-      `https://${mainnetInfo.alchemyNetwork}.g.alchemy.com/v2/YOUR-KEY` :
-      undefined)
+    transport: http(
+      mainnetInfo.alchemyNetwork
+        ? `https://${mainnetInfo.alchemyNetwork}.g.alchemy.com/v2/YOUR-KEY`
+        : undefined
+    ),
   });
 
   // 5. Create public clients (optional - will be created from ChainInfo if not provided)
   const sepoliaPublicClient = createPublicClient({
     chain: sepolia,
-    transport: http(sepoliaInfo.alchemyNetwork ?
-      `https://${sepoliaInfo.alchemyNetwork}.g.alchemy.com/v2/YOUR-KEY` :
-      undefined)
+    transport: http(
+      sepoliaInfo.alchemyNetwork
+        ? `https://${sepoliaInfo.alchemyNetwork}.g.alchemy.com/v2/YOUR-KEY`
+        : undefined
+    ),
   });
 
   // 6. Use the same client with different wallets and chains
@@ -63,7 +73,7 @@ async function evmExample() {
   console.log('\n📨 Sending message on Sepolia...');
   const sepoliaWallet: EVMWallet = {
     walletClient: sepoliaWalletClient,
-    publicClient: sepoliaPublicClient // Optional
+    publicClient: sepoliaPublicClient, // Optional
   };
 
   const result1 = await client.sendMessage(
@@ -73,7 +83,7 @@ async function evmExample() {
     sepoliaInfo,
     {
       priority: true,
-      to: '0xRecipientAddress' // Optional, defaults to sender
+      to: '0xRecipientAddress', // Optional, defaults to sender
     }
   );
   console.log('✅ Sent on Sepolia:', result1.transactionHash);
@@ -81,7 +91,7 @@ async function evmExample() {
   // Send on Mainnet with account2 (will auto-switch chain)
   console.log('\n📨 Sending message on Mainnet...');
   const mainnetWallet: EVMWallet = {
-    walletClient: mainnetWalletClient
+    walletClient: mainnetWalletClient,
     // No publicClient - will be created from ChainInfo
   };
 
@@ -99,7 +109,7 @@ async function evmExample() {
   const polygonWalletClient = createWalletClient({
     account: account1,
     chain: polygon,
-    transport: http()
+    transport: http(),
   });
 
   const polygonWallet: EVMWallet = { walletClient: polygonWalletClient };
@@ -109,7 +119,10 @@ async function evmExample() {
     polygonWallet,
     polygonInfo
   );
-  console.log('✅ Delegation set on Polygon:', delegationResult.transactionHash);
+  console.log(
+    '✅ Delegation set on Polygon:',
+    delegationResult.transactionHash
+  );
 
   // 8. Read operations (no wallet needed, just ChainInfo)
   console.log('\n💰 Getting send fee on Sepolia...');
@@ -118,10 +131,7 @@ async function evmExample() {
 
   // Check delegation
   console.log('\n🔍 Checking delegation on Polygon...');
-  const delegation = await client.getDelegation(
-    account1.address,
-    polygonInfo
-  );
+  const delegation = await client.getDelegation(account1.address, polygonInfo);
   console.log('   Delegation:', delegation || 'None');
 }
 
@@ -142,9 +152,9 @@ async function solanaExample() {
 
   // 4. Create connections (optional - will be created from ChainInfo if not provided)
   const mainnetConnection = new Connection(
-    solanaMainnet.alchemyNetwork ?
-      `https://${solanaMainnet.alchemyNetwork}.g.alchemy.com/v2/YOUR-KEY` :
-      'https://api.mainnet-beta.solana.com',
+    solanaMainnet.alchemyNetwork
+      ? `https://${solanaMainnet.alchemyNetwork}.g.alchemy.com/v2/YOUR-KEY`
+      : 'https://api.mainnet-beta.solana.com',
     'confirmed'
   );
 
@@ -152,7 +162,7 @@ async function solanaExample() {
   console.log('\n📨 Sending message on Solana mainnet...');
   const mainnetWallet: SolanaWallet = {
     wallet: wallet1,
-    connection: mainnetConnection // Optional
+    connection: mainnetConnection, // Optional
   };
 
   const result = await client.sendMessage(
@@ -167,7 +177,7 @@ async function solanaExample() {
   // 6. Send on devnet (no connection provided - will use ChainInfo)
   console.log('\n📨 Sending message on Solana devnet...');
   const devnetWallet: SolanaWallet = {
-    wallet: wallet1
+    wallet: wallet1,
     // No connection - will be created from ChainInfo
   };
 
@@ -215,7 +225,7 @@ async function multiChainExample() {
     polygon: RpcHelpers.getChainInfo(Chain.POLYGON_MAINNET),
     arbitrum: RpcHelpers.getChainInfo(Chain.ARBITRUM_MAINNET),
     optimism: RpcHelpers.getChainInfo(Chain.OPTIMISM_MAINNET),
-    solana: RpcHelpers.getChainInfo(Chain.SOLANA_MAINNET)
+    solana: RpcHelpers.getChainInfo(Chain.SOLANA_MAINNET),
   };
 
   console.log('📋 Available chains:');
@@ -228,13 +238,15 @@ async function multiChainExample() {
   const evmWalletClient = createWalletClient({
     account: evmAccount,
     chain: mainnet,
-    transport: http()
+    transport: http(),
   });
 
   // 4. Create Solana wallet
   const solanaWallet = new PhantomWalletAdapter();
   await solanaWallet.connect();
-  const solanaConnection = new Connection('https://api.mainnet-beta.solana.com');
+  const solanaConnection = new Connection(
+    'https://api.mainnet-beta.solana.com'
+  );
 
   // 5. Send messages on different chains with the same client
 

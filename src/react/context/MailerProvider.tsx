@@ -36,7 +36,7 @@ const defaultQueryClient = new QueryClient({
   defaultOptions: {
     queries: {
       retry: 3,
-      retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000),
+      retryDelay: attemptIndex => Math.min(1000 * 2 ** attemptIndex, 30000),
       refetchOnWindowFocus: false,
       staleTime: 30 * 1000, // 30 seconds default
     },
@@ -94,12 +94,14 @@ const defaultQueryClient = new QueryClient({
  * }
  * ```
  */
-export function MailerProvider({ children, wallet, chainInfo, queryClient }: MailerProviderProps) {
+export function MailerProvider({
+  children,
+  wallet,
+  chainInfo,
+  queryClient,
+}: MailerProviderProps) {
   // Create OnchainMailerClient instance (stateless, no constructor params)
-  const client = React.useMemo(
-    () => new OnchainMailerClient(),
-    []
-  );
+  const client = React.useMemo(() => new OnchainMailerClient(), []);
 
   // Create context value with client, wallet, and chainInfo
   const contextValue = React.useMemo(
@@ -158,4 +160,3 @@ export function useMailerClient(): OnchainMailerClient {
   const { client } = useMailerContext();
   return client;
 }
-

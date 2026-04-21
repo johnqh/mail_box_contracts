@@ -58,5 +58,8 @@ package-lock.json
 yarn.lock
 bun.lock
 
+# AI snippets (not valid TypeScript)
+.ai/
+
 # Generated types
 types/

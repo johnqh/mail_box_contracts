@@ -21,8 +21,8 @@ async function evmExample() {
   const client = new OnchainMailerClient({
     evm: {
       mailerAddress: '0xYourMailerContractAddress',
-      usdcAddress: '0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48'
-    }
+      usdcAddress: '0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48',
+    },
   });
 
   console.log('✅ Client created with EVM configuration');
@@ -34,18 +34,18 @@ async function evmExample() {
   const walletClient1 = createWalletClient({
     account: account1,
     chain: sepolia,
-    transport: http('https://eth-sepolia.g.alchemy.com/v2/YOUR-API-KEY')
+    transport: http('https://eth-sepolia.g.alchemy.com/v2/YOUR-API-KEY'),
   });
 
   const walletClient2 = createWalletClient({
     account: account2,
     chain: sepolia,
-    transport: http('https://eth-sepolia.g.alchemy.com/v2/YOUR-API-KEY')
+    transport: http('https://eth-sepolia.g.alchemy.com/v2/YOUR-API-KEY'),
   });
 
   const publicClient = createPublicClient({
     chain: sepolia,
-    transport: http('https://eth-sepolia.g.alchemy.com/v2/YOUR-API-KEY')
+    transport: http('https://eth-sepolia.g.alchemy.com/v2/YOUR-API-KEY'),
   });
 
   // ===== 3. Use the same client with different wallets =====
@@ -72,10 +72,10 @@ async function evmExample() {
 
   // ===== 4. Delegate from wallet 1 =====
   console.log('\n🤝 Setting delegation from wallet 1...');
-  const delegationResult = await client.delegateTo(
-    '0xDelegateAddress',
-    { walletClient: walletClient1, publicClient }
-  );
+  const delegationResult = await client.delegateTo('0xDelegateAddress', {
+    walletClient: walletClient1,
+    publicClient,
+  });
   console.log('✅ Delegation set:', delegationResult.transactionHash);
 
   // ===== 5. Read operations (no wallet needed) =====
@@ -91,14 +91,17 @@ async function solanaExample() {
   const client = new OnchainMailerClient({
     solana: {
       programId: '9FLkBDGpZBcR8LMsQ7MwwV6X9P4TDFgN3DeRh5qYyHJF',
-      usdcMint: 'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v'
-    }
+      usdcMint: 'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v',
+    },
   });
 
   console.log('✅ Client created with Solana configuration');
 
   // ===== 2. Create connection and wallets =====
-  const connection = new Connection('https://api.devnet.solana.com', 'confirmed');
+  const connection = new Connection(
+    'https://api.devnet.solana.com',
+    'confirmed'
+  );
 
   const wallet1 = new PhantomWalletAdapter();
   await wallet1.connect();
@@ -120,15 +123,18 @@ async function solanaExample() {
 
   // ===== 4. Delegate to another address =====
   console.log('\n🤝 Setting delegation...');
-  const delegationResult = await client.delegateTo(
-    'DelegatePublicKeyBase58',
-    { wallet: wallet1, connection }
-  );
+  const delegationResult = await client.delegateTo('DelegatePublicKeyBase58', {
+    wallet: wallet1,
+    connection,
+  });
   console.log('✅ Delegation set:', delegationResult.transactionHash);
 
   // ===== 5. Claim revenue =====
   console.log('\n💸 Claiming revenue share...');
-  const claimResult = await client.claimRevenue({ wallet: wallet1, connection });
+  const claimResult = await client.claimRevenue({
+    wallet: wallet1,
+    connection,
+  });
   console.log('✅ Revenue claimed:', claimResult.hash);
 
   // ===== 6. Read operations =====
@@ -146,12 +152,12 @@ async function multiChainExample() {
   const client = new OnchainMailerClient({
     evm: {
       mailerAddress: '0xYourMailerContractAddress',
-      usdcAddress: '0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48'
+      usdcAddress: '0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48',
     },
     solana: {
       programId: '9FLkBDGpZBcR8LMsQ7MwwV6X9P4TDFgN3DeRh5qYyHJF',
-      usdcMint: 'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v'
-    }
+      usdcMint: 'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v',
+    },
   });
 
   console.log('✅ Multi-chain client created');
@@ -161,11 +167,11 @@ async function multiChainExample() {
   const evmWalletClient = createWalletClient({
     account: evmAccount,
     chain: sepolia,
-    transport: http()
+    transport: http(),
   });
   const evmPublicClient = createPublicClient({
     chain: sepolia,
-    transport: http()
+    transport: http(),
   });
 
   // ===== Solana wallet =====
@@ -202,23 +208,20 @@ export function ReactComponent() {
   const client = new OnchainMailerClient({
     evm: {
       mailerAddress: process.env.NEXT_PUBLIC_MAILER_ADDRESS!,
-      usdcAddress: process.env.NEXT_PUBLIC_USDC_ADDRESS
+      usdcAddress: process.env.NEXT_PUBLIC_USDC_ADDRESS,
     },
     solana: {
       programId: process.env.NEXT_PUBLIC_MAILER_PROGRAM!,
-      usdcMint: process.env.NEXT_PUBLIC_USDC_MINT!
-    }
+      usdcMint: process.env.NEXT_PUBLIC_USDC_MINT!,
+    },
   });
 
   // Different users can use the same client
   const sendMessageForUser = async (userWallet: any) => {
     // The client doesn't care which wallet is used
-    const result = await client.sendMessage(
-      'Subject',
-      'Body',
-      userWallet,
-      { priority: true }
-    );
+    const result = await client.sendMessage('Subject', 'Body', userWallet, {
+      priority: true,
+    });
     return result;
   };
 
