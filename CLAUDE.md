@@ -1,5 +1,10 @@
 # mail_box_contracts - AI Development Guide
 
+> **Git policy — never auto-commit or auto-push.** Leave your work in the working tree.
+> Run `git commit`, `git push`, `gh pr create`, or `scripts/push_all.sh` **only when the user
+> explicitly asks in that turn**. Approval for an earlier change does not carry forward, and
+> finishing a task is not permission to commit it.
+
 ## Overview
 
 Multi-chain decentralized messaging system published as `@sudobility/contracts`. Supports EVM chains (Ethereum, Polygon, Optimism, Base, Arbitrum, Avalanche, BSC, and more) and Solana with USDC-based fees, revenue sharing, delegation management, and a unified TypeScript client. The system uses a two-tier fee model (Priority and Standard) with a 90/10 revenue split and 60-day claim periods.
@@ -477,3 +482,7 @@ expect(finalBalance - initialBalance).to.equal(expectedFee);
 | `spl-token`      | 3.5     | SPL token program interface |
 | `borsh`          | 1.5     | Binary serialization        |
 | `thiserror`      | 1.0     | Error derive macros         |
+
+## Git Workflow
+
+- Do not use feature branches for code changes. Always stay on the current branch.
