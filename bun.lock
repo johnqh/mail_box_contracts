@@ -17,9 +17,9 @@
         "@solana/spl-token": "^0.4.14",
         "@solana/wallet-adapter-base": "^0.9.27",
         "@solana/web3.js": "^1.98.4",
-        "@sudobility/configs": "^0.0.76",
-        "@sudobility/mail_box_types": "^1.0.25",
-        "@sudobility/types": "^1.9.67",
+        "@sudobility/configs": "^0.0.77",
+        "@sudobility/mail_box_types": "^1.0.26",
+        "@sudobility/types": "^1.9.68",
         "@tanstack/react-query": "^5.90.1",
         "@typechain/hardhat": "^9.1.0",
         "@types/chai": "^4.3.20",
@@ -49,9 +49,9 @@
       "peerDependencies": {
         "@solana/spl-token": ">=0.4.0",
         "@solana/web3.js": ">=1.95.0",
-        "@sudobility/configs": "^0.0.76",
-        "@sudobility/mail_box_types": "^1.0.25",
-        "@sudobility/types": "^1.9.67",
+        "@sudobility/configs": "^0.0.77",
+        "@sudobility/mail_box_types": "^1.0.26",
+        "@sudobility/types": "^1.9.68",
         "@tanstack/react-query": ">=5.0.0",
         "buffer": ">=6.0.0",
         "react": "^18.0.0 || ^19.0.0",
@@ -499,11 +499,11 @@
 
     "@solidity-parser/parser": ["@solidity-parser/parser@0.20.2", "", {}, "sha512-rbu0bzwNvMcwAjH86hiEAcOeRI2EeK8zCkHDrFykh/Al8mvJeFmjy3UrE7GYQjNwOgbGUUtCn5/k8CB8zIu7QA=="],
 
-    "@sudobility/configs": ["@sudobility/configs@0.0.76", "", { "peerDependencies": { "@sudobility/types": "^1.9.67" } }, "sha512-KX67FooiqzwUoa+Cm2UKIdMBUmwlgLEnn9sNBla5xXv60ZlW055anmVSC7+yxQ2Kz3tMFj0Sf9llRJ1VSqaylA=="],
+    "@sudobility/configs": ["@sudobility/configs@0.0.77", "", { "peerDependencies": { "@sudobility/types": "^1.9.68" } }, "sha512-7qpwuMfIjmJQ0C6jkFa0LrjWXPeYKpwRDIzZgwi+8bMBx+ii3mexMiWnb1gTONn0qU6S9KNOPG2knLypWNiiSg=="],
 
-    "@sudobility/mail_box_types": ["@sudobility/mail_box_types@1.0.25", "", { "peerDependencies": { "@sudobility/types": "^1.9.67" } }, "sha512-XprRx7nFeJINIXFNEpCuCYo4VLxPvumyKmWit0VYNBwymVmjwEe0QlX/F3GhzBWwMiryOLPhRJ4pZp6/Eefbqg=="],
+    "@sudobility/mail_box_types": ["@sudobility/mail_box_types@1.0.26", "", { "peerDependencies": { "@sudobility/types": "^1.9.68" } }, "sha512-ydN7+oLuKmvYEyK1cUmp2udZZbIgujDo/rc6I1JBeTWq75TDiuHwCGi1fNdUZqhoAzloc5Ljf0jEtPMUJcWMug=="],
 
-    "@sudobility/types": ["@sudobility/types@1.9.67", "", {}, "sha512-d+jk4L9i8VNvOnCJW/craqiiUTPH5aRq4KYe/QBrBU3mCcTfoYjgzzXopVQRcthiZ5dwQAEpdqCTQ0gAWRN6Ww=="],
+    "@sudobility/types": ["@sudobility/types@1.9.68", "", {}, "sha512-4LL5+UfcqQcc0PKKR/z/PqS6j9DQPVkkjL+3oOW+Bwx0TAu1SVKAlPhlt/9ruNMW+abcHuZoFvbOVD5gdYBSGw=="],
 
     "@swc/helpers": ["@swc/helpers@0.5.18", "", { "dependencies": { "tslib": "^2.8.0" } }, "sha512-TXTnIcNJQEKwThMMqBXsZ4VGAza6bvN4pa41Rkqoio6QBKMvo+5lexeTMScGCIxtzgQJzElcvIltani+adC5PQ=="],
 
