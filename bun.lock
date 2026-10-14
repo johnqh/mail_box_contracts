@@ -18,7 +18,7 @@
         "@solana/wallet-adapter-base": "^0.9.27",
         "@solana/web3.js": "^1.98.4",
         "@sudobility/configs": "^0.0.77",
-        "@sudobility/mail_box_types": "^1.0.26",
+        "@sudobility/mail_box_types": "^1.0.27",
         "@sudobility/types": "^1.9.68",
         "@tanstack/react-query": "^5.90.1",
         "@typechain/hardhat": "^9.1.0",
@@ -50,7 +50,7 @@
         "@solana/spl-token": ">=0.4.0",
         "@solana/web3.js": ">=1.95.0",
         "@sudobility/configs": "^0.0.77",
-        "@sudobility/mail_box_types": "^1.0.26",
+        "@sudobility/mail_box_types": "^1.0.27",
         "@sudobility/types": "^1.9.68",
         "@tanstack/react-query": ">=5.0.0",
         "buffer": ">=6.0.0",
@@ -501,7 +501,7 @@
 
     "@sudobility/configs": ["@sudobility/configs@0.0.77", "", { "peerDependencies": { "@sudobility/types": "^1.9.68" } }, "sha512-7qpwuMfIjmJQ0C6jkFa0LrjWXPeYKpwRDIzZgwi+8bMBx+ii3mexMiWnb1gTONn0qU6S9KNOPG2knLypWNiiSg=="],
 
-    "@sudobility/mail_box_types": ["@sudobility/mail_box_types@1.0.26", "", { "peerDependencies": { "@sudobility/types": "^1.9.68" } }, "sha512-ydN7+oLuKmvYEyK1cUmp2udZZbIgujDo/rc6I1JBeTWq75TDiuHwCGi1fNdUZqhoAzloc5Ljf0jEtPMUJcWMug=="],
+    "@sudobility/mail_box_types": ["@sudobility/mail_box_types@1.0.27", "", { "peerDependencies": { "@sudobility/types": "^1.9.68" } }, "sha512-uue/+404EfMSZjnaeeAybjo/kRPWw49pwKdeC62ysPJlKy9vIr1taB7rXWsKX4PqyS8Y1MirSYj5kXdz+TkSqQ=="],
 
     "@sudobility/types": ["@sudobility/types@1.9.68", "", {}, "sha512-4LL5+UfcqQcc0PKKR/z/PqS6j9DQPVkkjL+3oOW+Bwx0TAu1SVKAlPhlt/9ruNMW+abcHuZoFvbOVD5gdYBSGw=="],
 
